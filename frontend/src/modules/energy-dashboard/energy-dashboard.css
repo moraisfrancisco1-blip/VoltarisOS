@@ -1,0 +1,56 @@
+/* ============================================
+   EnergyOS Dashboard — Self-contained CSS
+   Nao depende de Tailwind, shadcn, ou variaveis externas.
+   Cola este ficheiro no teu projecto junto dos componentes.
+   ============================================ */
+
+.energy-dashboard {
+  min-height: 100vh;
+  background: #0a0f1a;
+  color: #f1f5f9;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.energy-dashboard__inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Custom scrollbar */
+.energy-dashboard ::-webkit-scrollbar {
+  width: 6px;
+}
+.energy-dashboard ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.energy-dashboard ::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+}
+.energy-dashboard ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* Recharts overrides for dark theme */
+.energy-dashboard .recharts-text {
+  fill: #64748b !important;
+  font-size: 10px;
+}
+.energy-dashboard .recharts-cartesian-grid-horizontal line,
+.energy-dashboard .recharts-cartesian-grid-vertical line {
+  stroke: rgba(255,255,255,0.04) !important;
+}
+.energy-dashboard .recharts-legend-item-text {
+  color: #94a3b8 !important;
+  font-size: 11px !important;
+}

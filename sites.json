@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Rotterdam Noord ",
+    "location": "Rotterdam, NL",
+    "lat": 51.9225,
+    "lng": 4.4792,
+    "solar_kw": 12.5,
+    "battery_kwh": 20.0,
+    "ev_chargers": 2,
+    "owner": "Francisco Morais",
+    "status": "active",
+    "id": 1
+  }
+]
