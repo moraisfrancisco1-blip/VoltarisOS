@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDashboardStore } from './lib/store';
 import { Header } from './components/dashboard/Header';
 import { DailySummary } from './components/dashboard/DailySummary';
@@ -13,19 +13,27 @@ import './energy-dashboard.css';
 
 export default function EnergyDashboard() {
   const { mode } = useDashboardStore();
+  const [realPrices, setRealPrices] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/prices/day-ahead")
+      .then(res => res.json())
+      .then(data => setRealPrices(data.prices || []))
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="energy-dashboard">
       <div className="energy-dashboard__inner">
         <Header />
         <DailySummary />
-        {mode === 'operator' ? <OperatorView /> : <InvestorView />}
+        {mode === 'operator' ? <OperatorView realPrices={realPrices} /> : <InvestorView />}
       </div>
     </div>
   );
 }
 
-function OperatorView() {
+function OperatorView({ realPrices }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <KPICards />
@@ -34,7 +42,7 @@ function OperatorView() {
           <EnergyFlowChart />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <BatteryChart />
-            <PriceProductionChart />
+            <PriceProductionChart realPrices={realPrices} />
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

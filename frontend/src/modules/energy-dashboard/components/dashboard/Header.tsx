@@ -1,3 +1,4 @@
+/// <reference types="react" />
 import React from 'react';
 import { Activity, Globe } from 'lucide-react';
 import { useDashboardStore } from '../../lib/store';
@@ -63,7 +64,7 @@ export function Header() {
         </div>
         <div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-            EnergyOS
+            VoltarisOS
           </h1>
           <p style={{ fontSize: 11, color: '#64748b', margin: '-2px 0 0 0' }}>Intelligent Energy Management</p>
         </div>

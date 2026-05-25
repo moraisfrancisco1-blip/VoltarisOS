@@ -10,5 +10,17 @@
     "owner": "Francisco Morais",
     "status": "active",
     "id": 1
+  },
+  {
+    "name": "Rebordelo",
+    "location": "REbordelo",
+    "lat": 41.7304837,
+    "lng": -7.1639982,
+    "solar_kw": 150.0,
+    "battery_kwh": 150.0,
+    "ev_chargers": 2,
+    "owner": "Francisco Morais",
+    "status": "active",
+    "id": 2
   }
 ]
