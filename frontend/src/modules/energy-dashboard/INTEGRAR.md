@@ -1,4 +1,4 @@
-# Integrar o EnergyOS Dashboard no teu projecto
+# Integrar o VoltarisOS Dashboard no teu projecto
 
 ## O que mudou nesta versão
 

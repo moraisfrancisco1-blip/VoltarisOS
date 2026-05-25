@@ -1,10 +1,14 @@
 {
   "compilerOptions": {
-    "jsx": "react",
-    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "strict": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "ignoreDeprecations": "6.0"
-  }
+    }
+  },
+  "include": ["src"]
 }

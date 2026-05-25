@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd frontend && npm install && npm run build"
+  },
+  "deploy": {
+    "startCommand": "cd frontend && npm run preview -- --port $PORT --host"
+  }
+}
