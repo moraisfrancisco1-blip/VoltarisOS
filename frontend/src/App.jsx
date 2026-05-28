@@ -30,7 +30,7 @@ import ToastContainer from "./components/ToastContainer"
 import ShortcutsOverlay from "./components/ShortcutsOverlay"
 import SimBanner from "./components/SimBanner"
 import OnboardingWizard from "./components/OnboardingWizard"
-import { useAppStore } from "./store/appStore"
+import { useAppStore, THEMES } from "./store/appStore"
 import "./index.css"
 
 const PAGES = {
@@ -86,13 +86,13 @@ function AppShell({ user, onLogout }) {
   }, [])
 
   const PageComponent = PAGES[page] || Dashboard
-  const isLight = theme === "light"
+  const themeVars = THEMES[theme] || THEMES.dark
 
   return (
     <div style={{
       display: "flex", minHeight: "100vh",
-      background: isLight ? "#f1f5f9" : "#0a0f1a",
-      color: isLight ? "#0f172a" : "white",
+      background: themeVars.bg,
+      color: themeVars.text,
     }}>
       <SimBanner />
       <Sidebar page={page} setPage={setPage} user={user} onLogout={onLogout} />
