@@ -172,7 +172,7 @@ const TABS = [
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Settings() {
-  const t = useTranslation();
+  const { t } = useTranslation();
   const accent     = useAppStore(s => s.accentColor);
   const theme      = useAppStore(s => s.theme);
   const setTheme   = useAppStore(s => s.setTheme);

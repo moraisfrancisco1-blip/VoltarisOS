@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
+import { useTranslation } from "../i18n/useTranslation"
 
 function generateKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -7,6 +8,7 @@ function generateKey() {
 }
 
 export default function ApiKeys({ user }) {
+  const { t } = useTranslation()
   const { addToast, addAuditEntry } = useAppStore()
   const color = user?.color || "#4ade80"
 
@@ -28,18 +30,18 @@ export default function ApiKeys({ user }) {
     setNewKey(k.key)
     setShowCreate(false)
     setNewName("")
-    addToast(`API Key "${newName}" criada com sucesso`, "success")
-    addAuditEntry({ user: user?.email || "admin@voltaris.com", action: "API Key gerada", resource: "API Keys" })
+    addToast(`API Key "${newName}" ${t("created_success") || "created successfully"}`, "success")
+    addAuditEntry({ user: user?.email || "admin@voltaris.com", action: "API Key created", resource: "API Keys" })
   }
 
   const revokeKey = (id) => {
     setKeys(prev => prev.map(k => k.id === id ? { ...k, active: false } : k))
-    addToast("API Key revogada", "warning")
+    addToast(t("api_key_revoked") || "API Key revoked", "warning")
   }
 
   const copyKey = (key) => {
     navigator.clipboard.writeText(key)
-    addToast("Copiado para o clipboard", "success")
+    addToast(t("copied_clipboard") || "Copied to clipboard", "success")
   }
 
   return (
@@ -48,7 +50,7 @@ export default function ApiKeys({ user }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px" }}>
         <div>
           <h1 style={{ color: "white", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>API Keys</h1>
-          <p style={{ color: "#4b5563", fontSize: "14px" }}>Tokens de acesso para integrar sistemas externos com o VoltarisOS</p>
+          <p style={{ color: "#4b5563", fontSize: "14px" }}>{t("apikeys_sub") || "Access tokens to integrate external systems with VoltarisOS"}</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -95,10 +97,10 @@ export default function ApiKeys({ user }) {
           background: "#111827", border: "1px solid #1e2d45",
           borderRadius: "14px", padding: "24px", marginBottom: "24px",
         }}>
-          <h3 style={{ color: "white", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>Criar nova API Key</h3>
+          <h3 style={{ color: "white", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>{t("apikeys_create_new") || "Create new API Key"}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "20px" }}>
             <div>
-              <label style={{ color: "#9ca3af", fontSize: "12px", display: "block", marginBottom: "6px" }}>Nome / Descrição</label>
+              <label style={{ color: "#9ca3af", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("name") || "Name"} / {t("description") || "Description"}</label>
               <input
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
@@ -114,7 +116,7 @@ export default function ApiKeys({ user }) {
               />
             </div>
             <div>
-              <label style={{ color: "#9ca3af", fontSize: "12px", display: "block", marginBottom: "6px" }}>Permissões</label>
+              <label style={{ color: "#9ca3af", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("permissions") || "Permissions"}</label>
               <select
                 value={newScope}
                 onChange={e => setNewScope(e.target.value)}
@@ -127,9 +129,9 @@ export default function ApiKeys({ user }) {
               >
                 <option value="read">Leitura</option>
                 <option value="read,write">Leitura + Escrita</option>
-                <option value="alerts">Só Alertas</option>
-                <option value="trading">Só Trading</option>
-                <option value="full">Acesso Total</option>
+                <option value="alerts">{t("perm_alerts_only") || "Alerts Only"}</option>
+                <option value="trading">{t("perm_trading_only") || "Trading Only"}</option>
+                <option value="full">{t("perm_full_access") || "Full Access"}</option>
               </select>
             </div>
           </div>
@@ -137,11 +139,11 @@ export default function ApiKeys({ user }) {
             <button onClick={() => setShowCreate(false)} style={{
               padding: "9px 18px", background: "#1f2937", border: "1px solid #374151",
               borderRadius: "8px", color: "#9ca3af", cursor: "pointer",
-            }}>Cancelar</button>
+            }}>{t("cancel") || "Cancel"}</button>
             <button onClick={createKey} style={{
               padding: "9px 18px", background: color, border: "none",
               borderRadius: "8px", color: "#0a0f1a", cursor: "pointer", fontWeight: "700",
-            }}>Criar Key</button>
+            }}>{t("apikeys_create_btn") || "Create Key"}</button>
           </div>
         </div>
       )}

@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "../i18n/useTranslation"
+import { useAppStore } from "../store/appStore"
 import axios from "axios"
 
-export default function Sites() {
+export default function Sites({ user }) {
+  const { t } = useTranslation()
+  const accentColor = useAppStore(s => s.accentColor)
+  const color = user?.color || accentColor || "#4ade80"
+
   const [sites, setSites] = useState([])
   const [form, setForm] = useState({
     name: "", location: "", lat: "", lng: "",
@@ -10,8 +16,7 @@ export default function Sites() {
   })
 
   const loadSites = () => {
-    axios.get("/api/sites")
-      .then(res => setSites(res.data))
+    axios.get("/api/sites").then(res => setSites(res.data)).catch(() => {})
   }
 
   useEffect(() => { loadSites() }, [])
@@ -24,63 +29,75 @@ export default function Sites() {
       solar_kw: parseFloat(form.solar_kw),
       battery_kwh: parseFloat(form.battery_kwh),
       ev_chargers: parseInt(form.ev_chargers),
-    }).then(() => { loadSites(); })
+    }).then(() => { loadSites() })
   }
 
   const deleteSite = (id) => {
-    axios.delete(`/api/sites/${id}`)
-      .then(() => loadSites())
+    axios.delete(`/api/sites/${id}`).then(() => loadSites())
   }
 
-  return (
-    <div className="p-10 bg-gray-900 min-h-screen text-white">
-      <h1 className="text-3xl mb-8">🗺️ Gestão de Sites</h1>
+  const FIELDS = [
+    ["name",        t("fleet_col_name")     || "Installation name"],
+    ["location",    t("fleet_col_location") || "Location (city)"],
+    ["lat",         "Latitude"],
+    ["lng",         "Longitude"],
+    ["solar_kw",    "Solar (kW)"],
+    ["battery_kwh", "Battery (kWh)"],
+    ["ev_chargers", t("fleet_ev_chargers")  || "EV Chargers"],
+    ["owner",       t("fleet_owner")        || "Owner"],
+  ]
 
-      {/* Formulário */}
-      <div className="bg-gray-800 p-6 rounded-xl mb-10 grid grid-cols-2 gap-4">
-        <h2 className="col-span-2 text-xl mb-2">➕ Novo Site</h2>
-        {[
-          ["name", "Nome da instalação"],
-          ["location", "Localização (cidade)"],
-          ["lat", "Latitude"],
-          ["lng", "Longitude"],
-          ["solar_kw", "Solar (kW)"],
-          ["battery_kwh", "Bateria (kWh)"],
-          ["ev_chargers", "Carregadores EV"],
-          ["owner", "Proprietário"],
-        ].map(([field, label]) => (
-          <input
-            key={field}
-            placeholder={label}
-            value={form[field]}
-            onChange={e => setForm({ ...form, [field]: e.target.value })}
-            className="bg-gray-700 p-3 rounded-lg text-white placeholder-gray-400"
-          />
-        ))}
-        <button
-          onClick={handleSubmit}
-          className="col-span-2 bg-green-600 hover:bg-green-500 p-3 rounded-lg font-bold mt-2"
-        >
-          Guardar Site
-        </button>
+  return (
+    <div style={{ padding: "32px", background: "#0a0f1a", minHeight: "100vh", color: "#e5e7eb" }}>
+      <h1 style={{ fontSize: "24px", fontWeight: "800", marginBottom: "6px" }}>🗺️ {t("nav_sites")}</h1>
+      <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "28px" }}>{t("nav_sites")} · {t("fleet_installations") || "Installations"}</p>
+
+      {/* Form */}
+      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "24px", marginBottom: "24px" }}>
+        <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "16px" }}>➕ {t("add")} Site</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+          {FIELDS.map(([field, label]) => (
+            <input
+              key={field}
+              placeholder={label}
+              value={form[field]}
+              onChange={e => setForm({ ...form, [field]: e.target.value })}
+              style={{
+                background: "#0d1117", border: "1px solid #1a2234", borderRadius: "8px",
+                padding: "10px 14px", color: "#e5e7eb", fontSize: "13px",
+              }}
+            />
+          ))}
+          <button
+            onClick={handleSubmit}
+            style={{
+              gridColumn: "1 / -1", background: color, color: "#000", border: "none",
+              borderRadius: "8px", padding: "11px", fontWeight: "700", fontSize: "13px", cursor: "pointer",
+            }}
+          >
+            {t("save")} Site
+          </button>
+        </div>
       </div>
 
-      {/* Lista de sites */}
-      <div className="grid grid-cols-1 gap-4">
+      {/* List */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {sites.length === 0 && (
-          <p className="text-gray-400">Nenhum site adicionado ainda.</p>
+          <p style={{ color: "#4b5563", fontSize: "13px" }}>No sites added yet.</p>
         )}
         {sites.map(site => (
-          <div key={site.id} className="bg-gray-800 p-5 rounded-xl flex justify-between items-center">
+          <div key={site.id} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <h3 className="text-lg font-bold">{site.name}</h3>
-              <p className="text-gray-400">{site.location} · {site.solar_kw} kW solar · {site.battery_kwh} kWh bateria · {site.ev_chargers} EV</p>
+              <div style={{ fontWeight: "700", fontSize: "15px" }}>{site.name}</div>
+              <div style={{ color: "#6b7280", fontSize: "12px", marginTop: "3px" }}>
+                {site.location} · {site.solar_kw} kW solar · {site.battery_kwh} kWh battery · {site.ev_chargers} EV
+              </div>
             </div>
             <button
               onClick={() => deleteSite(site.id)}
-              className="bg-red-700 hover:bg-red-600 px-4 py-2 rounded-lg"
+              style={{ background: "#450a0a", color: "#ef4444", border: "1px solid #7f1d1d", borderRadius: "8px", padding: "6px 14px", cursor: "pointer", fontSize: "12px", fontWeight: "600" }}
             >
-              Remover
+              {t("delete")}
             </button>
           </div>
         ))}

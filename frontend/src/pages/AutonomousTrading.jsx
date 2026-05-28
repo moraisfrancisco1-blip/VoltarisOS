@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react"
 import axios from "axios"
+import { useTranslation } from "../i18n/useTranslation"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts"
 
 const CT = ({ active, payload, label }) => {
@@ -19,6 +20,7 @@ const CT = ({ active, payload, label }) => {
 const ACTION_COLORS = { BUY: "#4ade80", SELL: "#f87171", HOLD: "#f59e0b" }
 
 export default function AutonomousTrading({ user }) {
+  const { t } = useTranslation()
   const [status, setStatus] = useState(null)
   const [log, setLog] = useState([])
   const [config, setConfig] = useState({ sell_min_price: 80, buy_max_price: 50, soc_min: 20, soc_max: 90, max_trade_kwh: 150 })
@@ -132,7 +134,7 @@ export default function AutonomousTrading({ user }) {
             width: "100%", padding: "9px", borderRadius: "8px", border: "none",
             background: color + "22", color, fontWeight: "700", fontSize: "13px",
             cursor: "pointer", border: `1px solid ${color}44`,
-          }}>Guardar Configuração</button>
+          }}>{t("save") || "Save Configuration"}</button>
         </div>
       </div>
 

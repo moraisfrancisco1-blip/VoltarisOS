@@ -228,20 +228,21 @@ function WidgetToggle({ widgetKey, label, color }) {
 
 /* ─── CO2 Widget ──────────────────────────────────────────────────────────── */
 function CO2Widget({ data, color }) {
+  const { t } = useTranslation()
   const total = data.slice(0, 24).reduce((s, d) => s + (d.co2 || 0), 0).toFixed(1)
   const equiv = (total / 8.4).toFixed(0)
   return (
     <div style={{ background: "linear-gradient(135deg, #111827 0%, #0f1724 100%)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
-      <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>CO₂ Evitado</div>
-      <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "12px" }}>Hoje · kg CO₂eq</div>
+      <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>{t("dash_co2_saved")}</div>
+      <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "12px" }}>{t("dash_today")} · kg CO₂eq</div>
       <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "14px" }}>
         <div>
           <div style={{ fontSize: "32px", fontWeight: "800", color: "#4ade80" }}>{total}</div>
-          <div style={{ fontSize: "11px", color: "#6b7280" }}>kg CO₂ hoje</div>
+          <div style={{ fontSize: "11px", color: "#6b7280" }}>kg CO₂</div>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "13px", color: "#9ca3af", marginBottom: "2px" }}>≈ {equiv} árvores/dia</div>
-          <div style={{ fontSize: "11px", color: "#374151" }}>Equivalente em sequestro</div>
+          <div style={{ fontSize: "13px", color: "#9ca3af", marginBottom: "2px" }}>≈ {equiv} trees/day</div>
+          <div style={{ fontSize: "11px", color: "#374151" }}>Carbon sequestration equiv.</div>
         </div>
       </div>
       <ResponsiveContainer width="100%" height={80}>
@@ -264,11 +265,12 @@ function CO2Widget({ data, color }) {
 
 /* ─── Grid Balance Widget ─────────────────────────────────────────────────── */
 function GridBalanceWidget({ data }) {
+  const { t } = useTranslation()
   const net = data.slice(0, 24).map(d => ({ ...d, net: +(d.solar - d.load).toFixed(1) }))
   return (
     <div style={{ background: "linear-gradient(135deg, #111827 0%, #0f1724 100%)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
-      <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>Balanço Rede</div>
-      <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "12px" }}>Solar − Consumo · kW</div>
+      <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>{t("dash_grid_balance")}</div>
+      <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "12px" }}>Solar − Load · kW</div>
       <ResponsiveContainer width="100%" height={110}>
         <ComposedChart data={net} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
           <XAxis dataKey="time" stroke="#1f2937" tick={{ fill: "#374151", fontSize: 9 }} interval={5} />
@@ -288,18 +290,19 @@ function GridBalanceWidget({ data }) {
 /* ─── Alerts Widget ───────────────────────────────────────────────────────── */
 function RecentAlertsWidget() {
   const { notifications } = useAppStore()
+  const { t } = useTranslation()
   const unread = notifications.filter(n => !n.read).slice(0, 4)
   return (
     <div style={{ background: "linear-gradient(135deg, #111827 0%, #0f1724 100%)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
         <div>
-          <div style={{ fontWeight: "700", fontSize: "14px" }}>Alertas Recentes</div>
-          <div style={{ color: "#4b5563", fontSize: "11px" }}>{unread.length} não lidos</div>
+          <div style={{ fontWeight: "700", fontSize: "14px" }}>{t("dash_recent_alerts")}</div>
+          <div style={{ color: "#4b5563", fontSize: "11px" }}>{unread.length} {t("dash_unread")}</div>
         </div>
         {unread.length > 0 && <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#f87171", animation: "pulse 1.5s infinite" }} />}
       </div>
       {unread.length === 0 ? (
-        <div style={{ color: "#374151", fontSize: "13px", textAlign: "center", padding: "12px 0" }}>✓ Nenhum alerta ativo</div>
+        <div style={{ color: "#374151", fontSize: "13px", textAlign: "center", padding: "12px 0" }}>✓ {t("dash_no_alerts")}</div>
       ) : (
         unread.map(n => (
           <div key={n.id} style={{ padding: "9px 10px", background: "#0d1525", borderRadius: "8px", border: "1px solid #1a2234", marginBottom: "6px" }}>
@@ -317,18 +320,19 @@ function RecentAlertsWidget() {
 
 /* ─── Weather Forecast ────────────────────────────────────────────────────── */
 function WeatherWidget() {
+  const { t } = useTranslation()
   const forecast = [
-    { day: "Hoje", icon: "☀", temp: "22°", solar: "Alta" },
-    { day: "Amanhã", icon: "⛅", temp: "18°", solar: "Média" },
-    { day: "Sáb", icon: "🌤", temp: "20°", solar: "Alta" },
-    { day: "Dom", icon: "🌧", temp: "14°", solar: "Baixa" },
-    { day: "Seg", icon: "☀", temp: "24°", solar: "Alta" },
+    { day: t("dash_today"), icon: "☀", temp: "22°", solar: "High" },
+    { day: "D+1", icon: "⛅", temp: "18°", solar: "Med" },
+    { day: "D+2", icon: "🌤", temp: "20°", solar: "High" },
+    { day: "D+3", icon: "🌧", temp: "14°", solar: "Low" },
+    { day: "D+4", icon: "☀", temp: "24°", solar: "High" },
   ]
-  const solarColor = { "Alta": "#f59e0b", "Média": "#60a5fa", "Baixa": "#6b7280" }
+  const solarColor = { "High": "#f59e0b", "Med": "#60a5fa", "Low": "#6b7280" }
   return (
     <div style={{ background: "linear-gradient(135deg, #111827 0%, #0f1724 100%)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
-      <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>Previsão Meteorológica</div>
-      <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "14px" }}>Irradiância solar prevista</div>
+      <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>{t("dash_weather_forecast")}</div>
+      <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "14px" }}>Solar irradiance forecast</div>
       <div style={{ display: "flex", gap: "8px" }}>
         {forecast.map((d, i) => (
           <div key={i} style={{ flex: 1, textAlign: "center", padding: "10px 4px", background: "#0d1525", borderRadius: "10px", border: "1px solid #1a2234" }}>
@@ -378,15 +382,23 @@ export default function Dashboard({ user }) {
     { key: "load", label: t("dash_consumption"), value: CURRENT.load.toFixed(1), unit: "kW", color: "#a78bfa", trend: -1.8, sparkData: liveTS.slice(0, 24), sparkKey: "load", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> },
     { key: "grid", label: t("dash_grid_flow"), value: CURRENT.grid.toFixed(1), unit: "kW", color: "#60a5fa", trend: 2.1, sparkData: liveTS.slice(0, 24), sparkKey: "grid", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> },
     { key: "today", label: t("dash_today_prod"), value: todaySolar, unit: "kWh", color, trend: 8.4, sparkData: liveTS.slice(0, 24), sparkKey: "solar", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-    { key: "co2", label: "CO₂ Evitado", value: todayCO2, unit: "kg", color: "#4ade80", trend: 3.5, sparkData: liveTS.slice(0, 24), sparkKey: "co2", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
-    { key: "revenue_kpi", label: "Receita Hoje", value: `€${todayRevenue}`, unit: "", color: "#f59e0b", trend: 5.1, sparkData: liveTS.slice(0, 24), sparkKey: "price", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+    { key: "co2", label: t("dash_co2_saved"), value: todayCO2, unit: "kg", color: "#4ade80", trend: 3.5, sparkData: liveTS.slice(0, 24), sparkKey: "co2", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    { key: "revenue_kpi", label: t("dash_today_revenue"), value: `€${todayRevenue}`, unit: "", color: "#f59e0b", trend: 5.1, sparkData: liveTS.slice(0, 24), sparkKey: "price", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
   ]
 
   const WIDGET_LABELS = {
-    kpis: "KPIs", prodVsConsumption: "Prod vs Consumo", marketPrice: "Preço Mercado",
-    battery: "Bateria", ai: "AI Engine", sites: "Sites", soc24h: "SoC 24h",
-    revenue: "Receita", weatherForecast: "Meteorologia", recentAlerts: "Alertas",
-    co2saved: "CO₂ Evitado", gridBalance: "Balanço Rede",
+    kpis: "KPIs",
+    prodVsConsumption: t("dash_prod_vs_cons"),
+    marketPrice: t("dash_market_price"),
+    battery: t("dash_battery"),
+    ai: "AI Engine",
+    sites: t("dash_sites_active"),
+    soc24h: t("dash_soc_24h"),
+    revenue: t("dash_revenue"),
+    weatherForecast: t("dash_weather_forecast"),
+    recentAlerts: t("dash_recent_alerts"),
+    co2saved: t("dash_co2_saved"),
+    gridBalance: t("dash_grid_balance"),
   }
 
   return (
@@ -438,7 +450,7 @@ export default function Dashboard({ user }) {
             }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            Personalizar
+            {t("dash_customize")}
           </button>
         </div>
       </div>
@@ -446,7 +458,7 @@ export default function Dashboard({ user }) {
       {/* Customize panel */}
       {showCustomize && (
         <div style={{ marginBottom: "20px", padding: "16px 20px", background: "#0d1525", borderRadius: "12px", border: `1px solid ${color}30` }}>
-          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "10px", fontWeight: "500" }}>WIDGETS VISÍVEIS</div>
+          <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "10px", fontWeight: "500", textTransform: "uppercase", letterSpacing: "0.05em" }}>Widgets</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
             {Object.entries(WIDGET_LABELS).map(([k, l]) => (
               <WidgetToggle key={k} widgetKey={k} label={l} color={color} />
