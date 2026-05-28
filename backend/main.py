@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file (OPENAI_API_KEY etc.)
+
 from optimization.ai_optimizer import optimize_energy
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

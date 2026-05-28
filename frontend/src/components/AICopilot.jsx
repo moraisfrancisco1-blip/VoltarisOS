@@ -46,7 +46,18 @@ export default function AICopilot({ user }) {
     setMessages(m => [...m, { role: "user", text: msg, ts }])
     setLoading(true)
     try {
-      const r = await axios.post("/api/copilot", { message: msg })
+      const r = await axios.post("/api/copilot", {
+        message: msg,
+        context: {
+          sites: "Rotterdam, Rebordelo",
+          battery_soc: "Rotterdam 78%, Rebordelo 45%",
+          solar_production: "Rotterdam 156 kW, Rebordelo 12 kW",
+          grid_price: (55 + Math.random() * 75).toFixed(1),
+          daily_revenue: (280 + Math.random() * 170).toFixed(0),
+          total_capacity: "800 kWh (4.8 MWh total with solar)",
+          pnl: (1800 + Math.random() * 100).toFixed(2),
+        }
+      })
       setMessages(m => [...m, {
         role: "assistant",
         text: r.data.response,
@@ -121,7 +132,7 @@ export default function AICopilot({ user }) {
               </div>
             </div>
             <div style={{ marginLeft: "auto", fontSize: "10px", color: "#374151", background: "#0d1525", padding: "3px 8px", borderRadius: "6px", border: "1px solid #1a2234" }}>
-              VoltarisAI-1.0
+              GPT-4o
             </div>
           </div>
 
