@@ -1,4 +1,5 @@
 import { useState } from "react"
+import logoDark from "../assets_logo_dark.png"
 
 const NAV_GROUPS = [
   {
@@ -67,37 +68,44 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
 
         {/* Header */}
         <div style={{
-          padding: "0 16px",
+          padding: "0 12px",
           height: "60px",
           borderBottom: "1px solid #1a2234",
           display: "flex",
           alignItems: "center",
-          gap: "10px",
+          gap: "8px",
           flexShrink: 0,
         }}>
-          <div style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "8px",
-            background: `linear-gradient(135deg, ${color}33, ${color}66)`,
-            border: `1px solid ${color}55`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={color}>
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-            </svg>
-          </div>
-
-          {!collapsed && (
-            <div style={{ overflow: "hidden", flex: 1 }}>
-              <div style={{ color: "white", fontWeight: "700", fontSize: "15px", letterSpacing: "-0.3px", whiteSpace: "nowrap" }}>
-                Voltaris<span style={{ color }}>OS</span>
-              </div>
-              <div style={{ color: "#4b5563", fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase", whiteSpace: "nowrap" }}>VPP Platform</div>
+          {/* Collapsed: show icon-only cropped logo */}
+          {collapsed ? (
+            <div style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "8px",
+              background: `linear-gradient(135deg, ${color}33, ${color}55)`,
+              border: `1px solid ${color}44`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              overflow: "hidden",
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={color}>
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              </svg>
             </div>
+          ) : (
+            <img
+              src={logoDark}
+              alt="VoltarisOS"
+              style={{
+                height: "36px",
+                width: "auto",
+                objectFit: "contain",
+                flex: 1,
+                minWidth: 0,
+              }}
+            />
           )}
 
           <button
