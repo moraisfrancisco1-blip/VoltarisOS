@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#111827", border: "1px solid #1f2937", borderRadius: 12, padding: 24 };
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 };
 
 const LineChart = ({ data, color, label, unit, height = 100 }) => {
   if (!data || data.length === 0) return null;
@@ -12,7 +12,7 @@ const LineChart = ({ data, color, label, unit, height = 100 }) => {
   const pts = data.map((d, i) => `${(i / (data.length - 1)) * w},${h - ((d.value - min) / range) * (h - 10) - 5}`);
   return (
     <div>
-      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 6 }}>{label}</div>
       <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
@@ -23,7 +23,7 @@ const LineChart = ({ data, color, label, unit, height = 100 }) => {
         <polygon fill={`url(#grad-${label})`} points={`0,${h} ${pts.join(" ")} ${w},${h}`} />
         <polyline fill="none" stroke={color} strokeWidth={2} points={pts.join(" ")} />
       </svg>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#4b5563", marginTop: 2 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--sub)", marginTop: 2 }}>
         <span>{data[0]?.hour}</span>
         <span>{data[Math.floor(data.length / 2)]?.hour}</span>
         <span>{data[data.length - 1]?.hour}</span>
@@ -101,15 +101,15 @@ export default function ForecastingDashboard() {
   const estRevenue = forecast ? forecast.reduce((a, h) => a + h.revenue, 0).toFixed(2) : 0;
 
   return (
-    <div style={{ padding: 32, color: "#e5e7eb", minHeight: "100vh", background: "#0a0f1a" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Forecasting Dashboard</h1>
-          <p style={{ color: "#6b7280" }}>24h irradiance, price, wind, and BESS dispatch recommendations</p>
+          <p style={{ color: "var(--sub)" }}>24h irradiance, price, wind, and BESS dispatch recommendations</p>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <select value={siteId} onChange={e => setSiteId(Number(e.target.value))}
-            style={{ background: "#111827", color: "#e5e7eb", border: "1px solid #1f2937", borderRadius: 8, padding: "8px 16px", fontSize: 13 }}>
+            style={{ background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 16px", fontSize: 13 }}>
             <option value={1}>Rotterdam</option>
             <option value={2}>Rebordelo</option>
           </select>
@@ -140,14 +140,14 @@ export default function ForecastingDashboard() {
           { label: "Est. Revenue", value: loading ? "—" : `€${estRevenue}`, color: accent },
         ].map(k => (
           <div key={k.label} style={card}>
-            <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
+            <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
             <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
           </div>
         ))}
       </div>
 
       {loading ? (
-        <div style={{ ...card, textAlign: "center", padding: 60, color: "#4b5563" }}>
+        <div style={{ ...card, textAlign: "center", padding: 60, color: "var(--sub)" }}>
           Loading forecast data...
         </div>
       ) : forecast ? (
@@ -182,7 +182,7 @@ export default function ForecastingDashboard() {
           {/* BESS dispatch recommendation */}
           <div style={card}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>BESS Dispatch Recommendation</h2>
-            <p style={{ color: "#6b7280", fontSize: 12, marginBottom: 16 }}>Optimal charge/discharge schedule based on price + solar forecast</p>
+            <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 16 }}>Optimal charge/discharge schedule based on price + solar forecast</p>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
               {forecast.map((h, i) => (
                 <div key={i} title={`${h.hour}: ${h.battery_action} | Price: €${h.price.toFixed(0)}/MWh`}
@@ -197,7 +197,7 @@ export default function ForecastingDashboard() {
                 </div>
               ))}
             </div>
-            <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12, color: "#6b7280" }}>
+            <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12, color: "var(--sub)" }}>
               <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#10b981", borderRadius: 2, marginRight: 4 }} />Charge</span>
               <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#f59e0b", borderRadius: 2, marginRight: 4 }} />Discharge</span>
               <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#374151", borderRadius: 2, marginRight: 4 }} />Idle</span>

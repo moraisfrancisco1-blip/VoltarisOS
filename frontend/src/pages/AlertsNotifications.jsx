@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#111827", border: "1px solid #1f2937", borderRadius: 12, padding: 24 };
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 };
 
 const initialAlerts = [
   { id: 1, type: "critical", icon: "🔴", title: "Battery Temp High", message: "Unit #2 Rebordelo: 38°C exceeds threshold (35°C)", time: "2 min ago", site: "Rebordelo", ack: false },
@@ -47,7 +47,7 @@ export default function AlertsNotifications() {
   const unacked = alerts.filter(a => !a.ack).length;
 
   const Toggle = ({ value, onChange, label }) => (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #1f2937" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
       <span style={{ fontSize: 13 }}>{label}</span>
       <div onClick={() => onChange(!value)} style={{
         width: 40, height: 22, borderRadius: 11, background: value ? accent : "#374151",
@@ -59,11 +59,11 @@ export default function AlertsNotifications() {
   );
 
   return (
-    <div style={{ padding: 32, color: "#e5e7eb", minHeight: "100vh", background: "#0a0f1a" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Alerts & Notifications</h1>
-          <p style={{ color: "#6b7280" }}>Threshold config, active alerts, and notification delivery</p>
+          <p style={{ color: "var(--sub)" }}>Threshold config, active alerts, and notification delivery</p>
         </div>
         {unacked > 0 && (
           <div style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: 8, padding: "8px 16px", fontSize: 13, color: "#ef4444" }}>
@@ -73,7 +73,7 @@ export default function AlertsNotifications() {
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#111827", borderRadius: 10, padding: 4, width: "fit-content", border: "1px solid #1f2937" }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "var(--surface)", borderRadius: 10, padding: 4, width: "fit-content", border: "1px solid var(--border)" }}>
         {["active", "thresholds", "channels"].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             background: tab === t ? accent : "transparent",
@@ -92,7 +92,7 @@ export default function AlertsNotifications() {
               <button key={f} onClick={() => setFilter(f)} style={{
                 background: filter === f ? "#1f2937" : "transparent",
                 color: filter === f ? "#e5e7eb" : "#6b7280",
-                border: "1px solid #1f2937", borderRadius: 8, padding: "6px 16px",
+                border: "1px solid var(--border)", borderRadius: 8, padding: "6px 16px",
                 cursor: "pointer", fontSize: 13, textTransform: "capitalize",
               }}>{f} {f === "all" ? `(${alerts.length})` : `(${alerts.filter(a => a.type === f).length})`}</button>
             ))}
@@ -104,13 +104,13 @@ export default function AlertsNotifications() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filtered.length === 0 && (
-              <div style={{ ...card, textAlign: "center", color: "#4b5563", padding: 40 }}>No alerts in this category</div>
+              <div style={{ ...card, textAlign: "center", color: "var(--sub)", padding: 40 }}>No alerts in this category</div>
             )}
             {filtered.map(alert => {
               const ts = typeStyle[alert.type];
               return (
                 <div key={alert.id} style={{
-                  background: alert.ack ? "#0d1117" : "#111827",
+                  background: alert.ack ? "var(--surface2)" : "var(--surface)",
                   border: `1px solid ${alert.ack ? "#1f2937" : ts.border}`,
                   borderLeft: `4px solid ${ts.text}`,
                   borderRadius: 10, padding: 16,
@@ -125,10 +125,10 @@ export default function AlertsNotifications() {
                           <span style={{ fontSize: 11, padding: "1px 6px", borderRadius: 99, background: ts.bg, color: ts.text, marginLeft: 8 }}>
                             {alert.type}
                           </span>
-                          {alert.ack && <span style={{ fontSize: 11, color: "#4b5563", marginLeft: 8 }}>acknowledged</span>}
+                          {alert.ack && <span style={{ fontSize: 11, color: "var(--sub)", marginLeft: 8 }}>acknowledged</span>}
                         </div>
-                        <div style={{ fontSize: 13, color: "#9ca3af" }}>{alert.message}</div>
-                        <div style={{ fontSize: 11, color: "#4b5563", marginTop: 4 }}>
+                        <div style={{ fontSize: 13, color: "var(--sub)" }}>{alert.message}</div>
+                        <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 4 }}>
                           Site: {alert.site} · {alert.time}
                         </div>
                       </div>
@@ -141,7 +141,7 @@ export default function AlertsNotifications() {
                         }}>Ack</button>
                       )}
                       <button onClick={() => dismiss(alert.id)} style={{
-                        background: "#1f2937", color: "#9ca3af", border: "none",
+                        background: "#1f2937", color: "var(--sub)", border: "none",
                         borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12,
                       }}>Dismiss</button>
                     </div>
@@ -156,9 +156,9 @@ export default function AlertsNotifications() {
       {tab === "thresholds" && (
         <div style={card}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Alert Thresholds</h2>
-          <p style={{ color: "#6b7280", fontSize: 12, marginBottom: 20 }}>Configure when alerts are triggered</p>
+          <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 20 }}>Configure when alerts are triggered</p>
           {thresh.map((t, i) => (
-            <div key={t.key} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: "1px solid #1f2937" }}>
+            <div key={t.key} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: "1px solid var(--border)" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{t.label}</div>
               </div>
@@ -195,36 +195,36 @@ export default function AlertsNotifications() {
             <Toggle value={webhookAlerts} onChange={setWebhookAlerts} label="Webhook / Slack" />
             {emailAlerts && (
               <div style={{ marginTop: 16 }}>
-                <label style={{ fontSize: 12, color: "#6b7280" }}>Alert email address</label>
+                <label style={{ fontSize: 12, color: "var(--sub)" }}>Alert email address</label>
                 <input defaultValue="admin@voltaris.com" style={{
-                  display: "block", width: "100%", marginTop: 4, background: "#0d1117",
-                  border: "1px solid #1f2937", borderRadius: 8, padding: "8px 12px",
-                  color: "#e5e7eb", fontSize: 13, boxSizing: "border-box",
+                  display: "block", width: "100%", marginTop: 4, background: "var(--surface2)",
+                  border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px",
+                  color: "var(--text)", fontSize: 13, boxSizing: "border-box",
                 }} />
               </div>
             )}
             {webhookAlerts && (
               <div style={{ marginTop: 16 }}>
-                <label style={{ fontSize: 12, color: "#6b7280" }}>Webhook URL</label>
+                <label style={{ fontSize: 12, color: "var(--sub)" }}>Webhook URL</label>
                 <input placeholder="https://hooks.slack.com/..." style={{
-                  display: "block", width: "100%", marginTop: 4, background: "#0d1117",
-                  border: "1px solid #1f2937", borderRadius: 8, padding: "8px 12px",
-                  color: "#e5e7eb", fontSize: 13, boxSizing: "border-box",
+                  display: "block", width: "100%", marginTop: 4, background: "var(--surface2)",
+                  border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px",
+                  color: "var(--text)", fontSize: 13, boxSizing: "border-box",
                 }} />
               </div>
             )}
           </div>
           <div style={card}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Notification Schedule</h2>
-            <p style={{ fontSize: 12, color: "#6b7280", marginBottom: 16 }}>Control when non-critical notifications are sent</p>
+            <p style={{ fontSize: 12, color: "var(--sub)", marginBottom: 16 }}>Control when non-critical notifications are sent</p>
             {[
               { label: "Critical alerts", val: "Always (24/7)" },
               { label: "Warning alerts", val: "Business hours" },
               { label: "Info alerts", val: "Daily digest" },
               { label: "Daily report", val: "08:00 local time" },
             ].map(n => (
-              <div key={n.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #1f2937", fontSize: 13 }}>
-                <span style={{ color: "#9ca3af" }}>{n.label}</span>
+              <div key={n.label} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
+                <span style={{ color: "var(--sub)" }}>{n.label}</span>
                 <span style={{ fontWeight: 500 }}>{n.val}</span>
               </div>
             ))}

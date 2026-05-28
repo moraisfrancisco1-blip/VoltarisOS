@@ -8,8 +8,8 @@ import {
 const CT = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: "#0d1525", border: "1px solid #1f2937", borderRadius: "10px", padding: "10px 14px", fontSize: "12px" }}>
-      <div style={{ color: "#9ca3af", marginBottom: "6px" }}>{label}</div>
+    <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 14px", fontSize: "12px" }}>
+      <div style={{ color: "var(--sub)", marginBottom: "6px" }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color, display: "flex", gap: "8px" }}>
           <span>{p.name}</span><span style={{ color: "white", fontWeight: "600" }}>{p.value}</span>
@@ -57,7 +57,7 @@ export default function CarbonDashboard({ user }) {
     })
   }, [])
 
-  if (!data) return <div style={{ padding: "28px", color: "#6b7280" }}>A carregar dados de carbono...</div>
+  if (!data) return <div style={{ padding: "28px", color: "var(--sub)" }}>A carregar dados de carbono...</div>
 
   const equivalences = [
     { icon: "🌳", label: "Árvores equivalentes", value: data.trees_equivalent.toLocaleString(), sub: "este ano" },
@@ -78,7 +78,7 @@ export default function CarbonDashboard({ user }) {
           </div>
           <div>
             <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Carbon Intelligence</h1>
-            <p style={{ color: "#4b5563", fontSize: "13px", marginTop: "2px" }}>Impacto ambiental em tempo real · Garantias de Origem</p>
+            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Impacto ambiental em tempo real · Garantias de Origem</p>
           </div>
         </div>
       </div>
@@ -91,11 +91,11 @@ export default function CarbonDashboard({ user }) {
           { label: "CO₂ Evitado Ano", value: (data.co2_year_kg / 1000).toFixed(1), unit: "ton", color: "#6ee7b7", icon: "🌍" },
           { label: "Produção Solar Hoje", value: data.solar_today_kwh.toLocaleString(), unit: "kWh", color: "#f59e0b", icon: "☀️" },
         ].map((k, i) => (
-          <div key={i} style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234", position: "relative", overflow: "hidden" }}>
+          <div key={i} style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: k.color + "15", filter: "blur(20px)" }} />
-            <div style={{ color: "#4b5563", fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px" }}>{k.icon} {k.label}</div>
+            <div style={{ color: "var(--sub)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px" }}>{k.icon} {k.label}</div>
             <div style={{ fontSize: "30px", fontWeight: "800", color: k.color, marginTop: "8px", lineHeight: 1 }}>
-              {k.value}<span style={{ fontSize: "14px", color: "#6b7280", marginLeft: "4px" }}>{k.unit}</span>
+              {k.value}<span style={{ fontSize: "14px", color: "var(--sub)", marginLeft: "4px" }}>{k.unit}</span>
             </div>
           </div>
         ))}
@@ -104,13 +104,13 @@ export default function CarbonDashboard({ user }) {
       {/* Main grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
         {/* Monthly CO₂ chart */}
-        <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>CO₂ Evitado por Mês</div>
-          <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "16px" }}>kg · acumulado 2025</div>
+          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>kg · acumulado 2025</div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={data.monthly} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-              <XAxis dataKey="month" stroke="#1f2937" tick={{ fill: "#374151", fontSize: 11 }} />
-              <YAxis stroke="#1f2937" tick={{ fill: "#374151", fontSize: 10 }} />
+              <XAxis dataKey="month" stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 11 }} />
+              <YAxis stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 10 }} />
               <Tooltip content={<CT />} />
               <Bar dataKey="co2_avoided" name="CO₂ (kg)" fill="#4ade80" fillOpacity={0.85} radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -118,9 +118,9 @@ export default function CarbonDashboard({ user }) {
         </div>
 
         {/* Certificates */}
-        <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>Garantias de Origem (GdO)</div>
-          <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "16px" }}>MWh certificados · 2025</div>
+          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>MWh certificados · 2025</div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={data.monthly} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
@@ -129,8 +129,8 @@ export default function CarbonDashboard({ user }) {
                   <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="month" stroke="#1f2937" tick={{ fill: "#374151", fontSize: 11 }} />
-              <YAxis stroke="#1f2937" tick={{ fill: "#374151", fontSize: 10 }} />
+              <XAxis dataKey="month" stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 11 }} />
+              <YAxis stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 10 }} />
               <Tooltip content={<CT />} />
               <Area type="monotone" dataKey="certificates" name="GdO (MWh)" stroke="#f59e0b" strokeWidth={2} fill="url(#gCert)" />
             </AreaChart>
@@ -141,14 +141,14 @@ export default function CarbonDashboard({ user }) {
       {/* Bottom row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
         {/* Equivalences */}
-        <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "16px" }}>Equivalências de Impacto</div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
             {equivalences.map((e, i) => (
-              <div key={i} style={{ background: "#0d1525", borderRadius: "10px", padding: "14px", border: "1px solid #1a2234" }}>
+              <div key={i} style={{ background: "var(--surface2)", borderRadius: "10px", padding: "14px", border: "1px solid var(--border)" }}>
                 <div style={{ fontSize: "24px" }}>{e.icon}</div>
                 <div style={{ fontWeight: "800", fontSize: "20px", color: "#4ade80", marginTop: "6px" }}>{e.value}</div>
-                <div style={{ color: "#9ca3af", fontSize: "11px", marginTop: "2px" }}>{e.label}</div>
+                <div style={{ color: "var(--sub)", fontSize: "11px", marginTop: "2px" }}>{e.label}</div>
                 <div style={{ color: "#374151", fontSize: "10px" }}>{e.sub}</div>
               </div>
             ))}
@@ -156,16 +156,16 @@ export default function CarbonDashboard({ user }) {
         </div>
 
         {/* Site scores */}
-        <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>Carbon Score por Site</div>
-          <div style={{ color: "#4b5563", fontSize: "11px", marginBottom: "16px" }}>Classificação EU Taxonomy</div>
+          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>Classificação EU Taxonomy</div>
           {data.sites.map((s, i) => (
-            <div key={i} style={{ background: "#0d1525", borderRadius: "10px", padding: "16px", border: "1px solid #1a2234", marginBottom: "10px" }}>
+            <div key={i} style={{ background: "var(--surface2)", borderRadius: "10px", padding: "16px", border: "1px solid var(--border)", marginBottom: "10px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                 <ScoreBadge score={s.score} />
                 <div>
                   <div style={{ fontWeight: "600", fontSize: "14px" }}>{s.name}</div>
-                  <div style={{ color: "#4b5563", fontSize: "11px" }}>Performance Ratio: {s.performance_ratio}%</div>
+                  <div style={{ color: "var(--sub)", fontSize: "11px" }}>Performance Ratio: {s.performance_ratio}%</div>
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>

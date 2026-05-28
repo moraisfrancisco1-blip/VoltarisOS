@@ -13,8 +13,8 @@ const TYPE_ICONS = { battery: "🔋", inverter: "⚡", solar: "☀️" }
 const CT = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: "#0d1525", border: "1px solid #1f2937", borderRadius: "8px", padding: "8px 12px", fontSize: "11px" }}>
-      <div style={{ color: "#6b7280", marginBottom: "4px" }}>Mês {label}</div>
+    <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px" }}>
+      <div style={{ color: "var(--sub)", marginBottom: "4px" }}>Mês {label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color }}>{p.name}: <span style={{ color: "white", fontWeight: "600" }}>{p.value}%</span></div>
       ))}
@@ -60,7 +60,7 @@ export default function PredictiveMaintenance({ user }) {
         </div>
         <div>
           <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Predictive Maintenance AI</h1>
-          <p style={{ color: "#4b5563", fontSize: "13px", marginTop: "2px" }}>Antecipa falhas antes que aconteçam · ML de degradação</p>
+          <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Antecipa falhas antes que aconteçam · ML de degradação</p>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", gap: "10px" }}>
           {criticalCount > 0 && (
@@ -80,10 +80,10 @@ export default function PredictiveMaintenance({ user }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: "16px" }}>
         {/* Asset list */}
         <div>
-          <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", border: "1px solid #1a2234", overflow: "hidden", marginBottom: "16px" }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a2234" }}>
+          <div style={{ background: "var(--surface)", borderRadius: "14px", border: "1px solid var(--border)", overflow: "hidden", marginBottom: "16px" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
               <div style={{ fontWeight: "700", fontSize: "14px" }}>Ativos Monitorizados</div>
-              <div style={{ color: "#4b5563", fontSize: "11px" }}>{assets.length} componentes · análise contínua por AI</div>
+              <div style={{ color: "var(--sub)", fontSize: "11px" }}>{assets.length} componentes · análise contínua por AI</div>
             </div>
             {assets.map((a, i) => {
               const sev = SEVERITY_STYLE[a.severity]
@@ -105,7 +105,7 @@ export default function PredictiveMaintenance({ user }) {
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                         <span style={{ fontWeight: "600", fontSize: "13px" }}>{a.name}</span>
                         <span style={{ color: "#374151", fontSize: "11px" }}>·</span>
-                        <span style={{ color: "#6b7280", fontSize: "11px" }}>{a.site}</span>
+                        <span style={{ color: "var(--sub)", fontSize: "11px" }}>{a.site}</span>
                         <span style={{ color: "#374151", fontSize: "11px" }}>·</span>
                         <span style={{ color: "#374151", fontSize: "11px" }}>{a.id}</span>
                       </div>
@@ -118,14 +118,14 @@ export default function PredictiveMaintenance({ user }) {
                             borderRadius: "4px",
                           }} />
                         </div>
-                        <span style={{ color: "#9ca3af", fontSize: "11px", minWidth: "32px" }}>{a.health}%</span>
+                        <span style={{ color: "var(--sub)", fontSize: "11px", minWidth: "32px" }}>{a.health}%</span>
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ padding: "2px 8px", borderRadius: "6px", background: sev.bg, border: `1px solid ${sev.border}`, color: sev.color, fontSize: "9px", fontWeight: "700", letterSpacing: "0.5px", marginBottom: "4px" }}>
                         {sev.label}
                       </div>
-                      <div style={{ color: "#6b7280", fontSize: "10px" }}>Falha 30d: <span style={{ color: sev.color, fontWeight: "700" }}>{a.failure_prob_30d}%</span></div>
+                      <div style={{ color: "var(--sub)", fontSize: "10px" }}>Falha 30d: <span style={{ color: sev.color, fontWeight: "700" }}>{a.failure_prob_30d}%</span></div>
                     </div>
                   </div>
                 </div>
@@ -134,8 +134,8 @@ export default function PredictiveMaintenance({ user }) {
           </div>
 
           {/* Schedule */}
-          <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", border: "1px solid #1a2234", overflow: "hidden" }}>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #1a2234" }}>
+          <div style={{ background: "var(--surface)", borderRadius: "14px", border: "1px solid var(--border)", overflow: "hidden" }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
               <div style={{ fontWeight: "700", fontSize: "14px" }}>Agenda de Manutenção AI</div>
             </div>
             {schedule.slice(0, 5).map((s, i) => {
@@ -148,7 +148,7 @@ export default function PredictiveMaintenance({ user }) {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: "600", fontSize: "13px" }}>{s.asset_name} · {s.site}</div>
-                    <div style={{ color: "#6b7280", fontSize: "11px" }}>{s.due_date} · {s.type === "preventive" ? "🤖 preventiva" : "📅 programada"}</div>
+                    <div style={{ color: "var(--sub)", fontSize: "11px" }}>{s.due_date} · {s.type === "preventive" ? "🤖 preventiva" : "📅 programada"}</div>
                   </div>
                   <div style={{ color: "#f59e0b", fontWeight: "700", fontSize: "13px" }}>€{s.estimated_cost}</div>
                 </div>
@@ -161,12 +161,12 @@ export default function PredictiveMaintenance({ user }) {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           {selected ? (
             <>
-              <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: `1px solid ${SEVERITY_STYLE[selected.severity].border}` }}>
+              <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: `1px solid ${SEVERITY_STYLE[selected.severity].border}` }}>
                 <div style={{ display: "flex", align: "center", gap: "10px", marginBottom: "16px" }}>
                   <div style={{ fontSize: "28px" }}>{TYPE_ICONS[selected.type]}</div>
                   <div>
                     <div style={{ fontWeight: "700", fontSize: "15px" }}>{selected.name}</div>
-                    <div style={{ color: "#6b7280", fontSize: "11px" }}>{selected.site} · {selected.id}</div>
+                    <div style={{ color: "var(--sub)", fontSize: "11px" }}>{selected.site} · {selected.id}</div>
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
@@ -178,7 +178,7 @@ export default function PredictiveMaintenance({ user }) {
                     { l: "Anomalias", v: selected.anomalies, c: selected.anomalies > 0 ? "#f87171" : "#4ade80" },
                     { l: "Idade", v: `${selected.age_months}m`, c: "#9ca3af" },
                   ].map(m => (
-                    <div key={m.l} style={{ background: "#0d1525", borderRadius: "8px", padding: "10px", border: "1px solid #1a2234" }}>
+                    <div key={m.l} style={{ background: "var(--surface2)", borderRadius: "8px", padding: "10px", border: "1px solid var(--border)" }}>
                       <div style={{ color: "#374151", fontSize: "10px" }}>{m.l}</div>
                       <div style={{ color: m.c, fontWeight: "800", fontSize: "18px" }}>{m.v}</div>
                     </div>
@@ -194,13 +194,13 @@ export default function PredictiveMaintenance({ user }) {
 
               {/* Degradation chart */}
               {degradation.length > 0 && (
-                <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "20px", border: "1px solid #1a2234" }}>
+                <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
                   <div style={{ fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>Degradação Histórica</div>
-                  <div style={{ color: "#4b5563", fontSize: "10px", marginBottom: "12px" }}>Health score ao longo do tempo (%)</div>
+                  <div style={{ color: "var(--sub)", fontSize: "10px", marginBottom: "12px" }}>Health score ao longo do tempo (%)</div>
                   <ResponsiveContainer width="100%" height={140}>
                     <LineChart data={degradation} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                      <XAxis dataKey="month" stroke="#1f2937" tick={{ fill: "#374151", fontSize: 9 }} />
-                      <YAxis domain={[60, 100]} stroke="#1f2937" tick={{ fill: "#374151", fontSize: 9 }} />
+                      <XAxis dataKey="month" stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 9 }} />
+                      <YAxis domain={[60, 100]} stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 9 }} />
                       <Tooltip content={<CT />} />
                       <ReferenceLine y={80} stroke="#f59e0b" strokeDasharray="3 2" />
                       <Line type="monotone" dataKey="health" stroke={SEVERITY_STYLE[selected.severity].color} strokeWidth={2} dot={false} name="Health" />
@@ -210,7 +210,7 @@ export default function PredictiveMaintenance({ user }) {
               )}
             </>
           ) : (
-            <div style={{ background: "linear-gradient(135deg,#111827,#0f1724)", borderRadius: "14px", padding: "40px 20px", border: "1px solid #1a2234", textAlign: "center", color: "#374151" }}>
+            <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "40px 20px", border: "1px solid var(--border)", textAlign: "center", color: "#374151" }}>
               Seleciona um ativo para ver o diagnóstico AI
             </div>
           )}

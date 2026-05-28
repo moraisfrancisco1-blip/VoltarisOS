@@ -123,7 +123,7 @@ export default function Login({ onLogin }) {
           }}>
             {mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
           </div>
-          <div style={{ color: "#4b5563", fontSize: "13px" }}>
+          <div style={{ color: "var(--sub)", fontSize: "13px" }}>
             {mode === "login" ? "Entra na tua plataforma de energia" : "Configura o teu workspace VoltarisOS"}
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function Login({ onLogin }) {
           {mode === "register" && (
             <>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "#6b7280", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
+                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
                   NOME DA EMPRESA
                 </label>
                 <div style={{ position: "relative" }}>
@@ -149,7 +149,7 @@ export default function Login({ onLogin }) {
                 </div>
               </div>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "#6b7280", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px" }}>COR DA MARCA</label>
+                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px" }}>COR DA MARCA</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <input
                     type="color"
@@ -169,7 +169,7 @@ export default function Login({ onLogin }) {
 
           {/* Email */}
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ color: "#6b7280", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
+            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
               EMAIL
             </label>
             <div style={{ position: "relative" }}>
@@ -194,7 +194,7 @@ export default function Login({ onLogin }) {
 
           {/* Password */}
           <div style={{ marginBottom: "24px" }}>
-            <label style={{ color: "#6b7280", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
+            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
               PASSWORD
             </label>
             <div style={{ position: "relative" }}>

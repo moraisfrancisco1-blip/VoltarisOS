@@ -19,7 +19,7 @@ export default function FleetManagement({ user }) {
   return (
     <div style={{ padding: "24px" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "6px" }}>🏭 Fleet Management</h1>
-      <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "24px" }}>{t("fleet_sub") || "All VPP fleet assets"}</p>
+      <p style={{ color: "var(--sub)", fontSize: "14px", marginBottom: "24px" }}>{t("fleet_sub") || "All VPP fleet assets"}</p>
 
       {/* Summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
@@ -29,37 +29,37 @@ export default function FleetManagement({ user }) {
           { label: t("fleet_battery_total") || "Total Battery", value: `${totalBattery.toFixed(0)} kWh`, icon: "🔋", color: "#60a5fa" },
           { label: t("fleet_ev_chargers") || "EV Chargers", value: totalEV, icon: "🚗", color: "#a78bfa" },
         ].map(k => (
-          <div key={k.label} style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
-            <div style={{ color: "#6b7280", fontSize: "12px" }}>{k.icon} {k.label}</div>
+          <div key={k.label} style={{ background: "var(--surface)", borderRadius: "12px", padding: "20px", border: "1px solid var(--border)" }}>
+            <div style={{ color: "var(--sub)", fontSize: "12px" }}>{k.icon} {k.label}</div>
             <div style={{ fontSize: "26px", fontWeight: "bold", color: k.color, marginTop: "8px" }}>{k.value}</div>
           </div>
         ))}
       </div>
 
       {/* Sites Table */}
-      <div style={{ background: "#111827", borderRadius: "12px", border: "1px solid #1f2937", overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f2937", display: "flex", justifyContent: "space-between" }}>
+      <div style={{ background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between" }}>
           <h3>{t("fleet_installations") || "Installations"}</h3>
-          <span style={{ color: "#6b7280", fontSize: "13px" }}>{sites.length} sites</span>
+          <span style={{ color: "var(--sub)", fontSize: "13px" }}>{sites.length} sites</span>
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid #1f2937" }}>
+            <tr style={{ borderBottom: "1px solid var(--border)" }}>
               {[
                 t("fleet_col_name") || "Name",
                 t("fleet_col_location") || "Location",
                 "Solar kW", "Battery kWh", "EV", "Status", ""
               ].map(h => (
-                <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: "#6b7280", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
+                <th key={h} style={{ padding: "12px 16px", textAlign: "left", color: "var(--sub)", fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {sites.map(site => (
-              <tr key={site.id} style={{ borderBottom: "1px solid #1f2937", cursor: "pointer" }}
+              <tr key={site.id} style={{ borderBottom: "1px solid var(--border)", cursor: "pointer" }}
                 onClick={() => setSelected(selected?.id === site.id ? null : site)}>
                 <td style={{ padding: "14px 16px", fontWeight: "600" }}>{site.name}</td>
-                <td style={{ padding: "14px 16px", color: "#9ca3af" }}>{site.location}</td>
+                <td style={{ padding: "14px 16px", color: "var(--sub)" }}>{site.location}</td>
                 <td style={{ padding: "14px 16px", color: "#f59e0b" }}>{site.solar_kw}</td>
                 <td style={{ padding: "14px 16px", color: "#60a5fa" }}>{site.battery_kwh}</td>
                 <td style={{ padding: "14px 16px", color: "#a78bfa" }}>{site.ev_chargers}</td>
@@ -81,7 +81,7 @@ export default function FleetManagement({ user }) {
 
       {/* Detail panel */}
       {selected && (
-        <div style={{ marginTop: "16px", background: "#111827", borderRadius: "12px", padding: "20px", border: `1px solid ${color}44` }}>
+        <div style={{ marginTop: "16px", background: "var(--surface)", borderRadius: "12px", padding: "20px", border: `1px solid ${color}44` }}>
           <h3 style={{ color, marginBottom: "12px" }}>📍 {selected.name}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
             {[
@@ -93,7 +93,7 @@ export default function FleetManagement({ user }) {
               [t("fleet_owner") || "Owner", selected.owner],
             ].map(([k, v]) => (
               <div key={k}>
-                <div style={{ color: "#6b7280", fontSize: "11px", textTransform: "uppercase" }}>{k}</div>
+                <div style={{ color: "var(--sub)", fontSize: "11px", textTransform: "uppercase" }}>{k}</div>
                 <div style={{ color: "white", fontWeight: "600", marginTop: "4px" }}>{v}</div>
               </div>
             ))}

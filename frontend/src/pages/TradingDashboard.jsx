@@ -36,7 +36,7 @@ export default function TradingDashboard({ user }) {
   return (
     <div style={{ padding: "24px" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "6px" }}>📈 Trading Dashboard</h1>
-      <p style={{ color: "#6b7280", fontSize: "14px", marginBottom: "24px" }}>Day-ahead energy market — NL</p>
+      <p style={{ color: "var(--sub)", fontSize: "14px", marginBottom: "24px" }}>Day-ahead energy market — NL</p>
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
@@ -46,8 +46,8 @@ export default function TradingDashboard({ user }) {
           { label: "Máximo", value: `${maxPrice} €/MWh`, color: "#f87171" },
           { label: "Mínimo", value: `${minPrice} €/MWh`, color: "#60a5fa" },
         ].map(k => (
-          <div key={k.label} style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
-            <div style={{ color: "#6b7280", fontSize: "12px" }}>{k.label}</div>
+          <div key={k.label} style={{ background: "var(--surface)", borderRadius: "12px", padding: "20px", border: "1px solid var(--border)" }}>
+            <div style={{ color: "var(--sub)", fontSize: "12px" }}>{k.label}</div>
             <div style={{ fontSize: "22px", fontWeight: "bold", color: k.color, marginTop: "8px" }}>{k.value}</div>
           </div>
         ))}
@@ -55,7 +55,7 @@ export default function TradingDashboard({ user }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "16px" }}>
         {/* Price Chart */}
-        <div style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "12px", padding: "20px", border: "1px solid var(--border)" }}>
           <h3 style={{ marginBottom: "16px" }}>Preço Day-Ahead (€/MWh)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={prices}>
@@ -70,7 +70,7 @@ export default function TradingDashboard({ user }) {
         </div>
 
         {/* Order Form */}
-        <div style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "12px", padding: "20px", border: "1px solid var(--border)" }}>
           <h3 style={{ marginBottom: "16px" }}>Nova Ordem</h3>
           <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
             {["BUY", "SELL"].map(t => (
@@ -97,15 +97,15 @@ export default function TradingDashboard({ user }) {
       </div>
 
       {/* Order Book */}
-      <div style={{ background: "#111827", borderRadius: "12px", border: "1px solid #1f2937", overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid #1f2937" }}>
+      <div style={{ background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border)", overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)" }}>
           <h3>Histórico de Ordens</h3>
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid #1f2937" }}>
+            <tr style={{ borderBottom: "1px solid var(--border)" }}>
               {["Tipo", "Volume", "Preço", "Status", "Hora"].map(h => (
-                <th key={h} style={{ padding: "10px 16px", textAlign: "left", color: "#6b7280", fontSize: "12px", textTransform: "uppercase" }}>{h}</th>
+                <th key={h} style={{ padding: "10px 16px", textAlign: "left", color: "var(--sub)", fontSize: "12px", textTransform: "uppercase" }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -122,7 +122,7 @@ export default function TradingDashboard({ user }) {
                     {o.status}
                   </span>
                 </td>
-                <td style={{ padding: "12px 16px", color: "#6b7280" }}>{o.time}</td>
+                <td style={{ padding: "12px 16px", color: "var(--sub)" }}>{o.time}</td>
               </tr>
             ))}
           </tbody>

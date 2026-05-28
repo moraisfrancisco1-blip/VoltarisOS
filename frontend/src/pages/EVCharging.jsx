@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#111827", border: "1px solid #1f2937", borderRadius: 12, padding: 24 };
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 };
 
 const mockChargers = [
   { id: "CH-01", site: "Rotterdam", type: "DC Fast", power: 150, status: "Occupied", vehicle: "Tesla Model 3", soc: 68, eta: "22 min", connector: "CCS2" },
@@ -39,7 +39,7 @@ export default function EVCharging() {
   const totalPower = mockChargers.filter(c => c.status === "Occupied").reduce((a, b) => a + b.power, 0);
 
   const Toggle = ({ value, onChange, label }) => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #1f2937" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid var(--border)" }}>
       <span style={{ fontSize: 14 }}>{label}</span>
       <div onClick={() => onChange(!value)} style={{
         width: 44, height: 24, borderRadius: 12, background: value ? accent : "#374151",
@@ -54,9 +54,9 @@ export default function EVCharging() {
   );
 
   return (
-    <div style={{ padding: 32, color: "#e5e7eb", minHeight: "100vh", background: "#0a0f1a" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>EV Charging</h1>
-      <p style={{ color: "#6b7280", marginBottom: 28 }}>Charger status, scheduling, and smart charging controls</p>
+      <p style={{ color: "var(--sub)", marginBottom: 28 }}>Charger status, scheduling, and smart charging controls</p>
 
       {/* KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
@@ -67,7 +67,7 @@ export default function EVCharging() {
           { label: "Active Power", value: `${totalPower} kW`, color: accent },
         ].map(k => (
           <div key={k.label} style={card}>
-            <div style={{ color: "#6b7280", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
+            <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: k.color }}>{k.value}</div>
           </div>
         ))}
@@ -85,20 +85,20 @@ export default function EVCharging() {
                 <div key={c.id}
                   onClick={() => setSelectedCharger(sel ? null : c)}
                   style={{
-                    background: sel ? "#1e3a5f" : "#0d1117",
+                    background: sel ? "var(--surface)" : "var(--surface2)",
                     border: `1px solid ${sel ? accent : "#1f2937"}`,
                     borderRadius: 10, padding: 16, cursor: "pointer"
                   }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 15 }}>{c.id}</div>
-                      <div style={{ fontSize: 11, color: "#6b7280" }}>{c.site} · {c.connector}</div>
+                      <div style={{ fontSize: 11, color: "var(--sub)" }}>{c.site} · {c.connector}</div>
                     </div>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: sc.bg, color: sc.text }}>
                       {c.status}
                     </span>
                   </div>
-                  <div style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>
+                  <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 6 }}>
                     {c.type} · {c.power} kW
                   </div>
                   {c.vehicle && (
@@ -107,7 +107,7 @@ export default function EVCharging() {
                       <div style={{ background: "#1f2937", borderRadius: 4, height: 6, marginBottom: 4 }}>
                         <div style={{ width: `${c.soc}%`, height: "100%", background: accent, borderRadius: 4 }} />
                       </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#6b7280" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--sub)" }}>
                         <span>SoC {c.soc}%</span>
                         <span>ETA {c.eta}</span>
                       </div>
@@ -123,7 +123,7 @@ export default function EVCharging() {
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           <div style={card}>
             <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Smart Charging</h2>
-            <p style={{ color: "#6b7280", fontSize: 12, marginBottom: 8 }}>Optimize based on grid price and capacity</p>
+            <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 8 }}>Optimize based on grid price and capacity</p>
             <Toggle value={smartCharging} onChange={setSmartCharging} label="Price-based optimization" />
             <Toggle value={loadBalance} onChange={setLoadBalance} label="Dynamic load balancing" />
             <Toggle value={v2g} onChange={setV2g} label="V2G — Vehicle to Grid" />
@@ -143,7 +143,7 @@ export default function EVCharging() {
               { label: "Active sessions", val: mockChargers.length, used: occupied, unit: "" },
             ].map(b => (
               <div key={b.label} style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#9ca3af", marginBottom: 4 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--sub)", marginBottom: 4 }}>
                   <span>{b.label}</span>
                   <span>{b.used}{b.unit} / {b.val}{b.unit}</span>
                 </div>
@@ -162,7 +162,7 @@ export default function EVCharging() {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ color: "#6b7280", borderBottom: "1px solid #1f2937" }}>
+              <tr style={{ color: "var(--sub)", borderBottom: "1px solid var(--border)" }}>
                 {["Time", "Charger", "Vehicle", "Duration", "Est. Energy", "Status"].map(h => (
                   <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
                 ))}
@@ -174,7 +174,7 @@ export default function EVCharging() {
                   <td style={{ padding: "10px 12px", fontWeight: 600 }}>{s.time}</td>
                   <td style={{ padding: "10px 12px", color: accent }}>{s.charger}</td>
                   <td style={{ padding: "10px 12px" }}>{s.vehicle}</td>
-                  <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{s.duration}h</td>
+                  <td style={{ padding: "10px 12px", color: "var(--sub)" }}>{s.duration}h</td>
                   <td style={{ padding: "10px 12px" }}>{Math.round(s.duration * 22)} kWh</td>
                   <td style={{ padding: "10px 12px" }}>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "#064e3b", color: "#10b981" }}>Confirmed</span>

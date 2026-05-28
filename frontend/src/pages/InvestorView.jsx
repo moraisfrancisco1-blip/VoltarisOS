@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#111827", border: "1px solid #1f2937", borderRadius: 12, padding: 24 };
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 };
 
 const LineChart = ({ data, color, height = 90 }) => {
   if (!data || data.length === 0) return null;
@@ -54,11 +54,11 @@ export default function InvestorView() {
   const revGrowth = ((financialData.revenue[5] - financialData.revenue[4]) / financialData.revenue[4] * 100).toFixed(1);
 
   return (
-    <div style={{ padding: 32, color: "#e5e7eb", minHeight: "100vh", background: "#0a0f1a" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Investor View</h1>
-          <p style={{ color: "#6b7280" }}>Financial performance, ROI, payback, and portfolio overview</p>
+          <p style={{ color: "var(--sub)" }}>Financial performance, ROI, payback, and portfolio overview</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {["ytd", "q1", "annual"].map(p => (
@@ -75,16 +75,16 @@ export default function InvestorView() {
       {/* Top KPIs */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 16, marginBottom: 28 }}>
         {[
-          { label: "Total CapEx Deployed", value: `€${(totalCapex / 1000).toFixed(0)}k`, color: "#e5e7eb", sub: "across 2 sites" },
+          { label: "Total CapEx Deployed", value: `€${(totalCapex / 1000).toFixed(0)}k`, color: "var(--text)", sub: "across 2 sites" },
           { label: "Revenue YTD", value: `€${(totalRevYTD / 1000).toFixed(0)}k`, color: "#10b981", sub: `+${revGrowth}% YoY` },
           { label: "Avg ROI", value: `${avgROI}%`, color: "#f59e0b", sub: "annualized" },
           { label: "Portfolio IRR", value: `${avgIRR}%`, color: accent, sub: "blended" },
           { label: "Total NPV", value: `€${(totalNPV / 1000).toFixed(0)}k`, color: "#60a5fa", sub: "10yr horizon" },
         ].map(k => (
           <div key={k.label} style={card}>
-            <div style={{ color: "#6b7280", fontSize: 11, marginBottom: 6 }}>{k.label}</div>
+            <div style={{ color: "var(--sub)", fontSize: 11, marginBottom: 6 }}>{k.label}</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: k.color }}>{k.value}</div>
-            <div style={{ color: "#4b5563", fontSize: 11, marginTop: 2 }}>{k.sub}</div>
+            <div style={{ color: "var(--sub)", fontSize: 11, marginTop: 2 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -95,14 +95,14 @@ export default function InvestorView() {
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>Revenue Trend</div>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>2020–2025 (€)</div>
+              <div style={{ fontSize: 11, color: "var(--sub)" }}>2020–2025 (€)</div>
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: "#10b981" }}>
               €{(financialData.revenue[5] / 1000).toFixed(0)}k
             </div>
           </div>
           <LineChart data={financialData.revenue} color="#10b981" height={90} />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#4b5563", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--sub)", marginTop: 4 }}>
             {years.map(y => <span key={y}>{y}</span>)}
           </div>
         </div>
@@ -111,14 +111,14 @@ export default function InvestorView() {
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>EBITDA</div>
-              <div style={{ fontSize: 11, color: "#6b7280" }}>2020–2025 (€)</div>
+              <div style={{ fontSize: 11, color: "var(--sub)" }}>2020–2025 (€)</div>
             </div>
             <div style={{ fontSize: 22, fontWeight: 700, color: accent }}>
               €{(financialData.ebitda[5] / 1000).toFixed(0)}k
             </div>
           </div>
           <LineChart data={financialData.ebitda} color={accent} height={90} />
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#4b5563", marginTop: 4 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--sub)", marginTop: 4 }}>
             {years.map(y => <span key={y}>{y}</span>)}
           </div>
         </div>
@@ -129,7 +129,7 @@ export default function InvestorView() {
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
           <div>
             <div style={{ fontSize: 14, fontWeight: 600 }}>Cumulative Cash Flow</div>
-            <div style={{ fontSize: 11, color: "#6b7280" }}>Break-even reached in 2025 · Total portfolio</div>
+            <div style={{ fontSize: 11, color: "var(--sub)" }}>Break-even reached in 2025 · Total portfolio</div>
           </div>
           <div style={{ fontSize: 22, fontWeight: 700, color: "#10b981" }}>+€136k</div>
         </div>
@@ -141,7 +141,7 @@ export default function InvestorView() {
             pointerEvents: "none",
           }} />
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#4b5563", marginTop: 4 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--sub)", marginTop: 4 }}>
           {years.map(y => <span key={y}>{y}</span>)}
         </div>
       </div>
@@ -153,7 +153,7 @@ export default function InvestorView() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>{s.name}</div>
-                <div style={{ fontSize: 12, color: "#6b7280" }}>{s.capacity}</div>
+                <div style={{ fontSize: 12, color: "var(--sub)" }}>{s.capacity}</div>
               </div>
               <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "#064e3b", color: "#10b981" }}>Operating</span>
             </div>
@@ -166,18 +166,18 @@ export default function InvestorView() {
                 { label: "Payback", val: `${s.payback} yrs` },
                 { label: "IRR", val: `${s.irr}%`, color: accent },
               ].map(m => (
-                <div key={m.label} style={{ background: "#0d1117", padding: 12, borderRadius: 8 }}>
-                  <div style={{ fontSize: 10, color: "#4b5563" }}>{m.label}</div>
+                <div key={m.label} style={{ background: "var(--surface2)", padding: 12, borderRadius: 8 }}>
+                  <div style={{ fontSize: 10, color: "var(--sub)" }}>{m.label}</div>
                   <div style={{ fontSize: 15, fontWeight: 700, color: m.color || "#e5e7eb" }}>{m.val}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 12, background: "#0d1117", borderRadius: 8, padding: 10, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-              <span style={{ color: "#6b7280" }}>NPV (10yr)</span>
+            <div style={{ marginTop: 12, background: "var(--surface2)", borderRadius: 8, padding: 10, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+              <span style={{ color: "var(--sub)" }}>NPV (10yr)</span>
               <span style={{ color: "#60a5fa", fontWeight: 600 }}>€{s.npv.toLocaleString()}</span>
             </div>
-            <div style={{ marginTop: 8, background: "#0d1117", borderRadius: 8, padding: 10, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
-              <span style={{ color: "#6b7280" }}>CO₂ Avoided</span>
+            <div style={{ marginTop: 8, background: "var(--surface2)", borderRadius: 8, padding: 10, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+              <span style={{ color: "var(--sub)" }}>CO₂ Avoided</span>
               <span style={{ color: "#10b981", fontWeight: 600 }}>{s.co2.toLocaleString()} kg/yr</span>
             </div>
           </div>
@@ -189,7 +189,7 @@ export default function InvestorView() {
         <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>P&L Summary (€)</h2>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
-            <tr style={{ color: "#6b7280", borderBottom: "1px solid #1f2937" }}>
+            <tr style={{ color: "var(--sub)", borderBottom: "1px solid var(--border)" }}>
               <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>Line Item</th>
               {years.map(y => <th key={y} style={{ padding: "8px 12px", textAlign: "right", fontWeight: 500 }}>{y}</th>)}
             </tr>
@@ -202,7 +202,7 @@ export default function InvestorView() {
               { label: "Cumulative Cash Flow", data: financialData.cumCashflow, color: "#f59e0b" },
             ].map(row => (
               <tr key={row.label} style={{ borderBottom: "1px solid #0d1117" }}>
-                <td style={{ padding: "10px 12px", color: "#9ca3af" }}>{row.label}</td>
+                <td style={{ padding: "10px 12px", color: "var(--sub)" }}>{row.label}</td>
                 {row.data.map((v, i) => (
                   <td key={i} style={{ padding: "10px 12px", textAlign: "right", color: row.color, fontWeight: 500 }}>
                     {v < 0 ? `-€${Math.abs(v / 1000).toFixed(0)}k` : `€${(v / 1000).toFixed(0)}k`}

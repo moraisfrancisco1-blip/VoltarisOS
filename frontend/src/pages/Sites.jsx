@@ -48,12 +48,12 @@ export default function Sites({ user }) {
   ]
 
   return (
-    <div style={{ padding: "32px", background: "#0a0f1a", minHeight: "100vh", color: "#e5e7eb" }}>
+    <div style={{ padding: "32px", background: "var(--bg)", minHeight: "100vh", color: "var(--text)" }}>
       <h1 style={{ fontSize: "24px", fontWeight: "800", marginBottom: "6px" }}>🗺️ {t("nav_sites")}</h1>
-      <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "28px" }}>{t("nav_sites")} · {t("fleet_installations") || "Installations"}</p>
+      <p style={{ color: "var(--sub)", fontSize: "13px", marginBottom: "28px" }}>{t("nav_sites")} · {t("fleet_installations") || "Installations"}</p>
 
       {/* Form */}
-      <div style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "24px", marginBottom: "24px" }}>
+      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "24px", marginBottom: "24px" }}>
         <h2 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "16px" }}>➕ {t("add")} Site</h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           {FIELDS.map(([field, label]) => (
@@ -63,8 +63,8 @@ export default function Sites({ user }) {
               value={form[field]}
               onChange={e => setForm({ ...form, [field]: e.target.value })}
               style={{
-                background: "#0d1117", border: "1px solid #1a2234", borderRadius: "8px",
-                padding: "10px 14px", color: "#e5e7eb", fontSize: "13px",
+                background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px",
+                padding: "10px 14px", color: "var(--text)", fontSize: "13px",
               }}
             />
           ))}
@@ -83,13 +83,13 @@ export default function Sites({ user }) {
       {/* List */}
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {sites.length === 0 && (
-          <p style={{ color: "#4b5563", fontSize: "13px" }}>No sites added yet.</p>
+          <p style={{ color: "var(--sub)", fontSize: "13px" }}>No sites added yet.</p>
         )}
         {sites.map(site => (
-          <div key={site.id} style={{ background: "#111827", border: "1px solid #1f2937", borderRadius: "12px", padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div key={site.id} style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "12px", padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontWeight: "700", fontSize: "15px" }}>{site.name}</div>
-              <div style={{ color: "#6b7280", fontSize: "12px", marginTop: "3px" }}>
+              <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "3px" }}>
                 {site.location} · {site.solar_kw} kW solar · {site.battery_kwh} kWh battery · {site.ev_chargers} EV
               </div>
             </div>
