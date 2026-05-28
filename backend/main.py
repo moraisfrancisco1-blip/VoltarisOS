@@ -12,6 +12,10 @@ from simulation.building_simulation import run_simulation
 from backend.routers import sites
 from backend.routers import auth
 from backend.routers.forecast import router as forecast_router
+from backend.routers.copilot import router as copilot_router
+from backend.routers.trading_agent import router as trading_agent_router
+from backend.routers.carbon import router as carbon_router
+from backend.routers.maintenance import router as maintenance_router
 import os
 
 models.Base.metadata.create_all(bind=engine)
@@ -28,11 +32,19 @@ app.add_middleware(
 
 app.include_router(optimization_router)
 app.include_router(trading_router)
-# app.include_router(forecast_router) # pyright: ignore[reportUndefinedVariable]
+# app.include_router(forecast_router)
+app.include_router(copilot_router)
+app.include_router(trading_agent_router)
+app.include_router(carbon_router)
+app.include_router(maintenance_router) # pyright: ignore[reportUndefinedVariable]
 app.include_router(prices.router, prefix="/api")
 app.include_router(sites.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
 app.include_router(forecast_router)
+app.include_router(copilot_router)
+app.include_router(trading_agent_router)
+app.include_router(carbon_router)
+app.include_router(maintenance_router)
 
 @app.get("/ai_decision")
 def ai_decision(price: float, battery: float):

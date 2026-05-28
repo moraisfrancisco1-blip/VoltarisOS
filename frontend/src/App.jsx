@@ -15,6 +15,12 @@ import ReportsAnalytics from "./pages/ReportsAnalytics"
 import UserManagement from "./pages/UserManagement"
 import InvestorView from "./pages/InvestorView"
 import Settings from "./pages/Settings"
+import CarbonDashboard from "./pages/CarbonDashboard"
+import AutonomousTrading from "./pages/AutonomousTrading"
+import DigitalTwin from "./pages/DigitalTwin"
+import PredictiveMaintenance from "./pages/PredictiveMaintenance"
+import WhiteLabel from "./pages/WhiteLabel"
+import AICopilot from "./components/AICopilot"
 import "./index.css"
 
 const PAGES = {
@@ -32,6 +38,11 @@ const PAGES = {
   investor: InvestorView,
   settings: Settings,
   sites: Sites,
+  carbon: CarbonDashboard,
+  autonomous: AutonomousTrading,
+  twin: DigitalTwin,
+  maintenance: PredictiveMaintenance,
+  whitelabel: WhiteLabel,
 }
 
 export default function App() {
@@ -59,6 +70,7 @@ export default function App() {
       <main style={{ flex: 1, overflow: "auto" }}>
         <PageComponent user={user} />
       </main>
+      <AICopilot user={user} />
     </div>
   )
 }
