@@ -16,7 +16,7 @@ export default function EnergyDashboard() {
   const [realPrices, setRealPrices] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/prices/day-ahead")
+    fetch("/api/prices/day-ahead")
       .then(res => res.json())
       .then(data => setRealPrices(data.prices || []))
       .catch(() => {})

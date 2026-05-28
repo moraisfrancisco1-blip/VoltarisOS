@@ -11,7 +11,7 @@ export default function Login({ onLogin }) {
   const handleSubmit = async () => {
     try {
       if (mode === "login") {
-        const res = await axios.post("http://localhost:8000/api/auth/login", {
+        const res = await axios.post("/api/auth/login", {
           email: form.email,
           password: form.password
         })
@@ -20,7 +20,7 @@ export default function Login({ onLogin }) {
         localStorage.setItem("color", res.data.color)
         onLogin(res.data)
       } else {
-        await axios.post("http://localhost:8000/api/auth/register", form)
+        await axios.post("/api/auth/register", form)
         setMode("login")
         setError("Conta criada! Faz login.")
       }

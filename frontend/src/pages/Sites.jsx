@@ -10,14 +10,14 @@ export default function Sites() {
   })
 
   const loadSites = () => {
-    axios.get("http://localhost:8000/api/sites")
+    axios.get("/api/sites")
       .then(res => setSites(res.data))
   }
 
   useEffect(() => { loadSites() }, [])
 
   const handleSubmit = () => {
-    axios.post("http://localhost:8000/api/sites", {
+    axios.post("/api/sites", {
       ...form,
       lat: parseFloat(form.lat),
       lng: parseFloat(form.lng),
@@ -28,7 +28,7 @@ export default function Sites() {
   }
 
   const deleteSite = (id) => {
-    axios.delete(`http://localhost:8000/api/sites/${id}`)
+    axios.delete(`/api/sites/${id}`)
       .then(() => loadSites())
   }
 

@@ -15,7 +15,7 @@ export default function Dashboard() {
   const totalProfit = data.reduce((acc, d) => acc + d.profit, 0).toFixed(2)
 
   useEffect(() => {
-    axios.get("http://localhost:8000/simulation")
+    axios.get("/simulation")
       .then(res => {
         const timeseries = res.data.timeseries.map((d, i) => ({
           hour: i,
