@@ -1,5 +1,5 @@
 import { useState } from "react"
-import logoDark from "../assets_logo_dark.png"
+import logoDark from "../logo_sidebar.png"
 
 const NAV_GROUPS = [
   {
@@ -69,29 +69,27 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
         {/* Header */}
         <div style={{
           padding: "0 12px",
-          height: "60px",
+          height: "68px",
           borderBottom: "1px solid #1a2234",
           display: "flex",
           alignItems: "center",
           gap: "8px",
           flexShrink: 0,
         }}>
-          {/* Collapsed: show icon-only cropped logo */}
           {collapsed ? (
             <div style={{
-              width: "34px",
-              height: "34px",
-              borderRadius: "8px",
-              background: `linear-gradient(135deg, ${color}33, ${color}55)`,
-              border: `1px solid ${color}44`,
+              width: "36px",
+              height: "36px",
+              borderRadius: "9px",
+              background: "linear-gradient(135deg, #f59e0b33, #f97316aa)",
+              border: "1px solid #f59e0b55",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
-              overflow: "hidden",
             }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill={color}>
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             </div>
           ) : (
@@ -99,7 +97,7 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
               src={logoDark}
               alt="VoltarisOS"
               style={{
-                height: "36px",
+                height: "44px",
                 width: "auto",
                 objectFit: "contain",
                 flex: 1,
@@ -140,51 +138,35 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
           </button>
         </div>
 
-        {/* User badge */}
+        {/* Company + role — compact strip, no avatar */}
         {!collapsed && (
           <div style={{
-            margin: "12px 12px 4px",
-            padding: "10px 12px",
+            margin: "10px 12px 2px",
+            padding: "8px 12px",
             background: "#0d1525",
-            borderRadius: "10px",
+            borderRadius: "8px",
             border: "1px solid #1a2234",
             flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                background: `linear-gradient(135deg, ${color}44, ${color}88)`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                fontWeight: "700",
-                color: color,
-                flexShrink: 0,
-              }}>
-                {(user?.company || "V")[0].toUpperCase()}
-              </div>
-              <div style={{ overflow: "hidden", flex: 1, minWidth: 0 }}>
-                <div style={{ color: "white", fontSize: "12px", fontWeight: "600", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {user?.company || "Voltaris"}
-                </div>
-                <div style={{
-                  display: "inline-block",
-                  fontSize: "9px",
-                  padding: "1px 6px",
-                  borderRadius: "20px",
-                  background: color + "22",
-                  color,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  marginTop: "2px",
-                  fontWeight: "600",
-                }}>
-                  {user?.role || "admin"}
-                </div>
-              </div>
+            <div style={{ color: "#9ca3af", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {user?.company || "Voltaris"}
+            </div>
+            <div style={{
+              fontSize: "9px",
+              padding: "2px 7px",
+              borderRadius: "20px",
+              background: "#f59e0b18",
+              color: "#f59e0b",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              fontWeight: "700",
+              flexShrink: 0,
+              marginLeft: "8px",
+            }}>
+              {user?.role || "admin"}
             </div>
           </div>
         )}
