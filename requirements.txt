@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+numpy
+pandas
+pyomo
+sqlalchemy
+pydantic
+scipy
+httpx
+python-multipart
+aiofiles
