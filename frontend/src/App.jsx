@@ -24,6 +24,11 @@ import WhiteLabel from "./pages/WhiteLabel"
 import AuditLog from "./pages/AuditLog"
 import ApiKeys from "./pages/ApiKeys"
 import ExportCenter from "./pages/ExportCenter"
+import RevenueOptimization from "./pages/RevenueOptimization"
+import RegulatoryCompliance from "./pages/RegulatoryCompliance"
+import CommandCenter from "./pages/CommandCenter"
+import ExecutiveScorecard from "./pages/ExecutiveScorecard"
+import AnomalyDetection from "./pages/AnomalyDetection"
 import AICopilot from "./components/AICopilot"
 import CommandPalette from "./components/CommandPalette"
 import ToastContainer from "./components/ToastContainer"
@@ -56,6 +61,11 @@ const PAGES = {
   audit: AuditLog,
   apikeys: ApiKeys,
   export: ExportCenter,
+  revenue_opt: RevenueOptimization,
+  compliance: RegulatoryCompliance,
+  command_center: CommandCenter,
+  scorecard: ExecutiveScorecard,
+  anomaly: AnomalyDetection,
 }
 
 function AppShell({ user, onLogout }) {
