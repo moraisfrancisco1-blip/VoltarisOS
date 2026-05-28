@@ -88,6 +88,25 @@ function AppShell({ user, onLogout }) {
   const PageComponent = PAGES[page] || Dashboard
   const themeVars = THEMES[theme] || THEMES.dark
 
+  // Inject CSS variables so ALL components inherit the theme
+  useEffect(() => {
+    const r = document.documentElement.style
+    r.setProperty("--bg", themeVars.bg)
+    r.setProperty("--surface", themeVars.surface)
+    r.setProperty("--surface2", themeVars.surface2)
+    r.setProperty("--surface-glass", themeVars.surfaceGlass)
+    r.setProperty("--border", themeVars.border)
+    r.setProperty("--border-strong", themeVars.borderStrong)
+    r.setProperty("--sidebar", themeVars.sidebar)
+    r.setProperty("--text", themeVars.text)
+    r.setProperty("--sub", themeVars.sub)
+    r.setProperty("--glow", themeVars.glow)
+    r.setProperty("--grid-line", themeVars.gridLine)
+    r.setProperty("--tooltip-bg", themeVars.tooltipBg)
+    r.setProperty("--gradient", themeVars.gradient)
+    document.body.style.background = themeVars.bg
+  }, [themeVars])
+
   return (
     <div style={{
       display: "flex", minHeight: "100vh",

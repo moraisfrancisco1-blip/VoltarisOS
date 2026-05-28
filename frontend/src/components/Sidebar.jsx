@@ -4,7 +4,7 @@ import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
 
 export default function Sidebar({ page, setPage, user, onLogout }) {
-  const { t, lang } = useTranslation()
+  const { t } = useTranslation()
   const { sidebarDefaultCollapsed } = useAppStore()
   const [collapsed, setCollapsed] = useState(sidebarDefaultCollapsed)
   const accentStore = useAppStore(s => s.accentColor)
@@ -65,8 +65,8 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
     <aside style={{
       width: `${w}px`,
       minWidth: `${w}px`,
-      background: "linear-gradient(180deg, #080d18 0%, #0a1020 100%)",
-      borderRight: "1px solid #1a2234",
+      background: "var(--sidebar)",
+      borderRight: "1px solid var(--border)",
       display: "flex",
       flexDirection: "column",
       transition: "width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1)",
@@ -80,7 +80,7 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
       <div style={{
         padding: "0 12px",
         height: "68px",
-        borderBottom: "1px solid #1a2234",
+        borderBottom: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
         gap: "8px",
@@ -105,11 +105,11 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
           title={collapsed ? "Expand" : "Collapse"}
           style={{
             marginLeft: collapsed ? "auto" : 0, background: "none", border: "none",
-            color: "#4b5563", cursor: "pointer", padding: "4px", borderRadius: "6px",
+            color: "var(--sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
           }}
-          onMouseEnter={e => e.currentTarget.style.color = "#9ca3af"}
-          onMouseLeave={e => e.currentTarget.style.color = "#4b5563"}
+          onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+          onMouseLeave={e => e.currentTarget.style.color = "var(--sub)"}
         >
           {collapsed
             ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -122,10 +122,10 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
       {!collapsed && (
         <div style={{
           margin: "10px 12px 2px", padding: "8px 12px",
-          background: "#0d1525", borderRadius: "8px", border: "1px solid #1a2234",
+          background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
           flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <div style={{ color: "#9ca3af", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {user?.company || "Voltaris"}
           </div>
           <div style={{
@@ -145,13 +145,13 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
             {!collapsed && (
               <div style={{
                 padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
-                color: "#374151", textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
+                color: "var(--sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
               }}>
                 {t(group.labelKey)}
               </div>
             )}
             {collapsed && gi > 0 && (
-              <div style={{ margin: "4px 12px", height: "1px", background: "#1a2234" }} />
+              <div style={{ margin: "4px 12px", height: "1px", background: "var(--border)" }} />
             )}
             {group.items.map(item => {
               const active = page === item.id
@@ -166,12 +166,12 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
                     justifyContent: collapsed ? "center" : "flex-start",
                     background: active ? `${color}14` : "none", border: "none",
                     borderLeft: active ? `2px solid ${color}` : "2px solid transparent",
-                    color: active ? color : "#6b7280",
+                    color: active ? color : "var(--sub)",
                     cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
                     textAlign: "left", transition: "all 0.12s",
                   }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "#ffffff08"; e.currentTarget.style.color = "#d1d5db" } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#6b7280" } }}
+                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.color = "var(--text)" } }}
+                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--sub)" } }}
                 >
                   <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
                   {!collapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
@@ -186,19 +186,19 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
       </nav>
 
       {/* Logout */}
-      <div style={{ padding: "10px 10px 16px", borderTop: "1px solid #1a2234", flexShrink: 0 }}>
+      <div style={{ padding: "10px 10px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
         <button
           onClick={onLogout}
           title={collapsed ? t("logout") : ""}
           style={{
             width: "100%", padding: "9px 12px",
-            background: "#1a0a0a", border: "1px solid #2d1515",
+            background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)",
             borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "13px",
             display: "flex", alignItems: "center", gap: "8px",
             justifyContent: collapsed ? "center" : "flex-start", transition: "background 0.15s",
           }}
-          onMouseEnter={e => e.currentTarget.style.background = "#2d1515"}
-          onMouseLeave={e => e.currentTarget.style.background = "#1a0a0a"}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.12)"}
+          onMouseLeave={e => e.currentTarget.style.background = "rgba(248,113,113,0.06)"}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

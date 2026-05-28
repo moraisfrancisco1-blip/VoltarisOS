@@ -162,11 +162,12 @@ const T = {
   app_sidebar_collapsed:{ pt:"Sidebar colapsada por padrão", en:"Sidebar collapsed by default", fr:"Barre latérale réduite par défaut", es:"Barra lateral colapsada por defecto", nl:"Zijbalk standaard ingeklapt" },
 
   // Themes
-  theme_dark:      { pt:"Escuro",     en:"Dark",       fr:"Sombre",       es:"Oscuro",      nl:"Donker" },
-  theme_light:     { pt:"Claro",      en:"Light",      fr:"Clair",        es:"Claro",       nl:"Licht" },
-  theme_midnight:  { pt:"Meia-noite", en:"Midnight",   fr:"Minuit",       es:"Medianoche",  nl:"Middernacht" },
-  theme_forest:    { pt:"Floresta",   en:"Forest",     fr:"Forêt",        es:"Bosque",      nl:"Woud" },
-  theme_ocean:     { pt:"Oceano",     en:"Ocean",      fr:"Océan",        es:"Océano",      nl:"Oceaan" },
+  theme_dark:      { pt:"Obsidian",   en:"Obsidian",   fr:"Obsidienne",   es:"Obsidiana",   nl:"Obsidiaan" },
+  theme_light:     { pt:"Pearl",      en:"Pearl",      fr:"Perle",        es:"Perla",       nl:"Parel" },
+  theme_midnight:  { pt:"Nebula",     en:"Nebula",     fr:"Nébuleuse",    es:"Nebulosa",    nl:"Nevel" },
+  theme_forest:    { pt:"Aurora",     en:"Aurora",     fr:"Aurore",       es:"Aurora",      nl:"Aurora" },
+  theme_ocean:     { pt:"Abyss",      en:"Abyss",      fr:"Abysses",      es:"Abismo",      nl:"Afgrond" },
+  theme_ember:     { pt:"Ember",      en:"Ember",      fr:"Braise",       es:"Brasa",       nl:"Gloed" },
 
   // ─── PAGE TITLES ─────────────────────────────────────────────────────────────
   page_dashboard:  { pt:"Dashboard",  en:"Dashboard",  fr:"Tableau de bord", es:"Panel",    nl:"Dashboard" },

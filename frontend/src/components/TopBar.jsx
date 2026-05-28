@@ -23,8 +23,9 @@ export default function TopBar({ page, user }) {
 
   return (
     <div style={{
-      height: "56px", background: "#080d18",
-      borderBottom: "1px solid #1a2234",
+      height: "56px",
+      background: "var(--topbar, var(--sidebar))",
+      borderBottom: "1px solid var(--border)",
       display: "flex", alignItems: "center",
       padding: "0 24px", gap: "10px",
       position: "sticky", top: 0, zIndex: 50,
@@ -32,7 +33,7 @@ export default function TopBar({ page, user }) {
     }}>
       {/* Page title */}
       <div style={{ flex: 1 }}>
-        <span style={{ color: "white", fontWeight: "600", fontSize: "15px" }}>
+        <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "15px" }}>
           {t(PAGE_TITLE_KEYS[page] || "page_dashboard")}
         </span>
       </div>
@@ -42,19 +43,19 @@ export default function TopBar({ page, user }) {
         onClick={() => setCmdOpen(true)}
         style={{
           display: "flex", alignItems: "center", gap: "8px",
-          padding: "7px 14px", background: "#0d1525",
-          border: "1px solid #1e2d45", borderRadius: "8px",
-          color: "#4b5563", cursor: "pointer", fontSize: "13px",
+          padding: "7px 14px", background: "var(--surface2)",
+          border: "1px solid var(--border)", borderRadius: "8px",
+          color: "var(--sub)", cursor: "pointer", fontSize: "13px",
           transition: "all 0.15s",
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = "#374151"; e.currentTarget.style.color = "#9ca3af" }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e2d45"; e.currentTarget.style.color = "#4b5563" }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text)" }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--sub)" }}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <span>{t("topbar_search")}</span>
-        <kbd style={{ padding: "1px 6px", background: "#1a2234", border: "1px solid #1e2d45", borderRadius: "4px", fontSize: "10px", color: "#374151" }}>⌘K</kbd>
+        <kbd style={{ padding: "1px 6px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "4px", fontSize: "10px", color: "var(--sub)" }}>⌘K</kbd>
       </button>
 
       {/* Sim mode toggle */}
@@ -63,9 +64,9 @@ export default function TopBar({ page, user }) {
         title={simMode ? "Desativar simulação" : "Ativar simulação"}
         style={{
           padding: "7px 12px",
-          background: simMode ? "#78350f30" : "#0d1525",
-          border: simMode ? "1px solid #f59e0b44" : "1px solid #1e2d45",
-          borderRadius: "8px", color: simMode ? "#f59e0b" : "#4b5563",
+          background: simMode ? "#78350f30" : "var(--surface2)",
+          border: simMode ? "1px solid #f59e0b44" : "1px solid var(--border)",
+          borderRadius: "8px", color: simMode ? "#f59e0b" : "var(--sub)",
           cursor: "pointer", fontSize: "12px", fontWeight: "600",
           transition: "all 0.15s", display: "flex", alignItems: "center", gap: "6px",
         }}
@@ -79,12 +80,12 @@ export default function TopBar({ page, user }) {
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         title={t("app_theme")}
         style={{
-          background: "#0d1525", border: "1px solid #1e2d45", borderRadius: "8px",
-          color: "#6b7280", cursor: "pointer", width: "36px", height: "36px",
+          background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px",
+          color: "var(--sub)", cursor: "pointer", width: "36px", height: "36px",
           display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s", fontSize: "16px",
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = "#1a2234"; e.currentTarget.style.color = "#d1d5db" }}
-        onMouseLeave={e => { e.currentTarget.style.background = "#0d1525"; e.currentTarget.style.color = "#6b7280" }}
+        onMouseEnter={e => { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.color = "var(--text)" }}
+        onMouseLeave={e => { e.currentTarget.style.background = "var(--surface2)"; e.currentTarget.style.color = "var(--sub)" }}
       >
         {theme === "dark" ? "☀" : "🌙"}
       </button>
@@ -94,12 +95,12 @@ export default function TopBar({ page, user }) {
         <button
           onClick={() => setLangOpen(!langOpen)}
           style={{
-            background: "#0d1525", border: "1px solid #1e2d45", borderRadius: "8px",
-            color: "#9ca3af", cursor: "pointer", padding: "6px 10px", height: "36px",
+            background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px",
+            color: "var(--sub)", cursor: "pointer", padding: "6px 10px", height: "36px",
             display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", transition: "all 0.15s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "#1a2234"; e.currentTarget.style.borderColor = "#374151" }}
-          onMouseLeave={e => { e.currentTarget.style.background = "#0d1525"; e.currentTarget.style.borderColor = "#1e2d45" }}
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)" }}
+          onMouseLeave={e => { e.currentTarget.style.background = "var(--surface2)"; e.currentTarget.style.borderColor = "var(--border)" }}
         >
           <span style={{ fontSize: "15px" }}>{LANGUAGES[language]?.flag}</span>
           <span style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>{language}</span>
@@ -113,9 +114,10 @@ export default function TopBar({ page, user }) {
             <div style={{ position: "fixed", inset: 0, zIndex: 998 }} onClick={() => setLangOpen(false)} />
             <div style={{
               position: "absolute", right: 0, top: "calc(100% + 6px)",
-              background: "#0d1525", border: "1px solid #1e2d45", borderRadius: "10px",
+              background: "var(--tooltip-bg)", border: "1px solid var(--border)", borderRadius: "10px",
               minWidth: "160px", zIndex: 999, overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+              backdropFilter: "blur(12px)",
             }}>
               {Object.entries(LANGUAGES).map(([code, lang]) => (
                 <button
@@ -124,12 +126,12 @@ export default function TopBar({ page, user }) {
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: "10px",
                     padding: "10px 14px", background: language === code ? `${color}14` : "none",
-                    border: "none", color: language === code ? color : "#9ca3af",
+                    border: "none", color: language === code ? color : "var(--sub)",
                     cursor: "pointer", fontSize: "13px", fontWeight: language === code ? "600" : "400",
                     textAlign: "left", transition: "background 0.1s",
                     borderLeft: language === code ? `2px solid ${color}` : "2px solid transparent",
                   }}
-                  onMouseEnter={e => { if (language !== code) { e.currentTarget.style.background = "#ffffff08" } }}
+                  onMouseEnter={e => { if (language !== code) { e.currentTarget.style.background = "var(--surface)" } }}
                   onMouseLeave={e => { if (language !== code) { e.currentTarget.style.background = "none" } }}
                 >
                   <span style={{ fontSize: "16px" }}>{lang.flag}</span>
@@ -147,8 +149,8 @@ export default function TopBar({ page, user }) {
       {/* User pill */}
       <div style={{
         display: "flex", alignItems: "center", gap: "8px",
-        padding: "5px 10px", background: "#0d1525",
-        border: "1px solid #1e2d45", borderRadius: "8px",
+        padding: "5px 10px", background: "var(--surface2)",
+        border: "1px solid var(--border)", borderRadius: "8px",
       }}>
         <div style={{
           width: "24px", height: "24px", borderRadius: "50%",
@@ -158,7 +160,7 @@ export default function TopBar({ page, user }) {
         }}>
           {(user?.company || "V").charAt(0).toUpperCase()}
         </div>
-        <span style={{ color: "#9ca3af", fontSize: "12px", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ color: "var(--sub)", fontSize: "12px", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {user?.company || "Admin"}
         </span>
       </div>

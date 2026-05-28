@@ -350,26 +350,56 @@ export default function Settings() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 24 }}>
               {Object.values(THEMES).map(th => {
                 const active = theme === th.name;
-                const tkey = `theme_${th.name}`;
+                // Premium preview colors for each theme
+                const previewAccent = {
+                  dark: "#4ade80", light: "#3b82f6", midnight: "#a78bfa",
+                  forest: "#4ade80", ocean: "#60a5fa", ember: "#f97316",
+                }[th.name] || accent;
                 return (
                   <div key={th.name} onClick={() => setTheme(th.name)} style={{
-                    border: `2px solid ${active ? accent : BORD}`,
-                    borderRadius: 10, padding: 12, cursor: "pointer",
-                    background: th.surface, transition: "border-color 0.15s",
-                    position: "relative", overflow: "hidden",
+                    border: `2px solid ${active ? accent : "transparent"}`,
+                    borderRadius: 12, padding: 0, cursor: "pointer",
+                    overflow: "hidden", transition: "all 0.2s",
+                    boxShadow: active ? `0 0 0 1px ${accent}60, 0 4px 20px ${accent}20` : "0 2px 8px rgba(0,0,0,0.3)",
+                    transform: active ? "scale(1.02)" : "scale(1)",
+                    position: "relative",
                   }}>
-                    {/* Preview swatch */}
-                    <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-                      <div style={{ width: "100%", height: 28, borderRadius: 6, background: th.bg }} />
+                    {/* Full preview panel */}
+                    <div style={{ background: th.bg, padding: "12px", height: "90px", position: "relative", overflow: "hidden" }}>
+                      {/* Ambient glow */}
+                      <div style={{ position: "absolute", top: "-10px", right: "-10px", width: "50px", height: "50px", borderRadius: "50%", background: previewAccent + "30", filter: "blur(15px)" }} />
+                      {/* Fake sidebar */}
+                      <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "20px", background: th.sidebar }} />
+                      {/* Mock widgets */}
+                      <div style={{ marginLeft: "26px" }}>
+                        <div style={{ display: "flex", gap: "4px", marginBottom: "5px" }}>
+                          {[previewAccent, "#60a5fa", "#a78bfa"].map((c, i) => (
+                            <div key={i} style={{ flex: 1, height: "18px", borderRadius: "4px", background: th.surface, border: `1px solid ${th.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <div style={{ width: "40%", height: "3px", borderRadius: "2px", background: c, opacity: 0.8 }} />
+                            </div>
+                          ))}
+                        </div>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <div style={{ flex: 2, height: "30px", borderRadius: "4px", background: th.surface, border: `1px solid ${th.border}` }}>
+                            <div style={{ margin: "6px 6px 3px", height: "3px", borderRadius: "2px", background: `linear-gradient(90deg, transparent, ${previewAccent}90, transparent)` }} />
+                            <div style={{ margin: "0 6px", height: "8px", borderRadius: "2px", background: `linear-gradient(90deg, ${previewAccent}20, ${previewAccent}50)` }} />
+                          </div>
+                          <div style={{ flex: 1, height: "30px", borderRadius: "4px", background: th.surface, border: `1px solid ${th.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: `3px solid ${previewAccent}`, borderTopColor: "transparent" }} />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", gap: 3, marginBottom: 8 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: accent }} />
-                      <div style={{ flex: 1, height: 8, borderRadius: 4, background: th.border }} />
+                    {/* Label */}
+                    <div style={{ background: th.surface, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${th.border}` }}>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: th.text }}>{th.label || th.name}</div>
+                        <div style={{ fontSize: 9, color: th.sub, marginTop: "1px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{th.name}</div>
+                      </div>
+                      {active && (
+                        <div style={{ width: 18, height: 18, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#000", fontWeight: 900 }}>✓</div>
+                      )}
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, color: th.text }}>{t(tkey)}</div>
-                    {active && (
-                      <div style={{ position: "absolute", top: 6, right: 6, width: 16, height: 16, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: "#000", fontWeight: 900 }}>✓</div>
-                    )}
                   </div>
                 );
               })}
