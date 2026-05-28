@@ -9,3 +9,4 @@ scipy
 httpx
 python-multipart
 aiofiles
+python-jose[cryptography]
