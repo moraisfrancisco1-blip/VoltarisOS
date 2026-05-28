@@ -168,6 +168,8 @@ const T = {
   theme_forest:    { pt:"Aurora",     en:"Aurora",     fr:"Aurore",       es:"Aurora",      nl:"Aurora" },
   theme_ocean:     { pt:"Abyss",      en:"Abyss",      fr:"Abysses",      es:"Abismo",      nl:"Afgrond" },
   theme_ember:     { pt:"Ember",      en:"Ember",      fr:"Braise",       es:"Brasa",       nl:"Gloed" },
+  theme_ivory:     { pt:"Ivory",      en:"Ivory",      fr:"Ivoire",       es:"Marfil",      nl:"Ivoor" },
+  theme_arctic:    { pt:"Arctic",     en:"Arctic",     fr:"Arctique",     es:"Ártico",      nl:"Arctisch" },
 
   // ─── PAGE TITLES ─────────────────────────────────────────────────────────────
   page_dashboard:  { pt:"Dashboard",  en:"Dashboard",  fr:"Tableau de bord", es:"Panel",    nl:"Dashboard" },

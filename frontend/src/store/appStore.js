@@ -106,6 +106,42 @@ export const THEMES = {
     tooltipBg: "rgba(16,5,1,0.97)",
     gradient: "linear-gradient(135deg, rgba(28,10,2,0.97) 0%, rgba(16,6,1,0.99) 100%)",
   },
+  // ── Light theme 2: Ivory ─────────────────────────────────────────────────────
+  ivory: {
+    name: "ivory",
+    label: "Ivory",
+    bg: "#faf8f4",
+    surface: "rgba(255,253,248,0.97)",
+    surface2: "rgba(245,242,234,0.92)",
+    surfaceGlass: "rgba(255,255,255,0.75)",
+    border: "rgba(180,160,120,0.18)",
+    borderStrong: "rgba(160,130,80,0.28)",
+    sidebar: "#2c2318",
+    text: "#1a150a",
+    sub: "#7a6a50",
+    glow: "rgba(200,160,60,0.12)",
+    gridLine: "rgba(160,130,80,0.08)",
+    tooltipBg: "rgba(255,253,248,0.98)",
+    gradient: "linear-gradient(135deg, rgba(255,253,248,0.97) 0%, rgba(245,242,234,0.95) 100%)",
+  },
+  // ── Light theme 3: Arctic ────────────────────────────────────────────────────
+  arctic: {
+    name: "arctic",
+    label: "Arctic",
+    bg: "#eef4fb",
+    surface: "rgba(255,255,255,0.96)",
+    surface2: "rgba(232,242,255,0.92)",
+    surfaceGlass: "rgba(255,255,255,0.78)",
+    border: "rgba(100,160,220,0.16)",
+    borderStrong: "rgba(80,140,210,0.28)",
+    sidebar: "#0f2244",
+    text: "#0a1e3a",
+    sub: "#5580aa",
+    glow: "rgba(80,160,240,0.12)",
+    gridLine: "rgba(80,140,210,0.07)",
+    tooltipBg: "rgba(255,255,255,0.98)",
+    gradient: "linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(232,242,255,0.94) 100%)",
+  },
 }
 
 export const useAppStore = create((set, get) => ({

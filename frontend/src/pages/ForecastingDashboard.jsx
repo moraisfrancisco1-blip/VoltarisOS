@@ -1,210 +1,467 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from 'react';
+import {
+  AreaChart, Area, ComposedChart, Bar, Line,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
+  CartesianGrid, ReferenceLine, Legend
+} from 'recharts';
+import { useAppStore } from '../store/appStore';
 
-const accent = "#6366f1";
-const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 };
+// ─── Mock Data Generator ──────────────────────────────────────────────────────
+function generateMockForecast(hours = 24) {
+  const now = new Date();
+  now.setMinutes(0, 0, 0);
+  return Array.from({ length: hours }, (_, i) => {
+    const t = new Date(now.getTime() + i * 3600000);
+    const h = t.getHours();
+    const dayFactor = Math.max(0, Math.sin(((h - 6) / 12) * Math.PI));
+    const noise = () => (Math.random() - 0.5) * 0.15;
+    const solar = h >= 6 && h <= 20
+      ? +(dayFactor * (850 + Math.random() * 200) * (0.85 + noise())).toFixed(1)
+      : 0;
+    const cloudCover = +(20 + Math.random() * 60).toFixed(0);
+    const solarAdj = +(solar * (1 - cloudCover / 150)).toFixed(1);
+    const windSpeed = +(3 + Math.random() * 12).toFixed(1);
+    const windDirs = ['N','NE','E','SE','S','SW','W','NW'];
+    return {
+      time: t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      hour: h,
+      solar: solarAdj,
+      price: +(35 + Math.sin(i / 3) * 25 + Math.random() * 10).toFixed(2),
+      wind: +(windSpeed).toFixed(1),
+      load: +(180 + Math.sin(i / 4) * 60 + Math.random() * 20).toFixed(1),
+      temp: +(18 + dayFactor * 10 + noise() * 5).toFixed(1),
+      humidity: +(55 + noise() * 30).toFixed(0),
+      cloudCover,
+      uvIndex: h >= 7 && h <= 18 ? +(dayFactor * 9 + noise() * 2).toFixed(1) : 0,
+      windDir: windDirs[Math.floor(Math.random() * 8)],
+      aiConfidence: +(72 + Math.random() * 22).toFixed(0),
+      bessRevenue: i % 4 === 3 ? +(Math.random() * 180 + 40).toFixed(0) : 0,
+    };
+  });
+}
 
-const LineChart = ({ data, color, label, unit, height = 100 }) => {
-  if (!data || data.length === 0) return null;
-  const vals = data.map(d => d.value);
-  const min = Math.min(...vals), max = Math.max(...vals);
-  const range = max - min || 1;
-  const w = 480, h = height;
-  const pts = data.map((d, i) => `${(i / (data.length - 1)) * w},${h - ((d.value - min) / range) * (h - 10) - 5}`);
+const BESS_SCHEDULE = [
+  { start: '02:00', end: '06:00', action: 'charge', label: 'Charge', revenue: null },
+  { start: '08:00', end: '10:00', action: 'discharge', label: 'Discharge', revenue: 142 },
+  { start: '12:00', end: '14:00', action: 'idle', label: 'Idle / Solar Absorb', revenue: null },
+  { start: '17:00', end: '20:00', action: 'discharge', label: 'Peak Discharge', revenue: 318 },
+  { start: '21:00', end: '23:00', action: 'charge', label: 'Night Charge', revenue: null },
+];
+
+// ─── Custom Tooltip ───────────────────────────────────────────────────────────
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
   return (
-    <div>
-      <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 6 }}>{label}</div>
-      <svg width="100%" height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-        <defs>
-          <linearGradient id={`grad-${label}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <polygon fill={`url(#grad-${label})`} points={`0,${h} ${pts.join(" ")} ${w},${h}`} />
-        <polyline fill="none" stroke={color} strokeWidth={2} points={pts.join(" ")} />
-      </svg>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--sub)", marginTop: 2 }}>
-        <span>{data[0]?.hour}</span>
-        <span>{data[Math.floor(data.length / 2)]?.hour}</span>
-        <span>{data[data.length - 1]?.hour}</span>
+    <div style={{
+      background: 'var(--tooltip-bg, var(--surface))',
+      border: '1px solid var(--border)',
+      borderRadius: 8,
+      padding: '8px 12px',
+      fontSize: 12,
+      color: 'var(--text)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    }}>
+      <div style={{ fontWeight: 600, marginBottom: 4, color: 'var(--accent)' }}>{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
+          <span style={{ color: 'var(--sub)' }}>{p.name}:</span>
+          <span style={{ fontWeight: 600 }}>{p.value}{p.unit || ''}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Weather Widget Card ──────────────────────────────────────────────────────
+const WeatherWidget = ({ icon, label, value, unit, trend, trendDir, color }) => (
+  <div style={{
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    padding: '14px 16px',
+    flex: 1,
+    minWidth: 110,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ fontSize: 22 }}>{icon}</span>
+      <span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
+    </div>
+    <div style={{ fontSize: 26, fontWeight: 700, color: color || 'var(--text)', lineHeight: 1 }}>
+      {value}<span style={{ fontSize: 14, fontWeight: 400, color: 'var(--sub)', marginLeft: 2 }}>{unit}</span>
+    </div>
+    {trend != null && (
+      <div style={{ fontSize: 11, color: trendDir === 'up' ? '#22c55e' : trendDir === 'down' ? '#ef4444' : 'var(--sub)', display: 'flex', alignItems: 'center', gap: 3 }}>
+        {trendDir === 'up' ? '↑' : trendDir === 'down' ? '↓' : '→'} {trend}
+      </div>
+    )}
+  </div>
+);
+
+// ─── AI Prediction Panel ──────────────────────────────────────────────────────
+const AIPredictionPanel = ({ data }) => {
+  const current = data[0] || {};
+  const next6 = data.slice(0, 6);
+  const avgCloud = (next6.reduce((a, d) => a + d.cloudCover, 0) / next6.length).toFixed(0);
+  const avgSolar = (next6.reduce((a, d) => a + d.solar, 0) / next6.length).toFixed(0);
+  const peakPriceSlot = [...data].sort((a, b) => b.price - a.price)[0];
+  const confidence = current.aiConfidence || 84;
+  const cloudAlert = avgCloud > 60;
+  const solarDipHour = next6.find(d => d.solar < 200 && d.hour >= 10 && d.hour <= 16);
+
+  return (
+    <div style={{
+      background: 'var(--surface)',
+      border: `1px solid ${cloudAlert ? '#f59e0b55' : 'var(--border)'}`,
+      borderRadius: 12,
+      padding: 20,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 14,
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 20 }}>🤖</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>AI Weather Forecast</div>
+            <div style={{ fontSize: 11, color: 'var(--sub)' }}>Next 6h prediction</div>
+          </div>
+        </div>
+        {/* Confidence ring */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: `conic-gradient(var(--accent) ${confidence * 3.6}deg, var(--border) 0deg)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative',
+          }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: '50%',
+              background: 'var(--surface)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 700, color: 'var(--accent)',
+            }}>{confidence}%</div>
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--sub)', marginTop: 2 }}>Confidence</div>
+        </div>
+      </div>
+
+      {/* Alert */}
+      {cloudAlert && (
+        <div style={{
+          background: '#f59e0b22',
+          border: '1px solid #f59e0b66',
+          borderRadius: 8,
+          padding: '8px 12px',
+          fontSize: 12,
+          color: '#f59e0b',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          ⚠️ Cloud cover &gt;60% — expect solar output drop ~{Math.round(avgCloud * 0.6)}% in next 6h
+        </div>
+      )}
+
+      {/* Predictions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <PredictionRow icon="☁️" label="Avg cloud cover" value={`${avgCloud}%`} />
+        <PredictionRow icon="☀️" label="Avg solar irradiance" value={`${avgSolar} W/m²`} />
+        {solarDipHour && <PredictionRow icon="📉" label="Solar dip expected" value={`~${solarDipHour.time}`} warn />}
+        <PredictionRow icon="⚡" label="Peak price window" value={peakPriceSlot ? `${peakPriceSlot.time} @ €${peakPriceSlot.price}/MWh` : '—'} />
+        <PredictionRow icon="💰" label="Weather-adj revenue est." value={`€ ${(avgSolar * 0.42 + peakPriceSlot?.price * 3.1).toFixed(0)}`} />
+      </div>
+
+      {/* Summary blurb */}
+      <div style={{
+        background: 'var(--bg, var(--surface))',
+        borderRadius: 8,
+        padding: '10px 12px',
+        fontSize: 12,
+        color: 'var(--sub)',
+        lineHeight: 1.6,
+        borderLeft: '3px solid var(--accent)',
+      }}>
+        {cloudAlert
+          ? `Overcast conditions likely. Recommend pre-charging BESS before ${solarDipHour?.time || '13:00'} and scheduling peak discharge 17–19h for max revenue.`
+          : `Clear-to-partly-cloudy forecast. Solar generation tracking nominal. Maintain standard BESS dispatch schedule.`}
       </div>
     </div>
   );
 };
 
-const generateMockForecast = (siteId) => {
-  const hours = Array.from({ length: 24 }, (_, i) => ({
-    hour: `${i.toString().padStart(2, "0")}:00`,
-    irradiance: i >= 6 && i <= 20 ? Math.max(0, Math.sin(((i - 6) / 14) * Math.PI) * 800 + (Math.random() - 0.5) * 60) : 0,
-    price: 40 + Math.sin(i / 3) * 25 + (Math.random() - 0.5) * 10,
-    wind: 2 + Math.random() * 8,
-    load: 200 + Math.sin((i - 8) / 6) * 80 + Math.random() * 20,
-    battery_action: i >= 10 && i <= 14 ? "charge" : i >= 17 && i <= 21 ? "discharge" : "idle",
-    revenue: i >= 17 && i <= 21 ? (40 + Math.random() * 20) : 0,
-  }));
+const PredictionRow = ({ icon, label, value, warn }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--sub)' }}>
+      <span>{icon}</span><span>{label}</span>
+    </div>
+    <span style={{ fontWeight: 600, color: warn ? '#f59e0b' : 'var(--text)' }}>{value}</span>
+  </div>
+);
 
-  // Simulate Rotterdam vs Rebordelo slight difference
-  if (siteId === 2) {
-    hours.forEach(h => {
-      h.irradiance *= 0.85;
-      h.wind *= 1.4;
-    });
-  }
-  return hours;
-};
-
-export default function ForecastingDashboard() {
-  const [siteId, setSiteId] = useState(1);
-  const [forecast, setForecast] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [useReal, setUseReal] = useState(false);
-
-  const loadForecast = async (id, real) => {
-    setLoading(true);
-    setError(null);
-    if (real) {
-      try {
-        const res = await fetch(`/api/forecast/combined/${id}`);
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        const data = await res.json();
-        // Normalize API response to our chart format
-        const mapped = (data.hours || data.forecast || []).map(h => ({
-          hour: h.hour || h.time,
-          irradiance: h.irradiance ?? h.solar_irradiance ?? 0,
-          price: h.price ?? h.da_price ?? 0,
-          wind: h.wind_speed ?? 0,
-          load: h.load ?? 0,
-          battery_action: h.recommendation || h.battery_action || "idle",
-          revenue: h.expected_revenue ?? 0,
-        }));
-        setForecast(mapped.length > 0 ? mapped : generateMockForecast(id));
-      } catch (e) {
-        setError(e.message);
-        setForecast(generateMockForecast(id));
-      }
-    } else {
-      await new Promise(r => setTimeout(r, 400));
-      setForecast(generateMockForecast(id));
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => { loadForecast(siteId, useReal); }, [siteId, useReal]);
-
-  const actionColor = a => a === "charge" ? "#10b981" : a === "discharge" ? "#f59e0b" : "#374151";
-  const actionLabel = a => a === "charge" ? "CHG" : a === "discharge" ? "DIS" : "—";
-
-  const peakSolar = forecast ? Math.round(Math.max(...forecast.map(h => h.irradiance))) : 0;
-  const maxPrice = forecast ? Math.round(Math.max(...forecast.map(h => h.price))) : 0;
-  const minPrice = forecast ? Math.round(Math.min(...forecast.map(h => h.price))) : 0;
-  const estRevenue = forecast ? forecast.reduce((a, h) => a + h.revenue, 0).toFixed(2) : 0;
+// ─── BESS Block Timeline ──────────────────────────────────────────────────────
+const BessTimeline = () => {
+  const slotColors = { charge: '#3b82f6', discharge: '#10b981', idle: 'var(--border)' };
+  const slotTextColors = { charge: '#fff', discharge: '#fff', idle: 'var(--sub)' };
 
   return (
-    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Forecasting Dashboard</h1>
-          <p style={{ color: "var(--sub)" }}>24h irradiance, price, wind, and BESS dispatch recommendations</p>
-        </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <select value={siteId} onChange={e => setSiteId(Number(e.target.value))}
-            style={{ background: "var(--surface)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 16px", fontSize: 13 }}>
-            <option value={1}>Rotterdam</option>
-            <option value={2}>Rebordelo</option>
-          </select>
-          <button onClick={() => setUseReal(!useReal)} style={{
-            background: useReal ? "#064e3b" : "#1f2937", color: useReal ? "#10b981" : "#9ca3af",
-            border: `1px solid ${useReal ? "#10b981" : "#374151"}`, borderRadius: 8,
-            padding: "8px 14px", fontSize: 13, cursor: "pointer"
-          }}>{useReal ? "Live API" : "Simulated"}</button>
-          <button onClick={() => loadForecast(siteId, useReal)} style={{
-            background: accent, color: "#fff", border: "none", borderRadius: 8,
-            padding: "8px 16px", fontSize: 13, cursor: "pointer"
-          }}>Refresh</button>
-        </div>
+    <div style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 12,
+      padding: 20,
+    }}>
+      <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+        🔋 BESS Dispatch Timeline
+        <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--sub)' }}>— Today's optimized schedule</span>
       </div>
-
-      {error && (
-        <div style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: "#fca5a5" }}>
-          API error: {error}. Showing simulated data.
-        </div>
-      )}
-
-      {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
-        {[
-          { label: "Peak Irradiance", value: loading ? "—" : `${peakSolar} W/m²`, color: "#f59e0b" },
-          { label: "Max Price", value: loading ? "—" : `€${maxPrice}/MWh`, color: "#ef4444" },
-          { label: "Min Price", value: loading ? "—" : `€${minPrice}/MWh`, color: "#10b981" },
-          { label: "Est. Revenue", value: loading ? "—" : `€${estRevenue}`, color: accent },
-        ].map(k => (
-          <div key={k.label} style={card}>
-            <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {BESS_SCHEDULE.map((slot, i) => (
+          <div key={i} style={{
+            flex: 1, minWidth: 120,
+            background: slotColors[slot.action],
+            borderRadius: 10,
+            padding: '12px 14px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: slotTextColors[slot.action], opacity: 0.8 }}>
+              {slot.start} – {slot.end}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: slotTextColors[slot.action] }}>{slot.label}</div>
+            {slot.revenue ? (
+              <div style={{ fontSize: 11, color: slotTextColors[slot.action], opacity: 0.9, marginTop: 2 }}>
+                +€{slot.revenue} est.
+              </div>
+            ) : (
+              <div style={{ fontSize: 11, color: slotTextColors[slot.action], opacity: 0.5 }}>—</div>
+            )}
           </div>
         ))}
       </div>
+      <div style={{ display: 'flex', gap: 16, marginTop: 14, fontSize: 11, color: 'var(--sub)' }}>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#3b82f6', marginRight: 4 }} />Charging</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: '#10b981', marginRight: 4 }} />Discharging</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: 'var(--border)', marginRight: 4 }} />Idle</span>
+      </div>
+    </div>
+  );
+};
 
-      {loading ? (
-        <div style={{ ...card, textAlign: "center", padding: 60, color: "var(--sub)" }}>
-          Loading forecast data...
+// ─── Chart Section ────────────────────────────────────────────────────────────
+const ChartCard = ({ title, icon, children, height = 200 }) => (
+  <div style={{
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    padding: 20,
+  }}>
+    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <span>{icon}</span>{title}
+    </div>
+    <div style={{ height }}>{children}</div>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function ForecastingDashboard() {
+  const { t } = useAppStore();
+  const [horizon, setHorizon] = useState(24);
+  const data = useMemo(() => generateMockForecast(horizon), [horizon]);
+
+  // Current conditions (first data point)
+  const now = data[0] || {};
+  const prev = data[1] || {};
+
+  // Tick reducer — show every 3h
+  const tickFormatter = (val, idx) => idx % 3 === 0 ? val : '';
+
+  const gridColor = 'var(--grid-line, rgba(128,128,128,0.12))';
+  const axisColor = 'var(--sub)';
+
+  return (
+    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>
+            ⚡ Forecasting Dashboard
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--sub)' }}>
+            Solar · Wind · BESS · Day-Ahead Price — AI-enhanced predictions
+          </p>
         </div>
-      ) : forecast ? (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
-            <div style={card}>
-              <LineChart
-                data={forecast.map(h => ({ hour: h.hour, value: h.irradiance }))}
-                color="#f59e0b" label="Solar Irradiance (W/m²)" unit="W/m²" height={110}
-              />
-            </div>
-            <div style={card}>
-              <LineChart
-                data={forecast.map(h => ({ hour: h.hour, value: h.price }))}
-                color="#6366f1" label="Day-Ahead Price (€/MWh)" unit="€/MWh" height={110}
-              />
-            </div>
-            <div style={card}>
-              <LineChart
-                data={forecast.map(h => ({ hour: h.hour, value: h.wind }))}
-                color="#60a5fa" label="Wind Speed (m/s)" unit="m/s" height={110}
-              />
-            </div>
-            <div style={card}>
-              <LineChart
-                data={forecast.map(h => ({ hour: h.hour, value: h.load }))}
-                color="#10b981" label="Forecasted Load (kW)" unit="kW" height={110}
-              />
-            </div>
-          </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: 'var(--sub)' }}>Horizon:</span>
+          {[12, 24, 48].map(h => (
+            <button key={h} onClick={() => setHorizon(h)} style={{
+              padding: '6px 14px',
+              borderRadius: 8,
+              border: `1px solid ${horizon === h ? 'var(--accent)' : 'var(--border)'}`,
+              background: horizon === h ? 'var(--accent)' : 'transparent',
+              color: horizon === h ? '#fff' : 'var(--text)',
+              fontWeight: 600,
+              fontSize: 12,
+              cursor: 'pointer',
+            }}>{h}h</button>
+          ))}
+        </div>
+      </div>
 
-          {/* BESS dispatch recommendation */}
-          <div style={card}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>BESS Dispatch Recommendation</h2>
-            <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 16 }}>Optimal charge/discharge schedule based on price + solar forecast</p>
-            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {forecast.map((h, i) => (
-                <div key={i} title={`${h.hour}: ${h.battery_action} | Price: €${h.price.toFixed(0)}/MWh`}
-                  style={{
-                    width: 32, height: 48, borderRadius: 6,
-                    background: actionColor(h.battery_action),
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    justifyContent: "center", cursor: "default"
-                  }}>
-                  <div style={{ fontSize: 8, color: "#fff", fontWeight: 700 }}>{actionLabel(h.battery_action)}</div>
-                  <div style={{ fontSize: 8, color: "#ffffff88", marginTop: 2 }}>{h.hour.slice(0, 2)}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12, color: "var(--sub)" }}>
-              <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#10b981", borderRadius: 2, marginRight: 4 }} />Charge</span>
-              <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#f59e0b", borderRadius: 2, marginRight: 4 }} />Discharge</span>
-              <span><span style={{ display: "inline-block", width: 10, height: 10, background: "#374151", borderRadius: 2, marginRight: 4 }} />Idle</span>
-            </div>
-          </div>
-        </>
-      ) : null}
+      {/* ── Weather Widgets Row ── */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--sub)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+          Current Conditions
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <WeatherWidget
+            icon="🌡️" label="Temperature"
+            value={now.temp} unit="°C"
+            trend={`${Math.abs((now.temp - prev.temp) || 0).toFixed(1)}°C`}
+            trendDir={now.temp > prev.temp ? 'up' : 'down'}
+            color="#f97316"
+          />
+          <WeatherWidget
+            icon="💧" label="Humidity"
+            value={now.humidity} unit="%"
+            trend={now.humidity > 70 ? 'High' : now.humidity < 40 ? 'Low' : 'Normal'}
+            trendDir={now.humidity > 70 ? 'up' : 'down'}
+            color="#38bdf8"
+          />
+          <WeatherWidget
+            icon="☁️" label="Cloud Cover"
+            value={now.cloudCover} unit="%"
+            trend={now.cloudCover > 60 ? 'Heavy cover' : now.cloudCover > 30 ? 'Partly cloudy' : 'Clear'}
+            trendDir={now.cloudCover > 60 ? 'up' : 'neutral'}
+            color={now.cloudCover > 60 ? '#94a3b8' : '#fbbf24'}
+          />
+          <WeatherWidget
+            icon="🔆" label="UV Index"
+            value={now.uvIndex} unit=""
+            trend={now.uvIndex >= 7 ? 'Very High' : now.uvIndex >= 4 ? 'Moderate' : 'Low'}
+            trendDir={now.uvIndex >= 7 ? 'up' : 'neutral'}
+            color="#a78bfa"
+          />
+          <WeatherWidget
+            icon="💨" label="Wind Speed"
+            value={now.wind} unit="m/s"
+            trend={`${now.windDir || 'NW'} direction`}
+            trendDir="neutral"
+            color="#34d399"
+          />
+        </div>
+      </div>
+
+      {/* ── AI Panel + BESS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 16 }}>
+        <AIPredictionPanel data={data} />
+        <BessTimeline />
+      </div>
+
+      {/* ── Charts Grid ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+        {/* Solar Irradiance */}
+        <ChartCard title="Solar Irradiance" icon="☀️" height={220}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="solarGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+              <XAxis dataKey="time" tick={{ fontSize: 10, fill: axisColor }} tickFormatter={tickFormatter} />
+              <YAxis tick={{ fontSize: 10, fill: axisColor }} unit=" W" />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="solar" name="Solar" stroke="#f59e0b" strokeWidth={2} fill="url(#solarGrad)" unit=" W/m²" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Day-Ahead Price */}
+        <ChartCard title="Day-Ahead Price" icon="📈" height={220}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#a855f7" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+              <XAxis dataKey="time" tick={{ fontSize: 10, fill: axisColor }} tickFormatter={tickFormatter} />
+              <YAxis tick={{ fontSize: 10, fill: axisColor }} unit="€" />
+              <Tooltip content={<CustomTooltip />} />
+              <ReferenceLine y={50} stroke="#ef4444" strokeDasharray="4 4" label={{ value: 'Peak', fill: '#ef4444', fontSize: 10 }} />
+              <Bar dataKey="price" name="Price" fill="url(#priceGrad)" stroke="#a855f7" strokeWidth={1} unit=" €/MWh" radius={[2,2,0,0]} />
+              <Line type="monotone" dataKey="price" name="Trend" stroke="#a855f7" strokeWidth={2} dot={false} unit=" €/MWh" />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Wind Speed */}
+        <ChartCard title="Wind Speed" icon="💨" height={220}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="windGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+              <XAxis dataKey="time" tick={{ fontSize: 10, fill: axisColor }} tickFormatter={tickFormatter} />
+              <YAxis tick={{ fontSize: 10, fill: axisColor }} unit=" m/s" />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="wind" name="Wind" stroke="#38bdf8" strokeWidth={2} fill="url(#windGrad)" unit=" m/s" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        {/* Load Forecast */}
+        <ChartCard title="Load Forecast" icon="⚡" height={220}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="loadGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+              <XAxis dataKey="time" tick={{ fontSize: 10, fill: axisColor }} tickFormatter={tickFormatter} />
+              <YAxis tick={{ fontSize: 10, fill: axisColor }} unit=" MW" />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="load" name="Load" stroke="#10b981" strokeWidth={2} fill="url(#loadGrad)" unit=" MW" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+      </div>
+
+      {/* ── Combined Overview ── */}
+      <ChartCard title="Combined 24h Overview" icon="📊" height={260}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 4, right: 16, left: -10, bottom: 0 }}>
+            <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
+            <XAxis dataKey="time" tick={{ fontSize: 10, fill: axisColor }} tickFormatter={tickFormatter} />
+            <YAxis yAxisId="left" tick={{ fontSize: 10, fill: axisColor }} />
+            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: axisColor }} unit="€" />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend wrapperStyle={{ fontSize: 11, color: axisColor }} />
+            <Area yAxisId="left" type="monotone" dataKey="solar" name="Solar (W/m²)" stroke="#f59e0b" fill="#f59e0b22" strokeWidth={2} dot={false} />
+            <Area yAxisId="left" type="monotone" dataKey="wind" name="Wind (m/s)" stroke="#38bdf8" fill="#38bdf822" strokeWidth={2} dot={false} />
+            <Line yAxisId="right" type="monotone" dataKey="price" name="Price (€/MWh)" stroke="#a855f7" strokeWidth={2} dot={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
     </div>
   );
 }
