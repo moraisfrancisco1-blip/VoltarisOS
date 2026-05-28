@@ -1,46 +1,64 @@
 import { useState } from "react"
-import EnergyDashboard from "./modules/energy-dashboard/EnergyDashboard"
-import "./modules/energy-dashboard/energy-dashboard.css"
-import Sites from "./pages/Sites.jsx"
 import Login from "./pages/Login"
+import Sidebar from "./components/Sidebar"
+import Dashboard from "./pages/Dashboard"
+import Sites from "./pages/Sites"
+import FleetManagement from "./pages/FleetManagement"
+import TradingDashboard from "./pages/TradingDashboard"
+import BatteryManagement from "./pages/BatteryManagement"
+import EVCharging from "./pages/EVCharging"
+import GridServices from "./pages/GridServices"
+import ForecastingDashboard from "./pages/ForecastingDashboard"
+import MapView from "./pages/MapView"
+import AlertsNotifications from "./pages/AlertsNotifications"
+import ReportsAnalytics from "./pages/ReportsAnalytics"
+import UserManagement from "./pages/UserManagement"
+import InvestorView from "./pages/InvestorView"
+import Settings from "./pages/Settings"
+import "./index.css"
 
-function App() {
+const PAGES = {
+  dashboard: Dashboard,
+  fleet: FleetManagement,
+  trading: TradingDashboard,
+  battery: BatteryManagement,
+  ev: EVCharging,
+  grid: GridServices,
+  forecasting: ForecastingDashboard,
+  map: MapView,
+  alerts: AlertsNotifications,
+  reports: ReportsAnalytics,
+  users: UserManagement,
+  investor: InvestorView,
+  settings: Settings,
+  sites: Sites,
+}
+
+export default function App() {
   const [page, setPage] = useState("dashboard")
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token")
     const company = localStorage.getItem("company")
     const color = localStorage.getItem("color")
-    return token ? { token, company, color } : null
+    const role = localStorage.getItem("role") || "admin"
+    return token ? { token, company, color, role } : null
   })
 
-  if (!user) return <Login onLogin={setUser} />
+  if (!user) return <Login onLogin={(u) => {
+    localStorage.setItem("role", u.role || "admin")
+    setUser({ ...u, role: u.role || "admin" })
+  }} />
+
+  const PageComponent = PAGES[page] || Dashboard
 
   return (
-    <div>
-      <nav style={{
-        background: "#0a0f1a", padding: "10px 20px",
-        display: "flex", gap: "16px", alignItems: "center",
-        borderBottom: `2px solid ${user.color}`
-      }}>
-        <span style={{ color: user.color, fontWeight: "bold", marginRight: "16px" }}>
-          ⚡ {user.company}
-        </span>
-        <button onClick={() => setPage("dashboard")}
-          style={{ color: page === "dashboard" ? user.color : "white", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
-          Dashboard
-        </button>
-        <button onClick={() => setPage("sites")}
-          style={{ color: page === "sites" ? user.color : "white", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
-          🗺️ Sites
-        </button>
-        <button onClick={() => { localStorage.clear(); setUser(null) }}
-          style={{ marginLeft: "auto", color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
-          Sair
-        </button>
-      </nav>
-      {page === "dashboard" ? <EnergyDashboard /> : <Sites />}
+    <div style={{ display: "flex", minHeight: "100vh", background: "#0a0f1a", color: "white" }}>
+      <Sidebar page={page} setPage={setPage} user={user} onLogout={() => {
+        localStorage.clear(); setUser(null)
+      }} />
+      <main style={{ flex: 1, overflow: "auto" }}>
+        <PageComponent user={user} />
+      </main>
     </div>
   )
 }
-
-export default App

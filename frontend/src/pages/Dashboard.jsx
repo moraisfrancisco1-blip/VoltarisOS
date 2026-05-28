@@ -1,63 +1,76 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import EnergyChart from "../modules/energy-dashboard/EnergyChart"
-import ProfitChart from "../modules/energy-dashboard/ProfitChart"
-import BatteryStatus from "../modules/energy-dashboard/BatteryStatus"
-import EnergyFlow from "../modules/energy-dashboard/EnergyFlow"
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts"
 
-export default function Dashboard() {
-  const [data, setData] = useState([])
-  const [soc, setSoc] = useState(0)
-  const [solar, setSolar] = useState(0)
-  const [grid, setGrid] = useState(0)
-  const [load, setLoad] = useState(0)
+const KPI = ({ label, value, unit, color, icon }) => (
+  <div style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
+    <div style={{ color: "#6b7280", fontSize: "12px", textTransform: "uppercase", letterSpacing: "1px" }}>{icon} {label}</div>
+    <div style={{ fontSize: "28px", fontWeight: "bold", color: color || "white", marginTop: "8px" }}>{value}</div>
+    <div style={{ color: "#6b7280", fontSize: "12px" }}>{unit}</div>
+  </div>
+)
 
-  const totalProfit = data.reduce((acc, d) => acc + d.profit, 0).toFixed(2)
+export default function Dashboard({ user }) {
+  const [simulation, setSimulation] = useState(null)
+  const [decision, setDecision] = useState(null)
+  const color = user?.color || "#4ade80"
 
   useEffect(() => {
-    axios.get("/simulation")
-      .then(res => {
-        const timeseries = res.data.timeseries.map((d, i) => ({
-          hour: i,
-          solar: res.data.solar[i],
-          load: res.data.load[i],
-          grid: res.data.grid[i],
-          soc: res.data.soc[i],
-          profit: res.data.profit ? res.data.profit[i] : 0
-        }))
-        setData(timeseries)
-        setSoc(res.data.soc[0])
-        setSolar(res.data.solar[0])
-        setGrid(res.data.grid[0])
-        setLoad(res.data.load[0])
-      })
-      .catch(err => console.error("API error:", err))
+    axios.get("/simulation").then(r => setSimulation(r.data)).catch(() => {})
+    axios.get("/ai_decision?price=75&battery=0.5").then(r => setDecision(r.data.decision)).catch(() => {})
   }, [])
 
+  const chartData = simulation?.timeseries?.map((t, i) => ({
+    time: `${i}h`,
+    solar: simulation.solar?.[i] || 0,
+    load: simulation.load?.[i] || 0,
+    grid: simulation.grid?.[i] || 0,
+    battery: (simulation.battery?.[i] || 0) * 100,
+  })) || []
+
   return (
-    <div className="p-10 bg-gray-900 min-h-screen text-white">
-      <h1 className="text-3xl mb-6">⚡ Energy Optimization Platform</h1>
-
-      <EnergyFlow
-        solar={solar}
-        battery={soc}
-        grid={grid}
-        demand={load}
-      />
-
-      <div className="mt-8">
-        <BatteryStatus soc={soc} />
+    <div style={{ padding: "24px" }}>
+      <div style={{ marginBottom: "24px" }}>
+        <h1 style={{ fontSize: "24px", fontWeight: "bold" }}>⚡ Dashboard</h1>
+        <p style={{ color: "#6b7280", fontSize: "14px" }}>Overview em tempo real — {new Date().toLocaleDateString("pt-PT", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
       </div>
 
-      <div className="mt-10">
-        <h2>Energy Overview</h2>
-        <EnergyChart data={data} />
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+        <KPI icon="☀️" label="Solar" value={simulation ? (simulation.solar?.[0] || 0).toFixed(1) : "—"} unit="kW atual" color={color} />
+        <KPI icon="🔋" label="Bateria" value={simulation ? ((simulation.battery?.[0] || 0) * 100).toFixed(0) : "—"} unit="% SoC" color="#60a5fa" />
+        <KPI icon="🔌" label="Rede" value={simulation ? (simulation.grid?.[0] || 0).toFixed(1) : "—"} unit="kW" color="#f59e0b" />
+        <KPI icon="🏠" label="Consumo" value={simulation ? (simulation.load?.[0] || 0).toFixed(1) : "—"} unit="kW" color="#a78bfa" />
+        <KPI icon="🤖" label="AI Decision" value={decision || "—"} unit="recomendação" color={decision === "charge" ? "#4ade80" : decision === "discharge" ? "#f87171" : "#f59e0b"} />
+        <KPI icon="💶" label="Preço" value="74.2" unit="€/MWh" color="#34d399" />
       </div>
 
-      <div className="mt-10">
-        <h2>Profit (€)</h2>
-        <h2>💰 Savings Today: €{totalProfit}</h2>
-        <ProfitChart data={data} />
+      {/* Charts */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+        <div style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
+          <h3 style={{ marginBottom: "16px", color: "#d1d5db" }}>Produção Solar vs Consumo</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={chartData}>
+              <XAxis dataKey="time" stroke="#374151" tick={{ fill: "#6b7280", fontSize: 11 }} />
+              <YAxis stroke="#374151" tick={{ fill: "#6b7280", fontSize: 11 }} />
+              <Tooltip contentStyle={{ background: "#1f2937", border: "none", borderRadius: "8px" }} />
+              <Area type="monotone" dataKey="solar" stroke={color} fill={color + "22"} name="Solar (kW)" />
+              <Area type="monotone" dataKey="load" stroke="#a78bfa" fill="#a78bfa22" name="Consumo (kW)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div style={{ background: "#111827", borderRadius: "12px", padding: "20px", border: "1px solid #1f2937" }}>
+          <h3 style={{ marginBottom: "16px", color: "#d1d5db" }}>Estado da Bateria (SoC %)</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={chartData}>
+              <XAxis dataKey="time" stroke="#374151" tick={{ fill: "#6b7280", fontSize: 11 }} />
+              <YAxis domain={[0, 100]} stroke="#374151" tick={{ fill: "#6b7280", fontSize: 11 }} />
+              <Tooltip contentStyle={{ background: "#1f2937", border: "none", borderRadius: "8px" }} />
+              <Line type="monotone" dataKey="battery" stroke="#60a5fa" dot={false} name="SoC %" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   )
