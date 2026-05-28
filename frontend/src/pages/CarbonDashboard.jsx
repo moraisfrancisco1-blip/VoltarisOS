@@ -1,190 +1,245 @@
-import { useEffect, useState } from "react"
-import axios from "axios"
+import { useState, useEffect } from "react";
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, RadialBarChart, RadialBar
-} from "recharts"
+  AreaChart, Area, BarChart, Bar, ComposedChart, Line,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie, RadarChart, Radar, PolarGrid, PolarAngleAxis
+} from "recharts";
 
-const CT = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
+const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
+const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
+
+const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 };
+const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
+
+const CustomTooltip = ({ active, payload, label: lb }) => {
+  if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 14px", fontSize: "12px" }}>
-      <div style={{ color: "var(--sub)", marginBottom: "6px" }}>{label}</div>
-      {payload.map(p => (
-        <div key={p.dataKey} style={{ color: p.color, display: "flex", gap: "8px" }}>
-          <span>{p.name}</span><span style={{ color: "white", fontWeight: "600" }}>{p.value}</span>
-        </div>
-      ))}
+    <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+      {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
-  )
-}
+  );
+};
 
-const ScoreBadge = ({ score }) => {
-  const colors = { "A+": "#4ade80", A: "#86efac", B: "#fbbf24", C: "#f97316", D: "#f87171" }
-  const c = colors[score] || "#6b7280"
-  return (
-    <div style={{
-      width: "44px", height: "44px", borderRadius: "10px",
-      background: c + "22", border: `2px solid ${c}`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontWeight: "900", fontSize: "16px", color: c
-    }}>{score}</div>
-  )
-}
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const genMonthly = () => MONTHS.map(m => ({
+  m,
+  avoided: rand(80, 220, 0),
+  scope1: rand(2, 12, 1),
+  scope2: rand(5, 25, 1),
+  scope3: rand(10, 40, 1),
+  credits: rand(0, 50, 0),
+}));
 
-export default function CarbonDashboard({ user }) {
-  const [data, setData] = useState(null)
-  const color = user?.color || "#4ade80"
+const SITES_CO2 = [
+  { name: "Herdade Solar Norte", avoided: 142, scope1: 3.2, scope2: 11.4, scope3: 18.0, credits: 12 },
+  { name: "Parque BESS Sul", avoided: 98, scope1: 1.8, scope2: 8.6, scope3: 22.4, credits: 8 },
+  { name: "Complexo Híbrido Évora", avoided: 218, scope1: 4.1, scope2: 14.2, scope3: 31.0, credits: 24 },
+  { name: "Mini-Grid Alentejo", avoided: 54, scope1: 0.9, scope2: 4.8, scope3: 9.2, credits: 5 },
+  { name: "Parque Algarve", avoided: 176, scope1: 2.6, scope2: 12.0, scope3: 25.5, credits: 18 },
+];
+
+const CREDITS = [
+  { id: "VCU-2024-001", type: "Solar Generation", qty: 120, price: 28.4, status: "verified", value: 3408 },
+  { id: "VCU-2024-002", type: "BESS Arbitrage", qty: 45, price: 31.2, status: "pending", value: 1404 },
+  { id: "VCU-2024-003", type: "Grid Avoided", qty: 88, price: 26.8, status: "verified", value: 2358 },
+  { id: "VCU-2024-004", type: "EV Displacement", qty: 34, price: 29.5, status: "retired", value: 1003 },
+];
+
+export default function CarbonDashboard() {
+  const [monthly] = useState(genMonthly());
+  const [metrics, setMetrics] = useState({ avoided: 688, scope1: 12.6, scope2: 51.0, scope3: 106.1, credits: 67, creditValue: 8173 });
+  const [gridIntensity, setGridIntensity] = useState(210);
 
   useEffect(() => {
-    axios.get("/api/carbon/overview").then(r => setData(r.data)).catch(() => {
-      setData({
-        co2_today_kg: 430.5, co2_month_kg: 9471, co2_year_kg: 18420,
-        solar_today_kwh: 1847, certificates_month: 12.4, certificates_year: 28.6,
-        trees_equivalent: 877, car_km_avoided: 153500, flights_avoided: 72.2,
-        monthly: [
-          { month: "Jan", co2_avoided: 4200, kwh: 18000, certificates: 18 },
-          { month: "Fev", co2_avoided: 5100, kwh: 21900, certificates: 21.9 },
-          { month: "Mar", co2_avoided: 6800, kwh: 29200, certificates: 29.2 },
-          { month: "Abr", co2_avoided: 7400, kwh: 31800, certificates: 31.8 },
-          { month: "Mai", co2_avoided: 8200, kwh: 35200, certificates: 35.2 },
-        ],
-        sites: [
-          { name: "Rotterdam", score: "A+", co2_avoided_kg: 279.8, performance_ratio: 91.2, certificates: 8.2 },
-          { name: "Rebordelo", score: "A", co2_avoided_kg: 150.7, performance_ratio: 87.4, certificates: 4.2 }
-        ]
-      })
-    })
-  }, [])
+    const t = setInterval(() => {
+      setMetrics(m => ({
+        avoided: parseFloat((m.avoided + rand(-2, 3)).toFixed(1)),
+        scope1: parseFloat((m.scope1 + rand(-0.1, 0.1)).toFixed(1)),
+        scope2: parseFloat((m.scope2 + rand(-0.2, 0.2)).toFixed(1)),
+        scope3: parseFloat((m.scope3 + rand(-0.3, 0.3)).toFixed(1)),
+        credits: m.credits,
+        creditValue: Math.round(m.creditValue + rand(-20, 30)),
+      }));
+      setGridIntensity(v => Math.round(Math.max(100, Math.min(350, v + rand(-5, 5)))));
+    }, 3000);
+    return () => clearInterval(t);
+  }, []);
 
-  if (!data) return <div style={{ padding: "28px", color: "var(--sub)" }}>A carregar dados de carbono...</div>
+  const scopeData = [
+    { name: "Scope 1", value: metrics.scope1, fill: green, desc: "Direct emissions" },
+    { name: "Scope 2", value: metrics.scope2, fill: blue, desc: "Purchased energy" },
+    { name: "Scope 3", value: metrics.scope3, fill: purple, desc: "Value chain" },
+  ];
 
-  const equivalences = [
-    { icon: "🌳", label: "Árvores equivalentes", value: data.trees_equivalent.toLocaleString(), sub: "este ano" },
-    { icon: "🚗", label: "Km de carro evitados", value: data.car_km_avoided.toLocaleString(), sub: "este ano" },
-    { icon: "✈️", label: "Voos evitados", value: data.flights_avoided.toFixed(1), sub: "Lisboa → NYC" },
-    { icon: "📜", label: "Certificados GdO", value: data.certificates_year.toFixed(1) + " MWh", sub: "este ano" },
-  ]
+  const radarData = SITES_CO2.map(s => ({ site: s.name.split(" ")[0], avoided: s.avoided, scope1: s.scope1 * 10, credits: s.credits * 3 }));
 
   return (
-    <div style={{ padding: "28px", maxWidth: "1400px" }}>
-      {/* Header */}
-      <div style={{ marginBottom: "28px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "#14532d33", border: "1px solid #14532d", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round">
-              <path d="M2 22a8 8 0 0 1 8-8 8 8 0 0 0 8-8 8 8 0 0 1 8 8 8 8 0 0 0-8 8 8 8 0 0 1-8-8 8 8 0 0 0-8 8z"/>
-            </svg>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Carbon Dashboard</h1>
+          <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Emissions tracking · Carbon credits · Scope 1/2/3</div>
+        </div>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ fontSize: 12, color: "var(--sub)" }}>Grid intensity:</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: gridIntensity < 150 ? green : gridIntensity < 250 ? amber : red }}>
+            {gridIntensity} gCO₂/kWh
           </div>
-          <div>
-            <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Carbon Intelligence</h1>
-            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Impacto ambiental em tempo real · Garantias de Origem</p>
+          <div style={{ fontSize: 10, padding: "3px 8px", borderRadius: 12, background: "var(--surface2)", color: "var(--sub)", border: "1px solid var(--border)" }}>
+            {gridIntensity < 150 ? "Very Clean" : gridIntensity < 250 ? "Moderate" : "High Carbon"}
           </div>
         </div>
       </div>
 
-      {/* Top KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "20px" }}>
+      {/* KPI row */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
         {[
-          { label: "CO₂ Evitado Hoje", value: data.co2_today_kg.toFixed(1), unit: "kg", color: "#4ade80", icon: "📉" },
-          { label: "CO₂ Evitado Mês", value: (data.co2_month_kg / 1000).toFixed(2), unit: "ton", color: "#34d399", icon: "📊" },
-          { label: "CO₂ Evitado Ano", value: (data.co2_year_kg / 1000).toFixed(1), unit: "ton", color: "#6ee7b7", icon: "🌍" },
-          { label: "Produção Solar Hoje", value: data.solar_today_kwh.toLocaleString(), unit: "kWh", color: "#f59e0b", icon: "☀️" },
-        ].map((k, i) => (
-          <div key={i} style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)", position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: k.color + "15", filter: "blur(20px)" }} />
-            <div style={{ color: "var(--sub)", fontSize: "11px", textTransform: "uppercase", letterSpacing: "1px" }}>{k.icon} {k.label}</div>
-            <div style={{ fontSize: "30px", fontWeight: "800", color: k.color, marginTop: "8px", lineHeight: 1 }}>
-              {k.value}<span style={{ fontSize: "14px", color: "var(--sub)", marginLeft: "4px" }}>{k.unit}</span>
-            </div>
+          { label: "CO₂ Avoided YTD", value: `${metrics.avoided} t`, color: green },
+          { label: "Scope 1 Emissions", value: `${metrics.scope1} t`, color: green },
+          { label: "Scope 2 Emissions", value: `${metrics.scope2} t`, color: blue },
+          { label: "Scope 3 Emissions", value: `${metrics.scope3} t`, color: purple },
+          { label: "Carbon Credits", value: `${metrics.credits} tCO₂e`, color: amber },
+        ].map(k => (
+          <div key={k.label} style={card}>
+            <div style={label}>{k.label}</div>
+            <div style={{ ...val, color: k.color }}>{k.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Main grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-        {/* Monthly CO₂ chart */}
-        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>CO₂ Evitado por Mês</div>
-          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>kg · acumulado 2025</div>
+      {/* Monthly trend + scope breakdown */}
+      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 12 }}>Monthly CO₂ Avoided vs Emissions</div>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={data.monthly} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-              <XAxis dataKey="month" stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 11 }} />
-              <YAxis stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 10 }} />
-              <Tooltip content={<CT />} />
-              <Bar dataKey="co2_avoided" name="CO₂ (kg)" fill="#4ade80" fillOpacity={0.85} radius={[4, 4, 0, 0]} />
-            </BarChart>
+            <ComposedChart data={monthly} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+              <XAxis dataKey="m" tick={{ fontSize: 10, fill: "var(--sub)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--sub)" }} unit=" t" />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="avoided" fill={green} fillOpacity={0.8} name="CO₂ Avoided" radius={[4,4,0,0]} />
+              <Line type="monotone" dataKey="scope1" stroke={red} strokeWidth={2} dot={false} name="Scope 1" />
+              <Line type="monotone" dataKey="scope2" stroke={blue} strokeWidth={2} dot={false} name="Scope 2" />
+              <Line type="monotone" dataKey="scope3" stroke={purple} strokeWidth={2} dot={false} name="Scope 3" />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Certificates */}
-        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>Garantias de Origem (GdO)</div>
-          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>MWh certificados · 2025</div>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={data.monthly} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="gCert" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="month" stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 11 }} />
-              <YAxis stroke="var(--grid-line)" tick={{ fill: "#374151", fontSize: 10 }} />
-              <Tooltip content={<CT />} />
-              <Area type="monotone" dataKey="certificates" name="GdO (MWh)" stroke="#f59e0b" strokeWidth={2} fill="url(#gCert)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Bottom row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-        {/* Equivalences */}
-        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "16px" }}>Equivalências de Impacto</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            {equivalences.map((e, i) => (
-              <div key={i} style={{ background: "var(--surface2)", borderRadius: "10px", padding: "14px", border: "1px solid var(--border)" }}>
-                <div style={{ fontSize: "24px" }}>{e.icon}</div>
-                <div style={{ fontWeight: "800", fontSize: "20px", color: "#4ade80", marginTop: "6px" }}>{e.value}</div>
-                <div style={{ color: "var(--sub)", fontSize: "11px", marginTop: "2px" }}>{e.label}</div>
-                <div style={{ color: "#374151", fontSize: "10px" }}>{e.sub}</div>
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 12 }}>Scope Breakdown</div>
+          <PieChart width={140} height={140} style={{ margin: "0 auto", display: "block" }}>
+            <Pie data={scopeData} cx={65} cy={65} innerRadius={38} outerRadius={60} dataKey="value" paddingAngle={3}>
+              {scopeData.map((s, i) => <Cell key={i} fill={s.fill} />)}
+            </Pie>
+          </PieChart>
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
+            {scopeData.map(s => (
+              <div key={s.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.fill }} />
+                  <span style={{ fontSize: 12, color: "var(--sub)" }}>{s.name}</span>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{s.value} t</div>
+                  <div style={{ fontSize: 9, color: "var(--sub)" }}>{s.desc}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
+      </div>
 
-        {/* Site scores */}
-        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid var(--border)" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>Carbon Score por Site</div>
-          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>Classificação EU Taxonomy</div>
-          {data.sites.map((s, i) => (
-            <div key={i} style={{ background: "var(--surface2)", borderRadius: "10px", padding: "16px", border: "1px solid var(--border)", marginBottom: "10px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                <ScoreBadge score={s.score} />
-                <div>
-                  <div style={{ fontWeight: "600", fontSize: "14px" }}>{s.name}</div>
-                  <div style={{ color: "var(--sub)", fontSize: "11px" }}>Performance Ratio: {s.performance_ratio}%</div>
-                </div>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                <div>
-                  <div style={{ color: "#374151", fontSize: "10px" }}>CO₂ Evitado Hoje</div>
-                  <div style={{ color: "#4ade80", fontWeight: "700", fontSize: "14px" }}>{s.co2_avoided_kg.toFixed(1)} kg</div>
-                </div>
-                <div>
-                  <div style={{ color: "#374151", fontSize: "10px" }}>Certificados Mês</div>
-                  <div style={{ color: "#f59e0b", fontWeight: "700", fontSize: "14px" }}>{s.certificates.toFixed(1)} MWh</div>
-                </div>
-              </div>
+      {/* Per-site CO2 breakdown */}
+      <div style={card}>
+        <div style={{ ...label, marginBottom: 12 }}>Per-Site CO₂ Avoided vs Emissions</div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={SITES_CO2} margin={{ left: -10, right: 10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+            <XAxis dataKey="name" tick={{ fontSize: 9, fill: "var(--sub)" }} tickFormatter={v => v.split(" ").slice(-1)[0]} />
+            <YAxis tick={{ fontSize: 10, fill: "var(--sub)" }} unit=" t" />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="avoided" fill={green} fillOpacity={0.8} name="CO₂ Avoided" radius={[4,4,0,0]} />
+            <Bar dataKey="scope1" fill={red} fillOpacity={0.6} name="Scope 1" radius={[4,4,0,0]} />
+            <Bar dataKey="scope2" fill={blue} fillOpacity={0.6} name="Scope 2" radius={[4,4,0,0]} />
+            <Bar dataKey="scope3" fill={purple} fillOpacity={0.6} name="Scope 3" radius={[4,4,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Avoided vs grid + Carbon credit tracker */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {/* Monthly credits */}
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 12 }}>Carbon Credits Generated (Monthly)</div>
+          <ResponsiveContainer width="100%" height={170}>
+            <BarChart data={monthly} margin={{ left: -10, right: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+              <XAxis dataKey="m" tick={{ fontSize: 10, fill: "var(--sub)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--sub)" }} unit=" t" />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="credits" fill={amber} fillOpacity={0.85} name="Credits" radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Credit registry */}
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 10 }}>Carbon Credit Registry</div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: "var(--sub)" }}>Total Portfolio Value</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: green }}>€{metrics.creditValue.toLocaleString()}</div>
             </div>
-          ))}
-          <div style={{ marginTop: "12px", padding: "10px 14px", background: "#0a2a1a", borderRadius: "8px", border: "1px solid #14532d", fontSize: "12px", color: "#4ade80" }}>
-            ✓ Conforme EU Taxonomy · Elegível para financiamento verde
+            <button style={{ padding: "6px 14px", background: "#10b98120", border: "1px solid #10b981", borderRadius: 8, color: green, fontSize: 12, cursor: "pointer" }}>
+              Export to Registry
+            </button>
           </div>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                {["ID", "Type", "Qty (tCO₂e)", "Price", "Status"].map(h => (
+                  <th key={h} style={{ textAlign: "left", padding: "4px 6px", fontSize: 10, color: "var(--sub)", fontWeight: 600 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {CREDITS.map(c => (
+                <tr key={c.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                  <td style={{ padding: "6px", fontSize: 11, color: accent }}>{c.id}</td>
+                  <td style={{ padding: "6px", fontSize: 11, color: "var(--text)" }}>{c.type}</td>
+                  <td style={{ padding: "6px", fontSize: 11, color: "var(--text)" }}>{c.qty}</td>
+                  <td style={{ padding: "6px", fontSize: 11, color: amber }}>€{c.price}</td>
+                  <td style={{ padding: "6px" }}>
+                    <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 8,
+                      background: c.status === "verified" ? "#10b98120" : c.status === "pending" ? "#f59e0b20" : "#6366f120",
+                      color: c.status === "verified" ? green : c.status === "pending" ? amber : accent }}>
+                      {c.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      {/* Avoided emissions vs grid equivalent */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+        {[
+          { label: "Equivalent Cars Off Road", value: Math.round(metrics.avoided / 0.12) + " cars/year", color: green, icon: "🚗" },
+          { label: "Equivalent Trees Planted", value: Math.round(metrics.avoided * 40) + " trees", color: green, icon: "🌳" },
+          { label: "Grid Displacement (kWh)", value: Math.round(metrics.avoided / 0.00021).toLocaleString() + " kWh", color: blue, icon: "⚡" },
+        ].map(k => (
+          <div key={k.label} style={{ ...card, textAlign: "center" }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{k.icon}</div>
+            <div style={label}>{k.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: k.color }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
     </div>
-  )
+  );
 }

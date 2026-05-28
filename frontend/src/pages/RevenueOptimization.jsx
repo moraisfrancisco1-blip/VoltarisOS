@@ -1,313 +1,235 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react";
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, ReferenceLine,
-  AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, Radar
-} from "recharts"
-import { useAppStore } from "../store/appStore"
+  AreaChart, Area, BarChart, Bar, ComposedChart, Line,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
+} from "recharts";
 
-function rand(min, max, dec = 1) { return +(Math.random() * (max - min) + min).toFixed(dec) }
+const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
+const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
-function generateScenarios() {
-  return Array.from({ length: 24 }, (_, i) => {
-    const h = i
-    const solarPeak = h >= 9 && h <= 16
-    const peakHour = h >= 17 && h <= 21
-    const solar = solarPeak ? rand(80, 280) : rand(0, 20)
-    const price = 35 + Math.sin(i / 3) * 28 + rand(-5, 5)
-    const baseRevenue = price * 0.4
-    const optimizedRevenue = baseRevenue * rand(1.15, 1.45)
-    const bessOpportunity = peakHour ? rand(60, 180) : rand(0, 40)
-    return {
-      hour: `${String(h).padStart(2, "0")}:00`,
-      h,
-      price: +price.toFixed(2),
-      solar,
-      baseRevenue: +baseRevenue.toFixed(1),
-      optimizedRevenue: +optimizedRevenue.toFixed(1),
-      bessOpportunity: +bessOpportunity.toFixed(1),
-      gridExport: solarPeak ? rand(20, 100) : 0,
-    }
-  })
-}
+const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 };
+const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
-const RECOMMENDATIONS = [
-  {
-    id: 1,
-    type: "bess",
-    priority: "critical",
-    title: "rec_bess_discharge_title",
-    desc: "rec_bess_discharge_desc",
-    gain: "+€318",
-    window: "17:00–20:00",
-    confidence: 94,
-    action: "rec_action_schedule",
-  },
-  {
-    id: 2,
-    type: "solar",
-    priority: "high",
-    title: "rec_solar_curtail_title",
-    desc: "rec_solar_curtail_desc",
-    gain: "+€142",
-    window: "12:00–14:00",
-    confidence: 87,
-    action: "rec_action_optimize",
-  },
-  {
-    id: 3,
-    type: "fcr",
-    priority: "high",
-    title: "rec_fcr_title",
-    desc: "rec_fcr_desc",
-    gain: "+€210",
-    window: "09:00–17:00",
-    confidence: 81,
-    action: "rec_action_activate",
-  },
-  {
-    id: 4,
-    type: "ev",
-    priority: "medium",
-    title: "rec_ev_shift_title",
-    desc: "rec_ev_shift_desc",
-    gain: "+€64",
-    window: "02:00–06:00",
-    confidence: 76,
-    action: "rec_action_configure",
-  },
-  {
-    id: 5,
-    type: "trading",
-    priority: "medium",
-    title: "rec_da_buy_title",
-    desc: "rec_da_buy_desc",
-    gain: "+€88",
-    window: "Tomorrow 03:00–07:00",
-    confidence: 71,
-    action: "rec_action_trade",
-  },
-]
+const CustomTooltip = ({ active, payload, label: lb }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+      {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
+    </div>
+  );
+};
+
+const genForecast = () => Array.from({ length: 24 }, (_, i) => ({
+  h: `${i}h`,
+  price: rand(40, 120),
+  forecast: rand(38, 125),
+  lower: rand(30, 70),
+  upper: rand(80, 140),
+  solar: i >= 7 && i <= 19 ? rand(0, 8) : 0,
+  dispatch: rand(0, 4),
+}));
 
 const SCENARIOS = [
-  { name: "sc_base",    revenue: 842,  co2: 1.2, cycles: 1.0, label: "#6b7280" },
-  { name: "sc_ai",      revenue: 1284, co2: 0.8, cycles: 1.2, label: "#6366f1" },
-  { name: "sc_max",     revenue: 1508, co2: 0.6, cycles: 1.8, label: "#10b981" },
-]
+  { name: "Conservative", revenue: 4200, arbitrage: 820, fcr: 340, risk: "Low", color: blue },
+  { name: "Balanced", revenue: 5840, arbitrage: 1420, fcr: 580, risk: "Medium", color: green },
+  { name: "Aggressive", revenue: 7200, arbitrage: 2100, fcr: 840, risk: "High", color: amber },
+  { name: "Solar Priority", revenue: 4900, arbitrage: 600, fcr: 280, risk: "Low", color: purple },
+];
 
-const priorityColor = { critical: "#f87171", high: "#f59e0b", medium: "#60a5fa" }
-const priorityBg    = { critical: "#f8717118", high: "#f59e0b18", medium: "#60a5fa18" }
-const typeIcon = { bess: "⚡", solar: "☀️", fcr: "🔁", ev: "🔌", trading: "📈" }
-
-const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div style={{
-      background: "var(--tooltip-bg)", border: "1px solid var(--border-strong)",
-      borderRadius: 12, padding: "12px 16px", fontSize: 12,
-      backdropFilter: "blur(20px)", boxShadow: "0 16px 48px rgba(0,0,0,0.4)",
-    }}>
-      <div style={{ color: "var(--sub)", marginBottom: 8, fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>{label}</div>
-      {payload.map(p => (
-        <div key={p.dataKey} style={{ display: "flex", justifyContent: "space-between", gap: 20, marginBottom: 4 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: p.color }} />
-            <span style={{ color: "var(--sub)", fontSize: 11 }}>{p.name}</span>
-          </div>
-          <span style={{ color: "var(--text)", fontWeight: 700 }}>{typeof p.value === "number" ? p.value.toFixed(1) : p.value}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
+const AI_DISPATCH = [
+  { time: "14:00–16:00", action: "Charge BESS", site: "All Sites", volume: "8.4 MWh", reason: "Low price window (€42/MWh)", confidence: 94, revenue: "+€340" },
+  { time: "17:00–19:00", action: "Discharge BESS", site: "Herdade Norte", volume: "4.2 MWh", reason: "Peak demand (€118/MWh)", confidence: 88, revenue: "+€496" },
+  { time: "18:30–20:00", action: "FCR Bid", site: "Parque BESS Sul", volume: "2.0 MW", reason: "Ancillary signal detected", confidence: 76, revenue: "+€128" },
+  { time: "22:00–06:00", action: "Night Arbitrage", site: "Complexo Évora", volume: "6.0 MWh", reason: "Off-peak buy → peak sell", confidence: 82, revenue: "+€210" },
+  { time: "09:00–11:00", action: "Solar Self-Cons.", site: "Parque Algarve", volume: "5.1 MWh", reason: "Maximise PPA self-consumption", confidence: 91, revenue: "+€180" },
+];
 
 export default function RevenueOptimization() {
-  const { t } = useAppStore()
-  const [data] = useState(generateScenarios)
-  const [accepted, setAccepted] = useState({})
-  const [activeScenario, setActiveScenario] = useState("sc_ai")
+  const [forecast] = useState(genForecast());
+  const [selectedScenario, setSelectedScenario] = useState("Balanced");
+  const [metrics, setMetrics] = useState({ todayRev: 5840, projectedRev: 8420, bestArb: 1420, aiUplift: 620 });
+  const [autoDispatch, setAutoDispatch] = useState(true);
 
-  const totalGain = RECOMMENDATIONS
-    .filter(r => !accepted[r.id])
-    .reduce((sum, r) => sum + parseInt(r.gain.replace(/[^0-9]/g, "")), 0)
+  useEffect(() => {
+    const t = setInterval(() => {
+      setMetrics(m => ({
+        todayRev: Math.round(m.todayRev + rand(-30, 50)),
+        projectedRev: Math.round(m.projectedRev + rand(-50, 80)),
+        bestArb: Math.round(m.bestArb + rand(-20, 30)),
+        aiUplift: Math.round(m.aiUplift + rand(-10, 15)),
+      }));
+    }, 3000);
+    return () => clearInterval(t);
+  }, []);
 
-  const acceptedGain = RECOMMENDATIONS
-    .filter(r => accepted[r.id])
-    .reduce((sum, r) => sum + parseInt(r.gain.replace(/[^0-9]/g, "")), 0)
+  const selected = SCENARIOS.find(s => s.name === selectedScenario);
 
-  const cardStyle = {
-    background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: 16, padding: "22px 26px",
-  }
+  const comparisonData = SCENARIOS.map(s => ({
+    name: s.name,
+    revenue: s.revenue,
+    arbitrage: s.arbitrage,
+    fcr: s.fcr,
+    fill: s.color,
+  }));
 
   return (
-    <div style={{ padding: "28px 32px", color: "var(--text)", minHeight: "100vh" }}>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>{t("rev_opt_title")}</h1>
-          <p style={{ color: "var(--sub)", fontSize: 14 }}>{t("rev_opt_sub")}</p>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Revenue Optimization</h1>
+          <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>AI dispatch · Scenario analysis · Price forecast integration</div>
         </div>
-        <div style={{
-          background: "linear-gradient(135deg, #10b98120, #10b98108)",
-          border: "1px solid #10b98130",
-          borderRadius: 16, padding: "16px 24px", textAlign: "center",
-        }}>
-          <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{t("rev_opt_opportunity")}</div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: "#10b981" }}>+€{totalGain}</div>
-          <div style={{ fontSize: 12, color: "var(--sub)" }}>{t("rev_opt_today")}</div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "var(--sub)" }}>Auto-Dispatch</span>
+          <div onClick={() => setAutoDispatch(!autoDispatch)} style={{
+            width: 40, height: 22, borderRadius: 11, cursor: "pointer",
+            background: autoDispatch ? green : "var(--border)", position: "relative"
+          }}>
+            <div style={{ position: "absolute", width: 16, height: 16, borderRadius: "50%", background: "#fff", top: 3, left: autoDispatch ? 21 : 3, transition: "left 0.2s" }} />
+          </div>
+          <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20,
+            background: autoDispatch ? "#10b98120" : "#f59e0b20",
+            color: autoDispatch ? green : amber }}>
+            {autoDispatch ? "Active" : "Manual"}
+          </span>
         </div>
       </div>
 
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
         {[
-          { label: t("rev_opt_accepted_gain"), value: `+€${acceptedGain}`, color: "#10b981", sub: `${Object.keys(accepted).length} ${t("rev_opt_actions")}` },
-          { label: t("rev_opt_pending"),       value: `€${totalGain}`,     color: "#f59e0b", sub: `${RECOMMENDATIONS.filter(r => !accepted[r.id]).length} ${t("rev_opt_recs")}` },
-          { label: t("rev_opt_ai_confidence"), value: "87%",               color: "#6366f1", sub: t("rev_opt_model_v2") },
-          { label: t("rev_opt_best_window"),   value: "17:00",             color: "#f87171", sub: t("rev_opt_peak_discharge") },
+          { label: "Today Revenue", value: `€${metrics.todayRev.toLocaleString()}`, color: green },
+          { label: "Projected (EOD)", value: `€${metrics.projectedRev.toLocaleString()}`, color: blue },
+          { label: "Best Arb Opportunity", value: `€${metrics.bestArb}`, color: amber },
+          { label: "AI Dispatch Uplift", value: `+€${metrics.aiUplift}`, color: purple },
         ].map(k => (
-          <div key={k.label} style={cardStyle}>
-            <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{k.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: k.color }}>{k.value}</div>
-            <div style={{ fontSize: 12, color: "var(--sub)", marginTop: 4 }}>{k.sub}</div>
+          <div key={k.label} style={card}>
+            <div style={label}>{k.label}</div>
+            <div style={{ ...val, color: k.color }}>{k.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Main 2-col */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20, marginBottom: 20 }}>
+      {/* Price forecast + solar */}
+      <div style={card}>
+        <div style={{ ...label, marginBottom: 12 }}>Price Forecast + Solar Generation + BESS Dispatch Plan</div>
+        <ResponsiveContainer width="100%" height={220}>
+          <ComposedChart data={forecast} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+            <XAxis dataKey="h" tick={{ fontSize: 10, fill: "var(--sub)" }} />
+            <YAxis yAxisId="price" tick={{ fontSize: 10, fill: "var(--sub)" }} unit=" €" />
+            <YAxis yAxisId="power" orientation="right" tick={{ fontSize: 10, fill: "var(--sub)" }} unit=" MW" />
+            <Tooltip content={<CustomTooltip />} />
+            <Area yAxisId="price" type="monotone" dataKey="upper" fill={blue} fillOpacity={0.08} stroke="none" name="Upper Bound" />
+            <Area yAxisId="price" type="monotone" dataKey="lower" fill="var(--bg)" fillOpacity={1} stroke="none" name="Lower Bound" />
+            <Line yAxisId="price" type="monotone" dataKey="price" stroke={blue} strokeWidth={2.5} dot={false} name="DA Price" />
+            <Line yAxisId="price" type="monotone" dataKey="forecast" stroke={purple} strokeWidth={2} strokeDasharray="4 2" dot={false} name="AI Forecast" />
+            <Bar yAxisId="power" dataKey="solar" fill={amber} fillOpacity={0.4} name="Solar (MW)" />
+            <Bar yAxisId="power" dataKey="dispatch" fill={green} fillOpacity={0.6} name="BESS Dispatch (MW)" />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
 
-        {/* Revenue chart */}
-        <div style={cardStyle}>
-          <div style={{ marginBottom: 16 }}>
-            <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{t("rev_opt_chart_title")}</h3>
-            <p style={{ color: "var(--sub)", fontSize: 13 }}>{t("rev_opt_chart_sub")}</p>
+      {/* Scenario selector + comparison */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 14 }}>
+        {/* Selector */}
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 12 }}>Scenario Selector</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {SCENARIOS.map(s => (
+              <div key={s.name}
+                onClick={() => setSelectedScenario(s.name)}
+                style={{
+                  padding: 14, borderRadius: 10, cursor: "pointer",
+                  border: `2px solid ${selectedScenario === s.name ? s.color : "var(--border)"}`,
+                  background: selectedScenario === s.name ? `${s.color}12` : "var(--surface2)",
+                }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: selectedScenario === s.name ? s.color : "var(--text)" }}>{s.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: green }}>€{s.revenue.toLocaleString()}</div>
+                </div>
+                <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 4 }}>
+                  Arbitrage €{s.arbitrage} · FCR €{s.fcr} · Risk:
+                  <span style={{ color: s.risk === "Low" ? green : s.risk === "Medium" ? amber : red, marginLeft: 4 }}>{s.risk}</span>
+                </div>
+              </div>
+            ))}
           </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <ComposedChart data={data} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="optGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6b7280" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="#6b7280" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line, rgba(128,128,128,0.1))" />
-              <XAxis dataKey="hour" tick={{ fill: "var(--sub)", fontSize: 10 }} tickLine={false} axisLine={false} interval={3} />
-              <YAxis tick={{ fill: "var(--sub)", fontSize: 10 }} tickLine={false} axisLine={false} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="bessOpportunity" name="BESS Opp." fill="#f59e0b" fillOpacity={0.6} barSize={8} />
-              <Area type="monotone" dataKey="baseRevenue" name={t("rev_opt_base")} stroke="#6b7280" strokeWidth={1.5} fill="url(#baseGrad)" dot={false} strokeDasharray="4 4" />
-              <Area type="monotone" dataKey="optimizedRevenue" name={t("rev_opt_optimized")} stroke="#10b981" strokeWidth={2.2} fill="url(#optGrad)" dot={false} />
-            </ComposedChart>
-          </ResponsiveContainer>
         </div>
 
-        {/* Scenario comparison */}
-        <div style={cardStyle}>
-          <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>{t("rev_opt_scenarios")}</h3>
-          {SCENARIOS.map(sc => (
-            <div key={sc.name}
-              onClick={() => setActiveScenario(sc.name)}
-              style={{
-                padding: "14px 16px", borderRadius: 12, marginBottom: 10, cursor: "pointer",
-                border: `1px solid ${activeScenario === sc.name ? sc.label : "var(--border)"}`,
-                background: activeScenario === sc.name ? sc.label + "12" : "var(--bg)",
-                transition: "all 0.2s",
-              }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontWeight: 700, fontSize: 13, color: activeScenario === sc.name ? sc.label : "var(--text)" }}>{t(sc.name)}</span>
-                <span style={{ fontSize: 20, fontWeight: 900, color: sc.label }}>€{sc.revenue}</span>
-              </div>
-              <div style={{ display: "flex", gap: 16, fontSize: 11, color: "var(--sub)" }}>
-                <span>CO₂: {sc.co2} t</span>
-                <span>{t("bat_cycles")}: {sc.cycles}x</span>
-              </div>
-              <div style={{ marginTop: 8, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${(sc.revenue / 1508) * 100}%`, background: sc.label, borderRadius: 2 }} />
-              </div>
-            </div>
-          ))}
-
-          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 16, marginTop: 4 }}>
-            <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 8 }}>{t("rev_opt_uplift")}</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: "#10b981" }}>
-              +{Math.round((1284 - 842) / 842 * 100)}%
-            </div>
-            <div style={{ fontSize: 12, color: "var(--sub)" }}>{t("rev_opt_vs_base")}</div>
+        {/* Comparison bar chart */}
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 12 }}>Scenario Revenue Comparison</div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={comparisonData} margin={{ left: -10, right: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--sub)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--sub)" }} unit="€" />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="revenue" name="Total Revenue" radius={[4, 4, 0, 0]}>
+                {comparisonData.map((d, i) => <Cell key={i} fill={d.fill} />)}
+              </Bar>
+              <Bar dataKey="arbitrage" name="Arbitrage" fill={purple} fillOpacity={0.6} radius={[4,4,0,0]} />
+              <Bar dataKey="fcr" name="FCR" fill={blue} fillOpacity={0.6} radius={[4,4,0,0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          <div style={{ marginTop: 10, padding: 10, background: "var(--surface2)", borderRadius: 8, border: `1px solid ${selected?.color}` }}>
+            <div style={{ fontSize: 12, color: "var(--sub)" }}>Active: <b style={{ color: selected?.color }}>{selectedScenario}</b></div>
+            <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 2 }}>Expected revenue: <b style={{ color: green }}>€{selected?.revenue.toLocaleString()}</b> · Risk: <b style={{ color: selected?.risk === "Low" ? green : selected?.risk === "Medium" ? amber : red }}>{selected?.risk}</b></div>
           </div>
         </div>
       </div>
 
-      {/* AI Recommendations */}
-      <div style={cardStyle}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <div>
-            <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{t("rev_opt_ai_recs")}</h3>
-            <p style={{ color: "var(--sub)", fontSize: 13 }}>{t("rev_opt_ai_recs_sub")}</p>
-          </div>
-          <button style={{
-            background: "var(--accent)", color: "#fff", border: "none", borderRadius: 10,
-            padding: "10px 20px", fontWeight: 700, cursor: "pointer", fontSize: 13,
-          }}
-            onClick={() => {
-              const all = {}
-              RECOMMENDATIONS.forEach(r => { all[r.id] = true })
-              setAccepted(all)
-            }}>
-            {t("rev_opt_accept_all")}
-          </button>
+      {/* AI Dispatch recommendations */}
+      <div style={card}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={label}>AI Dispatch Recommendations</div>
+          <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "#6366f120", color: accent }}>
+            GPT-4 Powered
+          </span>
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {RECOMMENDATIONS.map(rec => (
-            <div key={rec.id} style={{
-              display: "grid", gridTemplateColumns: "44px 1fr 120px 100px 120px",
-              alignItems: "center", gap: 16,
-              padding: "16px 20px", borderRadius: 14,
-              background: accepted[rec.id] ? "var(--bg)" : "var(--surface)",
-              border: `1px solid ${accepted[rec.id] ? "var(--border)" : priorityColor[rec.priority] + "40"}`,
-              opacity: accepted[rec.id] ? 0.6 : 1,
-              transition: "all 0.2s",
-            }}>
-              <div style={{ fontSize: 24, textAlign: "center" }}>{typeIcon[rec.type]}</div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{t(rec.title)}</div>
-                <div style={{ color: "var(--sub)", fontSize: 12 }}>{t(rec.desc)}</div>
-                <div style={{ color: "var(--sub)", fontSize: 11, marginTop: 4 }}>🕐 {rec.window}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: "#10b981" }}>{rec.gain}</div>
-                <div style={{ fontSize: 11, color: "var(--sub)" }}>{t("rev_opt_gain")}</div>
-              </div>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: rec.confidence > 85 ? "#10b981" : rec.confidence > 75 ? "#f59e0b" : "#f87171" }}>
-                  {rec.confidence}%
-                </div>
-                <div style={{ fontSize: 11, color: "var(--sub)" }}>{t("rev_opt_conf")}</div>
-                <div style={{ marginTop: 4, height: 3, background: "var(--border)", borderRadius: 2 }}>
-                  <div style={{ height: "100%", width: `${rec.confidence}%`, background: rec.confidence > 85 ? "#10b981" : "#f59e0b", borderRadius: 2 }} />
-                </div>
-              </div>
-              <button
-                onClick={() => setAccepted(a => ({ ...a, [rec.id]: !a[rec.id] }))}
-                style={{
-                  padding: "10px 16px", borderRadius: 10, border: "none", cursor: "pointer",
-                  fontWeight: 700, fontSize: 12,
-                  background: accepted[rec.id] ? "var(--border)" : "var(--accent)",
-                  color: accepted[rec.id] ? "var(--sub)" : "#fff",
-                }}>
-                {accepted[rec.id] ? t("rev_opt_accepted") : t(rec.action)}
-              </button>
-            </div>
-          ))}
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid var(--border)" }}>
+              {["Time Window", "Action", "Site", "Volume", "Reason", "Confidence", "Est. Revenue"].map(h => (
+                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600 }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {AI_DISPATCH.map((d, i) => (
+              <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--sub)" }}>{d.time}</td>
+                <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: accent }}>{d.action}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>{d.site}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: amber }}>{d.volume}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--sub)" }}>{d.reason}</td>
+                <td style={{ padding: "8px 10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ width: 40, height: 5, background: "var(--border)", borderRadius: 3 }}>
+                      <div style={{ width: `${d.confidence}%`, height: "100%", background: d.confidence > 85 ? green : amber, borderRadius: 3 }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: d.confidence > 85 ? green : amber }}>{d.confidence}%</span>
+                  </div>
+                </td>
+                <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 700, color: green }}>{d.revenue}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+          <button style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+            Apply All Recommendations
+          </button>
+          <button style={{ padding: "8px 18px", background: "none", border: "1px solid var(--border)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>
+            Review & Modify
+          </button>
         </div>
       </div>
     </div>
-  )
+  );
 }

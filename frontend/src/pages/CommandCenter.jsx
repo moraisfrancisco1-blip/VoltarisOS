@@ -1,303 +1,272 @@
-import { useState, useEffect } from "react"
-import { useAppStore } from "../store/appStore"
+import { useState, useEffect } from "react";
+import {
+  AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
+} from "recharts";
 
-const SITES = [
-  { id: "rot", name: "Rotterdam",  lat: 51.92, lng: 4.47,  status: "online",  solar: 284, wind: 62, battery: 78, price: 74.2, alert: null,    capacity: "500kW / 1MWh",   revenue: 1284, efficiency: 94 },
-  { id: "reb", name: "Rebordelo",  lat: 41.68, lng: -7.11, status: "online",  solar: 198, wind: 14, battery: 52, price: 68.1, alert: null,    capacity: "250kW / 500kWh", revenue: 742,  efficiency: 88 },
-  { id: "lis", name: "Lisboa",     lat: 38.72, lng: -9.14, status: "warning", solar: 156, wind: 8,  battery: 31, price: 71.8, alert: "cc_alert_low_batt", capacity: "350kW / 700kWh", revenue: 614,  efficiency: 72 },
-  { id: "ams", name: "Amsterdam",  lat: 52.37, lng: 4.90,  status: "online",  solar: 102, wind: 88, battery: 91, price: 76.4, alert: null,    capacity: "400kW / 800kWh", revenue: 1102, efficiency: 96 },
-  { id: "por", name: "Porto",      lat: 41.15, lng: -8.61, status: "offline", solar: 0,   wind: 0,  battery: 0,  price: 0,    alert: "cc_alert_offline",  capacity: "200kW / 400kWh", revenue: 0,    efficiency: 0 },
-]
+const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
+const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
-const statusColor  = { online: "#10b981", warning: "#f59e0b", offline: "#f87171" }
-const statusPulse  = { online: "#10b98140", warning: "#f59e0b40", offline: "#f8717140" }
+const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
+const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 };
+const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
-function Gauge({ value, max = 100, color, size = 56 }) {
-  const r = size / 2 - 6
-  const circ = 2 * Math.PI * r
-  const pct = Math.min(Math.max(value, 0), max) / max
-  const dash = pct * circ * 0.75
-  const offset = circ * 0.125
+const CustomTooltip = ({ active, payload, label: lb }) => {
+  if (!active || !payload?.length) return null;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--border)" strokeWidth={5}
-        strokeDasharray={`${circ * 0.75} ${circ}`}
-        strokeDashoffset={-offset}
-        strokeLinecap="round"
-        transform={`rotate(135 ${size/2} ${size/2})`}
-      />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={5}
-        strokeDasharray={`${dash} ${circ}`}
-        strokeDashoffset={-offset}
-        strokeLinecap="round"
-        transform={`rotate(135 ${size/2} ${size/2})`}
-        style={{ transition: "stroke-dasharray 0.5s" }}
-      />
-      <text x={size/2} y={size/2 + 4} textAnchor="middle" fill="var(--text)" fontSize={size * 0.22} fontWeight={700}>
-        {value}%
-      </text>
-    </svg>
-  )
-}
-
-function MiniBar({ value, max, color }) {
-  return (
-    <div style={{ flex: 1, height: 4, background: "var(--border)", borderRadius: 2, overflow: "hidden" }}>
-      <div style={{ height: "100%", width: `${Math.min(value / max * 100, 100)}%`, background: color, borderRadius: 2, transition: "width 0.5s" }} />
+    <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+      {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
-  )
-}
+  );
+};
+
+const initSites = () => [
+  { id: 1, name: "Herdade Solar Norte", status: "online", soc: 78, solarMW: 4.2, bessMW: 2.1, mode: "charge", setpoint: 70, temp: 31 },
+  { id: 2, name: "Parque BESS Sul", status: "online", soc: 45, solarMW: 2.8, bessMW: 3.4, mode: "discharge", setpoint: 100, temp: 34 },
+  { id: 3, name: "Complexo Híbrido Évora", status: "warning", soc: 91, solarMW: 6.1, bessMW: 4.0, mode: "standby", setpoint: 0, temp: 42 },
+  { id: 4, name: "Mini-Grid Alentejo", status: "online", soc: 33, solarMW: 1.5, bessMW: 0.9, mode: "charge", setpoint: 50, temp: 29 },
+  { id: 5, name: "Parque Fotovoltaico Algarve", status: "offline", soc: 62, solarMW: 0, bessMW: 0, mode: "offline", setpoint: 0, temp: 38 },
+];
+
+const genEvents = () => Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  ts: `${14 - Math.floor(i / 2)}:${String((i % 2) * 30).padStart(2, "0")}`,
+  type: ["info", "warning", "error", "success"][i % 4],
+  msg: [
+    "BESS Parque Sul: Discharge command executed — 100 kW",
+    "Herdade Norte: SoC 78% — Charge setpoint updated",
+    "Complexo Évora: High temp alert 42°C — throttle active",
+    "FCR activation received — Fleet response 2.4 MW",
+    "Intraday arbitrage executed — €286 profit",
+    "Algarve site: Comms lost — inverter offline",
+    "Scheduled night charge started — 3 sites",
+    "Grid signal: Frequency deviation — BESS responding",
+    "Manual override: Évora BESS to standby",
+    "Revenue target hit: €5,000 for today",
+    "Predictive alert: Cell-12 temp trending high",
+    "Auto-dispatch approved — AI recommendation applied",
+  ][i],
+}));
 
 export default function CommandCenter() {
-  const { t } = useAppStore()
-  const [selected, setSelected] = useState("rot")
-  const [ticker, setTicker] = useState(0)
+  const [sites, setSites] = useState(initSites());
+  const [events, setEvents] = useState(genEvents());
+  const [metrics, setMetrics] = useState({ online: 4, total: 5, totalPower: 10.2, activeAlerts: 2, cmdSent: 14 });
+  const [bulkMode, setBulkMode] = useState("");
+  const [bulkSetpoint, setBulkSetpoint] = useState(50);
+  const [selected, setSelected] = useState([]);
 
-  // Simulate live updates
+  const powerHistory = Array.from({ length: 20 }, (_, i) => ({
+    t: `${i * 3}m`, solar: rand(3, 14), bess: rand(1, 8)
+  }));
+
   useEffect(() => {
-    const int = setInterval(() => setTicker(n => n + 1), 4000)
-    return () => clearInterval(int)
-  }, [])
+    const t = setInterval(() => {
+      setSites(s => s.map(site => ({
+        ...site,
+        soc: site.status !== "offline"
+          ? Math.min(100, Math.max(5, site.soc + (site.mode === "charge" ? rand(0, 1.5, 0) : site.mode === "discharge" ? -rand(0, 1.5, 0) : 0)))
+          : site.soc,
+        temp: site.status !== "offline" ? Math.min(55, Math.max(20, site.temp + rand(-0.5, 0.5, 1))) : site.temp,
+        solarMW: site.status !== "offline" ? parseFloat((site.solarMW + rand(-0.1, 0.1)).toFixed(1)) : 0,
+      })));
+      setMetrics(m => ({
+        ...m,
+        totalPower: parseFloat((m.totalPower + rand(-0.3, 0.3)).toFixed(1)),
+      }));
+    }, 2500);
+    return () => clearInterval(t);
+  }, []);
 
-  const site = SITES.find(s => s.id === selected) || SITES[0]
-  const totalRevenue = SITES.reduce((sum, s) => sum + s.revenue, 0)
-  const totalSolar   = SITES.reduce((sum, s) => sum + s.solar, 0)
-  const onlineCount  = SITES.filter(s => s.status === "online").length
-  const avgBattery   = Math.round(SITES.filter(s => s.status !== "offline").reduce((sum, s) => sum + s.battery, 0) / SITES.filter(s => s.status !== "offline").length)
+  const sendBulkCommand = () => {
+    if (!bulkMode) return;
+    setSites(s => s.map(site =>
+      (selected.length === 0 || selected.includes(site.id)) && site.status !== "offline"
+        ? { ...site, mode: bulkMode, setpoint: bulkSetpoint }
+        : site
+    ));
+    setEvents(ev => [
+      { id: Date.now(), ts: new Date().toLocaleTimeString().slice(0, 5), type: "success",
+        msg: `Bulk command: ${bulkMode.toUpperCase()} ${bulkSetpoint}kW → ${selected.length === 0 ? "All" : selected.length} sites` },
+      ...ev.slice(0, 11),
+    ]);
+  };
 
-  const cardStyle = {
-    background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: 16, padding: "20px 24px",
-  }
+  const sendSiteCommand = (siteId, mode, setpoint) => {
+    setSites(s => s.map(site => site.id === siteId ? { ...site, mode, setpoint } : site));
+    const site = sites.find(s => s.id === siteId);
+    setEvents(ev => [
+      { id: Date.now(), ts: new Date().toLocaleTimeString().slice(0, 5), type: "info",
+        msg: `${site?.name}: ${mode.toUpperCase()} ${setpoint}kW dispatched` },
+      ...ev.slice(0, 11),
+    ]);
+  };
+
+  const statusBg = (s) => s === "online" ? "#10b98120" : s === "warning" ? "#f59e0b20" : "#ef444420";
+  const statusColor = (s) => s === "online" ? green : s === "warning" ? amber : red;
+  const eventColor = (t) => t === "error" ? red : t === "warning" ? amber : t === "success" ? green : blue;
 
   return (
-    <div style={{ padding: "28px 32px", color: "var(--text)", minHeight: "100vh" }}>
+    <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>{t("cc_title")}</h1>
-          <p style={{ color: "var(--sub)", fontSize: 14 }}>{t("cc_sub")}</p>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Command Center</h1>
+          <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Fleet-wide BESS dispatch · Real-time controls · Event feed</div>
         </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <div style={{ background: "#10b98120", color: "#10b981", padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-            {t("cc_live_feed")}
-          </div>
-          <div style={{ color: "var(--sub)", fontSize: 13, background: "var(--surface)", border: "1px solid var(--border)", padding: "6px 14px", borderRadius: 20 }}>
-            {onlineCount}/{SITES.length} {t("cc_sites_online")}
-          </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#10b98120", color: green, border: "1px solid #10b981" }}>
+            {metrics.online}/{metrics.total} sites online
+          </span>
+          <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#ef444420", color: red, border: "1px solid #ef4444" }}>
+            {metrics.activeAlerts} active alerts
+          </span>
         </div>
       </div>
 
-      {/* Fleet KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
         {[
-          { label: t("cc_fleet_revenue"),  value: `€${totalRevenue.toLocaleString()}`,  color: "#10b981", sub: t("cc_today") },
-          { label: t("cc_total_solar"),    value: `${totalSolar} kW`,                   color: "#f59e0b", sub: t("cc_generating") },
-          { label: t("cc_avg_battery"),    value: `${avgBattery}%`,                     color: "#6366f1", sub: t("cc_fleet_soc") },
-          { label: t("cc_active_alerts"),  value: SITES.filter(s => s.alert).length,    color: "#f87171", sub: t("cc_need_attention") },
+          { label: "Fleet Solar Output", value: `${metrics.totalPower} MW`, color: amber },
+          { label: "Sites Online", value: `${metrics.online} / ${metrics.total}`, color: green },
+          { label: "Commands Sent Today", value: metrics.cmdSent, color: accent },
+          { label: "Active Alerts", value: metrics.activeAlerts, color: red },
         ].map(k => (
-          <div key={k.label} style={cardStyle}>
-            <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>{k.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: k.color }}>{k.value}</div>
-            <div style={{ fontSize: 12, color: "var(--sub)", marginTop: 4 }}>{k.sub}</div>
+          <div key={k.label} style={card}>
+            <div style={label}>{k.label}</div>
+            <div style={{ ...val, color: k.color }}>{k.value}</div>
           </div>
         ))}
       </div>
 
-      {/* Main: site grid + detail */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, marginBottom: 20 }}>
-
-        {/* Site grid cards */}
+      {/* Bulk command bar */}
+      <div style={{ ...card, display: "flex", gap: 14, alignItems: "flex-end", flexWrap: "wrap" }}>
         <div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-            {SITES.map(s => (
-              <div key={s.id}
-                onClick={() => setSelected(s.id)}
-                style={{
-                  ...cardStyle,
-                  cursor: "pointer",
-                  border: `1px solid ${selected === s.id ? statusColor[s.status] : s.alert ? "#f8717130" : "var(--border)"}`,
-                  background: selected === s.id ? `${statusColor[s.status]}0a` : "var(--surface)",
-                  transition: "all 0.2s",
-                  position: "relative",
-                  overflow: "hidden",
-                }}>
-
-                {/* Status indicator */}
-                <div style={{ position: "absolute", top: 16, right: 16, display: "flex", alignItems: "center", gap: 6 }}>
-                  <div style={{
-                    width: 9, height: 9, borderRadius: "50%",
-                    background: statusColor[s.status],
-                    boxShadow: `0 0 0 3px ${statusPulse[s.status]}`,
-                  }} />
-                  <span style={{ fontSize: 11, color: statusColor[s.status], fontWeight: 700, textTransform: "uppercase" }}>
-                    {t(`cc_status_${s.status}`)}
-                  </span>
-                </div>
-
-                {/* Site name */}
-                <div style={{ marginBottom: 16 }}>
-                  <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 2 }}>{s.name}</h3>
-                  <div style={{ fontSize: 12, color: "var(--sub)" }}>{s.capacity}</div>
-                </div>
-
-                {s.status !== "offline" ? (
-                  <>
-                    {/* Mini stats */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
-                      {[
-                        { label: "☀️", value: `${s.solar}kW`, color: "#f59e0b" },
-                        { label: "🌬️", value: `${s.wind}kW`, color: "#60a5fa" },
-                        { label: "€", value: `${s.price}`, color: "#10b981" },
-                      ].map(stat => (
-                        <div key={stat.label} style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 2 }}>{stat.label}</div>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: stat.color }}>{stat.value}</div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Battery */}
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Gauge value={s.battery} color={s.battery > 60 ? "#10b981" : s.battery > 30 ? "#f59e0b" : "#f87171"} size={48} />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{t("cc_battery_soc")}</div>
-                        <div style={{ fontSize: 13, color: "var(--sub)", marginBottom: 6 }}>
-                          {t("cc_efficiency")}: <span style={{ color: "var(--text)", fontWeight: 700 }}>{s.efficiency}%</span>
-                        </div>
-                        <div style={{ fontSize: 13, color: "#10b981", fontWeight: 700 }}>€{s.revenue} {t("cc_today")}</div>
-                      </div>
-                    </div>
-
-                    {s.alert && (
-                      <div style={{ marginTop: 12, padding: "8px 12px", background: "#f8717112", borderRadius: 8, border: "1px solid #f8717130", fontSize: 12, color: "#f87171", fontWeight: 600 }}>
-                        ⚠️ {t(s.alert)}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div style={{ padding: "20px 0", textAlign: "center" }}>
-                    <div style={{ fontSize: 32 }}>🔴</div>
-                    <div style={{ color: "#f87171", fontWeight: 700, marginTop: 8 }}>{t("cc_alert_offline")}</div>
-                    <div style={{ color: "var(--sub)", fontSize: 12, marginTop: 4 }}>{t("cc_offline_since")}: 03:14</div>
-                  </div>
-                )}
-              </div>
+          <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>BULK COMMAND</div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {["charge", "discharge", "standby", "fcr_mode"].map(m => (
+              <button key={m} onClick={() => setBulkMode(m)} style={{
+                padding: "7px 14px", borderRadius: 8, fontSize: 12, cursor: "pointer",
+                background: bulkMode === m ? accent : "var(--surface2)",
+                color: bulkMode === m ? "#fff" : "var(--sub)",
+                border: `1px solid ${bulkMode === m ? accent : "var(--border)"}`,
+              }}>{m.replace("_", " ").toUpperCase()}</button>
             ))}
           </div>
         </div>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>SETPOINT (kW)</div>
+          <input type="number" value={bulkSetpoint} onChange={e => setBulkSetpoint(Number(e.target.value))}
+            style={{ width: 80, background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>TARGET</div>
+          <select onChange={e => {
+            const v = e.target.value;
+            setSelected(v === "all" ? [] : v === "online" ? sites.filter(s => s.status === "online").map(s => s.id) : []);
+          }} style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }}>
+            <option value="all">All Sites</option>
+            <option value="online">Online Only</option>
+          </select>
+        </div>
+        <button onClick={sendBulkCommand} style={{ padding: "8px 20px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          Send Command
+        </button>
+        <button style={{ padding: "8px 16px", background: "#ef444420", border: "1px solid #ef4444", borderRadius: 8, color: red, fontSize: 12, cursor: "pointer" }}>
+          EMERGENCY STOP ALL
+        </button>
+      </div>
 
-        {/* Site detail panel */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Site detail */}
-          <div style={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontWeight: 800, fontSize: 16 }}>{site.name}</h3>
-              <span style={{
-                background: statusBg(site.status), color: statusColor[site.status],
-                padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
-              }}>{t(`cc_status_${site.status}`)}</span>
-            </div>
-
-            {[
-              { label: t("cc_solar_output"), value: `${site.solar} kW`, color: "#f59e0b", bar: site.solar, max: 500 },
-              { label: t("cc_wind_output"),  value: `${site.wind} kW`,  color: "#60a5fa", bar: site.wind,  max: 100 },
-              { label: t("cc_battery_soc"),  value: `${site.battery}%`, color: "#10b981", bar: site.battery, max: 100 },
-              { label: t("cc_efficiency"),   value: `${site.efficiency}%`, color: "#6366f1", bar: site.efficiency, max: 100 },
-            ].map(item => (
-              <div key={item.label} style={{ marginBottom: 14 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 13 }}>
-                  <span style={{ color: "var(--sub)" }}>{item.label}</span>
-                  <span style={{ fontWeight: 700, color: item.color }}>{item.value}</span>
+      {/* Per-site controls */}
+      <div style={card}>
+        <div style={{ ...label, marginBottom: 12 }}>Per-Site BESS Dispatch Controls</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {sites.map(site => (
+            <div key={site.id} style={{
+              display: "grid", gridTemplateColumns: "2fr 80px 80px 80px 120px 1fr auto",
+              gap: 12, alignItems: "center", padding: "12px 0", borderBottom: "1px solid var(--border)"
+            }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{site.name}</div>
+                <div style={{ fontSize: 10, color: "var(--sub)" }}>Solar {site.solarMW} MW · Temp {site.temp.toFixed(1)}°C</div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: statusBg(site.status), color: statusColor(site.status) }}>
+                  {site.status}
+                </span>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: "var(--sub)" }}>SoC</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: site.soc > 70 ? green : site.soc > 40 ? amber : red }}>{site.soc}%</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: "var(--sub)" }}>BESS</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: purple }}>{site.bessMW} MW</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 2 }}>Mode</div>
+                <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 8,
+                  background: site.mode === "charge" ? "#10b98120" : site.mode === "discharge" ? "#ef444420" : "#f59e0b20",
+                  color: site.mode === "charge" ? green : site.mode === "discharge" ? red : amber }}>
+                  {site.mode.toUpperCase()}
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ flex: 1, height: 8, background: "var(--border)", borderRadius: 4 }}>
+                  <div style={{ width: `${site.soc}%`, height: "100%", borderRadius: 4,
+                    background: site.soc > 70 ? green : site.soc > 40 ? amber : red }} />
                 </div>
-                <MiniBar value={item.bar} max={item.max} color={item.color} />
               </div>
-            ))}
-
-            <div style={{ paddingTop: 14, borderTop: "1px solid var(--border)", marginTop: 4 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8 }}>
-                <span style={{ color: "var(--sub)" }}>{t("cc_market_price")}</span>
-                <span style={{ fontWeight: 700, color: "#10b981" }}>{site.price} €/MWh</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                <span style={{ color: "var(--sub)" }}>{t("cc_today_revenue")}</span>
-                <span style={{ fontWeight: 800, fontSize: 16, color: "#10b981" }}>€{site.revenue}</span>
-              </div>
+              {site.status !== "offline" && (
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["charge", "discharge", "standby"].map(m => (
+                    <button key={m} onClick={() => sendSiteCommand(site.id, m, site.setpoint)} style={{
+                      padding: "4px 8px", borderRadius: 6, fontSize: 10, cursor: "pointer",
+                      background: site.mode === m ? accent : "var(--surface2)",
+                      color: site.mode === m ? "#fff" : "var(--sub)",
+                      border: `1px solid ${site.mode === m ? accent : "var(--border)"}`,
+                    }}>{m[0].toUpperCase()}</button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-
-          {/* Quick commands */}
-          <div style={cardStyle}>
-            <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 14 }}>{t("cc_quick_commands")}</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[
-                { label: t("cc_cmd_charge"),    color: "#60a5fa", icon: "⚡", cmd: "charge" },
-                { label: t("cc_cmd_discharge"), color: "#10b981", icon: "💰", cmd: "discharge" },
-                { label: t("cc_cmd_idle"),      color: "#6b7280", icon: "⏸️", cmd: "idle" },
-                { label: t("cc_cmd_reboot"),    color: "#f59e0b", icon: "🔄", cmd: "reboot" },
-                { label: t("cc_cmd_ticket"),    color: "#f87171", icon: "🎫", cmd: "ticket" },
-              ].map(cmd => (
-                <button key={cmd.cmd} style={{
-                  display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-                  borderRadius: 10, border: `1px solid ${cmd.color}30`,
-                  background: `${cmd.color}0a`, cursor: "pointer",
-                  color: "var(--text)", fontWeight: 600, fontSize: 13,
-                  transition: "all 0.15s", textAlign: "left",
-                }}>
-                  <span style={{ fontSize: 16 }}>{cmd.icon}</span>
-                  {cmd.label}
-                  <span style={{ marginLeft: "auto", color: cmd.color, fontSize: 11 }}>→</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Fleet comparison table */}
-      <div style={cardStyle}>
-        <h3 style={{ fontWeight: 700, fontSize: 15, marginBottom: 16 }}>{t("cc_fleet_comparison")}</h3>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              {[t("cc_site"), t("cc_status_online"), t("cc_solar_output"), t("cc_battery_soc"), t("cc_efficiency"), t("cc_today_revenue"), t("cc_price")].map(h => (
-                <th key={h} style={{ padding: "8px 14px", textAlign: "left", color: "var(--sub)", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600, borderBottom: "1px solid var(--border)" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {SITES.map(s => (
-              <tr key={s.id} onClick={() => setSelected(s.id)} style={{ cursor: "pointer", borderBottom: "1px solid var(--border)", background: selected === s.id ? "var(--bg)" : "transparent" }}>
-                <td style={{ padding: "12px 14px", fontWeight: 700 }}>{s.name}</td>
-                <td style={{ padding: "12px 14px" }}>
-                  <span style={{ background: `${statusColor[s.status]}18`, color: statusColor[s.status], padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600 }}>
-                    {t(`cc_status_${s.status}`)}
-                  </span>
-                </td>
-                <td style={{ padding: "12px 14px", color: "#f59e0b", fontWeight: 600 }}>{s.solar} kW</td>
-                <td style={{ padding: "12px 14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div style={{ width: 60, height: 6, background: "var(--border)", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${s.battery}%`, background: s.battery > 60 ? "#10b981" : "#f59e0b", borderRadius: 3 }} />
-                    </div>
-                    <span style={{ fontSize: 12, fontWeight: 600 }}>{s.battery}%</span>
-                  </div>
-                </td>
-                <td style={{ padding: "12px 14px", color: s.efficiency > 85 ? "#10b981" : s.efficiency > 70 ? "#f59e0b" : "#f87171", fontWeight: 600 }}>{s.efficiency}%</td>
-                <td style={{ padding: "12px 14px", color: "#10b981", fontWeight: 700 }}>€{s.revenue}</td>
-                <td style={{ padding: "12px 14px", color: "var(--sub)" }}>{s.price ? `${s.price} €/MWh` : "—"}</td>
-              </tr>
+      {/* Power history + Event feed */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 14 }}>
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 12 }}>Fleet Power (Last 60 min)</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={powerHistory} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
+              <XAxis dataKey="t" tick={{ fontSize: 10, fill: "var(--sub)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "var(--sub)" }} unit=" MW" />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="solar" stroke={amber} fill={amber} fillOpacity={0.25} name="Solar" />
+              <Area type="monotone" dataKey="bess" stroke={purple} fill={purple} fillOpacity={0.25} name="BESS" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div style={card}>
+          <div style={{ ...label, marginBottom: 10 }}>Live Event Feed</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 220, overflowY: "auto" }}>
+            {events.map(e => (
+              <div key={e.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <div style={{ width: 7, height: 7, borderRadius: "50%", marginTop: 4, flexShrink: 0, background: eventColor(e.type) }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: "var(--text)", lineHeight: 1.4 }}>{e.msg}</div>
+                  <div style={{ fontSize: 9, color: "var(--sub)" }}>{e.ts}</div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </div>
-  )
-}
-
-function statusBg(status) {
-  return { online: "#10b98118", warning: "#f59e0b18", offline: "#f8717118" }[status]
+  );
 }
