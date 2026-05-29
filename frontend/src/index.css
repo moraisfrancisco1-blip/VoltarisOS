@@ -63,3 +63,30 @@ body {
   border: 1px solid var(--border);
   border-radius: 14px;
 }
+
+/* ── Mobile responsive ── */
+@media (max-width: 767px) {
+  /* Prevent horizontal overflow on all page content */
+  main > * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Smoother touch scroll on main content */
+  main {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Recharts: allow overflow hidden so charts don't break layout */
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+  }
+
+  /* Tables scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

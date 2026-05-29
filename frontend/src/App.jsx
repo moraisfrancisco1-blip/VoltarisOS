@@ -68,27 +68,44 @@ const PAGES = {
   anomaly: AnomalyDetection,
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener("resize", fn)
+    return () => window.removeEventListener("resize", fn)
+  }, [])
+  return isMobile
+}
+
 function AppShell({ user, onLogout }) {
   const [page, setPage] = useState("dashboard")
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const isMobile = useIsMobile()
   const { theme, simMode } = useAppStore()
+
+  // Close drawer on page change on mobile
+  const handleSetPage = (p) => {
+    setPage(p)
+    if (isMobile) setMobileOpen(false)
+  }
+
+  // Close drawer when resizing to desktop
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false)
+  }, [isMobile])
 
   // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
-      // Cmd/Ctrl+Shift+D = sim mode
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "D") {
         e.preventDefault()
         useAppStore.getState().setSimMode(!useAppStore.getState().simMode)
       }
-      // Cmd/Ctrl+Shift+L = theme toggle
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "L") {
         e.preventDefault()
         const t = useAppStore.getState().theme
         useAppStore.getState().setTheme(t === "dark" ? "light" : "dark")
-      }
-      // G + key navigation
-      if (e.key === "g" && !e.ctrlKey && !e.metaKey) {
-        // handled by sequence — simple single letters
       }
     }
     window.addEventListener("keydown", handler)
@@ -98,7 +115,6 @@ function AppShell({ user, onLogout }) {
   const PageComponent = PAGES[page] || Dashboard
   const themeVars = THEMES[theme] || THEMES.dark
 
-  // Inject CSS variables so ALL components inherit the theme
   useEffect(() => {
     const r = document.documentElement.style
     r.setProperty("--bg", themeVars.bg)
@@ -122,17 +138,54 @@ function AppShell({ user, onLogout }) {
       display: "flex", minHeight: "100vh",
       background: themeVars.bg,
       color: themeVars.text,
+      position: "relative",
     }}>
       <SimBanner />
-      <Sidebar page={page} setPage={setPage} user={user} onLogout={onLogout} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", marginTop: simMode ? "38px" : 0 }}>
-        <TopBar page={page} user={user} />
+
+      {/* Mobile overlay backdrop */}
+      {isMobile && mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(2px)",
+          }}
+        />
+      )}
+
+      <Sidebar
+        page={page}
+        setPage={handleSetPage}
+        user={user}
+        onLogout={onLogout}
+        isMobile={isMobile}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
+
+      <div style={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        marginTop: simMode ? "38px" : 0,
+        // On desktop, sidebar takes space naturally. On mobile sidebar is fixed overlay.
+        marginLeft: isMobile ? 0 : undefined,
+      }}>
+        <TopBar
+          page={page}
+          user={user}
+          isMobile={isMobile}
+          onMenuToggle={() => setMobileOpen(o => !o)}
+        />
         <main style={{ flex: 1, overflow: "auto" }}>
-          <PageComponent user={user} setPage={setPage} />
+          <PageComponent user={user} setPage={handleSetPage} />
         </main>
       </div>
+
       <AICopilot user={user} />
-      <CommandPalette setPage={setPage} onLogout={onLogout} />
+      <CommandPalette setPage={handleSetPage} onLogout={onLogout} />
       <ShortcutsOverlay />
       <ToastContainer />
       <OnboardingWizard />

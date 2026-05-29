@@ -1,15 +1,17 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import logoDark from "../logo_sidebar.png"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
 
-export default function Sidebar({ page, setPage, user, onLogout }) {
+export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobileOpen, setMobileOpen }) {
   const { t } = useTranslation()
   const { sidebarDefaultCollapsed } = useAppStore()
   const [collapsed, setCollapsed] = useState(sidebarDefaultCollapsed)
   const accentStore = useAppStore(s => s.accentColor)
   const color = user?.color || accentStore || "#4ade80"
-  const w = collapsed ? 64 : 240
+
+  // On mobile: sidebar is always full width (240px) when open, hidden when closed
+  const w = isMobile ? 240 : (collapsed ? 64 : 240)
 
   const NAV_GROUPS = [
     {
@@ -66,21 +68,40 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
     }
   ]
 
+  // Collapsed is irrelevant on mobile (always show full sidebar)
+  const showCollapsed = isMobile ? false : collapsed
+
+  const sidebarStyle = isMobile ? {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: "240px",
+    zIndex: 300,
+    transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
+    transition: "transform 0.25s cubic-bezier(.4,0,.2,1)",
+    background: "var(--sidebar)",
+    borderRight: "1px solid var(--border)",
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+  } : {
+    width: `${w}px`,
+    minWidth: `${w}px`,
+    background: "var(--sidebar)",
+    borderRight: "1px solid var(--border)",
+    display: "flex",
+    flexDirection: "column",
+    transition: "width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1)",
+    minHeight: "100vh",
+    position: "sticky",
+    top: 0,
+    overflow: "hidden",
+    zIndex: 100,
+  }
+
   return (
-    <aside style={{
-      width: `${w}px`,
-      minWidth: `${w}px`,
-      background: "var(--sidebar)",
-      borderRight: "1px solid var(--border)",
-      display: "flex",
-      flexDirection: "column",
-      transition: "width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1)",
-      minHeight: "100vh",
-      position: "sticky",
-      top: 0,
-      overflow: "hidden",
-      zIndex: 100,
-    }}>
+    <aside style={sidebarStyle}>
       {/* Header */}
       <div style={{
         padding: "0 12px",
@@ -91,7 +112,7 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
         gap: "8px",
         flexShrink: 0,
       }}>
-        {collapsed ? (
+        {showCollapsed ? (
           <div style={{
             width: "36px", height: "36px", borderRadius: "9px",
             background: "linear-gradient(135deg, #f59e0b33, #f97316aa)",
@@ -105,26 +126,42 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
         ) : (
           <img src={logoDark} alt="VoltarisOS" style={{ height: "44px", width: "auto", objectFit: "contain", flex: 1, minWidth: 0 }} />
         )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand" : "Collapse"}
-          style={{
-            marginLeft: collapsed ? "auto" : 0, background: "none", border: "none",
-            color: "var(--sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
-          onMouseLeave={e => e.currentTarget.style.color = "var(--sub)"}
-        >
-          {collapsed
-            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-          }
-        </button>
+        {!isMobile && (
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            title={collapsed ? "Expand" : "Collapse"}
+            style={{
+              marginLeft: collapsed ? "auto" : 0, background: "none", border: "none",
+              color: "var(--sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--sub)"}
+          >
+            {collapsed
+              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+            }
+          </button>
+        )}
+        {isMobile && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            style={{
+              background: "none", border: "none", color: "var(--sub)",
+              cursor: "pointer", padding: "4px", borderRadius: "6px",
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Company + role strip */}
-      {!collapsed && (
+      {!showCollapsed && (
         <div style={{
           margin: "10px 12px 2px", padding: "8px 12px",
           background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
@@ -147,7 +184,7 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
       <nav style={{ flex: 1, padding: "8px 0", overflowY: "auto", overflowX: "hidden" }}>
         {NAV_GROUPS.map((group, gi) => (
           <div key={gi} style={{ marginBottom: "4px" }}>
-            {!collapsed && (
+            {!showCollapsed && (
               <div style={{
                 padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
                 color: "var(--sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
@@ -155,7 +192,7 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
                 {t(group.labelKey)}
               </div>
             )}
-            {collapsed && gi > 0 && (
+            {showCollapsed && gi > 0 && (
               <div style={{ margin: "4px 12px", height: "1px", background: "var(--border)" }} />
             )}
             {group.items.map(item => {
@@ -164,11 +201,11 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
                 <button
                   key={item.id}
                   onClick={() => setPage(item.id)}
-                  title={collapsed ? t(item.labelKey) : ""}
+                  title={showCollapsed ? t(item.labelKey) : ""}
                   style={{
                     width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                    padding: collapsed ? "10px 0" : "9px 12px",
-                    justifyContent: collapsed ? "center" : "flex-start",
+                    padding: showCollapsed ? "10px 0" : "9px 12px",
+                    justifyContent: showCollapsed ? "center" : "flex-start",
                     background: active ? `${color}14` : "none", border: "none",
                     borderLeft: active ? `2px solid ${color}` : "2px solid transparent",
                     color: active ? color : "var(--sub)",
@@ -179,8 +216,8 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--sub)" } }}
                 >
                   <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
-                  {!collapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
-                  {active && !collapsed && (
+                  {!showCollapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
+                  {active && !showCollapsed && (
                     <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: color, flexShrink: 0 }} />
                   )}
                 </button>
@@ -194,13 +231,13 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
       <div style={{ padding: "10px 10px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
         <button
           onClick={onLogout}
-          title={collapsed ? t("logout") : ""}
+          title={showCollapsed ? t("logout") : ""}
           style={{
             width: "100%", padding: "9px 12px",
             background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)",
             borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "13px",
             display: "flex", alignItems: "center", gap: "8px",
-            justifyContent: collapsed ? "center" : "flex-start", transition: "background 0.15s",
+            justifyContent: showCollapsed ? "center" : "flex-start", transition: "background 0.15s",
           }}
           onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.12)"}
           onMouseLeave={e => e.currentTarget.style.background = "rgba(248,113,113,0.06)"}
@@ -210,7 +247,7 @@ export default function Sidebar({ page, setPage, user, onLogout }) {
             <polyline points="16 17 21 12 16 7"/>
             <line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          {!collapsed && <span>{t("logout")}</span>}
+          {!showCollapsed && <span>{t("logout")}</span>}
         </button>
       </div>
     </aside>
