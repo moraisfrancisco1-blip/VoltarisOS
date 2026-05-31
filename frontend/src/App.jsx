@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import { useState } from "react"
-import EnergyDashboard from "./modules/energy-dashboard/EnergyDashboard"
-import "./modules/energy-dashboard/energy-dashboard.css"
-import Sites from "./pages/Sites.jsx"
-import Login from "./pages/Login"
-=======
 import { useState, useEffect } from "react"
 import Login from "./pages/Login"
 import Sidebar from "./components/Sidebar"
@@ -44,7 +37,6 @@ import SimBanner from "./components/SimBanner"
 import OnboardingWizard from "./components/OnboardingWizard"
 import { useAppStore, THEMES } from "./store/appStore"
 import "./index.css"
->>>>>>> adminVoltariOs/master
 
 const PAGES = {
   dashboard: Dashboard,
@@ -88,57 +80,19 @@ function useIsMobile() {
 
 function AppShell({ user, onLogout }) {
   const [page, setPage] = useState("dashboard")
-<<<<<<< HEAD
-  const [user, setUser] = useState(() => {
-    const token = localStorage.getItem("token")
-    const company = localStorage.getItem("company")
-    const color = localStorage.getItem("color")
-    return token ? { token, company, color } : null
-  })
-
-  if (!user) return <Login onLogin={setUser} />
-
-  return (
-    <div>
-      <nav style={{
-        background: "#0a0f1a", padding: "10px 20px",
-        display: "flex", gap: "16px", alignItems: "center",
-        borderBottom: `2px solid ${user.color}`
-      }}>
-        <span style={{ color: user.color, fontWeight: "bold", marginRight: "16px" }}>
-          ⚡ {user.company}
-        </span>
-        <button onClick={() => setPage("dashboard")}
-          style={{ color: page === "dashboard" ? user.color : "white", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
-          Dashboard
-        </button>
-        <button onClick={() => setPage("sites")}
-          style={{ color: page === "sites" ? user.color : "white", background: "none", border: "none", cursor: "pointer", fontSize: "16px" }}>
-          🗺️ Sites
-        </button>
-        <button onClick={() => { localStorage.clear(); setUser(null) }}
-          style={{ marginLeft: "auto", color: "#f87171", background: "none", border: "none", cursor: "pointer" }}>
-          Sair
-        </button>
-      </nav>
-      {page === "dashboard" ? <EnergyDashboard /> : <Sites />}
-=======
   const [mobileOpen, setMobileOpen] = useState(false)
   const isMobile = useIsMobile()
   const { theme, simMode } = useAppStore()
 
-  // Close drawer on page change on mobile
   const handleSetPage = (p) => {
     setPage(p)
     if (isMobile) setMobileOpen(false)
   }
 
-  // Close drawer when resizing to desktop
   useEffect(() => {
     if (!isMobile) setMobileOpen(false)
   }, [isMobile])
 
-  // Global keyboard shortcuts
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "D") {
@@ -185,7 +139,6 @@ function AppShell({ user, onLogout }) {
     }}>
       <SimBanner />
 
-      {/* Mobile overlay backdrop */}
       {isMobile && mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
@@ -213,7 +166,6 @@ function AppShell({ user, onLogout }) {
         flexDirection: "column",
         overflow: "hidden",
         marginTop: simMode ? "38px" : 0,
-        // On desktop, sidebar takes space naturally. On mobile sidebar is fixed overlay.
         marginLeft: isMobile ? 0 : undefined,
       }}>
         <TopBar
@@ -232,7 +184,6 @@ function AppShell({ user, onLogout }) {
       <ShortcutsOverlay />
       <ToastContainer />
       <OnboardingWizard />
->>>>>>> adminVoltariOs/master
     </div>
   )
 }
