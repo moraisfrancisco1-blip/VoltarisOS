@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "VoltarisOS",
+    "slug": "voltarisos",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0a0f1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.voltarisos_k4x2.runable"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0f1a",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "package": "com.voltarisos_k4x2.runable"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiUrl": "https://voltarisos-production.up.railway.app"
+    }
+  }
+}

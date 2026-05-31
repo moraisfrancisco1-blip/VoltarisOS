@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "short_name": "React App",
   "name": "Create React App Sample",
+=======
+  "short_name": "VoltarisOS",
+  "name": "VoltarisOS — Power Redefined",
+>>>>>>> adminVoltariOs/master
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +25,11 @@
   ],
   "start_url": ".",
   "display": "standalone",
+<<<<<<< HEAD
   "theme_color": "#000000",
   "background_color": "#ffffff"
+=======
+  "theme_color": "#080d18",
+  "background_color": "#080d18"
+>>>>>>> adminVoltariOs/master
 }

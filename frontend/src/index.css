@@ -1,3 +1,92 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── CSS variable defaults (dark / Obsidian theme) ── */
+:root {
+  --bg:           #060a12;
+  --sidebar:      linear-gradient(180deg, #080d18 0%, #0a1020 100%);
+  --topbar:       #080d18;
+  --surface:      #0d1525;
+  --surface2:     #0a1020;
+  --surface-glass: rgba(13,21,37,0.7);
+  --border:       #1a2234;
+  --border-strong:#253450;
+  --text:         #f0f4ff;
+  --sub:          #6b7280;
+  --glow:         #3b82f6;
+  --grid-line:    #1a2234;
+  --tooltip-bg:   rgba(10,16,32,0.95);
+  --gradient:     linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+/* ── Base ── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong, #253450);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sub, #6b7280);
+}
+
+/* ── Recharts override for theme vars ── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--grid-line) !important;
+}
+
+/* ── Glass panel utility ── */
+.glass {
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 767px) {
+  /* Prevent horizontal overflow on all page content */
+  main > * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Smoother touch scroll on main content */
+  main {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Recharts: allow overflow hidden so charts don't break layout */
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+  }
+
+  /* Tables scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
