@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const accent = "#6366f1";
-const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24 };
+const card = { background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 24 };
 
 const roleColors = {
   admin: { bg: "#3730a3", text: "#a5b4fc" },
@@ -64,11 +64,11 @@ export default function UserManagement() {
     ? { ...x, status: x.status === "Active" ? "Inactive" : "Active" } : x));
 
   return (
-    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>User Management</h1>
-          <p style={{ color: "var(--sub)" }}>Manage team access, roles, and site permissions</p>
+          <p style={{ color: "rgba(148,163,184,0.6)" }}>Manage team access, roles, and site permissions</p>
         </div>
         <button onClick={() => setShowInvite(!showInvite)} style={{
           background: accent, color: "#fff", border: "none",
@@ -85,7 +85,7 @@ export default function UserManagement() {
           { label: "Operators", value: users.filter(u => u.role === "operator").length, color: "#60a5fa" },
         ].map(k => (
           <div key={k.label} style={card}>
-            <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
+            <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: k.color || "#e5e7eb" }}>{k.value}</div>
           </div>
         ))}
@@ -101,19 +101,19 @@ export default function UserManagement() {
               { label: "Email", key: "email", type: "email", placeholder: "user@company.com" },
             ].map(f => (
               <div key={f.key}>
-                <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>{f.label}</label>
+                <label style={{ fontSize: 12, color: "rgba(148,163,184,0.6)", display: "block", marginBottom: 4 }}>{f.label}</label>
                 <input type={f.type} placeholder={f.placeholder} value={inviteForm[f.key]}
                   onChange={e => setInviteForm(p => ({ ...p, [f.key]: e.target.value }))}
                   style={{
-                    background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8,
-                    padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box",
+                    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+                    padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%", boxSizing: "border-box",
                   }} />
               </div>
             ))}
             <div>
-              <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>Role</label>
+              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.6)", display: "block", marginBottom: 4 }}>Role</label>
               <select value={inviteForm.role} onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))}
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%" }}>
                 <option value="admin">Admin</option>
                 <option value="operator">Operator</option>
                 <option value="investor">Investor</option>
@@ -121,9 +121,9 @@ export default function UserManagement() {
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>Site Access</label>
+              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.6)", display: "block", marginBottom: 4 }}>Site Access</label>
               <select value={inviteForm.site} onChange={e => setInviteForm(p => ({ ...p, site: e.target.value }))}
-                style={{ background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%" }}>
                 <option>All Sites</option>
                 <option>Rotterdam</option>
                 <option>Rebordelo</option>
@@ -139,7 +139,7 @@ export default function UserManagement() {
               {inviteLoading ? "Sending..." : inviteSuccess ? "Invited!" : "Send Invite"}
             </button>
             <button onClick={() => setShowInvite(false)} style={{
-              background: "#1f2937", color: "var(--sub)", border: "none", borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontSize: 13,
+              background: "#1f2937", color: "rgba(148,163,184,0.6)", border: "none", borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontSize: 13,
             }}>Cancel</button>
           </div>
         </div>
@@ -152,14 +152,14 @@ export default function UserManagement() {
           <input placeholder="Search by name or email..." value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
-              background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8,
-              padding: "8px 14px", color: "var(--text)", fontSize: 13, width: 240,
+              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+              padding: "8px 14px", color: "#f1f5f9", fontSize: 13, width: 240,
             }} />
         </div>
 
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
-            <tr style={{ color: "var(--sub)", borderBottom: "1px solid var(--border)" }}>
+            <tr style={{ color: "rgba(148,163,184,0.6)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
               {["User", "Role", "Site Access", "Status", "Last Login", ""].map(h => (
                 <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
               ))}
@@ -179,7 +179,7 @@ export default function UserManagement() {
                       }}>{u.avatar}</div>
                       <div>
                         <div style={{ fontWeight: 500 }}>{u.name}</div>
-                        <div style={{ fontSize: 11, color: "var(--sub)" }}>{u.email}</div>
+                        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{u.email}</div>
                       </div>
                     </div>
                   </td>
@@ -188,7 +188,7 @@ export default function UserManagement() {
                       {u.role}
                     </span>
                   </td>
-                  <td style={{ padding: "12px", color: "var(--sub)" }}>{u.site}</td>
+                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.6)" }}>{u.site}</td>
                   <td style={{ padding: "12px" }}>
                     <span style={{
                       fontSize: 12, padding: "3px 10px", borderRadius: 99,
@@ -196,11 +196,11 @@ export default function UserManagement() {
                       color: u.status === "Active" ? "#10b981" : u.status === "Invited" ? "#60a5fa" : "#6b7280",
                     }}>{u.status}</span>
                   </td>
-                  <td style={{ padding: "12px", color: "var(--sub)" }}>{u.lastLogin}</td>
+                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.6)" }}>{u.lastLogin}</td>
                   <td style={{ padding: "12px" }}>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => toggleStatus(u.id)} style={{
-                        background: "#1f2937", color: "var(--sub)", border: "none",
+                        background: "#1f2937", color: "rgba(148,163,184,0.6)", border: "none",
                         borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11,
                       }}>{u.status === "Active" ? "Disable" : "Enable"}</button>
                       {u.id !== 1 && (
@@ -230,11 +230,11 @@ export default function UserManagement() {
           ].map(r => {
             const rc = roleColors[r.role];
             return (
-              <div key={r.role} style={{ background: "var(--surface2)", padding: 14, borderRadius: 10 }}>
+              <div key={r.role} style={{ background: "rgba(255,255,255,0.04)", padding: 14, borderRadius: 10 }}>
                 <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 99, background: rc.bg, color: rc.text, textTransform: "capitalize" }}>
                   {r.label}
                 </span>
-                <ul style={{ marginTop: 10, paddingLeft: 16, fontSize: 12, color: "var(--sub)", lineHeight: 1.8 }}>
+                <ul style={{ marginTop: 10, paddingLeft: 16, fontSize: 12, color: "rgba(148,163,184,0.6)", lineHeight: 1.8 }}>
                   {r.perms.map(p => <li key={p}>{p}</li>)}
                 </ul>
               </div>

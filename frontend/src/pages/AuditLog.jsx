@@ -37,7 +37,7 @@ export default function AuditLog({ user }) {
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ color: "white", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>
-        <p style={{ color: "var(--sub)", fontSize: "14px" }}>Registo completo de todas as ações realizadas no sistema</p>
+        <p style={{ color: "rgba(148,163,184,0.6)", fontSize: "14px" }}>Registo completo de todas as ações realizadas no sistema</p>
       </div>
 
       {/* Stats */}
@@ -49,11 +49,11 @@ export default function AuditLog({ user }) {
           { label: "IPs únicos", value: [...new Set(auditLog.map(e => e.ip))].length, color: "#f59e0b" },
         ].map(s => (
           <div key={s.label} style={{
-            background: "var(--surface)", border: "1px solid var(--border)",
+            background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: "12px", padding: "18px 20px",
           }}>
             <div style={{ color: s.color, fontSize: "24px", fontWeight: "700" }}>{s.value}</div>
-            <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "4px" }}>{s.label}</div>
+            <div style={{ color: "rgba(148,163,184,0.6)", fontSize: "12px", marginTop: "4px" }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -71,7 +71,7 @@ export default function AuditLog({ user }) {
             onChange={e => setSearch(e.target.value)}
             style={{
               width: "100%", padding: "10px 12px 10px 38px",
-              background: "var(--surface)", border: "1px solid var(--border)",
+              background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)",
               borderRadius: "10px", color: "white", fontSize: "14px",
               outline: "none", boxSizing: "border-box",
             }}
@@ -94,10 +94,10 @@ export default function AuditLog({ user }) {
       </div>
 
       {/* Table */}
-      <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "14px", overflow: "hidden" }}>
+      <div style={{ background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid var(--border)" }}>
+            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
               {["Timestamp", "Utilizador", "Ação", "Recurso", "IP"].map(h => (
                 <th key={h} style={{
                   padding: "12px 16px", textAlign: "left",
@@ -120,7 +120,7 @@ export default function AuditLog({ user }) {
                   onMouseEnter={e => e.currentTarget.style.background = "#ffffff04"}
                   onMouseLeave={e => e.currentTarget.style.background = "none"}
                 >
-                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                  <td style={{ padding: "12px 16px", color: "rgba(148,163,184,0.6)", fontSize: "12px", fontFamily: "monospace", whiteSpace: "nowrap" }}>
                     {fmt(entry.time)}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
@@ -131,7 +131,7 @@ export default function AuditLog({ user }) {
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "10px", fontWeight: "700", color: color, flexShrink: 0,
                       }}>{entry.user.charAt(0).toUpperCase()}</div>
-                      <span style={{ color: "var(--sub)", fontSize: "13px" }}>{entry.user}</span>
+                      <span style={{ color: "rgba(148,163,184,0.6)", fontSize: "13px" }}>{entry.user}</span>
                     </div>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
@@ -141,7 +141,7 @@ export default function AuditLog({ user }) {
                       borderRadius: "20px", color: ac, fontSize: "12px", fontWeight: "600",
                     }}>{entry.action}</span>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "13px" }}>{entry.resource}</td>
+                  <td style={{ padding: "12px 16px", color: "rgba(148,163,184,0.6)", fontSize: "13px" }}>{entry.resource}</td>
                   <td style={{ padding: "12px 16px", color: "#374151", fontSize: "12px", fontFamily: "monospace" }}>{entry.ip}</td>
                 </tr>
               )

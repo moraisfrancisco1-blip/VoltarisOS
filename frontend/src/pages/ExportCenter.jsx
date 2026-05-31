@@ -57,23 +57,23 @@ export default function ExportCenter({ user }) {
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ color: "white", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Export Center</h1>
-        <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("exp_sub") || "Export any report with custom branding"}</p>
+        <p style={{ color: "rgba(148,163,184,0.6)", fontSize: "14px" }}>{t("exp_sub") || "Export any report with custom branding"}</p>
       </div>
 
       {/* Options bar */}
       <div style={{
-        background: "var(--surface)", border: "1px solid var(--border)",
+        background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: "12px", padding: "18px 20px",
         display: "flex", alignItems: "center", gap: "20px",
         marginBottom: "24px", flexWrap: "wrap",
       }}>
         <div>
-          <div style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>{t("format") || "Format"}</div>
+          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>{t("format") || "Format"}</div>
           <div style={{ display: "flex", gap: "6px" }}>
             {FORMATS.map(f => (
               <button key={f} onClick={() => setFormat(f)} style={{
                 padding: "6px 14px",
-                background: format === f ? `${color}18` : "var(--surface2)",
+                background: format === f ? `${color}18` : "rgba(255,255,255,0.04)",
                 border: `1px solid ${format === f ? color + "50" : "#1e2d45"}`,
                 borderRadius: "8px", color: format === f ? color : "#6b7280",
                 cursor: "pointer", fontSize: "13px", fontWeight: format === f ? "700" : "400",
@@ -82,13 +82,13 @@ export default function ExportCenter({ user }) {
           </div>
         </div>
 
-        <div style={{ width: "1px", height: "40px", background: "var(--surface2)" }} />
+        <div style={{ width: "1px", height: "40px", background: "rgba(255,255,255,0.04)" }} />
 
         <div>
-          <div style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>{t("period") || "Period"}</div>
+          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>{t("period") || "Period"}</div>
           <select value={range} onChange={e => setRange(e.target.value)} style={{
-            padding: "7px 14px", background: "var(--surface2)",
-            border: "1px solid var(--border)", borderRadius: "8px",
+            padding: "7px 14px", background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px",
             color: "white", fontSize: "13px", outline: "none",
           }}>
             <option value="7d">{t("last_7d") || "Last 7 days"}</option>
@@ -99,7 +99,7 @@ export default function ExportCenter({ user }) {
           </select>
         </div>
 
-        <div style={{ width: "1px", height: "40px", background: "var(--surface2)" }} />
+        <div style={{ width: "1px", height: "40px", background: "rgba(255,255,255,0.04)" }} />
 
         <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
           <input
@@ -108,7 +108,7 @@ export default function ExportCenter({ user }) {
             onChange={e => setIncludeBranding(e.target.checked)}
             style={{ accentColor: color, width: "16px", height: "16px" }}
           />
-          <span style={{ color: "var(--sub)", fontSize: "13px" }}>{t("include_branding") || "Include logo & branding"}</span>
+          <span style={{ color: "rgba(148,163,184,0.6)", fontSize: "13px" }}>{t("include_branding") || "Include logo & branding"}</span>
         </label>
 
         <div style={{ marginLeft: "auto" }}>
@@ -144,7 +144,7 @@ export default function ExportCenter({ user }) {
                   key={item.id}
                   onClick={() => toggle(item.id)}
                   style={{
-                    background: isSel ? `${color}08` : "var(--surface)",
+                    background: isSel ? `${color}08` : "rgba(15,18,32,0.92)",
                     border: `1px solid ${isSel ? color + "40" : "#1a2234"}`,
                     borderRadius: "12px", padding: "16px 18px",
                     cursor: "pointer", transition: "all 0.15s",
@@ -166,7 +166,7 @@ export default function ExportCenter({ user }) {
                     <span style={{ fontSize: "20px" }}>{item.icon}</span>
                     <span style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>{item.label}</span>
                   </div>
-                  <div style={{ color: "var(--sub)", fontSize: "12px", lineHeight: "1.5", marginBottom: "14px" }}>{item.desc}</div>
+                  <div style={{ color: "rgba(148,163,184,0.6)", fontSize: "12px", lineHeight: "1.5", marginBottom: "14px" }}>{item.desc}</div>
                   <button
                     onClick={e => { e.stopPropagation(); doExport(item) }}
                     disabled={isExp}

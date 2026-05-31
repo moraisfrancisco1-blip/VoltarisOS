@@ -7,14 +7,14 @@ import {
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
-const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 };
-const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+const card = { background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 20 };
+const label = { fontSize: 11, color: "rgba(148,163,184,0.6)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "var(--tooltip-bg)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 12px" }}>
-      <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+    <div style={{ background: "rgba(15,18,32,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -59,14 +59,14 @@ export default function RegulatoryCompliance() {
   const highRisk = DEADLINES.filter(d => d.risk === "high" && d.status !== "done").length;
   const score = Math.round((done / DEADLINES.length) * 100);
 
-  const statusColor = (s) => s === "done" ? green : s === "inprogress" ? amber : "var(--sub)";
-  const statusBg = (s) => s === "done" ? "#10b98120" : s === "inprogress" ? "#f59e0b20" : "var(--surface2)";
+  const statusColor = (s) => s === "done" ? green : s === "inprogress" ? amber : "rgba(148,163,184,0.6)";
+  const statusBg = (s) => s === "done" ? "#10b98120" : s === "inprogress" ? "#f59e0b20" : "rgba(255,255,255,0.04)";
   const riskColor = (r) => r === "high" ? red : r === "medium" ? amber : green;
 
   const barData = [
     { name: "Done", value: done, fill: green },
     { name: "In Progress", value: inprog, fill: amber },
-    { name: "Pending", value: pending, fill: "var(--sub)" },
+    { name: "Pending", value: pending, fill: "rgba(148,163,184,0.6)" },
     { name: "Urgent", value: urgent, fill: red },
   ];
 
@@ -76,11 +76,11 @@ export default function RegulatoryCompliance() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Regulatory Compliance</h1>
-          <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Deadlines · Risk tracking · Certifications · ESG reporting</div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Regulatory Compliance</h1>
+          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13, marginTop: 2 }}>Deadlines · Risk tracking · Certifications · ESG reporting</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ padding: "8px 16px", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>
+          <button style={{ padding: "8px 16px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "rgba(148,163,184,0.6)", fontSize: 12, cursor: "pointer" }}>
             Export Report
           </button>
           <button onClick={() => setShowModal(true)}
@@ -98,12 +98,12 @@ export default function RegulatoryCompliance() {
           { label: "Urgent (≤60d)", value: urgent, color: urgent > 0 ? red : green, sub: "need action" },
           { label: "High Risk", value: highRisk, color: highRisk > 0 ? red : green, sub: "open items" },
           { label: "In Progress", value: inprog, color: amber, sub: "active items" },
-          { label: "Pending", value: pending, color: "var(--sub)", sub: "not started" },
+          { label: "Pending", value: pending, color: "rgba(148,163,184,0.6)", sub: "not started" },
         ].map(k => (
           <div key={k.label} style={card}>
             <div style={label}>{k.label}</div>
             <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
-            <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 3 }}>{k.sub}</div>
+            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 3 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -115,9 +115,9 @@ export default function RegulatoryCompliance() {
           <div style={{ ...label, marginBottom: 12 }}>Overall Status Breakdown</div>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={barData} margin={{ left: -10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "var(--sub)" }} />
-              <YAxis tick={{ fontSize: 10, fill: "var(--sub)" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {barData.map((b, i) => <Cell key={i} fill={b.fill} />)}
@@ -127,10 +127,10 @@ export default function RegulatoryCompliance() {
           {/* Progress bar */}
           <div style={{ marginTop: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12 }}>
-              <span style={{ color: "var(--sub)" }}>Overall Progress</span>
+              <span style={{ color: "rgba(148,163,184,0.6)" }}>Overall Progress</span>
               <span style={{ fontWeight: 700, color: green }}>{score}%</span>
             </div>
-            <div style={{ height: 8, background: "var(--border)", borderRadius: 4 }}>
+            <div style={{ height: 8, background: "rgba(255,255,255,0.08)", borderRadius: 4 }}>
               <div style={{ width: `${score}%`, height: "100%", background: score > 80 ? green : amber, borderRadius: 4 }} />
             </div>
           </div>
@@ -141,8 +141,8 @@ export default function RegulatoryCompliance() {
           <div style={{ ...label, marginBottom: 8 }}>Compliance by Category</div>
           <ResponsiveContainer width="100%" height={200}>
             <RadarChart data={RADAR_DATA} cx="50%" cy="50%" outerRadius={75}>
-              <PolarGrid stroke="var(--grid-line)" />
-              <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: "var(--sub)" }} />
+              <PolarGrid stroke="rgba(255,255,255,0.04)" />
+              <PolarAngleAxis dataKey="category" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
               <PolarRadiusAxis domain={[0, 100]} tick={false} />
               <Radar name="Score" dataKey="score" stroke={accent} fill={accent} fillOpacity={0.25} />
               <Tooltip content={<CustomTooltip />} />
@@ -156,9 +156,9 @@ export default function RegulatoryCompliance() {
         {["all", "done", "inprogress", "pending", "Safety", "Regulatory", "ESG", "Grid", "Market"].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: "5px 12px", borderRadius: 20, fontSize: 11, cursor: "pointer",
-            background: filter === f ? accent : "var(--surface2)",
-            color: filter === f ? "#fff" : "var(--sub)",
-            border: `1px solid ${filter === f ? accent : "var(--border)"}`,
+            background: filter === f ? accent : "rgba(255,255,255,0.04)",
+            color: filter === f ? "#fff" : "rgba(148,163,184,0.6)",
+            border: `1px solid ${filter === f ? accent : "rgba(255,255,255,0.08)"}`,
           }}>{f === "inprogress" ? "In Progress" : f.charAt(0).toUpperCase() + f.slice(1)}</button>
         ))}
       </div>
@@ -174,20 +174,20 @@ export default function RegulatoryCompliance() {
               <div key={d.id} style={{
                 display: "grid", gridTemplateColumns: "1fr 140px 100px 80px 80px 100px",
                 gap: 12, alignItems: "center", padding: "12px 14px", borderRadius: 10,
-                background: isUrgent ? "#ef444408" : "var(--surface2)",
-                border: `1px solid ${isUrgent ? "#ef444430" : "var(--border)"}`,
+                background: isUrgent ? "#ef444408" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${isUrgent ? "#ef444430" : "rgba(255,255,255,0.08)"}`,
               }}>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{d.title}</div>
-                  <div style={{ fontSize: 11, color: "var(--sub)" }}>{d.body}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{d.title}</div>
+                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{d.body}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: isUrgent ? red : "var(--text)" }}>{d.due}</div>
-                  <div style={{ fontSize: 10, color: isUrgent ? red : "var(--sub)" }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: isUrgent ? red : "#f1f5f9" }}>{d.due}</div>
+                  <div style={{ fontSize: 10, color: isUrgent ? red : "rgba(148,163,184,0.6)" }}>
                     {d.status === "done" ? "Completed" : `${dl}d left`}
                   </div>
                 </div>
-                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, background: "var(--surface)", border: "1px solid var(--border)", color: "var(--sub)" }}>
+                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.6)" }}>
                   {d.category}
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: riskColor(d.risk) }}>
@@ -203,7 +203,7 @@ export default function RegulatoryCompliance() {
                       Mark Done
                     </button>
                   )}
-                  <button style={{ padding: "4px 10px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--sub)", fontSize: 10, cursor: "pointer" }}>
+                  <button style={{ padding: "4px 10px", background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, color: "rgba(148,163,184,0.6)", fontSize: 10, cursor: "pointer" }}>
                     Edit
                   </button>
                 </div>
@@ -216,8 +216,8 @@ export default function RegulatoryCompliance() {
       {/* Add deadline modal */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "#00000088", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 16, padding: 28, width: 480 }}>
-            <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: "var(--text)" }}>Add Compliance Deadline</h2>
+          <div style={{ background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 28, width: 480 }}>
+            <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: "#f1f5f9" }}>Add Compliance Deadline</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {[
                 { l: "Title", type: "text" },
@@ -225,16 +225,16 @@ export default function RegulatoryCompliance() {
                 { l: "Due Date", type: "date" },
               ].map(f => (
                 <div key={f.l}>
-                  <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{f.l}</div>
-                  <input type={f.type} style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", color: "var(--text)", fontSize: 13, boxSizing: "border-box" }} />
+                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{f.l}</div>
+                  <input type={f.type} style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#f1f5f9", fontSize: 13, boxSizing: "border-box" }} />
                 </div>
               ))}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 {[{ l: "Category", opts: ["Safety","Regulatory","ESG","Grid","Market","Environmental","ISO"] },
                   { l: "Risk", opts: ["low","medium","high"] }].map(f => (
                   <div key={f.l}>
-                    <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{f.l}</div>
-                    <select style={{ width: "100%", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 10px", color: "var(--text)", fontSize: 13 }}>
+                    <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{f.l}</div>
+                    <select style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#f1f5f9", fontSize: 13 }}>
                       {f.opts.map(o => <option key={o}>{o}</option>)}
                     </select>
                   </div>
@@ -242,7 +242,7 @@ export default function RegulatoryCompliance() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
-              <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: "none", border: "1px solid var(--border)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+              <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "rgba(148,163,184,0.6)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
               <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
             </div>
           </div>

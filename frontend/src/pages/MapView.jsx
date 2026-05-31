@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const accent = "#6366f1";
-const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 20 };
+const card = { background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 20 };
 
 const sites = [
   {
@@ -91,9 +91,9 @@ export default function MapView() {
   }, []);
 
   return (
-    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Site Map</h1>
-      <p style={{ color: "var(--sub)", marginBottom: 24 }}>Geographic overview of all VPP assets</p>
+      <p style={{ color: "rgba(148,163,184,0.6)", marginBottom: 24 }}>Geographic overview of all VPP assets</p>
 
       {/* Summary row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
@@ -104,7 +104,7 @@ export default function MapView() {
           { label: "Countries", value: 2 },
         ].map(k => (
           <div key={k.label} style={card}>
-            <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 4 }}>{k.label}</div>
+            <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 12, marginBottom: 4 }}>{k.label}</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: k.color || "#e5e7eb" }}>{k.value}</div>
           </div>
         ))}
@@ -115,7 +115,7 @@ export default function MapView() {
         <div style={{ ...card, padding: 0, overflow: "hidden", minHeight: 500 }}>
           <div ref={mapRef} style={{ width: "100%", height: 500 }} />
           {!mapReady && (
-            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: "var(--sub)", fontSize: 13 }}>
+            <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", color: "rgba(148,163,184,0.6)", fontSize: 13 }}>
               Loading map...
             </div>
           )}
@@ -135,19 +135,19 @@ export default function MapView() {
                 ...card,
                 cursor: "pointer",
                 border: `1px solid ${selected?.id === s.id ? accent : "#1f2937"}`,
-                background: selected?.id === s.id ? "var(--surface2)" : "var(--surface)",
+                background: selected?.id === s.id ? "rgba(255,255,255,0.04)" : "rgba(15,18,32,0.92)",
               }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 15 }}>{s.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--sub)" }}>{s.country}</div>
+                  <div style={{ fontSize: 12, color: "rgba(148,163,184,0.6)" }}>{s.country}</div>
                 </div>
                 <span style={{
                   fontSize: 11, padding: "2px 8px", borderRadius: 99,
                   background: "#064e3b", color: "#10b981"
                 }}>{s.status}</span>
               </div>
-              <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 8 }}>{s.type}</div>
+              <div style={{ fontSize: 12, color: "rgba(148,163,184,0.6)", marginBottom: 8 }}>{s.type}</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                 {[
                   { label: "Power", val: `${s.power} kW` },
@@ -155,8 +155,8 @@ export default function MapView() {
                   { label: "Solar", val: `${s.solar} kW` },
                   { label: "Revenue", val: s.revenue },
                 ].map(m => (
-                  <div key={m.label} style={{ background: "var(--surface2)", padding: "6px 10px", borderRadius: 6 }}>
-                    <div style={{ fontSize: 10, color: "var(--sub)" }}>{m.label}</div>
+                  <div key={m.label} style={{ background: "rgba(255,255,255,0.04)", padding: "6px 10px", borderRadius: 6 }}>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>{m.label}</div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{m.val}</div>
                   </div>
                 ))}
@@ -167,7 +167,7 @@ export default function MapView() {
           {selected && (
             <div style={{ ...card, background: "#1a1f35", border: `1px solid ${accent}` }}>
               <div style={{ fontWeight: 600, marginBottom: 8 }}>Coordinates</div>
-              <div style={{ fontSize: 12, color: "var(--sub)" }}>
+              <div style={{ fontSize: 12, color: "rgba(148,163,184,0.6)" }}>
                 Lat: {selected.lat.toFixed(4)}<br />
                 Lng: {selected.lng.toFixed(4)}<br />
                 Capacity: {selected.capacity}

@@ -9,7 +9,7 @@ const green = "#10b981";
 const amber = "#f59e0b";
 const red = "#ef4444";
 const blue = "#60a5fa";
-const card = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14, padding: 20 };
+const card = { background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 20 };
 
 function rand(min, max, dec = 1) { return +(Math.random() * (max - min) + min).toFixed(dec); }
 
@@ -45,12 +45,12 @@ const ANOMALY_FEED = [
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "var(--tooltip-bg,#1a1f2e)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
-      <div style={{ color: "var(--sub)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
+    <div style={{ background: "rgba(15,18,32,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
+      <div style={{ color: "rgba(148,163,184,0.6)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ display: "flex", gap: 12, justifyContent: "space-between", marginBottom: 3 }}>
           <span style={{ color: p.color }}>{p.name}</span>
-          <span style={{ color: "var(--text)", fontWeight: 700 }}>{p.value}</span>
+          <span style={{ color: "#f1f5f9", fontWeight: 700 }}>{p.value}</span>
         </div>
       ))}
     </div>
@@ -98,13 +98,13 @@ export default function PredictiveMaintenance() {
   const PRIORITY_COLOR = { Critical: red, High: amber, Medium: blue, Low: green };
 
   return (
-    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--bg)" }}>
+    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Predictive Maintenance</h1>
-          <p style={{ color: "var(--sub)", fontSize: 14 }}>AI-driven asset health monitoring, RUL prediction & automated work order management</p>
+          <p style={{ color: "rgba(148,163,184,0.6)", fontSize: 14 }}>AI-driven asset health monitoring, RUL prediction & automated work order management</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button style={{ background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
@@ -127,7 +127,7 @@ export default function PredictiveMaintenance() {
           { l: "Avoided Failures", v: "€32.6k", c: green },
         ].map(k => (
           <div key={k.l} style={{ ...card, padding: 14, textAlign: "center" }}>
-            <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.l}</div>
+            <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.l}</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: k.c }}>{k.v}</div>
           </div>
         ))}
@@ -137,8 +137,8 @@ export default function PredictiveMaintenance() {
       <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
         {["Assets", "Work Orders", "Cost Analysis", "Anomaly Feed"].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            background: tab === t ? accent : "var(--surface)", color: tab === t ? "#fff" : "var(--sub)",
-            border: `1px solid ${tab === t ? accent : "var(--border)"}`, borderRadius: 8,
+            background: tab === t ? accent : "rgba(15,18,32,0.92)", color: tab === t ? "#fff" : "rgba(148,163,184,0.6)",
+            border: `1px solid ${tab === t ? accent : "rgba(255,255,255,0.08)"}`, borderRadius: 8,
             padding: "7px 16px", fontSize: 13, cursor: "pointer", fontWeight: tab === t ? 600 : 400
           }}>{t}</button>
         ))}
@@ -151,7 +151,7 @@ export default function PredictiveMaintenance() {
             <div style={{ display: "flex", gap: 6 }}>
               {["All", "Critical", "Warning", "Good"].map(f => (
                 <button key={f} onClick={() => setFilter(f)} style={{
-                  background: filter === f ? accent : "var(--surface2)", color: filter === f ? "#fff" : "var(--sub)",
+                  background: filter === f ? accent : "rgba(255,255,255,0.04)", color: filter === f ? "#fff" : "rgba(148,163,184,0.6)",
                   border: "none", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer"
                 }}>{f}</button>
               ))}
@@ -161,14 +161,14 @@ export default function PredictiveMaintenance() {
               return (
                 <div key={a.id} onClick={() => setSelected(idx)} style={{
                   ...card, padding: 14, cursor: "pointer",
-                  border: `1px solid ${selected === idx ? accent : "var(--border)"}`,
+                  border: `1px solid ${selected === idx ? accent : "rgba(255,255,255,0.08)"}`,
                   borderLeft: `3px solid ${STATUS_COLOR[a.status]}`,
-                  background: selected === idx ? "var(--surface2)" : "var(--surface)"
+                  background: selected === idx ? "rgba(255,255,255,0.04)" : "rgba(15,18,32,0.92)"
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{a.id}</div>
-                      <div style={{ fontSize: 11, color: "var(--sub)" }}>{a.type} · {a.site}</div>
+                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{a.type} · {a.site}</div>
                     </div>
                     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: STATUS_BG[a.status], color: STATUS_COLOR[a.status], fontWeight: 600, alignSelf: "flex-start" }}>{a.status}</span>
                   </div>
@@ -178,8 +178,8 @@ export default function PredictiveMaintenance() {
                       { l: "RUL", v: `${a.rul}y`, c: a.rul < 3 ? red : a.rul < 5 ? amber : green },
                       { l: "Alerts", v: a.alerts, c: a.alerts > 0 ? red : green },
                     ].map(m => (
-                      <div key={m.l} style={{ textAlign: "center", background: "var(--surface2)", borderRadius: 6, padding: "6px 4px" }}>
-                        <div style={{ fontSize: 9, color: "var(--sub)" }}>{m.l}</div>
+                      <div key={m.l} style={{ textAlign: "center", background: "rgba(255,255,255,0.04)", borderRadius: 6, padding: "6px 4px" }}>
+                        <div style={{ fontSize: 9, color: "rgba(148,163,184,0.6)" }}>{m.l}</div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: m.c }}>{m.v}</div>
                       </div>
                     ))}
@@ -202,7 +202,7 @@ export default function PredictiveMaintenance() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 800 }}>{asset.id} — {asset.model}</div>
-                  <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>{asset.type} · {asset.site} · Age: {asset.age}y · {asset.runtime.toLocaleString()} h runtime</div>
+                  <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13, marginTop: 2 }}>{asset.type} · {asset.site} · Age: {asset.age}y · {asset.runtime.toLocaleString()} h runtime</div>
                 </div>
                 <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 99, background: STATUS_BG[asset.status], color: STATUS_COLOR[asset.status], fontWeight: 700 }}>{asset.status}</span>
               </div>
@@ -212,10 +212,10 @@ export default function PredictiveMaintenance() {
                   { l: "Remaining Life", v: `${asset.rul} years`, c: asset.rul < 3 ? red : amber },
                   { l: "Efficiency", v: `${asset.efficiency}%`, c: green },
                   { l: "Active Alerts", v: asset.alerts, c: asset.alerts > 0 ? red : green },
-                  { l: "Next PM", v: asset.nextPM, c: "var(--text)" },
+                  { l: "Next PM", v: asset.nextPM, c: "#f1f5f9" },
                 ].map(m => (
-                  <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 10, padding: 12, textAlign: "center" }}>
-                    <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4 }}>{m.l}</div>
+                  <div key={m.l} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{m.l}</div>
                     <div style={{ fontSize: 16, fontWeight: 800, color: m.c }}>{m.v}</div>
                   </div>
                 ))}
@@ -227,10 +227,10 @@ export default function PredictiveMaintenance() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>30-Day Sensor Trend</div>
                 <ResponsiveContainer width="100%" height={160}>
                   <ComposedChart data={sensorData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line,#1f2937)" />
-                    <XAxis dataKey="day" tick={{ fontSize: 9, fill: "var(--sub)" }} interval={6} />
-                    <YAxis yAxisId="temp" tick={{ fontSize: 9, fill: "var(--sub)" }} />
-                    <YAxis yAxisId="eff" orientation="right" domain={[85, 100]} tick={{ fontSize: 9, fill: "var(--sub)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="day" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} interval={6} />
+                    <YAxis yAxisId="temp" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
+                    <YAxis yAxisId="eff" orientation="right" domain={[85, 100]} tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area yAxisId="temp" type="monotone" dataKey="temp" stroke={amber} fill={`${amber}20`} strokeWidth={2} name="Temp °C" />
                     <Line yAxisId="eff" type="monotone" dataKey="efficiency" stroke={green} strokeWidth={2} dot={false} name="Efficiency %" />
@@ -241,9 +241,9 @@ export default function PredictiveMaintenance() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Remaining Useful Life Projection</div>
                 <ResponsiveContainer width="100%" height={160}>
                   <AreaChart data={sensorData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line,#1f2937)" />
-                    <XAxis dataKey="day" tick={{ fontSize: 9, fill: "var(--sub)" }} interval={6} />
-                    <YAxis tick={{ fontSize: 9, fill: "var(--sub)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="day" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} interval={6} />
+                    <YAxis tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <ReferenceLine y={2} stroke={red} strokeDasharray="3 3" label={{ value: "Action needed", fill: red, fontSize: 10 }} />
                     <Area type="monotone" dataKey="rul" stroke={accent} fill={`${accent}20`} strokeWidth={2} name="RUL (years)" />
@@ -274,30 +274,30 @@ export default function PredictiveMaintenance() {
         <div style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700 }}>Active Work Orders</h2>
-            <div style={{ fontSize: 13, color: "var(--sub)" }}>Total budget: <span style={{ color: blue, fontWeight: 700 }}>€{maintenanceCost.toLocaleString()}</span></div>
+            <div style={{ fontSize: 13, color: "rgba(148,163,184,0.6)" }}>Total budget: <span style={{ color: blue, fontWeight: 700 }}>€{maintenanceCost.toLocaleString()}</span></div>
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid var(--border)" }}>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                 {["WO #", "Asset", "Description", "Priority", "Assigned To", "Due Date", "Cost", "Status"].map(h => (
-                  <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "var(--sub)", fontWeight: 500, fontSize: 12 }}>{h}</th>
+                  <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "rgba(148,163,184,0.6)", fontWeight: 500, fontSize: 12 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {WORK_ORDERS.map((w, i) => (
-                <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                   <td style={{ padding: "12px", fontWeight: 700, color: accent }}>{w.id}</td>
                   <td style={{ padding: "12px" }}>{w.asset}</td>
                   <td style={{ padding: "12px", maxWidth: 240 }}>{w.title}</td>
                   <td style={{ padding: "12px" }}>
-                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: w.priority === "Critical" ? "#7f1d1d" : w.priority === "High" ? "#451a03" : "var(--surface2)", color: PRIORITY_COLOR[w.priority] }}>{w.priority}</span>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: w.priority === "Critical" ? "#7f1d1d" : w.priority === "High" ? "#451a03" : "rgba(255,255,255,0.04)", color: PRIORITY_COLOR[w.priority] }}>{w.priority}</span>
                   </td>
-                  <td style={{ padding: "12px", color: w.assigned === "Unassigned" ? red : "var(--text)" }}>{w.assigned}</td>
-                  <td style={{ padding: "12px", color: "var(--sub)" }}>{w.due}</td>
+                  <td style={{ padding: "12px", color: w.assigned === "Unassigned" ? red : "#f1f5f9" }}>{w.assigned}</td>
+                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.6)" }}>{w.due}</td>
                   <td style={{ padding: "12px", color: blue, fontWeight: 600 }}>€{w.cost.toLocaleString()}</td>
                   <td style={{ padding: "12px" }}>
-                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: w.status === "In Progress" ? "#1e3a5f" : w.status === "Open" ? "#451a03" : "var(--surface2)", color: w.status === "In Progress" ? blue : w.status === "Open" ? amber : "var(--sub)" }}>{w.status}</span>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: w.status === "In Progress" ? "#1e3a5f" : w.status === "Open" ? "#451a03" : "rgba(255,255,255,0.04)", color: w.status === "In Progress" ? blue : w.status === "Open" ? amber : "rgba(148,163,184,0.6)" }}>{w.status}</span>
                   </td>
                 </tr>
               ))}
@@ -312,10 +312,10 @@ export default function PredictiveMaintenance() {
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Maintenance Cost Breakdown — Planned vs Unplanned + Avoided Failure Savings</div>
             <ResponsiveContainer width="100%" height={220}>
               <ComposedChart data={costData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line,#1f2937)" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "var(--sub)" }} />
-                <YAxis yAxisId="cost" tick={{ fontSize: 11, fill: "var(--sub)" }} />
-                <YAxis yAxisId="avoid" orientation="right" tick={{ fontSize: 11, fill: "var(--sub)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "rgba(148,163,184,0.6)" }} />
+                <YAxis yAxisId="cost" tick={{ fontSize: 11, fill: "rgba(148,163,184,0.6)" }} />
+                <YAxis yAxisId="avoid" orientation="right" tick={{ fontSize: 11, fill: "rgba(148,163,184,0.6)" }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar yAxisId="cost" dataKey="planned" fill={blue} name="Planned €" stackId="a" />
@@ -334,8 +334,8 @@ export default function PredictiveMaintenance() {
               { l: "Avg MTBF (fleet)", v: "4,280 hours", c: amber },
               { l: "Avg MTTR", v: "6.4 hours", c: amber },
             ].map(m => (
-              <div key={m.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-                <span style={{ color: "var(--sub)" }}>{m.l}</span>
+              <div key={m.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.08)", fontSize: 13 }}>
+                <span style={{ color: "rgba(148,163,184,0.6)" }}>{m.l}</span>
                 <span style={{ color: m.c, fontWeight: 700 }}>{m.v}</span>
               </div>
             ))}
@@ -344,9 +344,9 @@ export default function PredictiveMaintenance() {
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Asset Health Distribution</div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={ASSETS.map(a => ({ name: a.id, health: a.health, rul: a.rul }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line,#1f2937)" />
-                <XAxis dataKey="name" tick={{ fontSize: 9, fill: "var(--sub)" }} />
-                <YAxis domain={[60, 100]} tick={{ fontSize: 9, fill: "var(--sub)" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="name" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
+                <YAxis domain={[60, 100]} tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="health" name="Health %" radius={[4, 4, 0, 0]}>
                   {ASSETS.map((a, i) => <Cell key={i} fill={STATUS_COLOR[a.status]} />)}
@@ -362,20 +362,20 @@ export default function PredictiveMaintenance() {
           <div style={card}>
             <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Active Anomaly Detections</div>
             {ANOMALY_FEED.map((a, i) => (
-              <div key={i} style={{ borderBottom: "1px solid var(--border)", padding: "14px 0", display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "14px 0", display: "flex", gap: 16, alignItems: "flex-start" }}>
                 <div style={{ width: 6, height: 6, borderRadius: "50%", background: STATUS_COLOR[a.sev] || amber, marginTop: 6, flexShrink: 0, boxShadow: `0 0 6px ${STATUS_COLOR[a.sev] || amber}` }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 4 }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{a.asset}</span>
-                    <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: "var(--surface2)", color: "var(--sub)" }}>{a.type}</span>
+                    <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.6)" }}>{a.type}</span>
                     <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: STATUS_BG[a.sev] || "#451a03", color: STATUS_COLOR[a.sev] || amber }}>{a.sev}</span>
                   </div>
-                  <div style={{ fontSize: 13, color: "var(--text)" }}>{a.msg}</div>
-                  <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 4 }}>Detected at {a.time} today</div>
+                  <div style={{ fontSize: 13, color: "#f1f5f9" }}>{a.msg}</div>
+                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 4 }}>Detected at {a.time} today</div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button style={{ fontSize: 11, padding: "4px 10px", background: accent, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Create WO</button>
-                  <button style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "var(--sub)", border: "1px solid var(--border)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
+                  <button style={{ fontSize: 11, padding: "4px 10px", background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.6)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
                 </div>
               </div>
             ))}
@@ -390,8 +390,8 @@ export default function PredictiveMaintenance() {
               { l: "Tickets created", v: 2 },
               { l: "Next full scan", v: "in 14 min" },
             ].map(m => (
-              <div key={m.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 13 }}>
-                <span style={{ color: "var(--sub)" }}>{m.l}</span>
+              <div key={m.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.08)", fontSize: 13 }}>
+                <span style={{ color: "rgba(148,163,184,0.6)" }}>{m.l}</span>
                 <span style={{ fontWeight: 700 }}>{m.v}</span>
               </div>
             ))}
@@ -404,7 +404,7 @@ export default function PredictiveMaintenance() {
             ].map(f => (
               <div key={f.type} style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-                  <span>{f.type}</span><span style={{ color: "var(--sub)" }}>{f.pct}%</span>
+                  <span>{f.type}</span><span style={{ color: "rgba(148,163,184,0.6)" }}>{f.pct}%</span>
                 </div>
                 <div style={{ background: "#1f2937", borderRadius: 3, height: 5 }}>
                   <div style={{ width: `${f.pct}%`, height: "100%", background: f.color, borderRadius: 3 }} />
