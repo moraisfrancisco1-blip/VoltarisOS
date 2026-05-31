@@ -15,13 +15,24 @@ const PAGE_TITLE_KEYS = {
   whitelabel: "page_whitelabel", audit: "page_audit", apikeys: "page_apikeys", export: "page_export",
 }
 
+const BILLING_URL = "https://se303bch6c5bf4hrjpjkj-preview-4200.runable.site"
+
+const PLANS = [
+  { id: "home",       name: "Home",       price: "€49",   period: "/mo",  desc: "1 site · up to 50 kWh",  color: "#10b981" },
+  { id: "starter",    name: "Starter",    price: "€299",  period: "/mo",  desc: "5 sites · up to 500 kWh", color: "#6366f1" },
+  { id: "pro",        name: "Pro",        price: "€899",  period: "/mo",  desc: "20 sites · advanced AI",  color: "#f59e0b" },
+  { id: "enterprise", name: "Enterprise", price: "€2 499", period: "/mo", desc: "Unlimited · white-label",  color: "#ec4899" },
+]
+
 export default function TopBar({ page, user, isMobile, onMenuToggle }) {
   const { theme, setTheme, simMode, setSimMode, setCmdOpen, addToast, language, setLanguage, accentColor } = useAppStore()
   const { t } = useTranslation()
   const color = user?.color || accentColor || "#4ade80"
   const [langOpen, setLangOpen] = useState(false)
+  const [planOpen, setPlanOpen] = useState(false)
 
   return (
+    <>
     <div style={{
       height: "56px",
       background: "var(--topbar, var(--sidebar))",
@@ -177,6 +188,35 @@ export default function TopBar({ page, user, isMobile, onMenuToggle }) {
         </div>
       )}
 
+      {/* Change Plan */}
+      {!isMobile && (
+        <button
+          onClick={() => setPlanOpen(true)}
+          style={{
+            padding: "7px 13px",
+            background: `${color}18`,
+            border: `1px solid ${color}55`,
+            borderRadius: "8px",
+            color: color,
+            cursor: "pointer",
+            fontSize: "12px",
+            fontWeight: "600",
+            transition: "all 0.15s",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = `${color}30`; e.currentTarget.style.borderColor = color }}
+          onMouseLeave={e => { e.currentTarget.style.background = `${color}18`; e.currentTarget.style.borderColor = `${color}55` }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          Change Plan
+        </button>
+      )}
+
       {/* Notifications */}
       <NotificationBell color={color} />
 
@@ -202,5 +242,81 @@ export default function TopBar({ page, user, isMobile, onMenuToggle }) {
         )}
       </div>
     </div>
+
+    {/* ── Plan Modal ─────────────────────────────────────────────────── */}
+    {planOpen && (
+      <>
+        <div
+          onClick={() => setPlanOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, backdropFilter: "blur(4px)" }}
+        />
+        <div style={{
+          position: "fixed", top: "50%", left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "var(--surface)", border: "1px solid var(--border)",
+          borderRadius: "16px", padding: "32px", zIndex: 1001,
+          width: "min(96vw, 680px)",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
+        }}>
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+            <div>
+              <h2 style={{ color: "var(--text)", margin: 0, fontSize: "20px", fontWeight: 700 }}>Choose your plan</h2>
+              <p style={{ color: "var(--sub)", margin: "4px 0 0", fontSize: "13px" }}>Upgrade or downgrade at any time. Billed monthly.</p>
+            </div>
+            <button
+              onClick={() => setPlanOpen(false)}
+              style={{ background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "20px", lineHeight: 1, padding: "4px" }}
+            >✕</button>
+          </div>
+
+          {/* Plans grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "20px" }}>
+            {PLANS.map(plan => (
+              <a
+                key={plan.id}
+                href={BILLING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "block", textDecoration: "none",
+                  background: "var(--surface2)", border: `1px solid ${plan.color}44`,
+                  borderRadius: "12px", padding: "18px",
+                  transition: "all 0.15s", cursor: "pointer",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = plan.color; e.currentTarget.style.background = `${plan.color}12` }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = `${plan.color}44`; e.currentTarget.style.background = "var(--surface2)" }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: plan.color }}>{plan.name}</span>
+                  <span style={{
+                    fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
+                    color: plan.color, background: `${plan.color}20`, padding: "2px 8px", borderRadius: "20px",
+                  }}>Select</span>
+                </div>
+                <div style={{ marginBottom: "6px" }}>
+                  <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--text)" }}>{plan.price}</span>
+                  <span style={{ fontSize: "12px", color: "var(--sub)", marginLeft: "2px" }}>{plan.period}</span>
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--sub)" }}>{plan.desc}</div>
+              </a>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div style={{ textAlign: "center" }}>
+            <a
+              href={BILLING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--sub)", fontSize: "12px", textDecoration: "underline" }}
+            >
+              Manage billing &amp; invoices →
+            </a>
+          </div>
+        </div>
+      </>
+    )}
+    </>
   )
 }
