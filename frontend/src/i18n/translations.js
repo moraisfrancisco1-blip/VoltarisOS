@@ -474,6 +474,28 @@ const T = {
   anom_desc_comm:      { pt:"Inversor 2 perdeu conexão BMS por 47 min — Site Gamma", en:"Inverter 2 lost BMS connection for 47 min — Site Gamma", fr:"Onduleur 2 a perdu la connexion BMS pendant 47 min — Site Gamma", es:"Inversor 2 perdió conexión BMS durante 47 min — Site Gamma", nl:"Omvormer 2 verloor BMS verbinding gedurende 47 min — Site Gamma" },
   anom_desc_power:     { pt:"Output oscilando ±12% além da variação esperada — Site Delta", en:"Output oscillating ±12% beyond expected variation — Site Delta", fr:"Sortie oscillant ±12% au-delà de la variation attendue — Site Delta", es:"Salida oscilando ±12% más allá de la variación esperada — Site Delta", nl:"Uitvoer oscilleert ±12% buiten verwachte variatie — Site Delta" },
   anom_desc_efficiency:{ pt:"RT efficiency caiu de 94.2% para 88.1% — Site Alpha", en:"RT efficiency dropped from 94.2% to 88.1% — Site Alpha", fr:"Efficacité RT chutée de 94.2% à 88.1% — Site Alpha", es:"Eficiencia RT bajó de 94.2% a 88.1% — Site Alpha", nl:"RT efficiëntie gedaald van 94.2% naar 88.1% — Site Alpha" },
+
+  // ─── AUTH / LOGIN ────────────────────────────────────────────────────────────
+  auth_welcome_back:   { pt:"Bem-vindo de volta",        en:"Welcome back",           fr:"Bienvenue",              es:"Bienvenido de vuelta",   nl:"Welkom terug" },
+  auth_subtitle_login: { pt:"Entra na tua plataforma de energia", en:"Sign in to your energy platform", fr:"Connectez-vous à votre plateforme", es:"Accede a tu plataforma de energía", nl:"Log in op je energieplatform" },
+  auth_create_account: { pt:"Criar conta",               en:"Create account",         fr:"Créer un compte",        es:"Crear cuenta",           nl:"Account aanmaken" },
+  auth_setup_ws:       { pt:"Configura o teu workspace VoltarisOS", en:"Set up your VoltarisOS workspace", fr:"Configurez votre espace VoltarisOS", es:"Configura tu workspace VoltarisOS", nl:"Stel je VoltarisOS workspace in" },
+  auth_company_name:   { pt:"Nome da Empresa",           en:"Company Name",           fr:"Nom de l'entreprise",    es:"Nombre de la empresa",   nl:"Bedrijfsnaam" },
+  auth_brand_color:    { pt:"Cor da Marca",              en:"Brand Color",            fr:"Couleur de marque",      es:"Color de marca",         nl:"Merkkleur" },
+  auth_email:          { pt:"Email",                     en:"Email",                  fr:"Email",                  es:"Email",                  nl:"E-mail" },
+  auth_password:       { pt:"Password",                  en:"Password",               fr:"Mot de passe",           es:"Contraseña",             nl:"Wachtwoord" },
+  auth_enter:          { pt:"Entrar na plataforma →",    en:"Sign in →",              fr:"Se connecter →",         es:"Iniciar sesión →",       nl:"Inloggen →" },
+  auth_register:       { pt:"Criar conta →",             en:"Create account →",       fr:"Créer compte →",         es:"Crear cuenta →",         nl:"Account aanmaken →" },
+  auth_authenticating: { pt:"A autenticar...",           en:"Authenticating...",      fr:"Authentification...",    es:"Autenticando...",        nl:"Verifiëren..." },
+  auth_no_account:     { pt:"Não tens conta?",           en:"Don't have an account?", fr:"Pas de compte?",         es:"¿No tienes cuenta?",     nl:"Geen account?" },
+  auth_have_account:   { pt:"Já tens conta?",            en:"Already have an account?",fr:"Déjà un compte?",       es:"¿Ya tienes cuenta?",     nl:"Heb je al een account?" },
+  auth_register_link:  { pt:"Regista-te aqui",           en:"Sign up here",           fr:"S'inscrire ici",         es:"Regístrate aquí",        nl:"Registreer hier" },
+  auth_login_link:     { pt:"Fazer login",               en:"Log in",                 fr:"Se connecter",           es:"Iniciar sesión",         nl:"Inloggen" },
+  auth_account_created:{ pt:"Conta criada! Faz login.",  en:"Account created! Log in.",fr:"Compte créé! Connectez-vous.",es:"¡Cuenta creada! Inicia sesión.",nl:"Account aangemaakt! Log in." },
+  auth_invalid_creds:  { pt:"Credenciais inválidas",     en:"Invalid credentials",    fr:"Identifiants invalides", es:"Credenciales inválidas", nl:"Ongeldige inloggegevens" },
+  auth_hide_pass:      { pt:"Ocultar password",          en:"Hide password",          fr:"Masquer le mot de passe",es:"Ocultar contraseña",     nl:"Wachtwoord verbergen" },
+  auth_show_pass:      { pt:"Ver password",              en:"Show password",          fr:"Voir le mot de passe",   es:"Ver contraseña",         nl:"Wachtwoord tonen" },
+  auth_system_label:   { pt:"Sistema operacional",       en:"Operating system",       fr:"Système d'exploitation", es:"Sistema operativo",      nl:"Besturingssysteem" },
 }
 
 export default T

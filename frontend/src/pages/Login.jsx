@@ -1,12 +1,48 @@
 import { useState, useEffect } from "react"
+import { useTranslation } from "../i18n/useTranslation"
 import axios from "axios"
-import logoDark from "../logo_sidebar.png"
 
 function FloatingParticle({ style }) {
   return <div style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", ...style }} />
 }
 
+// Inline SVG logo — animated hex + lightning + wordmark
+function VoltarisLogo({ height = 42 }) {
+  return (
+    <svg height={height} viewBox="0 0 180 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg_login" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#f59e0b"/>
+          <stop offset="100%" stopColor="#f97316"/>
+        </linearGradient>
+        <filter id="lg_glow">
+          <feGaussianBlur stdDeviation="1.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      {/* Hexagon */}
+      <polygon points="22,2 36,10 36,26 22,34 8,26 8,10"
+        fill="none" stroke="url(#lg_login)" strokeWidth="2"/>
+      <polygon points="22,6 32,12 32,24 22,30 12,24 12,12"
+        fill="url(#lg_login)" opacity="0.12"/>
+      {/* Lightning bolt */}
+      <path d="M25 8 L18 20 L23 20 L19 34 L28 18 L22.5 18 Z"
+        fill="url(#lg_login)" filter="url(#lg_glow)"/>
+      {/* Wordmark */}
+      <text x="46" y="26" fontFamily="system-ui,-apple-system,sans-serif"
+        fontSize="18" fontWeight="800" fill="#f1f5f9" letterSpacing="-0.5">
+        Voltaris
+      </text>
+      <text x="146" y="26" fontFamily="system-ui,-apple-system,sans-serif"
+        fontSize="18" fontWeight="800" fill="url(#lg_login)" letterSpacing="-0.5">
+        OS
+      </text>
+    </svg>
+  )
+}
+
 export default function Login({ onLogin }) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState("login")
   const [form, setForm] = useState({ email: "", password: "", company: "", color: "#4ade80" })
   const [showPass, setShowPass] = useState(false)
@@ -30,10 +66,10 @@ export default function Login({ onLogin }) {
       } else {
         await axios.post("/api/auth/register", form)
         setMode("login")
-        setError("Conta criada! Faz login.")
+        setError(t("auth_account_created"))
       }
     } catch (e) {
-      setError(e.response?.data?.detail || "Credenciais inválidas")
+      setError(e.response?.data?.detail || t("auth_invalid_creds"))
     } finally {
       setLoading(false)
     }
@@ -95,7 +131,7 @@ export default function Login({ onLogin }) {
         {/* Top gradient line */}
         <div style={{
           height: "3px",
-          background: "linear-gradient(90deg, transparent, #4ade80, #22d3ee, transparent)",
+          background: "linear-gradient(90deg, transparent, #f59e0b, #f97316, transparent)",
         }} />
 
         {/* Logo section */}
@@ -106,25 +142,21 @@ export default function Login({ onLogin }) {
         }}>
           <div style={{
             padding: "14px 28px",
-            background: "rgba(74,222,128,0.04)",
-            border: "1px solid rgba(74,222,128,0.12)",
+            background: "rgba(245,158,11,0.05)",
+            border: "1px solid rgba(245,158,11,0.15)",
             borderRadius: "16px",
             marginBottom: "20px",
           }}>
-            <img
-              src={logoDark}
-              alt="VoltarisOS"
-              style={{ height: "42px", objectFit: "contain", display: "block" }}
-            />
+            <VoltarisLogo height={42} />
           </div>
           <div style={{
             color: "rgba(255,255,255,0.85)", fontSize: "20px",
             fontWeight: "700", marginBottom: "6px", letterSpacing: "-0.3px",
           }}>
-            {mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
+            {mode === "login" ? t("auth_welcome_back") : t("auth_create_account")}
           </div>
           <div style={{ color: "var(--sub)", fontSize: "13px" }}>
-            {mode === "login" ? "Entra na tua plataforma de energia" : "Configura o teu workspace VoltarisOS"}
+            {mode === "login" ? t("auth_subtitle_login") : t("auth_setup_ws")}
           </div>
         </div>
 
@@ -134,22 +166,22 @@ export default function Login({ onLogin }) {
           {mode === "register" && (
             <>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
-                  NOME DA EMPRESA
+                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+                  {t("auth_company_name")}
                 </label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    placeholder="Ex: GreenVolt Energy"
-                    value={form.company}
-                    onChange={e => setForm({ ...form, company: e.target.value })}
-                    onFocus={() => setFocused("company")}
-                    onBlur={() => setFocused(null)}
-                    style={inputStyle(focused === "company")}
-                  />
-                </div>
+                <input
+                  placeholder="Ex: GreenVolt Energy"
+                  value={form.company}
+                  onChange={e => setForm({ ...form, company: e.target.value })}
+                  onFocus={() => setFocused("company")}
+                  onBlur={() => setFocused(null)}
+                  style={inputStyle(focused === "company")}
+                />
               </div>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px" }}>COR DA MARCA</label>
+                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", textTransform: "uppercase" }}>
+                  {t("auth_brand_color")}
+                </label>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <input
                     type="color"
@@ -169,12 +201,12 @@ export default function Login({ onLogin }) {
 
           {/* Email */}
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
-              EMAIL
+            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+              {t("auth_email")}
             </label>
             <div style={{ position: "relative" }}>
               <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={focused === "email" ? "#4ade80" : "#374151"} strokeWidth="1.8">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={focused === "email" ? "#f59e0b" : "#374151"} strokeWidth="1.8">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
@@ -194,12 +226,12 @@ export default function Login({ onLogin }) {
 
           {/* Password */}
           <div style={{ marginBottom: "24px" }}>
-            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px" }}>
-              PASSWORD
+            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+              {t("auth_password")}
             </label>
             <div style={{ position: "relative" }}>
               <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={focused === "password" ? "#4ade80" : "#374151"} strokeWidth="1.8">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={focused === "password" ? "#f59e0b" : "#374151"} strokeWidth="1.8">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
@@ -214,7 +246,6 @@ export default function Login({ onLogin }) {
                 onKeyDown={handleKey}
                 style={{ ...inputStyle(focused === "password"), paddingLeft: "42px", paddingRight: "48px" }}
               />
-              {/* Eye toggle */}
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
@@ -222,24 +253,19 @@ export default function Login({ onLogin }) {
                 style={{
                   position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
                   background: "none", border: "none", cursor: "pointer",
-                  color: showPass ? "#4ade80" : "#374151",
+                  color: showPass ? "#f59e0b" : "#374151",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: "4px", borderRadius: "6px",
-                  transition: "color 0.15s",
+                  padding: "4px", borderRadius: "6px", transition: "color 0.15s",
                 }}
-                onMouseEnter={e => { if (!showPass) e.currentTarget.style.color = "#6b7280" }}
-                onMouseLeave={e => { if (!showPass) e.currentTarget.style.color = "#374151" }}
-                title={showPass ? "Ocultar password" : "Ver password"}
+                title={showPass ? t("auth_hide_pass") : t("auth_show_pass")}
               >
                 {showPass ? (
-                  // Eye-off
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
                     <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
                     <line x1="1" y1="1" x2="23" y2="23"/>
                   </svg>
                 ) : (
-                  // Eye
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
@@ -253,10 +279,10 @@ export default function Login({ onLogin }) {
           {error && (
             <div style={{
               padding: "10px 14px", marginBottom: "16px",
-              background: error.includes("criada") ? "#0d2818" : "#2d0a0a",
-              border: `1px solid ${error.includes("criada") ? "#14532d" : "#7f1d1d"}`,
+              background: error.includes("created") || error.includes("criada") ? "#0d2818" : "#2d0a0a",
+              border: `1px solid ${error.includes("created") || error.includes("criada") ? "#14532d" : "#7f1d1d"}`,
               borderRadius: "8px",
-              color: error.includes("criada") ? "#4ade80" : "#f87171",
+              color: error.includes("created") || error.includes("criada") ? "#4ade80" : "#f87171",
               fontSize: "13px",
             }}>{error}</div>
           )}
@@ -269,51 +295,51 @@ export default function Login({ onLogin }) {
               width: "100%", padding: "14px",
               background: loading
                 ? "#1f2937"
-                : "linear-gradient(135deg, #4ade80 0%, #22d3ee 100%)",
+                : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
               border: "none", borderRadius: "12px",
               color: loading ? "#4b5563" : "#0a0f1a",
               fontWeight: "800", fontSize: "15px",
               cursor: loading ? "not-allowed" : "pointer",
               marginBottom: "20px",
-              boxShadow: loading ? "none" : "0 4px 24px rgba(74,222,128,0.25)",
+              boxShadow: loading ? "none" : "0 4px 24px rgba(245,158,11,0.3)",
               transition: "all 0.2s",
               display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
               letterSpacing: "0.3px",
             }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = "0 6px 32px rgba(74,222,128,0.4)" }}
-            onMouseLeave={e => { if (!loading) e.currentTarget.style.boxShadow = "0 4px 24px rgba(74,222,128,0.25)" }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = "0 6px 32px rgba(245,158,11,0.5)" }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.3)" }}
           >
             {loading ? (
               <>
                 <span style={{
                   width: "16px", height: "16px",
                   border: "2px solid #374151",
-                  borderTopColor: "#4ade80",
+                  borderTopColor: "#f59e0b",
                   borderRadius: "50%",
                   animation: "spin 0.6s linear infinite",
                   display: "inline-block",
                 }} />
-                A autenticar...
+                {t("auth_authenticating")}
               </>
             ) : (
-              mode === "login" ? "Entrar na plataforma →" : "Criar conta →"
+              mode === "login" ? t("auth_enter") : t("auth_register")
             )}
           </button>
 
           {/* Mode switch */}
           <div style={{ textAlign: "center" }}>
-            <span style={{ color: "#374151", fontSize: "13px" }}>
-              {mode === "login" ? "Não tens conta? " : "Já tens conta? "}
+            <span style={{ color: "var(--sub)", fontSize: "13px" }}>
+              {mode === "login" ? t("auth_no_account") + " " : t("auth_have_account") + " "}
             </span>
             <button
               onClick={() => { setMode(mode === "login" ? "register" : "login"); setError("") }}
               style={{
-                background: "none", border: "none", color: "#4ade80",
+                background: "none", border: "none", color: "#f59e0b",
                 cursor: "pointer", fontSize: "13px", fontWeight: "600",
                 textDecoration: "underline",
               }}
             >
-              {mode === "login" ? "Regista-te aqui" : "Fazer login"}
+              {mode === "login" ? t("auth_register_link") : t("auth_login_link")}
             </button>
           </div>
         </div>
@@ -326,11 +352,11 @@ export default function Login({ onLogin }) {
         }}>
           <div style={{
             width: "6px", height: "6px", borderRadius: "50%",
-            background: "#4ade80",
-            boxShadow: "0 0 6px #4ade80",
+            background: "#f59e0b",
+            boxShadow: "0 0 6px #f59e0b",
             animation: "pulse 2s ease-in-out infinite",
           }} />
-          <span style={{ color: "#374151", fontSize: "11px" }}>VoltarisOS v2.0 · Sistema operacional</span>
+          <span style={{ color: "var(--sub)", fontSize: "11px" }}>VoltarisOS v2.0 · {t("auth_system_label")}</span>
         </div>
       </div>
 
@@ -345,8 +371,8 @@ export default function Login({ onLogin }) {
           50% { transform: translateY(10px) }
         }
         @keyframes pulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 6px #4ade80 }
-          50% { opacity: 0.5; box-shadow: 0 0 12px #4ade80 }
+          0%, 100% { opacity: 1; box-shadow: 0 0 6px #f59e0b }
+          50% { opacity: 0.5; box-shadow: 0 0 12px #f59e0b }
         }
       `}</style>
     </div>
@@ -357,15 +383,15 @@ function inputStyle(active) {
   return {
     width: "100%",
     padding: "12px 14px",
-    background: active ? "rgba(74,222,128,0.04)" : "var(--surface2)",
-    border: `1px solid ${active ? "rgba(74,222,128,0.4)" : "var(--surface2)"}`,
+    background: active ? "rgba(245,158,11,0.04)" : "var(--surface2)",
+    border: `1px solid ${active ? "rgba(245,158,11,0.4)" : "var(--surface2)"}`,
     borderRadius: "10px",
-    color: "white",
+    color: "var(--text)",
     fontSize: "14px",
     outline: "none",
     boxSizing: "border-box",
     transition: "all 0.2s",
     fontFamily: "inherit",
-    boxShadow: active ? "0 0 0 3px rgba(74,222,128,0.08)" : "none",
+    boxShadow: active ? "0 0 0 3px rgba(245,158,11,0.08)" : "none",
   }
 }

@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, ReferenceLine
 } from "recharts";
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme";
+import { useTranslation } from "../i18n/useTranslation";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 
@@ -29,12 +30,9 @@ function SoCRing({ soc, size = 56 }) {
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      {/* Track */}
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--surface2)" strokeWidth={6} />
-      {/* Fill shadow */}
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={9} opacity={0.1}
         strokeDasharray={`${fill} ${circ}`} strokeDashoffset={circ / 4} strokeLinecap="round" />
-      {/* Fill */}
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={5.5}
         strokeDasharray={`${fill} ${circ}`} strokeDashoffset={circ / 4} strokeLinecap="round"
         filter={`url(#soc_glow_${soc})`}
@@ -45,7 +43,7 @@ function SoCRing({ soc, size = 56 }) {
   );
 }
 
-// ── Power Flow Diagram (3D depth) ─────────────────────────────────────────────
+// ── Power Flow Diagram (enlarged, theme-aware) ────────────────────────────────
 function PowerFlowDiagram({ solar, bess, grid, load }) {
   const [dash, setDash] = useState(0);
   useEffect(() => {
@@ -53,72 +51,88 @@ function PowerFlowDiagram({ solar, bess, grid, load }) {
     return () => clearInterval(t);
   }, []);
 
+  // Wider layout: sources on left (x=90), hub in center (x=310), load on right (x=490)
   const nodes = [
-    { id: "solar", label: "Solar",  value: `${solar} MW`, color: C.amber,  x: 70,  y: 55  },
-    { id: "bess",  label: "BESS",   value: `${bess} MW`,  color: C.purple, x: 70,  y: 155 },
-    { id: "grid",  label: "Grid",   value: `${grid} MW`,  color: C.blue,   x: 70,  y: 255 },
-    { id: "load",  label: "Load",   value: `${load} MW`,  color: C.green,  x: 290, y: 155 },
+    { id: "solar", label: "Solar",  value: `${solar} MW`, color: C.amber,  x: 90,  y: 70  },
+    { id: "bess",  label: "BESS",   value: `${bess} MW`,  color: C.purple, x: 90,  y: 200 },
+    { id: "grid",  label: "Grid",   value: `${grid} MW`,  color: C.blue,   x: 90,  y: 330 },
+    { id: "load",  label: "Load",   value: `${load} MW`,  color: C.green,  x: 490, y: 200 },
   ];
+
+  // Hub node center
+  const HUB = { x: 290, y: 200 };
+
   const flows = [
-    { x1: 118, y1: 67,  x2: 248, y2: 143, color: C.amber,  width: 2.5 },
-    { x1: 118, y1: 155, x2: 248, y2: 155, color: C.purple, width: 2.5 },
-    { x1: 118, y1: 247, x2: 248, y2: 167, color: C.blue,   width: 2.5 },
+    { x1: 140, y1: 70,  x2: HUB.x - 44, y2: 185, color: C.amber,  width: 3 },
+    { x1: 140, y1: 200, x2: HUB.x - 44, y2: 200, color: C.purple, width: 3 },
+    { x1: 140, y1: 330, x2: HUB.x - 44, y2: 215, color: C.blue,   width: 3 },
+    { x1: HUB.x + 44, y1: 200, x2: 440, y2: 200, color: C.green,  width: 3.5 },
   ];
 
   return (
-    <svg viewBox="0 0 380 310" style={{ width: "100%", height: 220 }}>
+    <svg viewBox="0 0 580 400" style={{ width: "100%", height: 360 }}>
       <defs>
-        <radialGradient id="loadGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor={C.green} stopOpacity={0.2} />
+        <radialGradient id="loadGlow2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={C.green} stopOpacity={0.25} />
           <stop offset="100%" stopColor={C.green} stopOpacity={0} />
         </radialGradient>
-        <filter id="nodeGlow">
+        <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={C.accent} stopOpacity={0.2} />
+          <stop offset="100%" stopColor={C.accent} stopOpacity={0} />
+        </radialGradient>
+        <filter id="nodeGlow2">
           <feGaussianBlur stdDeviation="4" result="blur" />
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
 
+      {/* Hub ambient glow */}
+      <circle cx={HUB.x} cy={HUB.y} r={55} fill="url(#hubGlow)" />
       {/* Load ambient glow */}
-      <circle cx={290} cy={155} r={50} fill="url(#loadGlow)" />
+      <circle cx={490} cy={200} r={55} fill="url(#loadGlow2)" />
 
+      {/* Flow lines */}
       {flows.map((f, i) => {
         const mx = (f.x1 + f.x2) / 2;
         const my = (f.y1 + f.y2) / 2;
         return (
           <g key={i}>
-            {/* Deep shadow tube */}
             <line x1={f.x1} y1={f.y1+3} x2={f.x2} y2={f.y2+3}
-              stroke="#000" strokeWidth={f.width + 4} opacity={0.2} strokeLinecap="round" />
-            {/* Glow halo */}
+              stroke="#000" strokeWidth={f.width + 5} opacity={0.18} strokeLinecap="round" />
             <line x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2}
-              stroke={f.color} strokeWidth={f.width + 6} opacity={0.08} strokeLinecap="round" />
-            {/* Main line */}
+              stroke={f.color} strokeWidth={f.width + 7} opacity={0.07} strokeLinecap="round" />
             <line x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2}
               stroke={f.color} strokeWidth={f.width}
-              strokeDasharray="10 7" strokeDashoffset={-dash}
+              strokeDasharray="12 8" strokeDashoffset={-dash}
               opacity={0.9} strokeLinecap="round" />
-            {/* Moving dot */}
-            <circle cx={mx} cy={my} r={4} fill={f.color} opacity={0.95}
-              style={{ filter: `drop-shadow(0 0 5px ${f.color})` }} />
+            <circle cx={mx} cy={my} r={5} fill={f.color} opacity={0.95}
+              style={{ filter: `drop-shadow(0 0 6px ${f.color})` }} />
           </g>
         );
       })}
 
+      {/* Hub node */}
+      <rect x={HUB.x - 48} y={HUB.y - 27} width={96} height={54} rx={14} fill="#000" opacity={0.25} />
+      <rect x={HUB.x - 52} y={HUB.y - 31} width={104} height={62} rx={16} fill={C.accent} opacity={0.08} />
+      <rect x={HUB.x - 50} y={HUB.y - 29} width={100} height={58} rx={14}
+        fill="var(--surface)" stroke={C.accent} strokeWidth={2} />
+      <rect x={HUB.x - 48} y={HUB.y - 27} width={96} height={4} rx={4} fill="var(--surface2)" />
+      <text x={HUB.x} y={HUB.y - 7} textAnchor="middle" fill={C.accent} fontSize={9.5} fontWeight={800}
+        letterSpacing={1}>VPP HUB</text>
+      <text x={HUB.x} y={HUB.y + 13} textAnchor="middle" fill="var(--text)" fontSize={11} fontWeight={900}
+        style={{ filter: `drop-shadow(0 0 6px ${C.accent}80)` }}>19.7 MW</text>
+
+      {/* Source / Load nodes */}
       {nodes.map(n => (
         <g key={n.id}>
-          {/* 3D shadow offset */}
-          <rect x={n.x - 39} y={n.y - 20 + 4} width={78} height={44} rx={12} fill="#000" opacity={0.25} />
-          {/* Glow halo */}
-          <rect x={n.x - 42} y={n.y - 23} width={84} height={50} rx={14} fill={n.color} opacity={0.07} />
-          {/* Card body */}
-          <rect x={n.x - 40} y={n.y - 21} width={80} height={46} rx={12}
-            fill="var(--surface)" stroke={n.color} strokeWidth={1.5} />
-          {/* Top highlight (3D shine) */}
-          <rect x={n.x - 38} y={n.y - 19} width={76} height={3} rx={3}
-            fill="var(--surface2)" />
-          <text x={n.x} y={n.y - 4} textAnchor="middle" fill={n.color} fontSize={9.5} fontWeight={800}
-            letterSpacing={0.8} style={{ textTransform: "uppercase" }}>{n.label}</text>
-          <text x={n.x} y={n.y + 13} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={900}
+          <rect x={n.x - 42} y={n.y - 23 + 4} width={84} height={50} rx={13} fill="#000" opacity={0.22} />
+          <rect x={n.x - 46} y={n.y - 27} width={92} height={58} rx={15} fill={n.color} opacity={0.07} />
+          <rect x={n.x - 44} y={n.y - 25} width={88} height={54} rx={13}
+            fill="var(--surface)" stroke={n.color} strokeWidth={1.8} />
+          <rect x={n.x - 42} y={n.y - 23} width={84} height={4} rx={4} fill="var(--surface2)" />
+          <text x={n.x} y={n.y - 5} textAnchor="middle" fill={n.color} fontSize={9.5} fontWeight={800}
+            letterSpacing={0.8}>{n.label}</text>
+          <text x={n.x} y={n.y + 16} textAnchor="middle" fill="var(--text)" fontSize={13} fontWeight={900}
             style={{ filter: `drop-shadow(0 0 6px ${n.color}80)` }}>{n.value}</text>
         </g>
       ))}
@@ -128,6 +142,8 @@ function PowerFlowDiagram({ solar, bess, grid, load }) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const { t } = useTranslation();
+
   const genPower = () => Array.from({ length: 24 }, (_, i) => ({
     h: `${i}h`,
     solar: i >= 6 && i <= 20 ? rand(0.5, 8) : 0,
@@ -183,9 +199,9 @@ export default function Dashboard() {
       {/* ── Header ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff", letterSpacing: -0.8,
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "var(--text)", letterSpacing: -0.8,
             textShadow: `0 0 30px ${C.accent}40` }}>Operations Center</h1>
-          <div style={{ color: "rgba(148,163,184,0.7)", fontSize: 12, marginTop: 4, display: "flex", alignItems: "center", gap: 7 }}>
+          <div style={{ color: "var(--sub)", fontSize: 12, marginTop: 4, display: "flex", alignItems: "center", gap: 7 }}>
             <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: C.green,
               boxShadow: `0 0 8px ${C.green}`, animation: "livepin 2s infinite" }} />
             Live · {now}
@@ -224,11 +240,11 @@ export default function Dashboard() {
             background: `radial-gradient(ellipse at 80% 0%, ${C.amber}08 0%, transparent 60%)`,
             pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, position: "relative" }}>
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Live Power Flow</div>
+            <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Live Power Flow</div>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.green,
                 boxShadow: `0 0 8px ${C.green}`, animation: "livepin 2s infinite" }} />
-              <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Live</span>
+              <span style={{ fontSize: 10, color: "var(--sub)" }}>Live</span>
             </div>
           </div>
           <PowerFlowDiagram solar={metrics.solar} bess={metrics.bess} grid={rand(1, 3)} load={rand(8, 14)} />
@@ -239,18 +255,18 @@ export default function Dashboard() {
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
             background: `radial-gradient(ellipse at 80% 0%, ${C.purple}08 0%, transparent 60%)`,
             pointerEvents: "none" }} />
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, fontWeight: 700, position: "relative" }}>Fleet BESS — State of Charge</div>
+          <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, fontWeight: 700, position: "relative" }}>Fleet BESS — State of Charge</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
             {sites.map(s => {
               const sc = s.status === "online" ? C.green : s.status === "warning" ? C.amber : C.red;
               return (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12,
                   padding: "8px 10px", borderRadius: 10,
-                  background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  background: "var(--surface2)", border: "1px solid var(--border)" }}>
                   <SoCRing soc={s.soc} size={50} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{s.name}</div>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>Solar {s.solar} MW · BESS {s.bess} MW</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", lineHeight: 1.3 }}>{s.name}</div>
+                    <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 2 }}>Solar {s.solar} MW · BESS {s.bess} MW</div>
                   </div>
                   <span style={{
                     fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20,
@@ -270,12 +286,12 @@ export default function Dashboard() {
           background: `radial-gradient(ellipse at 50% 0%, ${C.accent}08 0%, transparent 70%)`,
           pointerEvents: "none" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, position: "relative" }}>
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>24h Generation & Load Profile</div>
+          <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>24h Generation & Load Profile</div>
           <div style={{ display: "flex", gap: 16 }}>
             {[[C.amber, "Solar"], [C.purple, "BESS"], [C.blue, "Wind"], [C.red, "Load"]].map(([c, l]) => (
               <div key={l} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <div style={{ width: 12, height: 3, borderRadius: 2, background: c, boxShadow: `0 0 6px ${c}` }} />
-                <span style={{ fontSize: 11, color: "rgba(148,163,184,0.7)" }}>{l}</span>
+                <span style={{ fontSize: 11, color: "var(--sub)" }}>{l}</span>
               </div>
             ))}
           </div>
@@ -290,7 +306,6 @@ export default function Dashboard() {
             <Area type="monotone" dataKey="wind"  stackId="1" stroke={C.blue}   fill="url(#grad_wind)"  strokeWidth={0}   name="Wind" />
             <Area type="monotone" dataKey="bess"  stackId="1" stroke={C.purple} fill="url(#grad_bess)"  strokeWidth={0}   name="BESS" />
             <Area type="monotone" dataKey="solar" stackId="1" stroke={C.amber}  fill="url(#grad_solar)" strokeWidth={0}   name="Solar" />
-            {/* Stroke lines on top */}
             <Area type="monotone" dataKey="wind"  stackId="2" stroke={C.blue}   fill="none" strokeWidth={1.5} name="Wind"  dot={false} />
             <Area type="monotone" dataKey="bess"  stackId="2" stroke={C.purple} fill="none" strokeWidth={1.5} name="BESS"  dot={false} />
             <Area type="monotone" dataKey="solar" stackId="2" stroke={C.amber}  fill="none" strokeWidth={2}   name="Solar" dot={false} />
@@ -308,28 +323,28 @@ export default function Dashboard() {
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.green}10 0%, transparent 60%)`,
             pointerEvents: "none" }} />
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Arbitrage Signal</div>
+          <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Arbitrage Signal</div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, position: "relative" }}>
             <div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 3 }}>Buy (off-peak)</div>
+              <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 3 }}>Buy (off-peak)</div>
               <div style={{ fontSize: 26, fontWeight: 900, color: C.green, fontVariantNumeric: "tabular-nums",
                 textShadow: `0 0 16px ${C.green}60` }}>€{arb.buy}</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>per MWh</div>
+              <div style={{ fontSize: 10, color: "var(--sub)" }}>per MWh</div>
             </div>
-            <div style={{ alignSelf: "center", fontSize: 22, color: "rgba(255,255,255,0.2)",
-              textShadow: "0 0 10px rgba(255,255,255,0.1)" }}>→</div>
+            <div style={{ alignSelf: "center", fontSize: 22, color: "var(--border)",
+              textShadow: "none" }}>→</div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 3 }}>Sell (peak)</div>
+              <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 3 }}>Sell (peak)</div>
               <div style={{ fontSize: 26, fontWeight: 900, color: C.red, fontVariantNumeric: "tabular-nums",
                 textShadow: `0 0 16px ${C.red}60` }}>€{arb.sell}</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>per MWh</div>
+              <div style={{ fontSize: 10, color: "var(--sub)" }}>per MWh</div>
             </div>
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12, position: "relative",
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, position: "relative",
             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Spread</div>
-              <div style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>€{arb.spread}/MWh</div>
+              <div style={{ fontSize: 10, color: "var(--sub)" }}>Spread</div>
+              <div style={{ fontSize: 20, fontWeight: 900, color: "var(--text)" }}>€{arb.spread}/MWh</div>
             </div>
             <div style={{
               padding: "7px 20px", borderRadius: 22, fontWeight: 900, fontSize: 12,
@@ -340,7 +355,7 @@ export default function Dashboard() {
               letterSpacing: 1,
             }}>{arb.signal}</div>
           </div>
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.75)", marginTop: 10, position: "relative" }}>
+          <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 10, position: "relative" }}>
             Next peak ~38 min · Est. +€{Math.round(arb.spread * 4.5)}
           </div>
         </div>
@@ -350,7 +365,7 @@ export default function Dashboard() {
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.purple}08 0%, transparent 60%)`,
             pointerEvents: "none" }} />
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Today Revenue by Source</div>
+          <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Today Revenue by Source</div>
           <ResponsiveContainer width="100%" height={175} style={{ position: "relative" }}>
             <BarChart data={revenueBySource} layout="vertical" margin={{ left: 0, right: 14 }}>
               <defs>
@@ -380,7 +395,7 @@ export default function Dashboard() {
             background: `radial-gradient(ellipse at 50% 0%, ${C.red}08 0%, transparent 60%)`,
             pointerEvents: "none" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, position: "relative" }}>
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Live Alerts</div>
+            <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Live Alerts</div>
             <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 10px", borderRadius: 12,
               background: `${C.red}20`, color: C.red, border: `1px solid ${C.red}30`,
               boxShadow: `0 0 10px ${C.red}20` }}>
@@ -393,15 +408,15 @@ export default function Dashboard() {
               return (
                 <div key={a.id} style={{
                   display: "flex", gap: 10, alignItems: "flex-start",
-                  padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.08)"
+                  padding: "10px 0", borderBottom: "1px solid var(--border)"
                 }}>
                   <div style={{
                     width: 8, height: 8, borderRadius: "50%", marginTop: 3, flexShrink: 0,
                     background: c, boxShadow: `0 0 8px ${c}, 0 0 3px ${c}`,
                   }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12, color: "#e2e8f0", lineHeight: 1.45 }}>{a.msg}</div>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)", marginTop: 2 }}>{a.ts}</div>
+                    <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.45 }}>{a.msg}</div>
+                    <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 2 }}>{a.ts}</div>
                   </div>
                 </div>
               );
@@ -409,8 +424,8 @@ export default function Dashboard() {
           </div>
           <div style={{ marginTop: 14, textAlign: "center", position: "relative" }}>
             <button style={{
-              background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-              borderRadius: 10, padding: "7px 18px", fontSize: 12, color: "rgba(148,163,184,0.7)",
+              background: "var(--surface2)", border: "1px solid var(--border)",
+              borderRadius: 10, padding: "7px 18px", fontSize: 12, color: "var(--sub)",
               cursor: "pointer", transition: "all 0.2s",
             }}>View All Alerts</button>
           </div>
@@ -422,13 +437,13 @@ export default function Dashboard() {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
           background: `radial-gradient(ellipse at 50% 0%, ${C.blue}06 0%, transparent 60%)`,
           pointerEvents: "none" }} />
-        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, fontWeight: 700, position: "relative" }}>Site Health Summary</div>
+        <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, fontWeight: 700, position: "relative" }}>Site Health Summary</div>
         <table style={{ width: "100%", borderCollapse: "collapse", position: "relative" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <tr style={{ borderBottom: "1px solid var(--border)" }}>
               {["Site", "Status", "Solar MW", "BESS SoC", "BESS MW", "Temp °C", "Last Sync"].map(h => (
                 <th key={h} style={{ textAlign: "left", padding: "6px 12px", fontSize: 10,
-                  color: "rgba(148,163,184,0.75)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  color: "var(--sub)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -438,11 +453,11 @@ export default function Dashboard() {
               const soc = s.soc > 70 ? C.green : s.soc > 40 ? C.amber : C.red;
               return (
                 <tr key={s.id} style={{
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  borderBottom: "1px solid var(--border)",
                   background: i % 2 === 0 ? "transparent" : "var(--surface2)",
                   transition: "background 0.15s",
                 }}>
-                  <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>{s.name}</td>
+                  <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{s.name}</td>
                   <td style={{ padding: "10px 12px" }}>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20,
                       background: `${sc}15`, color: sc, border: `1px solid ${sc}30`,
@@ -453,8 +468,8 @@ export default function Dashboard() {
                   <td style={{ padding: "10px 12px", fontSize: 13, color: soc, fontWeight: 900,
                     textShadow: `0 0 8px ${soc}40` }}>{s.soc}%</td>
                   <td style={{ padding: "10px 12px", fontSize: 13, color: C.purple }}>{s.bess}</td>
-                  <td style={{ padding: "10px 12px", fontSize: 13, color: "#e2e8f0" }}>{rand(28, 42)}°C</td>
-                  <td style={{ padding: "10px 12px", fontSize: 11, color: "rgba(148,163,184,0.75)" }}>Just now</td>
+                  <td style={{ padding: "10px 12px", fontSize: 13, color: "var(--text)" }}>{rand(28, 42)}°C</td>
+                  <td style={{ padding: "10px 12px", fontSize: 11, color: "var(--sub)" }}>Just now</td>
                 </tr>
               );
             })}
