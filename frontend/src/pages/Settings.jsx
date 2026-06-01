@@ -5,8 +5,8 @@ import { LANGUAGES } from "../i18n/translations";
 
 // ─── Mini design tokens ────────────────────────────────────────────────────────
 const BG    = "rgba(10,12,24,0.98)";
-const SURF  = "rgba(15,18,32,0.92)";
-const SURF2 = "rgba(255,255,255,0.04)";
+const SURF  = "#1e293b";
+const SURF2 = "rgba(255,255,255,0.08)";
 const BORD  = "#1a2234";
 const SUB   = "#6b7280";
 const DANG  = "#ef4444";
@@ -68,7 +68,7 @@ const Toggle = ({ value, onChange, label, desc, accent }) => (
   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: `1px solid ${BORD}` }}>
     <div>
       <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
-      {desc && <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>{desc}</div>}
+      {desc && <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{desc}</div>}
     </div>
     <div onClick={() => onChange(!value)} style={{
       width: 40, height: 22, borderRadius: 11, background: value ? accent : "#374151",
@@ -99,7 +99,7 @@ const Slider = ({ label, value, onChange, min, max, step = 1, unit, accent }) =>
     </div>
     <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))}
       style={{ width: "100%", accentColor: accent, cursor: "pointer" }} />
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>
       <span>{min}{unit}</span><span>{max}{unit}</span>
     </div>
   </div>
@@ -119,7 +119,7 @@ const InfoRow = ({ label, value }) => (
 const Btn = ({ children, onClick, variant = "primary", accent, style: s }) => {
   const styles = {
     primary:   { background: accent, color: "#000", border: "none" },
-    secondary: { background: "#1f2937", color: "rgba(148,163,184,0.6)", border: "none" },
+    secondary: { background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none" },
     danger:    { background: "#450a0a", color: DANG, border: `1px solid #7f1d1d` },
     outline:   { background: "transparent", color: accent, border: `1px solid ${accent}` },
   };
@@ -740,7 +740,7 @@ export default function Settings() {
             </div>
             <div style={{ ...card, background: "#0a1a0a", border: `1px solid #14532d` }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: accent }}>Security Audit</h2>
-              <p style={{ fontSize: 12, color: "rgba(148,163,184,0.6)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
+              <p style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
               <div style={{ display: "flex", gap: 10 }}>
                 <Btn variant="outline" accent={accent} onClick={() => {}}>Run Scan</Btn>
                 <Btn variant="secondary" accent={accent} onClick={() => {}}>View Audit Log</Btn>
@@ -873,7 +873,7 @@ export default function Settings() {
                     <div style={{ fontSize: 11, color: SUB }}>{item.size}</div>
                   </div>
                 </div>
-                <button style={{ background: "#1f2937", color: "rgba(148,163,184,0.6)", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
+                <button style={{ background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
                   Export
                 </button>
               </div>
@@ -936,11 +936,11 @@ export default function Settings() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{k.label}</div>
-                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{k.scope}</div>
+                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{k.scope}</div>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => setRevealed(r => ({ ...r, [k.key]: !r[k.key] }))} style={{
-                        background: "#1f2937", color: "rgba(148,163,184,0.6)", border: "none",
+                        background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none",
                         borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12,
                       }}>{revealed[k.key] ? "Hide" : "Reveal"}</button>
                       <button style={{

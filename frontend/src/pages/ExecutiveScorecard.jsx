@@ -10,20 +10,20 @@ const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa"
 const rand = (min, max, dec = 1) => +(Math.random() * (max - min) + min).toFixed(dec)
 
 const card = {
-  background: "rgba(15,18,32,0.92)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "#1e293b",
+  border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: 14,
   padding: 20,
   position: "relative",
   overflow: "hidden",
 }
-const label = { fontSize: 11, color: "rgba(148,163,184,0.6)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: "rgba(15,18,32,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 12px" }}>
-      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{lb}</div>
+    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>
       ))}
@@ -51,7 +51,7 @@ function HealthRing({ score, size = 140 }) {
         strokeDasharray={`${arc} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round"
         style={{ transition: "stroke-dasharray 0.8s ease" }} />
       <text x={cx} y={cy - 6} textAnchor="middle" fill={color} fontSize={26} fontWeight={800}>{score}</text>
-      <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.6)" fontSize={10} fontWeight={600}>FLEET HEALTH</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.85)" fontSize={10} fontWeight={600}>FLEET HEALTH</text>
     </svg>
   )
 }
@@ -70,7 +70,7 @@ function RevenueGauge({ pct, size = 140 }) {
         strokeDasharray={`${arc} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round"
         style={{ transition: "stroke-dasharray 0.8s ease" }} />
       <text x={cx} y={cy - 6} textAnchor="middle" fill={color} fontSize={22} fontWeight={800}>{pct}%</text>
-      <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.6)" fontSize={10} fontWeight={600}>VS TARGET</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.85)" fontSize={10} fontWeight={600}>VS TARGET</text>
     </svg>
   )
 }
@@ -137,13 +137,13 @@ export default function ExecutiveScorecard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#f1f5f9" }}>Executive Scorecard</h1>
-          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 12, marginTop: 2 }}>Portfolio performance · Investor summary · {new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginTop: 2 }}>Portfolio performance · Investor summary · {new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {["5 Sites", "€1.24M YTD", "87 MW Portfolio"].map(t => (
             <span key={t} style={{
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "rgba(148,163,184,0.6)"
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "rgba(148,163,184,0.85)"
             }}>{t}</span>
           ))}
         </div>
@@ -154,7 +154,7 @@ export default function ExecutiveScorecard() {
         {/* Health ring */}
         <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 12px" }}>
           <HealthRing score={healthScore} size={140} />
-          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.6)", textAlign: "center" }}>
+          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "center" }}>
             {healthScore >= 85 ? "Excellent" : healthScore >= 70 ? "Good" : "Needs Attention"}
           </div>
         </div>
@@ -162,23 +162,23 @@ export default function ExecutiveScorecard() {
         {/* Revenue gauge */}
         <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 12px" }}>
           <RevenueGauge pct={+revPct.toFixed(0)} size={140} />
-          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.6)", textAlign: "center" }}>Revenue vs Target</div>
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>€1.24M / €1.30M</div>
+          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "center" }}>Revenue vs Target</div>
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>€1.24M / €1.30M</div>
         </div>
 
         {/* 8 KPI cards grid */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
           {KPI_CARDS.map(k => (
             <div key={k.label} style={{
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid rgba(255,255,255,0.08)`,
+              background: "rgba(255,255,255,0.08)",
+              border: `1px solid rgba(255,255,255,0.12)`,
               borderTop: `3px solid ${k.color}50`,
               borderRadius: 10, padding: "12px 14px"
             }}>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{k.label}</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{k.label}</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: k.color }}>{k.value}</div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                <span style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>Target: {k.target}</span>
+                <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Target: {k.target}</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: k.up ? green : red }}>{k.trend}</span>
               </div>
               {/* Mini progress */}
@@ -198,16 +198,16 @@ export default function ExecutiveScorecard() {
             {[[green, "Revenue"], [accent, "Target"], [purple, "EBITDA"]].map(([c, l]) => (
               <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 10, height: 3, borderRadius: 2, background: c }} />
-                <span style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{l}</span>
+                <span style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{l}</span>
               </div>
             ))}
           </div>
         </div>
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={FINANCIALS} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-            <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} unit="k€" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+            <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit="k€" />
             <Tooltip content={<CustomTooltip />} />
             <Area type="monotone" dataKey="revenue" stroke={green} fill={green} fillOpacity={0.15} strokeWidth={2} name="Revenue (k€)" />
             <Line type="monotone" dataKey="target" stroke={accent} strokeWidth={1.5} strokeDasharray="5 3" dot={false} name="Target (k€)" />
@@ -223,9 +223,9 @@ export default function ExecutiveScorecard() {
           <div style={label}>Per-Site Performance Scorecard</div>
           <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 {["Site", "Revenue (k€)", "Target", "vs Target", "ROI", "Uptime", "MoM", "Grade"].map(h => (
-                  <th key={h} style={{ textAlign: "left", padding: "6px 10px", fontSize: 10, color: "rgba(148,163,184,0.6)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
+                  <th key={h} style={{ textAlign: "left", padding: "6px 10px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -234,10 +234,10 @@ export default function ExecutiveScorecard() {
                 const vt = +((s.revenue / s.target) * 100).toFixed(0)
                 const vtColor = vt >= 100 ? green : vt >= 90 ? amber : red
                 return (
-                  <tr key={s.name} style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                  <tr key={s.name} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                     <td style={{ padding: "10px 10px", fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{s.name}</td>
                     <td style={{ padding: "10px 10px", fontSize: 13, color: green, fontWeight: 700 }}>{s.revenue}</td>
-                    <td style={{ padding: "10px 10px", fontSize: 12, color: "rgba(148,163,184,0.6)" }}>{s.target}</td>
+                    <td style={{ padding: "10px 10px", fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{s.target}</td>
                     <td style={{ padding: "10px 10px" }}>
                       <span style={{
                         fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 8,
@@ -278,7 +278,7 @@ export default function ExecutiveScorecard() {
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: SEV_COL[r.sev], flexShrink: 0, marginTop: 4 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, color: "#f1f5f9", lineHeight: 1.4 }}>{r.text}</div>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 3 }}>Owner: {r.owner}</div>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 3 }}>Owner: {r.owner}</div>
                   </div>
                 </div>
               ))}
@@ -303,7 +303,7 @@ export default function ExecutiveScorecard() {
               ].map(item => (
                 <div key={item.l} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 800, color: item.c }}>{item.v}</div>
-                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>{item.l}</div>
+                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{item.l}</div>
                 </div>
               ))}
             </div>

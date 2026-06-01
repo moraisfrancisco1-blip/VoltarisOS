@@ -8,15 +8,15 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
-const card = { background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 20 };
-const label = { fontSize: 11, color: "rgba(148,163,184,0.6)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
 const val = { fontSize: 26, fontWeight: 700, color: "#f1f5f9" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "rgba(15,18,32,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 12px" }}>
-      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{lb}</div>
+    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -81,10 +81,10 @@ export default function RevenueOptimization() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Revenue Optimization</h1>
-          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13, marginTop: 2 }}>AI dispatch · Scenario analysis · Price forecast integration</div>
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>AI dispatch · Scenario analysis · Price forecast integration</div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <span style={{ fontSize: 12, color: "rgba(148,163,184,0.6)" }}>Auto-Dispatch</span>
+          <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Auto-Dispatch</span>
           <div onClick={() => setAutoDispatch(!autoDispatch)} style={{
             width: 40, height: 22, borderRadius: 11, cursor: "pointer",
             background: autoDispatch ? green : "rgba(255,255,255,0.08)", position: "relative"
@@ -119,10 +119,10 @@ export default function RevenueOptimization() {
         <div style={{ ...label, marginBottom: 12 }}>Price Forecast + Solar Generation + BESS Dispatch Plan</div>
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={forecast} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-            <YAxis yAxisId="price" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} unit=" €" />
-            <YAxis yAxisId="power" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} unit=" MW" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+            <YAxis yAxisId="price" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" €" />
+            <YAxis yAxisId="power" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" MW" />
             <Tooltip content={<CustomTooltip />} />
             <Area yAxisId="price" type="monotone" dataKey="upper" fill={blue} fillOpacity={0.08} stroke="none" name="Upper Bound" />
             <Area yAxisId="price" type="monotone" dataKey="lower" fill="rgba(10,12,24,0.98)" fillOpacity={1} stroke="none" name="Lower Bound" />
@@ -146,13 +146,13 @@ export default function RevenueOptimization() {
                 style={{
                   padding: 14, borderRadius: 10, cursor: "pointer",
                   border: `2px solid ${selectedScenario === s.name ? s.color : "rgba(255,255,255,0.08)"}`,
-                  background: selectedScenario === s.name ? `${s.color}12` : "rgba(255,255,255,0.04)",
+                  background: selectedScenario === s.name ? `${s.color}12` : "rgba(255,255,255,0.08)",
                 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: selectedScenario === s.name ? s.color : "#f1f5f9" }}>{s.name}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: green }}>€{s.revenue.toLocaleString()}</div>
                 </div>
-                <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 4 }}>
+                <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 4 }}>
                   Arbitrage €{s.arbitrage} · FCR €{s.fcr} · Risk:
                   <span style={{ color: s.risk === "Low" ? green : s.risk === "Medium" ? amber : red, marginLeft: 4 }}>{s.risk}</span>
                 </div>
@@ -166,9 +166,9 @@ export default function RevenueOptimization() {
           <div style={{ ...label, marginBottom: 12 }}>Scenario Revenue Comparison</div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={comparisonData} margin={{ left: -10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-              <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} unit="€" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+              <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit="€" />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="revenue" name="Total Revenue" radius={[4, 4, 0, 0]}>
                 {comparisonData.map((d, i) => <Cell key={i} fill={d.fill} />)}
@@ -177,9 +177,9 @@ export default function RevenueOptimization() {
               <Bar dataKey="fcr" name="FCR" fill={blue} fillOpacity={0.6} radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
-          <div style={{ marginTop: 10, padding: 10, background: "rgba(255,255,255,0.04)", borderRadius: 8, border: `1px solid ${selected?.color}` }}>
-            <div style={{ fontSize: 12, color: "rgba(148,163,184,0.6)" }}>Active: <b style={{ color: selected?.color }}>{selectedScenario}</b></div>
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>Expected revenue: <b style={{ color: green }}>€{selected?.revenue.toLocaleString()}</b> · Risk: <b style={{ color: selected?.risk === "Low" ? green : selected?.risk === "Medium" ? amber : red }}>{selected?.risk}</b></div>
+          <div style={{ marginTop: 10, padding: 10, background: "rgba(255,255,255,0.08)", borderRadius: 8, border: `1px solid ${selected?.color}` }}>
+            <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Active: <b style={{ color: selected?.color }}>{selectedScenario}</b></div>
+            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>Expected revenue: <b style={{ color: green }}>€{selected?.revenue.toLocaleString()}</b> · Risk: <b style={{ color: selected?.risk === "Low" ? green : selected?.risk === "Medium" ? amber : red }}>{selected?.risk}</b></div>
           </div>
         </div>
       </div>
@@ -194,20 +194,20 @@ export default function RevenueOptimization() {
         </div>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
               {["Time Window", "Action", "Site", "Volume", "Reason", "Confidence", "Est. Revenue"].map(h => (
-                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "rgba(148,163,184,0.6)", fontWeight: 600 }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {AI_DISPATCH.map((d, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{d.time}</td>
+              <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.time}</td>
                 <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: accent }}>{d.action}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "#f1f5f9" }}>{d.site}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: amber }}>{d.volume}</td>
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{d.reason}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.reason}</td>
                 <td style={{ padding: "8px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 40, height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 3 }}>
@@ -225,7 +225,7 @@ export default function RevenueOptimization() {
           <button style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
             Apply All Recommendations
           </button>
-          <button style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, color: "rgba(148,163,184,0.6)", fontSize: 12, cursor: "pointer" }}>
+          <button style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
             Review & Modify
           </button>
         </div>

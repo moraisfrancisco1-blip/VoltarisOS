@@ -80,13 +80,13 @@ export default function TradingDashboard() {
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff", letterSpacing: -0.8,
             textShadow: `0 0 30px ${C.accent}40` }}>Energy Trading</h1>
-          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13, marginTop: 3 }}>Multi-market · DAM · Intraday · Ancillary Services</div>
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 3 }}>Multi-market · DAM · Intraday · Ancillary Services</div>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {MARKETS.map(m => (
             <button key={m} onClick={() => setSelectedMarket(m)} style={{
               padding: "5px 12px", borderRadius: 20, fontSize: 11, cursor: "pointer",
-              background:   selectedMarket === m ? `${C.accent}30` : "rgba(255,255,255,0.04)",
+              background:   selectedMarket === m ? `${C.accent}30` : "rgba(255,255,255,0.08)",
               color:        selectedMarket === m ? C.accent : "rgba(148,163,184,0.7)",
               border:       `1px solid ${selectedMarket === m ? C.accent : "rgba(255,255,255,0.08)"}`,
               boxShadow:    selectedMarket === m ? `0 0 12px ${C.accent}30` : "none",
@@ -166,17 +166,17 @@ export default function TradingDashboard() {
                 </div>
                 <span style={{ width: 44, fontSize: 11, color: C.red, textAlign: "right",
                   fontWeight: 700, textShadow: `0 0 6px ${C.red}60` }}>€{a.price.toFixed(1)}</span>
-                <span style={{ width: 32, fontSize: 10, color: "rgba(148,163,184,0.5)" }}>{a.qty.toFixed(1)}</span>
+                <span style={{ width: 32, fontSize: 10, color: "rgba(148,163,184,0.75)" }}>{a.qty.toFixed(1)}</span>
               </div>
             ))}
             {/* Mid price */}
             <div style={{ textAlign: "center", padding: "8px 0", margin: "4px 0",
               borderTop: "1px solid rgba(255,255,255,0.06)",
               borderBottom: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.02)", borderRadius: 6 }}>
+              background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: "#fff",
                 textShadow: `0 0 12px ${priceColor}60` }}>€{lastPrice}/MWh</span>
-              <span style={{ fontSize: 10, color: "rgba(148,163,184,0.5)", marginLeft: 8 }}>
+              <span style={{ fontSize: 10, color: "rgba(148,163,184,0.75)", marginLeft: 8 }}>
                 Spread €{(orderBook.asks[0]?.price - orderBook.bids[0]?.price).toFixed(1)}
               </span>
             </div>
@@ -193,7 +193,7 @@ export default function TradingDashboard() {
                 </div>
                 <span style={{ width: 44, fontSize: 11, color: C.green, textAlign: "right",
                   fontWeight: 700, textShadow: `0 0 6px ${C.green}60` }}>€{b.price.toFixed(1)}</span>
-                <span style={{ width: 32, fontSize: 10, color: "rgba(148,163,184,0.5)" }}>{b.qty.toFixed(1)}</span>
+                <span style={{ width: 32, fontSize: 10, color: "rgba(148,163,184,0.75)" }}>{b.qty.toFixed(1)}</span>
               </div>
             ))}
           </div>
@@ -246,8 +246,8 @@ export default function TradingDashboard() {
             {positions.map(p => (
               <div key={p.market} style={{
                 padding: "8px 10px", borderRadius: 10,
-                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)",
-                borderBottom: "1px solid rgba(255,255,255,0.04)"
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)",
+                borderBottom: "1px solid rgba(255,255,255,0.08)"
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{p.market}</span>
@@ -260,7 +260,7 @@ export default function TradingDashboard() {
                   {[
                     { label: `Long ${p.long.toFixed(1)} MW`, color: C.green },
                     { label: `Short ${p.short.toFixed(1)} MW`, color: C.red },
-                    { label: `Net ${p.net.toFixed(1)} MW`, color: "rgba(148,163,184,0.6)" },
+                    { label: `Net ${p.net.toFixed(1)} MW`, color: "rgba(148,163,184,0.85)" },
                     { label: `${p.exposure.toFixed(0)} MWh`, color: C.amber },
                   ].map(tag => (
                     <span key={tag.label} style={{ fontSize: 10, color: tag.color, fontWeight: 600,
@@ -285,18 +285,18 @@ export default function TradingDashboard() {
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {["ID", "Time", "Market", "Side", "Qty (MW)", "Price (€/MWh)", "P&L"].map(h => (
                 <th key={h} style={{ textAlign: "left", padding: "5px 10px", fontSize: 10,
-                  color: "rgba(148,163,184,0.5)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
+                  color: "rgba(148,163,184,0.75)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {RECENT_TRADES.map((t, i) => (
               <tr key={t.id} style={{
-                borderBottom: "1px solid rgba(255,255,255,0.03)",
-                background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.05)",
               }}>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: C.accent, fontWeight: 700 }}>{t.id}</td>
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{t.time}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{t.time}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "#e2e8f0" }}>{t.market}</td>
                 <td style={{ padding: "8px 10px" }}>
                   <span style={{ fontSize: 11, fontWeight: 900, color: t.side === "BUY" ? C.green : C.red,
@@ -332,16 +332,16 @@ export default function TradingDashboard() {
             { label: "Limit Price (€/MWh)", type: "number", placeholder: "0.0" },
           ].map(f => (
             <div key={f.label} style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 5, fontWeight: 600 }}>{f.label}</div>
+              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 5, fontWeight: 600 }}>{f.label}</div>
               {f.type === "select" ? (
-                <select style={{ width: "100%", background: "rgba(255,255,255,0.04)",
+                <select style={{ width: "100%", background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
                   padding: "9px 12px", color: "#e2e8f0", fontSize: 13 }}>
                   {f.options.map(o => <option key={o}>{o}</option>)}
                 </select>
               ) : (
                 <input type={f.type} placeholder={f.placeholder} style={{
-                  width: "100%", background: "rgba(255,255,255,0.04)",
+                  width: "100%", background: "rgba(255,255,255,0.08)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
                   padding: "9px 12px", color: "#e2e8f0", fontSize: 13, boxSizing: "border-box"
                 }} />

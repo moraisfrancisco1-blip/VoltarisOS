@@ -4,19 +4,19 @@
 
 /* ── CSS variable defaults (dark / Obsidian theme) ── */
 :root {
-  --bg:           #060a12;
-  --sidebar:      linear-gradient(180deg, #080d18 0%, #0a1020 100%);
-  --topbar:       #080d18;
-  --surface:      #0d1525;
-  --surface2:     #0a1020;
-  --surface-glass: rgba(13,21,37,0.7);
-  --border:       #1a2234;
-  --border-strong:#253450;
-  --text:         #f0f4ff;
-  --sub:          #6b7280;
+  --bg:           #0f172a;
+  --sidebar:      linear-gradient(180deg, #0c1322 0%, #0a1120 100%);
+  --topbar:       #0c1322;
+  --surface:      #1e293b;
+  --surface2:     #172033;
+  --surface-glass: rgba(30,41,59,0.85);
+  --border:       rgba(255,255,255,0.10);
+  --border-strong: rgba(255,255,255,0.18);
+  --text:         #f1f5f9;
+  --sub:          #94a3b8;
   --glow:         #3b82f6;
-  --grid-line:    #1a2234;
-  --tooltip-bg:   rgba(10,16,32,0.95);
+  --grid-line:    rgba(255,255,255,0.06);
+  --tooltip-bg:   #1e293b;
   --gradient:     linear-gradient(135deg, #3b82f6, #8b5cf6);
 }
 
@@ -90,3 +90,4 @@ body {
     white-space: nowrap;
   }
 }
+

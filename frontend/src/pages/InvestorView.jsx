@@ -8,15 +8,15 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
-const card = { background: "rgba(15,18,32,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 20 };
-const label = { fontSize: 11, color: "rgba(148,163,184,0.6)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
 const val = { fontSize: 26, fontWeight: 700, color: "#f1f5f9" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "rgba(15,18,32,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 12px" }}>
-      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{lb}</div>
+    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -81,7 +81,7 @@ export default function InvestorView() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Investor View</h1>
-          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13, marginTop: 2 }}>Portfolio financials · IRR/NPV · BESS degradation · Revenue waterfall</div>
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Portfolio financials · IRR/NPV · BESS degradation · Revenue waterfall</div>
         </div>
         <button style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Export Report
@@ -109,9 +109,9 @@ export default function InvestorView() {
         <div style={{ ...label, marginBottom: 12 }}>Revenue Projection by Source (€k/year)</div>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={revenue} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="y" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-            <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} unit="k€" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <XAxis dataKey="y" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+            <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit="k€" />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="solar_ppa" stackId="a" fill={amber} name="Solar PPA" />
             <Bar dataKey="bess_arb" stackId="a" fill={purple} name="BESS Arbitrage" />
@@ -129,7 +129,7 @@ export default function InvestorView() {
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {WATERFALL.map((w, i) => (
               <div key={w.name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <div style={{ width: 110, fontSize: 11, color: "rgba(148,163,184,0.6)", textAlign: "right" }}>{w.name}</div>
+                <div style={{ width: 110, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "right" }}>{w.name}</div>
                 <div style={{ flex: 1, height: 22, position: "relative" }}>
                   <div style={{
                     position: "absolute",
@@ -156,21 +156,21 @@ export default function InvestorView() {
           <div style={{ ...label, marginBottom: 10 }}>Per-Site Financials</div>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 {["Site", "CapEx (€k)", "IRR", "NPV (€k)", "DSCR", "Payback"].map(h => (
-                  <th key={h} style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "rgba(148,163,184,0.6)", fontWeight: 600 }}>{h}</th>
+                  <th key={h} style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {SITES_FIN.map(s => (
-                <tr key={s.name} style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <tr key={s.name} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                   <td style={{ padding: "7px 8px", fontSize: 11, fontWeight: 600, color: "#f1f5f9" }}>{s.name.split(" ").slice(-2).join(" ")}</td>
                   <td style={{ padding: "7px 8px", fontSize: 11, color: "#f1f5f9" }}>€{s.capex.toLocaleString()}</td>
                   <td style={{ padding: "7px 8px", fontSize: 12, fontWeight: 700, color: s.irr > 16 ? green : amber }}>{s.irr}%</td>
                   <td style={{ padding: "7px 8px", fontSize: 11, color: green }}>€{s.npv.toLocaleString()}</td>
                   <td style={{ padding: "7px 8px", fontSize: 12, fontWeight: 700, color: s.dscr >= 1.5 ? green : amber }}>{s.dscr}x</td>
-                  <td style={{ padding: "7px 8px", fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{s.payback}y</td>
+                  <td style={{ padding: "7px 8px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{s.payback}y</td>
                 </tr>
               ))}
             </tbody>
@@ -183,15 +183,15 @@ export default function InvestorView() {
         <div style={{ ...label, marginBottom: 12 }}>BESS Degradation & Replacement Cost Model</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
           {SITES_FIN.map(s => (
-            <div key={s.name} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 14 }}>
+            <div key={s.name} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: "#f1f5f9", marginBottom: 8 }}>{s.name.split(" ").slice(-2).join(" ")}</div>
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>Capacity Remaining</div>
+              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>Capacity Remaining</div>
               <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, marginBottom: 4 }}>
                 <div style={{ width: `${s.bessRemain}%`, height: "100%", background: s.bessRemain > 70 ? green : s.bessRemain > 50 ? amber : red, borderRadius: 3 }} />
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.bessRemain > 70 ? green : s.bessRemain > 50 ? amber : red }}>{s.bessRemain}%</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 6 }}>Age: {s.bessAge} yrs</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 6 }}>Age: {s.bessAge} yrs</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>
                 Replace in ~{Math.round((s.bessRemain - 60) / 3)} yrs
               </div>
               <div style={{ fontSize: 11, color: red, marginTop: 4, fontWeight: 600 }}>
@@ -216,9 +216,9 @@ export default function InvestorView() {
             }))}
             margin={{ top: 5, right: 10, bottom: 0, left: -10 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-            <XAxis dataKey="y" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-            <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} unit="k€" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <XAxis dataKey="y" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+            <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit="k€" />
             <Tooltip content={<CustomTooltip />} />
             <Area type="monotone" dataKey="cumulative" stroke={accent} fill={accent} fillOpacity={0.2} name="Cumulative CF" />
           </AreaChart>

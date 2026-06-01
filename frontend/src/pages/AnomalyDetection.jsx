@@ -11,20 +11,20 @@ const orange = "#f97316"
 const rand = (min, max, dec = 1) => +(Math.random() * (max - min) + min).toFixed(dec)
 
 const card = {
-  background: "rgba(15,18,32,0.92)",
-  border: "1px solid rgba(255,255,255,0.08)",
+  background: "#1e293b",
+  border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: 14,
   padding: 20,
   position: "relative",
   overflow: "hidden",
 }
-const label = { fontSize: 11, color: "rgba(148,163,184,0.6)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: "rgba(15,18,32,0.95)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 12px" }}>
-      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{lb}</div>
+    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>
       ))}
@@ -78,7 +78,7 @@ function SeverityGauge({ score, size = 110 }) {
       <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={8} strokeDasharray={`${circ * 0.75} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round" />
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={8} strokeDasharray={`${arc} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round" style={{ transition: "stroke-dasharray 0.6s" }} />
       <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize={18} fontWeight={800}>{score}</text>
-      <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.6)" fontSize={9}>RISK SCORE</text>
+      <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.85)" fontSize={9}>RISK SCORE</text>
     </svg>
   )
 }
@@ -201,7 +201,7 @@ export default function AnomalyDetection() {
             }} />
             <div>
               <span style={{ fontWeight: 700, color: red, fontSize: 13 }}>THERMAL RUNAWAY RISK — Rotterdam Pack C · Cell 47 </span>
-              <span style={{ color: "rgba(148,163,184,0.6)", fontSize: 12 }}> · Temp +18°C above baseline · Auto-throttle engaged · 14:23</span>
+              <span style={{ color: "rgba(148,163,184,0.85)", fontSize: 12 }}> · Temp +18°C above baseline · Auto-throttle engaged · 14:23</span>
             </div>
           </div>
           <button onClick={() => setThermalAlert(false)} style={{
@@ -215,18 +215,18 @@ export default function AnomalyDetection() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#f1f5f9" }}>Anomaly Detection</h1>
-          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 12, marginTop: 2 }}>
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginTop: 2 }}>
             BESS cell-level fault isolation · Real-time · Updated {ticker > 0 ? "just now" : "loading…"}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20,
+            background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20,
             padding: "5px 14px", fontSize: 12
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: green, animation: "pulse 2s infinite" }} />
-            <span style={{ color: "rgba(148,163,184,0.6)" }}>Live Monitoring</span>
+            <span style={{ color: "rgba(148,163,184,0.85)" }}>Live Monitoring</span>
           </div>
         </div>
       </div>
@@ -246,7 +246,7 @@ export default function AnomalyDetection() {
           }}>
             <div style={label}>{k.label}</div>
             <div style={{ fontSize: 30, fontWeight: 800, color: k.color, lineHeight: 1 }}>{k.value}</div>
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginTop: 6 }}>{k.sub}</div>
+            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 6 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -257,7 +257,7 @@ export default function AnomalyDetection() {
         <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
           <div style={{ ...label, textAlign: "center" }}>Fleet Risk Score</div>
           <SeverityGauge score={riskScore} size={120} />
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", textAlign: "center" }}>
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "center" }}>
             {riskScore > 70 ? "🔴 High Risk" : riskScore > 40 ? "🟡 Elevated" : "🟢 Normal"}
           </div>
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
@@ -278,13 +278,13 @@ export default function AnomalyDetection() {
               {[["green", "OK"], [amber, "Warn"], [orange, "High"], [red, "Critical"]].map(([c, l]) => (
                 <div key={l} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: c === "green" ? green : c }} />
-                  <span style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>{l}</span>
+                  <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{l}</span>
                 </div>
               ))}
             </div>
           </div>
           <CellHeatmap rows={6} cols={16} anomalyCells={heatAnoms} />
-          <div style={{ marginTop: 10, fontSize: 11, color: "rgba(148,163,184,0.6)" }}>
+          <div style={{ marginTop: 10, fontSize: 11, color: "rgba(148,163,184,0.85)" }}>
             {heatAnoms.filter(x => x.sev === "critical").length} critical · {heatAnoms.filter(x => x.sev === "high").length} high · {heatAnoms.filter(x => x.sev === "medium").length} medium
             &nbsp;· Refreshes every 2.5s
           </div>
@@ -298,9 +298,9 @@ export default function AnomalyDetection() {
           <div style={label}>24h Anomaly Trend by Type</div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={trend} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="h" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
-              <YAxis tick={{ fontSize: 9, fill: "rgba(148,163,184,0.6)" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <XAxis dataKey="h" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
+              <YAxis tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <Tooltip content={<CustomTooltip />} />
               <Area type="monotone" dataKey="thermal" stackId="1" stroke={red} fill={red} fillOpacity={0.3} name="Thermal" />
               <Area type="monotone" dataKey="voltage" stackId="1" stroke={amber} fill={amber} fillOpacity={0.3} name="Voltage" />
@@ -322,7 +322,7 @@ export default function AnomalyDetection() {
                     <span style={{ fontSize: 11, color: "#f1f5f9" }}>{t.name}</span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.count}</span>
                   </div>
-                  <div style={{ height: 5, borderRadius: 4, background: "rgba(255,255,255,0.04)", overflow: "hidden" }}>
+                  <div style={{ height: 5, borderRadius: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
                     <div style={{ height: "100%", borderRadius: 4, background: t.color, width: `${(t.count / max) * 100}%`, transition: "width 0.5s" }} />
                   </div>
                 </div>
@@ -340,9 +340,9 @@ export default function AnomalyDetection() {
             {["all", "critical", "high", "medium", "low"].map(s => (
               <button key={s} onClick={() => setSelectedSev(s)} style={{
                 padding: "3px 12px", borderRadius: 20, fontSize: 11, cursor: "pointer",
-                border: selectedSev === s ? `1px solid ${SEV_COLORS[s] || accent}` : "1px solid rgba(255,255,255,0.08)",
-                background: selectedSev === s ? `${SEV_COLORS[s] || accent}20` : "rgba(255,255,255,0.04)",
-                color: selectedSev === s ? (SEV_COLORS[s] || accent) : "rgba(148,163,184,0.6)",
+                border: selectedSev === s ? `1px solid ${SEV_COLORS[s] || accent}` : "1px solid rgba(255,255,255,0.12)",
+                background: selectedSev === s ? `${SEV_COLORS[s] || accent}20` : "rgba(255,255,255,0.08)",
+                color: selectedSev === s ? (SEV_COLORS[s] || accent) : "rgba(148,163,184,0.85)",
                 fontWeight: selectedSev === s ? 700 : 400,
               }}>{s === "all" ? "All" : s}</button>
             ))}
@@ -352,7 +352,7 @@ export default function AnomalyDetection() {
           {filteredFeed.slice(0, 15).map((a, i) => (
             <div key={a.id} style={{
               display: "flex", alignItems: "center", gap: 14, padding: "10px 0",
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              borderBottom: "1px solid rgba(255,255,255,0.12)",
               opacity: a.ack ? 0.45 : 1,
               background: i === 0 && !a.ack ? `${SEV_COLORS[a.sev]}08` : "transparent",
             }}>
@@ -362,16 +362,16 @@ export default function AnomalyDetection() {
                 boxShadow: a.sev === "critical" ? `0 0 0 3px ${red}30` : "none",
               }} />
               <div style={{ width: 65, fontSize: 11, fontWeight: 700, color: SEV_COLORS[a.sev], textTransform: "uppercase" }}>{a.sev}</div>
-              <div style={{ width: 110, fontSize: 12, color: "rgba(148,163,184,0.6)", fontWeight: 600 }}>{a.site}</div>
-              <div style={{ width: 60, fontSize: 11, color: "rgba(148,163,184,0.6)" }}>{a.pack}</div>
+              <div style={{ width: 110, fontSize: 12, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{a.site}</div>
+              <div style={{ width: 60, fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{a.pack}</div>
               <div style={{ flex: 1, fontSize: 12, color: "#f1f5f9", fontWeight: 500 }}>{a.type}</div>
               <div style={{ width: 70, fontSize: 11, color: a.delta < -20 ? red : amber, textAlign: "right" }}>{a.delta}%</div>
-              <div style={{ width: 50, fontSize: 11, color: "rgba(148,163,184,0.6)", textAlign: "right" }}>{a.ts}</div>
+              <div style={{ width: 50, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "right" }}>{a.ts}</div>
               <button
                 onClick={() => setFeed(f => f.map(x => x.id === a.id ? { ...x, ack: true } : x))}
                 style={{
                   padding: "2px 10px", borderRadius: 8, fontSize: 10, cursor: "pointer",
-                  border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.6)"
+                  border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.85)"
                 }}
               >{a.ack ? "ACK" : "Ack"}</button>
             </div>

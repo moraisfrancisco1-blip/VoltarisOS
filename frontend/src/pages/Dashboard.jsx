@@ -112,7 +112,7 @@ function PowerFlowDiagram({ solar, bess, grid, load }) {
           <rect x={n.x - 42} y={n.y - 23} width={84} height={50} rx={14} fill={n.color} opacity={0.07} />
           {/* Card body */}
           <rect x={n.x - 40} y={n.y - 21} width={80} height={46} rx={12}
-            fill="rgba(15,18,32,0.95)" stroke={n.color} strokeWidth={1.5} />
+            fill="#1e293b" stroke={n.color} strokeWidth={1.5} />
           {/* Top highlight (3D shine) */}
           <rect x={n.x - 38} y={n.y - 19} width={76} height={3} rx={3}
             fill="rgba(255,255,255,0.08)" />
@@ -228,7 +228,7 @@ export default function Dashboard() {
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: C.green,
                 boxShadow: `0 0 8px ${C.green}`, animation: "livepin 2s infinite" }} />
-              <span style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>Live</span>
+              <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Live</span>
             </div>
           </div>
           <PowerFlowDiagram solar={metrics.solar} bess={metrics.bess} grid={rand(1, 3)} load={rand(8, 14)} />
@@ -246,11 +246,11 @@ export default function Dashboard() {
               return (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12,
                   padding: "8px 10px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <SoCRing soc={s.soc} size={50} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{s.name}</div>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>Solar {s.solar} MW · BESS {s.bess} MW</div>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>Solar {s.solar} MW · BESS {s.bess} MW</div>
                   </div>
                   <span style={{
                     fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 20,
@@ -311,24 +311,24 @@ export default function Dashboard() {
           <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Arbitrage Signal</div>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16, position: "relative" }}>
             <div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 3 }}>Buy (off-peak)</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 3 }}>Buy (off-peak)</div>
               <div style={{ fontSize: 26, fontWeight: 900, color: C.green, fontVariantNumeric: "tabular-nums",
                 textShadow: `0 0 16px ${C.green}60` }}>€{arb.buy}</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.5)" }}>per MWh</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>per MWh</div>
             </div>
             <div style={{ alignSelf: "center", fontSize: 22, color: "rgba(255,255,255,0.2)",
               textShadow: "0 0 10px rgba(255,255,255,0.1)" }}>→</div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 3 }}>Sell (peak)</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 3 }}>Sell (peak)</div>
               <div style={{ fontSize: 26, fontWeight: 900, color: C.red, fontVariantNumeric: "tabular-nums",
                 textShadow: `0 0 16px ${C.red}60` }}>€{arb.sell}</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.5)" }}>per MWh</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>per MWh</div>
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12, position: "relative",
             display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>Spread</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Spread</div>
               <div style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>€{arb.spread}/MWh</div>
             </div>
             <div style={{
@@ -340,7 +340,7 @@ export default function Dashboard() {
               letterSpacing: 1,
             }}>{arb.signal}</div>
           </div>
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.5)", marginTop: 10, position: "relative" }}>
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.75)", marginTop: 10, position: "relative" }}>
             Next peak ~38 min · Est. +€{Math.round(arb.spread * 4.5)}
           </div>
         </div>
@@ -393,7 +393,7 @@ export default function Dashboard() {
               return (
                 <div key={a.id} style={{
                   display: "flex", gap: 10, alignItems: "flex-start",
-                  padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)"
+                  padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.08)"
                 }}>
                   <div style={{
                     width: 8, height: 8, borderRadius: "50%", marginTop: 3, flexShrink: 0,
@@ -401,7 +401,7 @@ export default function Dashboard() {
                   }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, color: "#e2e8f0", lineHeight: 1.45 }}>{a.msg}</div>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.5)", marginTop: 2 }}>{a.ts}</div>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)", marginTop: 2 }}>{a.ts}</div>
                   </div>
                 </div>
               );
@@ -409,7 +409,7 @@ export default function Dashboard() {
           </div>
           <div style={{ marginTop: 14, textAlign: "center", position: "relative" }}>
             <button style={{
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 10, padding: "7px 18px", fontSize: 12, color: "rgba(148,163,184,0.7)",
               cursor: "pointer", transition: "all 0.2s",
             }}>View All Alerts</button>
@@ -428,7 +428,7 @@ export default function Dashboard() {
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {["Site", "Status", "Solar MW", "BESS SoC", "BESS MW", "Temp °C", "Last Sync"].map(h => (
                 <th key={h} style={{ textAlign: "left", padding: "6px 12px", fontSize: 10,
-                  color: "rgba(148,163,184,0.5)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  color: "rgba(148,163,184,0.75)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -438,8 +438,8 @@ export default function Dashboard() {
               const soc = s.soc > 70 ? C.green : s.soc > 40 ? C.amber : C.red;
               return (
                 <tr key={s.id} style={{
-                  borderBottom: "1px solid rgba(255,255,255,0.03)",
-                  background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.05)",
                   transition: "background 0.15s",
                 }}>
                   <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>{s.name}</td>
@@ -454,7 +454,7 @@ export default function Dashboard() {
                     textShadow: `0 0 8px ${soc}40` }}>{s.soc}%</td>
                   <td style={{ padding: "10px 12px", fontSize: 13, color: C.purple }}>{s.bess}</td>
                   <td style={{ padding: "10px 12px", fontSize: 13, color: "#e2e8f0" }}>{rand(28, 42)}°C</td>
-                  <td style={{ padding: "10px 12px", fontSize: 11, color: "rgba(148,163,184,0.5)" }}>Just now</td>
+                  <td style={{ padding: "10px 12px", fontSize: 11, color: "rgba(148,163,184,0.75)" }}>Just now</td>
                 </tr>
               );
             })}

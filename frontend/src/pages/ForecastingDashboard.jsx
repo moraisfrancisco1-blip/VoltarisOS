@@ -155,15 +155,15 @@ export default function ForecastingDashboard() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 10 }}>
           {WEATHER.map(w => (
             <div key={w.day} style={{
-              background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "12px 8px", textAlign: "center",
+              background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "12px 8px", textAlign: "center",
               border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(4px)",
             }}>
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 6 }}>{w.day}</div>
+              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 6 }}>{w.day}</div>
               <div style={{ fontSize: 22, marginBottom: 6 }}>{w.icon}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", marginBottom: 4 }}>{w.temp}°C</div>
               <div style={{ fontSize: 10, color: C.amber }}>☀️ {w.irr} W/m²</div>
               <div style={{ fontSize: 10, color: C.blue }}>💨 {w.wind} m/s</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.5)" }}>☁️ {w.cloud}%</div>
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>☁️ {w.cloud}%</div>
             </div>
           ))}
         </div>
@@ -173,7 +173,7 @@ export default function ForecastingDashboard() {
       <div style={glassCard(C.amber)}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={label}>Solar Generation Forecast (MW) — with confidence interval</div>
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.5)" }}>Shaded area = 80% confidence band</div>
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.75)" }}>Shaded area = 80% confidence band</div>
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={displayData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
@@ -183,7 +183,7 @@ export default function ForecastingDashboard() {
             <Tooltip content={<PremiumTooltip />} />
             <ReferenceLine x="Today 12h" stroke={C.amber} strokeDasharray="3 3" label={{ value: "Now", fill: C.amber, fontSize: 10 }} />
             <Area type="monotone" dataKey="solar_high" fill={`url(#${FORECAST_IDS.solarConf})`} stroke="none" name="Upper 80%" />
-            <Area type="monotone" dataKey="solar_low" fill="rgba(15,18,32,0.95)" stroke="none" name="Lower 80%" />
+            <Area type="monotone" dataKey="solar_low" fill="#1e293b" stroke="none" name="Lower 80%" />
             <Area type="monotone" dataKey="solar" stroke={C.amber} fill={`url(#${FORECAST_IDS.solarGrad})`}
               strokeWidth={2.5} dot={false} name="Solar Forecast"
               style={{ filter: `drop-shadow(0 0 6px ${C.amber}88)` }} />
@@ -271,7 +271,7 @@ export default function ForecastingDashboard() {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               {["Model", "MAE (kWh)", "RMSE (kWh)", "R² Score", "Status"].map(h => (
-                <th key={h} style={{ textAlign: "left", padding: "6px 12px", fontSize: 10, color: "rgba(148,163,184,0.6)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "6px 12px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -279,7 +279,7 @@ export default function ForecastingDashboard() {
             {MODELS.map((m, idx) => (
               <tr key={m.name} style={{
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
-                background: idx % 2 === 0 ? "rgba(255,255,255,0.015)" : "transparent",
+                background: idx % 2 === 0 ? "rgba(255,255,255,0.05)" : "transparent",
               }}>
                 <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{m.name}</td>
                 <td style={{ padding: "10px 12px", fontSize: 12, color: m.mae < 5 ? C.green : C.amber, fontWeight: 600 }}>{m.mae}</td>
@@ -290,7 +290,7 @@ export default function ForecastingDashboard() {
                   <span style={{
                     fontSize: 11, padding: "3px 10px", borderRadius: 12,
                     background: m.status === "active" ? `${C.green}22` : "rgba(255,255,255,0.05)",
-                    color: m.status === "active" ? C.green : "rgba(148,163,184,0.5)",
+                    color: m.status === "active" ? C.green : "rgba(148,163,184,0.75)",
                     border: `1px solid ${m.status === "active" ? `${C.green}55` : "rgba(255,255,255,0.08)"}`,
                     boxShadow: m.status === "active" ? `0 0 8px ${C.green}33` : "none",
                   }}>

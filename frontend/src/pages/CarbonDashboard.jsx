@@ -68,10 +68,10 @@ export default function CarbonDashboard() {
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff", letterSpacing: -0.8,
             textShadow: `0 0 30px ${C.green}40` }}>Carbon Dashboard</h1>
-          <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13, marginTop: 3 }}>Emissions tracking · Carbon credits · Scope 1/2/3</div>
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 3 }}>Emissions tracking · Carbon credits · Scope 1/2/3</div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ fontSize: 12, color: "rgba(148,163,184,0.6)" }}>Grid intensity:</div>
+          <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Grid intensity:</div>
           <div style={{ fontSize: 16, fontWeight: 900, color: giColor, textShadow: `0 0 12px ${giColor}60` }}>
             {gridIntensity} gCO₂/kWh
           </div>
@@ -153,7 +153,7 @@ export default function CarbonDashboard() {
               <div style={{ fontSize: 11, fontWeight: 900, color: "#fff" }}>
                 {(metrics.scope1 + metrics.scope2 + metrics.scope3).toFixed(0)}
               </div>
-              <div style={{ fontSize: 9, color: "rgba(148,163,184,0.6)" }}>tCO₂e</div>
+              <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>tCO₂e</div>
             </div>
           </div>
           <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10, position: "relative" }}>
@@ -166,7 +166,7 @@ export default function CarbonDashboard() {
                     boxShadow: `0 0 6px ${s.fill}` }} />
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{s.name}</div>
-                    <div style={{ fontSize: 9, color: "rgba(148,163,184,0.5)" }}>{s.desc}</div>
+                    <div style={{ fontSize: 9, color: "rgba(148,163,184,0.75)" }}>{s.desc}</div>
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 900, color: s.fill,
@@ -245,7 +245,7 @@ export default function CarbonDashboard() {
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, position: "relative" }}>
             <div>
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>Portfolio Value</div>
+              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>Portfolio Value</div>
               <div style={{ fontSize: 22, fontWeight: 900, color: C.green,
                 textShadow: `0 0 16px ${C.green}60` }}>€{metrics.creditValue.toLocaleString()}</div>
             </div>
@@ -258,7 +258,7 @@ export default function CarbonDashboard() {
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                 {["ID", "Type", "Qty", "Price", "Status"].map(h => (
                   <th key={h} style={{ textAlign: "left", padding: "4px 6px", fontSize: 10,
-                    color: "rgba(148,163,184,0.5)", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
+                    color: "rgba(148,163,184,0.75)", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -266,8 +266,8 @@ export default function CarbonDashboard() {
               {CREDITS.map((c, i) => {
                 const sc = c.status === "verified" ? C.green : c.status === "pending" ? C.amber : C.accent;
                 return (
-                  <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)",
-                    background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)" }}>
+                  <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.05)" }}>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: C.accent, fontWeight: 700 }}>{c.id}</td>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: "#e2e8f0" }}>{c.type}</td>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: "#e2e8f0" }}>{c.qty}</td>

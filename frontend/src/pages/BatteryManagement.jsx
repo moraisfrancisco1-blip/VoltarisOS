@@ -12,14 +12,14 @@ const red    = C.red;
 const blue   = C.blue;
 
 const card = {
-  background: "linear-gradient(135deg, rgba(22,26,42,0.92) 0%, rgba(15,18,32,0.98) 100%)",
+  background: "#1e293b",
   border: "1px solid rgba(255,255,255,0.07)",
   borderRadius: 16,
   padding: 24,
-  boxShadow: "0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.03) inset",
+  boxShadow: "0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset",
 };
 const card2 = {
-  background: "linear-gradient(135deg, rgba(22,26,42,0.9) 0%, rgba(15,18,32,0.96) 100%)",
+  background: "#1e293b",
   border: "1px solid rgba(255,255,255,0.06)",
   borderRadius: 14,
   padding: 16,
@@ -87,7 +87,7 @@ function HealthRing({ value, size = 70 }) {
         filter={`url(#hr_glow_${value})`} />
       <text x={size/2} y={size/2+2} textAnchor="middle" fill="#fff" fontSize={size*0.2} fontWeight="900"
         style={{ filter: `drop-shadow(0 0 6px ${color}80)` }}>{value}%</text>
-      <text x={size/2} y={size/2+size*0.17} textAnchor="middle" fill="rgba(148,163,184,0.6)" fontSize={size*0.12}>SoH</text>
+      <text x={size/2} y={size/2+size*0.17} textAnchor="middle" fill="rgba(148,163,184,0.85)" fontSize={size*0.12}>SoH</text>
     </svg>
   );
 }
@@ -193,7 +193,7 @@ export default function BatteryManagement() {
           <div style={{ background: "rgba(16,185,129,0.08)", border: `1px solid ${green}30`, borderRadius: 8, padding: "6px 14px", fontSize: 12 }}>
             <span style={{ color: green, textShadow: `0 0 8px ${green}` }}>●</span>
             <span style={{ color: "rgba(148,163,184,0.7)", marginLeft: 6 }}>Live</span>
-            <span style={{ color: "rgba(148,163,184,0.4)", marginLeft: 6 }}>· {tick * 2.5 | 0}s ago</span>
+            <span style={{ color: "rgba(148,163,184,0.7)", marginLeft: 6 }}>· {tick * 2.5 | 0}s ago</span>
           </div>
           <button style={{
             background: `linear-gradient(135deg, ${accent}, #4f46e5)`,
@@ -217,9 +217,9 @@ export default function BatteryManagement() {
           { label: "Avg RTE", value: `${(batteries.reduce((a, b) => a + b.rte, 0) / batteries.length).toFixed(1)}%`, sub: "round-trip eff.", color: "#a78bfa" },
         ].map(k => (
           <div key={k.label} style={{ ...card2, textAlign: "center" }}>
-            <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 10, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{k.label}</div>
+            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 10, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{k.label}</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: k.color }}>{k.value}</div>
-            <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 10, marginTop: 2 }}>{k.sub}</div>
+            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 10, marginTop: 2 }}>{k.sub}</div>
           </div>
         ))}
       </div>
@@ -233,7 +233,7 @@ export default function BatteryManagement() {
           <div style={{ display: "flex", gap: 6 }}>
             {["All", "Charging", "Discharging", "Idle"].map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{
-                background: filter === f ? accent : "rgba(255,255,255,0.06)", color: filter === f ? "#fff" : "rgba(148,163,184,0.6)",
+                background: filter === f ? accent : "rgba(255,255,255,0.06)", color: filter === f ? "#fff" : "rgba(148,163,184,0.85)",
                 border: `1px solid ${filter === f ? accent : "rgba(255,255,255,0.08)"}`, borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer"
               }}>{f}</button>
             ))}
@@ -255,7 +255,7 @@ export default function BatteryManagement() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div>
                       <span style={{ fontWeight: 700, fontSize: 14 }}>{b.id}</span>
-                      <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 11, marginTop: 2 }}>{b.site} · {b.chemistry} · {(b.capacity / 1000).toFixed(1)} MWh</div>
+                      <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginTop: 2 }}>{b.site} · {b.chemistry} · {(b.capacity / 1000).toFixed(1)} MWh</div>
                     </div>
                     <span style={{
                       fontSize: 10, padding: "2px 8px", borderRadius: 99, fontWeight: 600,
@@ -264,7 +264,7 @@ export default function BatteryManagement() {
                     }}>{b.status}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: "rgba(148,163,184,0.6)", width: 52 }}>SoC {b.soc}%</span>
+                    <span style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", width: 52 }}>SoC {b.soc}%</span>
                     <div style={{ flex: 1 }}><SoCBar value={b.soc} /></div>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
@@ -272,10 +272,10 @@ export default function BatteryManagement() {
                       { l: "Health", v: `${b.health}%`, c: b.health > 90 ? green : b.health > 75 ? amber : red },
                       { l: "Temp", v: `${b.temp}°C`, c: b.temp > 40 ? red : b.temp > 32 ? amber : green },
                       { l: "Power", v: `${Math.abs(b.current * 48 / 1000).toFixed(1)} kW`, c: "#f1f5f9" },
-                      { l: "Cycles", v: b.cycles, c: "rgba(148,163,184,0.6)" },
+                      { l: "Cycles", v: b.cycles, c: "rgba(148,163,184,0.85)" },
                     ].map(m => (
                       <div key={m.l} style={{ textAlign: "center" }}>
-                        <div style={{ fontSize: 9, color: "rgba(148,163,184,0.6)" }}>{m.l}</div>
+                        <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
                         <div style={{ fontSize: 12, fontWeight: 600, color: m.c }}>{m.v}</div>
                       </div>
                     ))}
@@ -290,7 +290,7 @@ export default function BatteryManagement() {
             <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Fleet SoC Distribution</div>
             {batteries.map(b => (
               <div key={b.id} style={{ marginBottom: 8 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "rgba(148,163,184,0.6)", marginBottom: 3 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 3 }}>
                   <span>{b.id}</span><span>{b.soc}%</span>
                 </div>
                 <SoCBar value={b.soc} height={6} />
@@ -309,11 +309,11 @@ export default function BatteryManagement() {
                 <HealthRing value={bat.health} size={80} />
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>{bat.id}</div>
-                  <div style={{ color: "rgba(148,163,184,0.6)", fontSize: 13 }}>{bat.site}</div>
+                  <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13 }}>{bat.site}</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: STATUS_BG[bat.status], color: STATUS_COLORS[bat.status], fontWeight: 600 }}>{bat.status}</span>
-                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.6)" }}>{bat.chemistry} — {CHEMISTRIES[bat.chemistry]?.desc}</span>
-                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.04)", color: "rgba(148,163,184,0.6)" }}>FW {bat.firmware}</span>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.85)" }}>{bat.chemistry} — {CHEMISTRIES[bat.chemistry]?.desc}</span>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.85)" }}>FW {bat.firmware}</span>
                   </div>
                 </div>
               </div>
@@ -325,7 +325,7 @@ export default function BatteryManagement() {
                   { l: "Installed", v: bat.installed },
                 ].map(m => (
                   <div key={m.l}>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>{m.l}</div>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{m.v}</div>
                   </div>
                 ))}
@@ -340,12 +340,12 @@ export default function BatteryManagement() {
                 { l: "Current", v: `${bat.current > 0 ? "+" : ""}${bat.current}A`, c: bat.current > 0 ? green : red, icon: "↕" },
                 { l: "Temperature", v: `${bat.temp}°C`, c: bat.temp > 40 ? red : bat.temp > 32 ? amber : green, icon: "🌡" },
                 { l: "Cycles", v: bat.cycles, c: "#f1f5f9", icon: "🔄" },
-                { l: "Cells", v: `${bat.cells} / ${bat.strings}S`, c: "rgba(148,163,184,0.6)", icon: "⬛" },
+                { l: "Cells", v: `${bat.cells} / ${bat.strings}S`, c: "rgba(148,163,184,0.85)", icon: "⬛" },
               ].map(m => (
-                <div key={m.l} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
+                <div key={m.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
                   <div style={{ fontSize: 16, marginBottom: 4 }}>{m.icon}</div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: m.c }}>{m.v}</div>
-                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>{m.l}</div>
+                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{m.l}</div>
                 </div>
               ))}
             </div>
@@ -355,7 +355,7 @@ export default function BatteryManagement() {
           <div style={{ display: "flex", gap: 4 }}>
             {TABS.map(t => (
               <button key={t} onClick={() => setTab(t)} style={{
-                background: tab === t ? accent : "rgba(255,255,255,0.04)", color: tab === t ? "#fff" : "rgba(148,163,184,0.6)",
+                background: tab === t ? accent : "rgba(255,255,255,0.08)", color: tab === t ? "#fff" : "rgba(148,163,184,0.85)",
                 border: `1px solid ${tab === t ? accent : "rgba(255,255,255,0.08)"}`, borderRadius: 8,
                 padding: "6px 14px", fontSize: 12, cursor: "pointer", fontWeight: tab === t ? 600 : 400
               }}>{t}</button>
@@ -370,17 +370,17 @@ export default function BatteryManagement() {
                 <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                   {["24h", "7d", "30d"].map(r => (
                     <button key={r} onClick={() => setChartRange(r)} style={{
-                      background: chartRange === r ? accent : "rgba(255,255,255,0.06)", color: chartRange === r ? "#fff" : "rgba(148,163,184,0.6)",
+                      background: chartRange === r ? accent : "rgba(255,255,255,0.06)", color: chartRange === r ? "#fff" : "rgba(148,163,184,0.85)",
                       border: "none", borderRadius: 6, padding: "3px 8px", fontSize: 11, cursor: "pointer"
                     }}>{r}</button>
                   ))}
                 </div>
                 <ResponsiveContainer width="100%" height={160}>
                   <ComposedChart data={socHistory}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} interval={5} />
-                    <YAxis yAxisId="soc" domain={[0, 100]} tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis yAxisId="pwr" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} interval={5} />
+                    <YAxis yAxisId="soc" domain={[0, 100]} tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis yAxisId="pwr" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area yAxisId="soc" type="monotone" dataKey="soc" stroke={green} fill={`${green}20`} strokeWidth={2} name="SoC %" />
                     <Bar yAxisId="pwr" dataKey="power" name="Power kW" fill={accent} opacity={0.7} />
@@ -391,9 +391,9 @@ export default function BatteryManagement() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Degradation Forecast</div>
                 <ResponsiveContainer width="100%" height={160}>
                   <LineChart data={degradationData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis domain={[65, 100]} tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="year" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis domain={[65, 100]} tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Line type="monotone" dataKey="this_unit" stroke={accent} strokeWidth={2.5} dot={false} name="This Unit" />
                     <Line type="monotone" dataKey="health_lfp" stroke={green} strokeWidth={1.5} strokeDasharray="4 2" dot={false} name="LFP Avg" />
@@ -406,10 +406,10 @@ export default function BatteryManagement() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Monthly Revenue & Cycle Count</div>
                 <ResponsiveContainer width="100%" height={140}>
                   <ComposedChart data={cycleData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis yAxisId="cyc" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis yAxisId="rev" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis yAxisId="cyc" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis yAxisId="rev" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar yAxisId="cyc" dataKey="cycles" fill={accent} opacity={0.8} name="Cycles" />
                     <Line yAxisId="rev" type="monotone" dataKey="revenue" stroke={green} strokeWidth={2} dot={false} name="Revenue €" />
@@ -422,7 +422,7 @@ export default function BatteryManagement() {
           {tab === "Cell Diagnostics" && (
             <div style={card}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Cell-Level Voltage & Temperature ({bat.cells} cells, {bat.strings} strings)</div>
-              <p style={{ color: "rgba(148,163,184,0.6)", fontSize: 12, marginBottom: 12 }}>Each column = 1 cell. Color = voltage deviation from nominal.</p>
+              <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 12 }}>Each column = 1 cell. Color = voltage deviation from nominal.</p>
               <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(bat.cells, 24)}, 1fr)`, gap: 2, marginBottom: 16 }}>
                 {cellData.slice(0, 24).map(c => {
                   const dev = Math.abs(c.voltage - (bat.voltage / (bat.cells / bat.strings)));
@@ -432,7 +432,7 @@ export default function BatteryManagement() {
                     <div key={c.cell} style={{ background: bg, borderRadius: 3, padding: "6px 2px", textAlign: "center", cursor: "pointer" }}
                       title={`Cell ${c.cell}: ${c.voltage.toFixed(3)}V, ${c.temp.toFixed(1)}°C`}>
                       <div style={{ fontSize: 8, color: col, fontWeight: 700 }}>{c.voltage.toFixed(2)}</div>
-                      <div style={{ fontSize: 7, color: "rgba(148,163,184,0.6)", marginTop: 1 }}>{c.cell}</div>
+                      <div style={{ fontSize: 7, color: "rgba(148,163,184,0.85)", marginTop: 1 }}>{c.cell}</div>
                     </div>
                   );
                 })}
@@ -445,8 +445,8 @@ export default function BatteryManagement() {
                   { l: "Delta V", v: `${(Math.max(...cellData.map(c => c.voltage)) - Math.min(...cellData.map(c => c.voltage))).toFixed(3)}V`, c: amber },
                   { l: "Balancing", v: `${cellData.filter(c => c.balance > 50).length} cells`, c: blue },
                 ].map(m => (
-                  <div key={m.l} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: 12, textAlign: "center" }}>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{m.l}</div>
+                  <div key={m.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: 12, textAlign: "center" }}>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{m.l}</div>
                     <div style={{ fontSize: 16, fontWeight: 700, color: m.c }}>{m.v}</div>
                   </div>
                 ))}
@@ -472,7 +472,7 @@ export default function BatteryManagement() {
                     );
                   })}
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, color: "rgba(148,163,184,0.6)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, color: "rgba(148,163,184,0.85)" }}>
                   <span style={{ color: blue }}>Cool ({(bat.temp - 6).toFixed(0)}°C)</span>
                   <span>Thermal Heatmap</span>
                   <span style={{ color: red }}>Hot ({(bat.temp + 8).toFixed(0)}°C)</span>
@@ -482,9 +482,9 @@ export default function BatteryManagement() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Temperature Over Time</div>
                 <ResponsiveContainer width="100%" height={180}>
                   <AreaChart data={socHistory}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} interval={5} />
-                    <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} interval={5} />
+                    <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <ReferenceLine y={CHEMISTRIES[bat.chemistry]?.tempMax || 45} stroke={red} strokeDasharray="3 3" label={{ value: "Max", fill: red, fontSize: 10 }} />
                     <Area type="monotone" dataKey="temp" stroke={amber} fill={`${amber}20`} strokeWidth={2} name="°C" />
@@ -496,8 +496,8 @@ export default function BatteryManagement() {
                     { l: "Max Allowed", v: `${CHEMISTRIES[bat.chemistry]?.tempMax || 45}°C`, c: amber },
                     { l: "Cooling Status", v: bat.temp > 35 ? "Active" : "Standby", c: bat.temp > 35 ? amber : green },
                   ].map(m => (
-                    <div key={m.l} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: 10, textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)" }}>{m.l}</div>
+                    <div key={m.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: 10, textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: m.c, marginTop: 4 }}>{m.v}</div>
                     </div>
                   ))}
@@ -512,9 +512,9 @@ export default function BatteryManagement() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Cycle History (12 months)</div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={cycleData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Bar dataKey="cycles" fill={accent} radius={[4, 4, 0, 0]} name="Cycles" />
                   </BarChart>
@@ -524,9 +524,9 @@ export default function BatteryManagement() {
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Capacity Fade vs Cycles</div>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={cycleData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Area type="monotone" dataKey="capacity_fade" stroke={amber} fill={`${amber}20`} strokeWidth={2} name="kWh Capacity" />
                   </AreaChart>
@@ -542,8 +542,8 @@ export default function BatteryManagement() {
                     { l: "DoD Avg", v: "80%" },
                     { l: "Calendar Age", v: `${new Date().getFullYear() - parseInt(bat.installed.split("-")[0])} yr` },
                   ].map(m => (
-                    <div key={m.l} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 10, padding: 14, textAlign: "center" }}>
-                      <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{m.l}</div>
+                    <div key={m.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: 14, textAlign: "center" }}>
+                      <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{m.l}</div>
                       <div style={{ fontSize: 18, fontWeight: 800, color: "#f1f5f9" }}>{m.v}</div>
                     </div>
                   ))}
@@ -556,12 +556,12 @@ export default function BatteryManagement() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={{ ...card, gridColumn: "span 2" }}>
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>SoH Degradation Forecast by Chemistry</div>
-                <p style={{ color: "rgba(148,163,184,0.6)", fontSize: 12, marginBottom: 12 }}>Projected State of Health over 10 years. EOL at 80% SoH.</p>
+                <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 12 }}>Projected State of Health over 10 years. EOL at 80% SoH.</p>
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={degradationData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                    <XAxis dataKey="year" tick={{ fontSize: 11, fill: "rgba(148,163,184,0.6)" }} />
-                    <YAxis domain={[65, 100]} tick={{ fontSize: 11, fill: "rgba(148,163,184,0.6)" }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="year" tick={{ fontSize: 11, fill: "rgba(148,163,184,0.85)" }} />
+                    <YAxis domain={[65, 100]} tick={{ fontSize: 11, fill: "rgba(148,163,184,0.85)" }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Line type="monotone" dataKey="this_unit" stroke={accent} strokeWidth={3} dot={false} name={`${bat.id} (projected)`} />
@@ -598,12 +598,12 @@ export default function BatteryManagement() {
                 ].map(f => (
                   <div key={f.factor} style={{ marginBottom: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                      <span>{f.factor}</span><span style={{ color: "rgba(148,163,184,0.6)" }}>{f.impact}%</span>
+                      <span>{f.factor}</span><span style={{ color: "rgba(148,163,184,0.85)" }}>{f.impact}%</span>
                     </div>
                     <div style={{ background: "#1f2937", borderRadius: 4, height: 6 }}>
                       <div style={{ width: `${f.impact}%`, height: "100%", background: accent, borderRadius: 4 }} />
                     </div>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginTop: 2 }}>{f.desc}</div>
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{f.desc}</div>
                   </div>
                 ))}
               </div>
@@ -642,10 +642,10 @@ export default function BatteryManagement() {
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: accent }}>{section.title}</div>
                   {section.params.map(p => (
                     <div key={p.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                      <span style={{ fontSize: 12, color: "rgba(148,163,184,0.6)" }}>{p.l}</span>
+                      <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{p.l}</span>
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <span style={{ fontSize: 12, fontWeight: 600 }}>{p.v}</span>
-                        {p.editable && <button style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.04)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}
+                        {p.editable && <button style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.08)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}
                       </div>
                     </div>
                   ))}

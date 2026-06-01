@@ -102,7 +102,7 @@ export default function Login({ onLogin }) {
         <div style={{
           padding: "32px 36px 28px",
           display: "flex", flexDirection: "column", alignItems: "center",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}>
           <div style={{
             padding: "14px 28px",
@@ -321,7 +321,7 @@ export default function Login({ onLogin }) {
         {/* Footer */}
         <div style={{
           padding: "14px 36px 20px",
-          borderTop: "1px solid rgba(255,255,255,0.03)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
           display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
         }}>
           <div style={{
@@ -357,7 +357,7 @@ function inputStyle(active) {
   return {
     width: "100%",
     padding: "12px 14px",
-    background: active ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.03)",
+    background: active ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.06)",
     border: `1px solid ${active ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.07)"}`,
     borderRadius: "10px",
     color: "white",
