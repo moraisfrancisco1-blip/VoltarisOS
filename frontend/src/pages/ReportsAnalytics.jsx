@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 24 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 24 };
 
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -79,7 +79,7 @@ export default function ReportsAnalytics() {
   ];
 
   return (
-    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Reports & Analytics</h1>
@@ -114,7 +114,7 @@ export default function ReportsAnalytics() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "#1e293b", borderRadius: 10, padding: 4, width: "fit-content", border: "1px solid rgba(255,255,255,0.12)" }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 24, background: "var(--surface)", borderRadius: 10, padding: 4, width: "fit-content", border: "1px solid rgba(255,255,255,0.12)" }}>
         {["overview", "by-site", "reports"].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             background: tab === t ? accent : "transparent",
@@ -191,7 +191,7 @@ export default function ReportsAnalytics() {
                   { label: "CO₂ Avoided", val: `${site.co2.toLocaleString()} kg` },
                   { label: "Peak Power", val: `${site.peakPower} kW` },
                 ].map(m => (
-                  <div key={m.label} style={{ background: "rgba(255,255,255,0.08)", padding: 14, borderRadius: 8 }}>
+                  <div key={m.label} style={{ background: "var(--surface2)", padding: 14, borderRadius: 8 }}>
                     <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{m.label}</div>
                     <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>{m.val}</div>
                   </div>

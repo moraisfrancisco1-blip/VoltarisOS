@@ -5,19 +5,19 @@
 /* ── CSS variable defaults (dark / Obsidian theme) ── */
 :root {
   --bg:           #0f172a;
-  --sidebar:      linear-gradient(180deg, #0c1322 0%, #0a1120 100%);
+  --sidebar:      #0c1322;
   --topbar:       #0c1322;
   --surface:      #1e293b;
-  --surface2:     #172033;
-  --surface-glass: rgba(30,41,59,0.85);
-  --border:       rgba(255,255,255,0.10);
-  --border-strong: rgba(255,255,255,0.18);
+  --surface2:     #162032;
+  --surface-glass: #1e293b;
+  --border:       rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
   --text:         #f1f5f9;
   --sub:          #94a3b8;
   --glow:         #3b82f6;
   --grid-line:    rgba(255,255,255,0.06);
   --tooltip-bg:   #1e293b;
-  --gradient:     linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient:     linear-gradient(135deg, #1e293b 0%, #162032 100%);
 }
 
 /* ── Base ── */
@@ -55,39 +55,29 @@ body {
   stroke: var(--grid-line) !important;
 }
 
-/* ── Glass panel utility ── */
+/* ── Card / panel utility — always solid ── */
 .glass {
-  background: var(--surface-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
 }
 
 /* ── Mobile responsive ── */
 @media (max-width: 767px) {
-  /* Prevent horizontal overflow on all page content */
   main > * {
     max-width: 100%;
     overflow-x: hidden;
   }
-
-  /* Smoother touch scroll on main content */
   main {
     -webkit-overflow-scrolling: touch;
   }
-
-  /* Recharts: allow overflow hidden so charts don't break layout */
   .recharts-wrapper,
   .recharts-surface {
     max-width: 100% !important;
   }
-
-  /* Tables scroll horizontally */
   table {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
   }
 }
-

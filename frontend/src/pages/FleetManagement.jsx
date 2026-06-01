@@ -8,13 +8,13 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
 const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+    <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
       <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
@@ -78,16 +78,16 @@ export default function FleetManagement() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Fleet Management</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Fleet Management</h1>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Multi-site Solar + BESS portfolio overview</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {["all", "online", "warning", "offline"].map(f => (
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: "6px 14px", borderRadius: 20, fontSize: 11, cursor: "pointer",
-              background: filter === f ? accent : "rgba(255,255,255,0.08)",
+              background: filter === f ? accent : "var(--surface2)",
               color: filter === f ? "#fff" : "rgba(148,163,184,0.85)",
-              border: `1px solid ${filter === f ? accent : "rgba(255,255,255,0.08)"}`,
+              border: `1px solid ${filter === f ? accent : "var(--surface2)"}`,
             }}>{f === "all" ? "All Sites" : f.charAt(0).toUpperCase() + f.slice(1)}</button>
           ))}
         </div>
@@ -145,7 +145,7 @@ export default function FleetManagement() {
         <div style={{ ...label, marginBottom: 12 }}>Fleet 24h Generation Profile</div>
         <ResponsiveContainer width="100%" height={180}>
           <ComposedChart data={hourly} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
             <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
             <YAxis yAxisId="power" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" MW" />
             <YAxis yAxisId="rev" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit="€" />
@@ -166,7 +166,7 @@ export default function FleetManagement() {
             {["revenue", "soc", "solarNow", "uptime"].map(s => (
               <button key={s} onClick={() => setSortBy(s)} style={{
                 padding: "4px 10px", borderRadius: 8, fontSize: 11, cursor: "pointer",
-                background: sortBy === s ? "rgba(255,255,255,0.08)" : "none",
+                background: sortBy === s ? "var(--surface2)" : "none",
                 color: sortBy === s ? accent : "rgba(148,163,184,0.85)",
                 border: `1px solid ${sortBy === s ? accent : "transparent"}`,
               }}>{s === "solarNow" ? "Solar" : s === "uptime" ? "Uptime" : s.charAt(0).toUpperCase() + s.slice(1)}</button>
@@ -186,7 +186,7 @@ export default function FleetManagement() {
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: statusColor(site.status) }} />
               </div>
 
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#f1f5f9", marginBottom: 2, paddingRight: 60 }}>{site.name}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 2, paddingRight: 60 }}>{site.name}</div>
               <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 12 }}>
                 {site.type.replace("_", " ")} · {site.country} · {site.lastSync}
               </div>
@@ -197,7 +197,7 @@ export default function FleetManagement() {
                   <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>BESS SoC</span>
                   <span style={{ fontSize: 11, fontWeight: 700, color: site.soc > 70 ? green : site.soc > 40 ? amber : red }}>{site.soc}%</span>
                 </div>
-                <div style={{ height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 3 }}>
+                <div style={{ height: 5, background: "var(--surface2)", borderRadius: 3 }}>
                   <div style={{ width: `${site.soc}%`, height: "100%", borderRadius: 3, transition: "width 0.4s",
                     background: site.soc > 70 ? green : site.soc > 40 ? amber : red }} />
                 </div>
@@ -213,7 +213,7 @@ export default function FleetManagement() {
                   { l: "Temp", v: `${site.temp}°C`, c: site.temp > 40 ? red : "#f1f5f9" },
                   { l: site.solarKw > 0 ? `${(site.solarKw/1000).toFixed(1)} MWp` : `${(site.bessKwh/1000).toFixed(1)} MWh`, v: "capacity", c: "rgba(148,163,184,0.85)" },
                 ].map(m => (
-                  <div key={m.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px" }}>
+                  <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 10px" }}>
                     <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)", marginBottom: 2 }}>{m.l}</div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: m.c }}>{m.v}</div>
                   </div>
@@ -238,7 +238,7 @@ export default function FleetManagement() {
           <tbody>
             {fleet.map(s => (
               <tr key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-                <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "#f1f5f9" }}>{s.name}</td>
+                <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{s.name}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{s.type.replace("_", " ")}</td>
                 <td style={{ padding: "8px 10px" }}>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: statusBg(s.status), color: statusColor(s.status) }}>{s.status}</span>

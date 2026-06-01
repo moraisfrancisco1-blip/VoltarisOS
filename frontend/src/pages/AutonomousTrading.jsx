@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 const CT = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 14px", fontSize: "12px" }}>
+    <div style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 14px", fontSize: "12px" }}>
       <div style={{ color: "rgba(148,163,184,0.85)", marginBottom: "6px" }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color, display: "flex", gap: "8px" }}>
@@ -80,7 +80,7 @@ export default function AutonomousTrading({ user }) {
             { label: "Win Rate", value: `${(status.win_rate * 100).toFixed(0)}%`, color: "#a78bfa" },
             { label: "Última Ação", value: status.last_action, color: "rgba(148,163,184,0.85)", small: true },
           ].map((s, i) => (
-            <div key={i} style={{ background: "#1e293b", borderRadius: "12px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
+            <div key={i} style={{ background: "var(--surface)", borderRadius: "12px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
               <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>{s.label}</div>
               <div style={{ color: s.color, fontWeight: "700", fontSize: s.small ? "11px" : "18px", display: "flex", alignItems: "center" }}>
                 {s.extra}{s.value}
@@ -92,13 +92,13 @@ export default function AutonomousTrading({ user }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "16px", marginBottom: "16px" }}>
         {/* P&L Chart */}
-        <div style={{ background: "#1e293b", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>P&L em Tempo Real</div>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "11px", marginBottom: "16px" }}>Lucro acumulado do agente (€)</div>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={pnlHistory} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
-              <XAxis dataKey="t" stroke="rgba(255,255,255,0.08)" tick={{ fill: "#374151", fontSize: 9 }} interval="preserveStartEnd" />
-              <YAxis stroke="rgba(255,255,255,0.08)" tick={{ fill: "#374151", fontSize: 10 }} />
+              <XAxis dataKey="t" stroke="var(--surface2)" tick={{ fill: "#374151", fontSize: 9 }} interval="preserveStartEnd" />
+              <YAxis stroke="var(--surface2)" tick={{ fill: "#374151", fontSize: 10 }} />
               <Tooltip content={<CT />} />
               <ReferenceLine y={0} stroke="#374151" strokeDasharray="3 2" />
               <Line type="monotone" dataKey="pnl" name="P&L €" stroke="#4ade80" strokeWidth={2.5} dot={false} />
@@ -107,7 +107,7 @@ export default function AutonomousTrading({ user }) {
         </div>
 
         {/* Config */}
-        <div style={{ background: "#1e293b", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
+        <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "16px" }}>Regras do Agente</div>
           {[
             { label: "Vender acima de (€/MWh)", key: "sell_min_price" },
@@ -123,7 +123,7 @@ export default function AutonomousTrading({ user }) {
                 value={config[f.key]}
                 onChange={e => setConfig(c => ({ ...c, [f.key]: +e.target.value }))}
                 style={{
-                  width: "100%", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+                  width: "100%", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "6px", padding: "7px 10px", color: "white",
                   fontSize: "13px", outline: "none", boxSizing: "border-box",
                 }}
@@ -139,7 +139,7 @@ export default function AutonomousTrading({ user }) {
       </div>
 
       {/* Live log */}
-      <div style={{ background: "#1e293b", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
+      <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
           <div style={{ fontWeight: "700", fontSize: "14px" }}>Log de Decisões</div>
           {isRunning && <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", animation: "blink 1s infinite" }} />}
@@ -150,7 +150,7 @@ export default function AutonomousTrading({ user }) {
             <div key={i} style={{
               display: "grid", gridTemplateColumns: "80px 60px 70px 80px 80px 1fr",
               gap: "12px", padding: "10px 12px", borderRadius: "8px",
-              background: i % 2 === 0 ? "rgba(255,255,255,0.08)" : "transparent",
+              background: i % 2 === 0 ? "var(--surface2)" : "transparent",
               borderLeft: `3px solid ${ACTION_COLORS[entry.action] || "#374151"}`,
               marginBottom: "3px", fontSize: "12px", alignItems: "center",
             }}>

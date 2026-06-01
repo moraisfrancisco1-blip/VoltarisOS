@@ -11,7 +11,7 @@ const orange = "#f97316"
 const rand = (min, max, dec = 1) => +(Math.random() * (max - min) + min).toFixed(dec)
 
 const card = {
-  background: "#1e293b",
+  background: "var(--surface)",
   border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: 14,
   padding: 20,
@@ -23,7 +23,7 @@ const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "u
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null
   return (
-    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+    <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
       <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>
@@ -75,7 +75,7 @@ function SeverityGauge({ score, size = 110 }) {
   const color = score > 70 ? red : score > 40 ? amber : green
   return (
     <svg width={size} height={size}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={8} strokeDasharray={`${circ * 0.75} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--surface2)" strokeWidth={8} strokeDasharray={`${circ * 0.75} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round" />
       <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={8} strokeDasharray={`${arc} ${circ}`} strokeDashoffset={circ * 0.125} strokeLinecap="round" style={{ transition: "stroke-dasharray 0.6s" }} />
       <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize={18} fontWeight={800}>{score}</text>
       <text x={cx} y={cy + 14} textAnchor="middle" fill="rgba(148,163,184,0.85)" fontSize={9}>RISK SCORE</text>
@@ -214,7 +214,7 @@ export default function AnomalyDetection() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#f1f5f9" }}>Anomaly Detection</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Anomaly Detection</h1>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginTop: 2 }}>
             BESS cell-level fault isolation · Real-time · Updated {ticker > 0 ? "just now" : "loading…"}
           </div>
@@ -222,7 +222,7 @@ export default function AnomalyDetection() {
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: 6,
-            background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20,
+            background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20,
             padding: "5px 14px", fontSize: 12
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: green, animation: "pulse 2s infinite" }} />
@@ -264,7 +264,7 @@ export default function AnomalyDetection() {
             {Object.entries(sevCounts).map(([sev, cnt]) => (
               <div key={sev} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 10, color: SEV_COLORS[sev], textTransform: "uppercase", fontWeight: 600 }}>{sev}</span>
-                <span style={{ fontSize: 12, color: "#f1f5f9", fontWeight: 700 }}>{cnt}</span>
+                <span style={{ fontSize: 12, color: "var(--text)", fontWeight: 700 }}>{cnt}</span>
               </div>
             ))}
           </div>
@@ -298,7 +298,7 @@ export default function AnomalyDetection() {
           <div style={label}>24h Anomaly Trend by Type</div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={trend} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
               <XAxis dataKey="h" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <YAxis tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <Tooltip content={<CustomTooltip />} />
@@ -319,10 +319,10 @@ export default function AnomalyDetection() {
               return (
                 <div key={t.name}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                    <span style={{ fontSize: 11, color: "#f1f5f9" }}>{t.name}</span>
+                    <span style={{ fontSize: 11, color: "var(--text)" }}>{t.name}</span>
                     <span style={{ fontSize: 11, fontWeight: 700, color: t.color }}>{t.count}</span>
                   </div>
-                  <div style={{ height: 5, borderRadius: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                  <div style={{ height: 5, borderRadius: 4, background: "var(--surface2)", overflow: "hidden" }}>
                     <div style={{ height: "100%", borderRadius: 4, background: t.color, width: `${(t.count / max) * 100}%`, transition: "width 0.5s" }} />
                   </div>
                 </div>
@@ -341,7 +341,7 @@ export default function AnomalyDetection() {
               <button key={s} onClick={() => setSelectedSev(s)} style={{
                 padding: "3px 12px", borderRadius: 20, fontSize: 11, cursor: "pointer",
                 border: selectedSev === s ? `1px solid ${SEV_COLORS[s] || accent}` : "1px solid rgba(255,255,255,0.12)",
-                background: selectedSev === s ? `${SEV_COLORS[s] || accent}20` : "rgba(255,255,255,0.08)",
+                background: selectedSev === s ? `${SEV_COLORS[s] || accent}20` : "var(--surface2)",
                 color: selectedSev === s ? (SEV_COLORS[s] || accent) : "rgba(148,163,184,0.85)",
                 fontWeight: selectedSev === s ? 700 : 400,
               }}>{s === "all" ? "All" : s}</button>
@@ -364,14 +364,14 @@ export default function AnomalyDetection() {
               <div style={{ width: 65, fontSize: 11, fontWeight: 700, color: SEV_COLORS[a.sev], textTransform: "uppercase" }}>{a.sev}</div>
               <div style={{ width: 110, fontSize: 12, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{a.site}</div>
               <div style={{ width: 60, fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{a.pack}</div>
-              <div style={{ flex: 1, fontSize: 12, color: "#f1f5f9", fontWeight: 500 }}>{a.type}</div>
+              <div style={{ flex: 1, fontSize: 12, color: "var(--text)", fontWeight: 500 }}>{a.type}</div>
               <div style={{ width: 70, fontSize: 11, color: a.delta < -20 ? red : amber, textAlign: "right" }}>{a.delta}%</div>
               <div style={{ width: 50, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "right" }}>{a.ts}</div>
               <button
                 onClick={() => setFeed(f => f.map(x => x.id === a.id ? { ...x, ack: true } : x))}
                 style={{
                   padding: "2px 10px", borderRadius: 8, fontSize: 10, cursor: "pointer",
-                  border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.85)"
+                  border: "1px solid rgba(255,255,255,0.12)", background: "var(--surface2)", color: "rgba(148,163,184,0.85)"
                 }}
               >{a.ack ? "ACK" : "Ack"}</button>
             </div>

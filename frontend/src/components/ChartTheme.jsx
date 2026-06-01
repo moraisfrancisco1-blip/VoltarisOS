@@ -1,6 +1,6 @@
 /**
- * VoltarisOS — Premium Chart Theme v3
- * Fundos claros, legíveis. Contraste real.
+ * VoltarisOS — Chart Theme v4
+ * All backgrounds use CSS vars → adapts to any theme automatically.
  */
 
 export const C = {
@@ -67,28 +67,28 @@ export function ChartDefs() {
   );
 }
 
-// ── Premium Tooltip ───────────────────────────────────────────────────────────
+// ── Premium Tooltip — uses CSS vars ──────────────────────────────────────────
 export function PremiumTooltip({ active, payload, label, unit = "" }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: "#1e293b",
-      border: "1px solid rgba(129,140,248,0.3)",
+      background: "var(--surface)",
+      border: "1px solid var(--border-strong)",
       borderRadius: 10,
       padding: "10px 14px",
-      boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+      boxShadow: "0 16px 40px rgba(0,0,0,0.4)",
       minWidth: 140,
     }}>
       <div style={{
-        fontSize: 11, fontWeight: 700, color: "#94a3b8",
+        fontSize: 11, fontWeight: 700, color: "var(--sub)",
         textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8,
-        borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: 6,
+        borderBottom: "1px solid var(--border)", paddingBottom: 6,
       }}>{label}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ display:"flex", justifyContent:"space-between", gap:20, marginBottom:4, alignItems:"center" }}>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             <div style={{ width:8, height:8, borderRadius:"50%", background:p.color, boxShadow:`0 0 8px ${p.color}` }} />
-            <span style={{ fontSize:12, color:"#94a3b8" }}>{p.name}</span>
+            <span style={{ fontSize:12, color:"var(--sub)" }}>{p.name}</span>
           </div>
           <span style={{ fontSize:13, fontWeight:800, color:p.color, fontVariantNumeric:"tabular-nums" }}>
             {typeof p.value === "number" ? p.value.toFixed(1) : p.value}{unit}
@@ -100,33 +100,33 @@ export function PremiumTooltip({ active, payload, label, unit = "" }) {
 }
 
 // ── Axis + Grid ───────────────────────────────────────────────────────────────
-export const axisStyle = { fontSize: 10, fill: "#64748b", fontFamily: "inherit" };
-export const gridStyle  = { strokeDasharray: "3 3", stroke: "rgba(255,255,255,0.06)" };
+export const axisStyle = { fontSize: 10, fill: "var(--sub)", fontFamily: "inherit" };
+export const gridStyle  = { strokeDasharray: "3 3", stroke: "var(--border)" };
 
-// ── Glass Card — fundo slate-800 sólido, legível ──────────────────────────────
+// ── Card style — uses CSS vars, adapts to any theme ───────────────────────────
 export const glassCard = (accentColor = "#818cf8") => ({
-  background: "#1e293b",
-  border: `1px solid rgba(255,255,255,0.08)`,
+  background: "var(--surface)",
+  border: `1px solid var(--border)`,
   borderTop: `2px solid ${accentColor}`,
   borderRadius: 16,
   padding: 20,
   position: "relative",
   overflow: "hidden",
-  boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03) inset`,
+  boxShadow: "0 4px 24px rgba(0,0,0,0.18)",
 });
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 export function KpiCard({ label: lbl, value, sub, color, icon }) {
   return (
     <div style={{
-      background: "#1e293b",
-      border: "1px solid rgba(255,255,255,0.08)",
+      background: "var(--surface)",
+      border: "1px solid var(--border)",
       borderTop: `2px solid ${color}`,
       borderRadius: 16,
       padding: "18px 20px",
       position: "relative",
       overflow: "hidden",
-      boxShadow: `0 4px 24px rgba(0,0,0,0.35)`,
+      boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
     }}>
       {/* Ambient glow */}
       <div style={{
@@ -135,7 +135,7 @@ export function KpiCard({ label: lbl, value, sub, color, icon }) {
         pointerEvents:"none",
       }} />
       <div style={{
-        fontSize:11, color:"#94a3b8", textTransform:"uppercase",
+        fontSize:11, color:"var(--sub)", textTransform:"uppercase",
         letterSpacing:1, marginBottom:10, display:"flex", alignItems:"center", gap:6,
       }}>
         {icon && <span style={{ fontSize:14 }}>{icon}</span>}
@@ -148,7 +148,7 @@ export function KpiCard({ label: lbl, value, sub, color, icon }) {
         textShadow:`0 0 20px ${color}60`,
       }}>{value}</div>
       {sub && (
-        <div style={{ fontSize:11, color:"#64748b", marginTop:8, display:"flex", alignItems:"center", gap:4 }}>
+        <div style={{ fontSize:11, color:"var(--sub)", marginTop:8, display:"flex", alignItems:"center", gap:4 }}>
           {sub}
         </div>
       )}

@@ -86,9 +86,9 @@ export default function TradingDashboard() {
           {MARKETS.map(m => (
             <button key={m} onClick={() => setSelectedMarket(m)} style={{
               padding: "5px 12px", borderRadius: 20, fontSize: 11, cursor: "pointer",
-              background:   selectedMarket === m ? `${C.accent}30` : "rgba(255,255,255,0.08)",
+              background:   selectedMarket === m ? `${C.accent}30` : "var(--surface2)",
               color:        selectedMarket === m ? C.accent : "rgba(148,163,184,0.7)",
-              border:       `1px solid ${selectedMarket === m ? C.accent : "rgba(255,255,255,0.08)"}`,
+              border:       `1px solid ${selectedMarket === m ? C.accent : "var(--surface2)"}`,
               boxShadow:    selectedMarket === m ? `0 0 12px ${C.accent}30` : "none",
               fontWeight:   selectedMarket === m ? 700 : 500,
               transition: "all 0.2s",
@@ -173,7 +173,7 @@ export default function TradingDashboard() {
             <div style={{ textAlign: "center", padding: "8px 0", margin: "4px 0",
               borderTop: "1px solid rgba(255,255,255,0.06)",
               borderBottom: "1px solid rgba(255,255,255,0.06)",
-              background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
+              background: "var(--surface2)", borderRadius: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: "#fff",
                 textShadow: `0 0 12px ${priceColor}60` }}>€{lastPrice}/MWh</span>
               <span style={{ fontSize: 10, color: "rgba(148,163,184,0.75)", marginLeft: 8 }}>
@@ -246,7 +246,7 @@ export default function TradingDashboard() {
             {positions.map(p => (
               <div key={p.market} style={{
                 padding: "8px 10px", borderRadius: 10,
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.08)",
                 borderBottom: "1px solid rgba(255,255,255,0.08)"
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
@@ -293,7 +293,7 @@ export default function TradingDashboard() {
             {RECENT_TRADES.map((t, i) => (
               <tr key={t.id} style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
-                background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.05)",
+                background: i % 2 === 0 ? "transparent" : "var(--surface2)",
               }}>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: C.accent, fontWeight: 700 }}>{t.id}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{t.time}</td>
@@ -334,14 +334,14 @@ export default function TradingDashboard() {
             <div key={f.label} style={{ flex: 1, minWidth: 140 }}>
               <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 5, fontWeight: 600 }}>{f.label}</div>
               {f.type === "select" ? (
-                <select style={{ width: "100%", background: "rgba(255,255,255,0.08)",
+                <select style={{ width: "100%", background: "var(--surface2)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
                   padding: "9px 12px", color: "#e2e8f0", fontSize: 13 }}>
                   {f.options.map(o => <option key={o}>{o}</option>)}
                 </select>
               ) : (
                 <input type={f.type} placeholder={f.placeholder} style={{
-                  width: "100%", background: "rgba(255,255,255,0.08)",
+                  width: "100%", background: "var(--surface2)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
                   padding: "9px 12px", color: "#e2e8f0", fontSize: 13, boxSizing: "border-box"
                 }} />

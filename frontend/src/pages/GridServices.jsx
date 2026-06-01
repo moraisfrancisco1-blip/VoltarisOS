@@ -9,7 +9,7 @@ const green = "#10b981";
 const amber = "#f59e0b";
 const red = "#ef4444";
 const blue = "#60a5fa";
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
 
 const Toggle = ({ value, onChange, label, desc, badge, revenue }) => (
   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
@@ -33,12 +33,12 @@ const Toggle = ({ value, onChange, label, desc, badge, revenue }) => (
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
+    <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
       <div style={{ color: "rgba(148,163,184,0.85)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ display: "flex", gap: 12, justifyContent: "space-between", marginBottom: 3 }}>
           <span style={{ color: p.color }}>{p.name}</span>
-          <span style={{ color: "#f1f5f9", fontWeight: 700 }}>{p.value}</span>
+          <span style={{ color: "var(--text)", fontWeight: 700 }}>{p.value}</span>
         </div>
       ))}
     </div>
@@ -147,7 +147,7 @@ export default function GridServices() {
   const totalRevenue = Object.values(todayRevenue).reduce((a, b) => a + b, 0).toFixed(2);
 
   return (
-    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
@@ -156,7 +156,7 @@ export default function GridServices() {
           <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 14 }}>FCR, aFRR, mFRR, Demand Response, Peak Shaving & Voltage Regulation</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 14px" }}>
+          <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 14px" }}>
             <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Today's Grid Revenue</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: green }}>€{totalRevenue}</div>
           </div>
@@ -178,13 +178,13 @@ export default function GridServices() {
           <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginTop: 4 }}>
             Deviation: <span style={{ color: freqColor, fontWeight: 700 }}>{freqDev > 0 ? "+" : ""}{(freqValue - 50).toFixed(3)} Hz</span>
           </div>
-          <div style={{ marginTop: 12, background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: 10, fontSize: 11 }}>
+          <div style={{ marginTop: 12, background: "var(--surface2)", borderRadius: 8, padding: 10, fontSize: 11 }}>
             {[
               { band: "FCR-N", range: "49.90 – 50.10 Hz", active: freqDev < 0.1 },
               { band: "FCR-D", range: "49.50 – 49.90 Hz", active: freqDev >= 0.1 && freqDev < 0.5 },
               { band: "Emergency", range: "< 49.50 Hz", active: freqValue < 49.5 },
             ].map(b => (
-              <div key={b.band} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, padding: "4px 6px", borderRadius: 4, background: b.active ? "#1e293b" : "transparent" }}>
+              <div key={b.band} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, padding: "4px 6px", borderRadius: 4, background: b.active ? "var(--surface)" : "transparent" }}>
                 <span style={{ color: b.active ? freqColor : "rgba(148,163,184,0.85)", fontWeight: b.active ? 700 : 400 }}>{b.band}</span>
                 <span style={{ color: "rgba(148,163,184,0.85)" }}>{b.range}</span>
               </div>
@@ -204,7 +204,7 @@ export default function GridServices() {
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Frequency & Dispatch Response (last 60s)</div>
           <ResponsiveContainer width="100%" height={160}>
             <ComposedChart data={freqHistory}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
               <XAxis dataKey="t" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} interval={9} />
               <YAxis yAxisId="freq" domain={[49.5, 50.5]} tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <YAxis yAxisId="resp" orientation="right" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
@@ -237,7 +237,7 @@ export default function GridServices() {
             <>
               <div style={{ fontSize: 20, fontWeight: 800, color: green }}>STANDBY</div>
               <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginTop: 4, marginBottom: 12 }}>Ready for TSO activation</div>
-              <div style={{ fontSize: 11, background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+              <div style={{ fontSize: 11, background: "var(--surface2)", borderRadius: 8, padding: 10, marginBottom: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                   <span style={{ color: "rgba(148,163,184,0.85)" }}>Available capacity</span><span style={{ color: green }}>150 kW</span>
                 </div>
@@ -285,7 +285,7 @@ export default function GridServices() {
               </div>
             </div>
           ))}
-          <div style={{ background: "rgba(255,255,255,0.08)", borderRadius: 8, padding: 10, fontSize: 12, marginTop: 8 }}>
+          <div style={{ background: "var(--surface2)", borderRadius: 8, padding: 10, fontSize: 12, marginTop: 8 }}>
             {[
               { l: "Total BESS", v: "750 kW / 1500 kWh" },
               { l: "Allocated", v: `${capacityAlloc.filter(s => s.active).reduce((a, b) => a + b.kw, 0)} kW (active services)` },
@@ -303,7 +303,7 @@ export default function GridServices() {
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Today's Revenue by Service</h2>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={revenueData} stackOffset="none">
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
               <XAxis dataKey="h" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} interval={5} />
               <YAxis tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <Tooltip content={<CustomTooltip />} />
@@ -315,7 +315,7 @@ export default function GridServices() {
           </ResponsiveContainer>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
             {Object.entries(todayRevenue).map(([k, v]) => (
-              <div key={k} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 6, padding: "6px 10px", display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+              <div key={k} style={{ background: "var(--surface2)", borderRadius: 6, padding: "6px 10px", display: "flex", justifyContent: "space-between", fontSize: 12 }}>
                 <span style={{ color: "rgba(148,163,184,0.85)", textTransform: "uppercase", fontSize: 10 }}>{k}</span>
                 <span style={{ color: green, fontWeight: 700 }}>€{v.toFixed(2)}</span>
               </div>
@@ -331,7 +331,7 @@ export default function GridServices() {
           <div style={{ display: "flex", gap: 6 }}>
             {MARKET_TABS.map(t => (
               <button key={t} onClick={() => setMarketTab(t)} style={{
-                background: marketTab === t ? accent : "rgba(255,255,255,0.08)", color: marketTab === t ? "#fff" : "rgba(148,163,184,0.85)",
+                background: marketTab === t ? accent : "var(--surface2)", color: marketTab === t ? "#fff" : "rgba(148,163,184,0.85)",
                 border: "none", borderRadius: 6, padding: "4px 12px", fontSize: 12, cursor: "pointer"
               }}>{t}</button>
             ))}
@@ -352,7 +352,7 @@ export default function GridServices() {
                 <td style={{ padding: "10px 12px", color: blue }}>{r.price}</td>
                 <td style={{ padding: "10px 12px" }}>{r.bid}</td>
                 <td style={{ padding: "10px 12px" }}>
-                  <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: r.color === green ? "#064e3b" : r.color === amber ? "#451a03" : "rgba(255,255,255,0.08)", color: r.color }}>{r.status}</span>
+                  <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: r.color === green ? "#064e3b" : r.color === amber ? "#451a03" : "var(--surface2)", color: r.color }}>{r.status}</span>
                 </td>
               </tr>
             ))}

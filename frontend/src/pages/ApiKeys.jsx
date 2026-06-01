@@ -94,7 +94,7 @@ export default function ApiKeys({ user }) {
       {/* Create form */}
       {showCreate && (
         <div style={{
-          background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)",
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "14px", padding: "24px", marginBottom: "24px",
         }}>
           <h3 style={{ color: "white", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>{t("apikeys_create_new") || "Create new API Key"}</h3>
@@ -107,7 +107,7 @@ export default function ApiKeys({ user }) {
                 placeholder="Ex: Integração InfluxDB"
                 style={{
                   width: "100%", padding: "10px 14px",
-                  background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+                  background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "8px", color: "white", fontSize: "14px",
                   outline: "none", boxSizing: "border-box",
                 }}
@@ -122,7 +122,7 @@ export default function ApiKeys({ user }) {
                 onChange={e => setNewScope(e.target.value)}
                 style={{
                   width: "100%", padding: "10px 14px",
-                  background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+                  background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "8px", color: "white", fontSize: "14px",
                   outline: "none", boxSizing: "border-box",
                 }}
@@ -152,7 +152,7 @@ export default function ApiKeys({ user }) {
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {keys.map(k => (
           <div key={k.id} style={{
-            background: "#1e293b", border: `1px solid ${k.active ? "#1a2234" : "#2d1515"}`,
+            background: "var(--surface)", border: `1px solid ${k.active ? "#1a2234" : "#2d1515"}`,
             borderRadius: "14px", padding: "20px 24px",
             opacity: k.active ? 1 : 0.6,
           }}>
@@ -190,7 +190,7 @@ export default function ApiKeys({ user }) {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <code style={{
-                flex: 1, padding: "8px 14px", background: "rgba(255,255,255,0.08)",
+                flex: 1, padding: "8px 14px", background: "var(--surface2)",
                 border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px",
                 color: "rgba(148,163,184,0.85)", fontSize: "12px", fontFamily: "monospace",
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -200,14 +200,14 @@ export default function ApiKeys({ user }) {
               <button
                 onClick={() => setRevealed(r => ({ ...r, [k.id]: !r[k.id] }))}
                 style={{
-                  padding: "8px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+                  padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "8px", color: "rgba(148,163,184,0.85)", cursor: "pointer", fontSize: "12px",
                 }}
               >{revealed[k.id] ? "Ocultar" : "Revelar"}</button>
               <button
                 onClick={() => copyKey(k.key)}
                 style={{
-                  padding: "8px 12px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+                  padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "8px", color: "rgba(148,163,184,0.85)", cursor: "pointer", fontSize: "12px",
                 }}
               >Copiar</button>
@@ -228,7 +228,7 @@ export default function ApiKeys({ user }) {
       {/* Docs note */}
       <div style={{
         marginTop: "24px", padding: "16px 20px",
-        background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+        background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
         borderRadius: "12px", display: "flex", alignItems: "center", gap: "12px",
       }}>
         <span style={{ fontSize: "20px" }}>📖</span>

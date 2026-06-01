@@ -61,11 +61,11 @@ export default function AlertsNotifications() {
   );
 
   return (
-    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8, color: "#f1f5f9" }}>Alerts & Notifications</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8, color: "var(--text)" }}>Alerts & Notifications</h1>
           <p style={{ color: "rgba(148,163,184,0.7)", margin: 0 }}>Threshold config, active alerts, and notification delivery</p>
         </div>
         {unacked > 0 && (
@@ -82,7 +82,7 @@ export default function AlertsNotifications() {
       {/* Tab bar */}
       <div style={{
         display: "flex", gap: 4, marginBottom: 24,
-        background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: 4,
+        background: "var(--surface2)", borderRadius: 10, padding: 4,
         width: "fit-content", border: "1px solid rgba(255,255,255,0.12)"
       }}>
         {["active", "thresholds", "channels"].map(t => (
@@ -106,9 +106,9 @@ export default function AlertsNotifications() {
               const active = filter === f;
               return (
                 <button key={f} onClick={() => setFilter(f)} style={{
-                  background: active ? (ts.bg || "rgba(255,255,255,0.1)") : "rgba(255,255,255,0.08)",
+                  background: active ? (ts.bg || "rgba(255,255,255,0.1)") : "var(--surface2)",
                   color: active ? (ts.color || "#f1f5f9") : "rgba(148,163,184,0.85)",
-                  border: `1px solid ${active ? (ts.border || "rgba(255,255,255,0.2)") : "rgba(255,255,255,0.08)"}`,
+                  border: `1px solid ${active ? (ts.border || "rgba(255,255,255,0.2)") : "var(--surface2)"}`,
                   borderRadius: 8, padding: "6px 16px", cursor: "pointer", fontSize: 13,
                   textTransform: "capitalize",
                   boxShadow: active && ts.glow ? ts.glow : "none",
@@ -134,9 +134,9 @@ export default function AlertsNotifications() {
               const ts = typeStyle[alert.type];
               return (
                 <div key={alert.id} style={{
-                  background: alert.ack ? "rgba(255,255,255,0.06)" : "#1e293b",
-                  border: `1px solid ${alert.ack ? "rgba(255,255,255,0.06)" : ts.border}`,
-                  borderLeft: `3px solid ${alert.ack ? "rgba(255,255,255,0.15)" : ts.color}`,
+                  background: alert.ack ? "var(--surface2)" : "var(--surface)",
+                  border: `1px solid ${alert.ack ? "var(--surface2)" : ts.border}`,
+                  borderLeft: `3px solid ${alert.ack ? "var(--surface2)" : ts.color}`,
                   borderRadius: 10, padding: 16,
                   opacity: alert.ack ? 0.55 : 1,
                   boxShadow: alert.ack ? "none" : ts.glow,
@@ -147,7 +147,7 @@ export default function AlertsNotifications() {
                     <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                       <span style={{ fontSize: 18 }}>{alert.icon}</span>
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: "#f1f5f9" }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, color: "var(--text)" }}>
                           {alert.title}
                           <span style={{
                             fontSize: 10, padding: "2px 8px", borderRadius: 99,
@@ -174,7 +174,7 @@ export default function AlertsNotifications() {
                         }}>Ack</button>
                       )}
                       <button onClick={() => dismiss(alert.id)} style={{
-                        background: "rgba(255,255,255,0.05)", color: "rgba(148,163,184,0.85)",
+                        background: "var(--surface2)", color: "rgba(148,163,184,0.85)",
                         border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6,
                         padding: "5px 12px", cursor: "pointer", fontSize: 12,
                       }}>Dismiss</button>
@@ -189,7 +189,7 @@ export default function AlertsNotifications() {
 
       {tab === "thresholds" && (
         <div style={glassCard(C.indigo)}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: "#f1f5f9" }}>Alert Thresholds</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: "var(--text)" }}>Alert Thresholds</h2>
           <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 20 }}>Configure when alerts are triggered</p>
           {thresh.map((t, i) => (
             <div key={t.key} style={{ display: "flex", alignItems: "center", gap: 16, padding: "14px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -225,7 +225,7 @@ export default function AlertsNotifications() {
       {tab === "channels" && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div style={glassCard(C.indigo)}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "#f1f5f9" }}>Delivery Channels</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text)" }}>Delivery Channels</h2>
             <Toggle value={emailAlerts} onChange={setEmailAlerts} label="Email alerts" />
             <Toggle value={smsAlerts} onChange={setSmsAlerts} label="SMS alerts" />
             <Toggle value={webhookAlerts} onChange={setWebhookAlerts} label="Webhook / Slack" />
@@ -234,7 +234,7 @@ export default function AlertsNotifications() {
                 <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Alert email address</label>
                 <input defaultValue="admin@voltaris.com" style={{
                   display: "block", width: "100%", marginTop: 4,
-                  background: "rgba(255,255,255,0.05)",
+                  background: "var(--surface2)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 12px",
                   color: "#e2e8f0", fontSize: 13, boxSizing: "border-box",
                 }} />
@@ -245,7 +245,7 @@ export default function AlertsNotifications() {
                 <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Webhook URL</label>
                 <input placeholder="https://hooks.slack.com/..." style={{
                   display: "block", width: "100%", marginTop: 4,
-                  background: "rgba(255,255,255,0.05)",
+                  background: "var(--surface2)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "8px 12px",
                   color: "#e2e8f0", fontSize: 13, boxSizing: "border-box",
                 }} />
@@ -253,7 +253,7 @@ export default function AlertsNotifications() {
             )}
           </div>
           <div style={glassCard(C.blue)}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "#f1f5f9" }}>Notification Schedule</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text)" }}>Notification Schedule</h2>
             <p style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginBottom: 16 }}>Control when non-critical notifications are sent</p>
             {[
               { label: "Critical alerts", val: "Always (24/7)", color: C.red },

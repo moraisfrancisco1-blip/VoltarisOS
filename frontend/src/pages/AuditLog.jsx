@@ -49,7 +49,7 @@ export default function AuditLog({ user }) {
           { label: "IPs únicos", value: [...new Set(auditLog.map(e => e.ip))].length, color: "#f59e0b" },
         ].map(s => (
           <div key={s.label} style={{
-            background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)",
+            background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: "12px", padding: "18px 20px",
           }}>
             <div style={{ color: s.color, fontSize: "24px", fontWeight: "700" }}>{s.value}</div>
@@ -71,7 +71,7 @@ export default function AuditLog({ user }) {
             onChange={e => setSearch(e.target.value)}
             style={{
               width: "100%", padding: "10px 12px 10px 38px",
-              background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)",
+              background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: "10px", color: "white", fontSize: "14px",
               outline: "none", boxSizing: "border-box",
             }}
@@ -94,7 +94,7 @@ export default function AuditLog({ user }) {
       </div>
 
       {/* Table */}
-      <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "14px", overflow: "hidden" }}>
+      <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "14px", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>

@@ -92,7 +92,7 @@ export default function OnboardingWizard() {
 
   return (
     <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)",
+      position: "fixed", inset: 0, background: "var(--surface)",
       zIndex: 9997, display: "flex", alignItems: "center", justifyContent: "center",
       backdropFilter: "blur(6px)",
     }}>

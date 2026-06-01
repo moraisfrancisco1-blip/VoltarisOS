@@ -8,14 +8,14 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
 const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
-const val = { fontSize: 26, fontWeight: 700, color: "#f1f5f9" };
+const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+    <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
       <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
@@ -80,14 +80,14 @@ export default function RevenueOptimization() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Revenue Optimization</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Revenue Optimization</h1>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>AI dispatch · Scenario analysis · Price forecast integration</div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Auto-Dispatch</span>
           <div onClick={() => setAutoDispatch(!autoDispatch)} style={{
             width: 40, height: 22, borderRadius: 11, cursor: "pointer",
-            background: autoDispatch ? green : "rgba(255,255,255,0.08)", position: "relative"
+            background: autoDispatch ? green : "var(--surface2)", position: "relative"
           }}>
             <div style={{ position: "absolute", width: 16, height: 16, borderRadius: "50%", background: "#fff", top: 3, left: autoDispatch ? 21 : 3, transition: "left 0.2s" }} />
           </div>
@@ -119,13 +119,13 @@ export default function RevenueOptimization() {
         <div style={{ ...label, marginBottom: 12 }}>Price Forecast + Solar Generation + BESS Dispatch Plan</div>
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={forecast} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
             <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
             <YAxis yAxisId="price" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" €" />
             <YAxis yAxisId="power" orientation="right" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" MW" />
             <Tooltip content={<CustomTooltip />} />
             <Area yAxisId="price" type="monotone" dataKey="upper" fill={blue} fillOpacity={0.08} stroke="none" name="Upper Bound" />
-            <Area yAxisId="price" type="monotone" dataKey="lower" fill="rgba(10,12,24,0.98)" fillOpacity={1} stroke="none" name="Lower Bound" />
+            <Area yAxisId="price" type="monotone" dataKey="lower" fill="var(--surface)" fillOpacity={1} stroke="none" name="Lower Bound" />
             <Line yAxisId="price" type="monotone" dataKey="price" stroke={blue} strokeWidth={2.5} dot={false} name="DA Price" />
             <Line yAxisId="price" type="monotone" dataKey="forecast" stroke={purple} strokeWidth={2} strokeDasharray="4 2" dot={false} name="AI Forecast" />
             <Bar yAxisId="power" dataKey="solar" fill={amber} fillOpacity={0.4} name="Solar (MW)" />
@@ -145,8 +145,8 @@ export default function RevenueOptimization() {
                 onClick={() => setSelectedScenario(s.name)}
                 style={{
                   padding: 14, borderRadius: 10, cursor: "pointer",
-                  border: `2px solid ${selectedScenario === s.name ? s.color : "rgba(255,255,255,0.08)"}`,
-                  background: selectedScenario === s.name ? `${s.color}12` : "rgba(255,255,255,0.08)",
+                  border: `2px solid ${selectedScenario === s.name ? s.color : "var(--surface2)"}`,
+                  background: selectedScenario === s.name ? `${s.color}12` : "var(--surface2)",
                 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: selectedScenario === s.name ? s.color : "#f1f5f9" }}>{s.name}</div>
@@ -166,7 +166,7 @@ export default function RevenueOptimization() {
           <div style={{ ...label, marginBottom: 12 }}>Scenario Revenue Comparison</div>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={comparisonData} margin={{ left: -10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
               <XAxis dataKey="name" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit="€" />
               <Tooltip content={<CustomTooltip />} />
@@ -177,7 +177,7 @@ export default function RevenueOptimization() {
               <Bar dataKey="fcr" name="FCR" fill={blue} fillOpacity={0.6} radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
-          <div style={{ marginTop: 10, padding: 10, background: "rgba(255,255,255,0.08)", borderRadius: 8, border: `1px solid ${selected?.color}` }}>
+          <div style={{ marginTop: 10, padding: 10, background: "var(--surface2)", borderRadius: 8, border: `1px solid ${selected?.color}` }}>
             <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Active: <b style={{ color: selected?.color }}>{selectedScenario}</b></div>
             <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>Expected revenue: <b style={{ color: green }}>€{selected?.revenue.toLocaleString()}</b> · Risk: <b style={{ color: selected?.risk === "Low" ? green : selected?.risk === "Medium" ? amber : red }}>{selected?.risk}</b></div>
           </div>
@@ -205,12 +205,12 @@ export default function RevenueOptimization() {
               <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.time}</td>
                 <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: accent }}>{d.action}</td>
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "#f1f5f9" }}>{d.site}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>{d.site}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: amber }}>{d.volume}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.reason}</td>
                 <td style={{ padding: "8px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <div style={{ width: 40, height: 5, background: "rgba(255,255,255,0.08)", borderRadius: 3 }}>
+                    <div style={{ width: 40, height: 5, background: "var(--surface2)", borderRadius: 3 }}>
                       <div style={{ width: `${d.confidence}%`, height: "100%", background: d.confidence > 85 ? green : amber, borderRadius: 3 }} />
                     </div>
                     <span style={{ fontSize: 11, color: d.confidence > 85 ? green : amber }}>{d.confidence}%</span>

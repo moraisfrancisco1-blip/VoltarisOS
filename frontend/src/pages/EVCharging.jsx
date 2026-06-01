@@ -8,14 +8,14 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
 const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
-const val = { fontSize: 26, fontWeight: 700, color: "#f1f5f9" };
+const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+    <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
       <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
@@ -90,7 +90,7 @@ export default function EVCharging() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>EV Charging</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>EV Charging</h1>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Solar + BESS + V2G Integration</div>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -102,7 +102,7 @@ export default function EVCharging() {
               <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{sw.label}</span>
               <div onClick={() => sw.set(!sw.val)} style={{
                 width: 40, height: 22, borderRadius: 11, cursor: "pointer",
-                background: sw.val ? sw.color : "rgba(255,255,255,0.08)", position: "relative", transition: "background 0.2s"
+                background: sw.val ? sw.color : "var(--surface2)", position: "relative", transition: "background 0.2s"
               }}>
                 <div style={{
                   position: "absolute", width: 16, height: 16, borderRadius: "50%", background: "#fff",
@@ -144,19 +144,19 @@ export default function EVCharging() {
             ].map(n => (
               <g key={n.label}>
                 <rect x={20} y={n.y - 18} width={90} height={36} rx={8}
-                  fill="rgba(255,255,255,0.08)" stroke={n.color} strokeWidth={1.5} />
+                  fill="var(--surface2)" stroke={n.color} strokeWidth={1.5} />
                 <text x={65} y={n.y - 3} textAnchor="middle" fill={n.color} fontSize={11} fontWeight={700}>{n.label}</text>
                 <text x={65} y={n.y + 11} textAnchor="middle" fill="#f1f5f9" fontSize={10}>{n.val}</text>
                 <line x1={110} y1={n.y} x2={200} y2={100} stroke={n.color} strokeWidth={2} strokeDasharray="4 2" opacity={0.7} />
               </g>
             ))}
             {/* Hub */}
-            <rect x={195} y={70} width={80} height={60} rx={10} fill="rgba(255,255,255,0.08)" stroke={green} strokeWidth={2} />
+            <rect x={195} y={70} width={80} height={60} rx={10} fill="var(--surface2)" stroke={green} strokeWidth={2} />
             <text x={235} y={97} textAnchor="middle" fill={green} fontSize={11} fontWeight={700}>EV Hub</text>
             <text x={235} y={113} textAnchor="middle" fill="#f1f5f9" fontSize={10}>{flow.evTotal} MW</text>
             <line x1={275} y1={100} x2={340} y2={100} stroke={green} strokeWidth={2} />
             {/* EV */}
-            <rect x={340} y={78} width={50} height={44} rx={8} fill="rgba(255,255,255,0.08)" stroke={green} strokeWidth={1.5} />
+            <rect x={340} y={78} width={50} height={44} rx={8} fill="var(--surface2)" stroke={green} strokeWidth={1.5} />
             <text x={365} y={98} textAnchor="middle" fill={green} fontSize={11} fontWeight={700}>EVs</text>
             <text x={365} y={114} textAnchor="middle" fill="rgba(148,163,184,0.85)" fontSize={10}>{chargers.filter(c=>c.status==="charging").length} active</text>
           </svg>
@@ -178,7 +178,7 @@ export default function EVCharging() {
                     <div style={{ width: 10, height: 10, borderRadius: "50%", background: s.fill }} />
                     <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{s.name}</span>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{s.value}%</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{s.value}%</span>
                 </div>
               ))}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 8 }}>
@@ -195,7 +195,7 @@ export default function EVCharging() {
         <div style={{ ...label, marginBottom: 12 }}>24h Solar vs EV Demand vs BESS Buffer</div>
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={solar} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
             <XAxis dataKey="h" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
             <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" MW" />
             <Tooltip content={<CustomTooltip />} />
@@ -213,7 +213,7 @@ export default function EVCharging() {
           <div style={{ ...label, marginBottom: 12 }}>Smart Charging Schedule (24h)</div>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={schedule} margin={{ left: -10, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
               <XAxis dataKey="slot" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" kW" />
               <Tooltip content={<CustomTooltip />} />
@@ -238,14 +238,14 @@ export default function EVCharging() {
             {chargers.map(c => (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
-                  background: c.status === "charging" ? green : c.status === "discharging" ? purple : "rgba(255,255,255,0.08)" }} />
+                  background: c.status === "charging" ? green : c.status === "discharging" ? purple : "var(--surface2)" }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#f1f5f9" }}>{c.id} · {c.vehicle}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{c.id} · {c.vehicle}</div>
                   <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{c.location} · {c.power} kW · {c.mode}</div>
                 </div>
                 {c.soc > 0 && (
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <div style={{ width: 60, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3 }}>
+                    <div style={{ width: 60, height: 6, background: "var(--surface2)", borderRadius: 3 }}>
                       <div style={{ width: `${c.soc}%`, height: "100%", background: c.soc > 70 ? green : c.soc > 40 ? amber : red, borderRadius: 3 }} />
                     </div>
                     <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", width: 32 }}>{c.soc}%</span>

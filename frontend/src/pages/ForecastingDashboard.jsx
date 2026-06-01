@@ -120,18 +120,18 @@ export default function ForecastingDashboard() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Forecasting</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Forecasting</h1>
           <div style={{ color: "rgba(148,163,184,0.7)", fontSize: 13, marginTop: 2 }}>AI-powered solar · wind · price · load prediction</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)}
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 12px", color: "#e2e8f0", fontSize: 12 }}>
+            style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 12px", color: "#e2e8f0", fontSize: 12 }}>
             {SITES.map(s => <option key={s}>{s}</option>)}
           </select>
           {["24h", "48h", "7d"].map(h => (
             <button key={h} onClick={() => setHorizon(h)} style={{
               padding: "7px 16px", borderRadius: 8, fontSize: 12, cursor: "pointer",
-              background: horizon === h ? C.indigo : "rgba(255,255,255,0.06)",
+              background: horizon === h ? C.indigo : "var(--surface2)",
               color: horizon === h ? "#fff" : "rgba(148,163,184,0.7)",
               border: `1px solid ${horizon === h ? C.indigo : "rgba(255,255,255,0.1)"}`,
               boxShadow: horizon === h ? `0 0 12px ${C.indigo}55` : "none",
@@ -155,12 +155,12 @@ export default function ForecastingDashboard() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 10 }}>
           {WEATHER.map(w => (
             <div key={w.day} style={{
-              background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "12px 8px", textAlign: "center",
+              background: "var(--surface2)", borderRadius: 10, padding: "12px 8px", textAlign: "center",
               border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(4px)",
             }}>
               <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 6 }}>{w.day}</div>
               <div style={{ fontSize: 22, marginBottom: 6 }}>{w.icon}</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#f1f5f9", marginBottom: 4 }}>{w.temp}°C</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{w.temp}°C</div>
               <div style={{ fontSize: 10, color: C.amber }}>☀️ {w.irr} W/m²</div>
               <div style={{ fontSize: 10, color: C.blue }}>💨 {w.wind} m/s</div>
               <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>☁️ {w.cloud}%</div>
@@ -183,7 +183,7 @@ export default function ForecastingDashboard() {
             <Tooltip content={<PremiumTooltip />} />
             <ReferenceLine x="Today 12h" stroke={C.amber} strokeDasharray="3 3" label={{ value: "Now", fill: C.amber, fontSize: 10 }} />
             <Area type="monotone" dataKey="solar_high" fill={`url(#${FORECAST_IDS.solarConf})`} stroke="none" name="Upper 80%" />
-            <Area type="monotone" dataKey="solar_low" fill="#1e293b" stroke="none" name="Lower 80%" />
+            <Area type="monotone" dataKey="solar_low" fill="var(--surface)" stroke="none" name="Lower 80%" />
             <Area type="monotone" dataKey="solar" stroke={C.amber} fill={`url(#${FORECAST_IDS.solarGrad})`}
               strokeWidth={2.5} dot={false} name="Solar Forecast"
               style={{ filter: `drop-shadow(0 0 6px ${C.amber}88)` }} />
@@ -252,7 +252,7 @@ export default function ForecastingDashboard() {
           <div style={{ ...label, marginBottom: 12 }}>Forecast Accuracy by Category</div>
           <ResponsiveContainer width="100%" height={180}>
             <RadarChart data={radarData} cx="50%" cy="50%" outerRadius={70}>
-              <PolarGrid stroke="rgba(255,255,255,0.06)" />
+              <PolarGrid stroke="var(--surface2)" />
               <PolarAngleAxis dataKey="metric" tick={axisStyle} />
               <PolarRadiusAxis domain={[0, 100]} tick={false} />
               <Radar name="Forecast" dataKey="forecast" stroke={C.indigo} fill={C.indigo} fillOpacity={0.25}
@@ -279,9 +279,9 @@ export default function ForecastingDashboard() {
             {MODELS.map((m, idx) => (
               <tr key={m.name} style={{
                 borderBottom: "1px solid rgba(255,255,255,0.05)",
-                background: idx % 2 === 0 ? "rgba(255,255,255,0.05)" : "transparent",
+                background: idx % 2 === 0 ? "var(--surface2)" : "transparent",
               }}>
-                <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{m.name}</td>
+                <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{m.name}</td>
                 <td style={{ padding: "10px 12px", fontSize: 12, color: m.mae < 5 ? C.green : C.amber, fontWeight: 600 }}>{m.mae}</td>
                 <td style={{ padding: "10px 12px", fontSize: 12, color: m.rmse < 6 ? C.green : C.amber }}>{m.rmse}</td>
                 <td style={{ padding: "10px 12px", fontSize: 12, fontWeight: 700, color: m.r2 > 0.93 ? C.green : C.blue,
@@ -289,9 +289,9 @@ export default function ForecastingDashboard() {
                 <td style={{ padding: "10px 12px" }}>
                   <span style={{
                     fontSize: 11, padding: "3px 10px", borderRadius: 12,
-                    background: m.status === "active" ? `${C.green}22` : "rgba(255,255,255,0.05)",
+                    background: m.status === "active" ? `${C.green}22` : "var(--surface2)",
                     color: m.status === "active" ? C.green : "rgba(148,163,184,0.75)",
-                    border: `1px solid ${m.status === "active" ? `${C.green}55` : "rgba(255,255,255,0.08)"}`,
+                    border: `1px solid ${m.status === "active" ? `${C.green}55` : "var(--surface2)"}`,
                     boxShadow: m.status === "active" ? `0 0 8px ${C.green}33` : "none",
                   }}>
                     {m.status}

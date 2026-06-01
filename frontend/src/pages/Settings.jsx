@@ -4,9 +4,9 @@ import { useTranslation } from "../i18n/useTranslation";
 import { LANGUAGES } from "../i18n/translations";
 
 // ─── Mini design tokens ────────────────────────────────────────────────────────
-const BG    = "rgba(10,12,24,0.98)";
-const SURF  = "#1e293b";
-const SURF2 = "rgba(255,255,255,0.08)";
+const BG    = "var(--surface)";
+const SURF  = "var(--surface)";
+const SURF2 = "var(--surface2)";
 const BORD  = "#1a2234";
 const SUB   = "#6b7280";
 const DANG  = "#ef4444";
@@ -51,7 +51,7 @@ const NumInput = ({ label, value, onChange, min, max, step = 1, unit }) => (
         style={{
           background: SURF2, border: `1px solid ${BORD}`, borderRadius: unit ? "8px 0 0 8px" : 8,
           borderRight: unit ? "none" : undefined,
-          padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%", boxSizing: "border-box",
+          padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box",
         }}
       />
       {unit && (
@@ -84,7 +84,7 @@ const Select = ({ label, value, onChange, options }) => (
     {label && <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>{label}</label>}
     <select value={value} onChange={e => onChange(e.target.value)} style={{
       background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8,
-      padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%", cursor: "pointer",
+      padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", cursor: "pointer",
     }}>
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
@@ -214,7 +214,7 @@ export default function Settings() {
   };
 
   return (
-    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: BG }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: BG }}>
       {/* Header */}
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 6 }}>{t("settings_title")}</h1>
       <p style={{ color: SUB, marginBottom: 28, fontSize: 13 }}>{t("settings_sub")}</p>
@@ -718,7 +718,7 @@ export default function Settings() {
                 rows={4} placeholder="192.168.1.0/24&#10;10.0.0.1"
                 style={{
                   background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8,
-                  padding: 12, color: "#f1f5f9", fontSize: 13, width: "100%",
+                  padding: 12, color: "var(--text)", fontSize: 13, width: "100%",
                   boxSizing: "border-box", resize: "vertical", fontFamily: "monospace",
                 }}
               />

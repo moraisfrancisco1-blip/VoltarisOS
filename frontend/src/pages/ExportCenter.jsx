@@ -62,7 +62,7 @@ export default function ExportCenter({ user }) {
 
       {/* Options bar */}
       <div style={{
-        background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)",
+        background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
         borderRadius: "12px", padding: "18px 20px",
         display: "flex", alignItems: "center", gap: "20px",
         marginBottom: "24px", flexWrap: "wrap",
@@ -73,7 +73,7 @@ export default function ExportCenter({ user }) {
             {FORMATS.map(f => (
               <button key={f} onClick={() => setFormat(f)} style={{
                 padding: "6px 14px",
-                background: format === f ? `${color}18` : "rgba(255,255,255,0.08)",
+                background: format === f ? `${color}18` : "var(--surface2)",
                 border: `1px solid ${format === f ? color + "50" : "#1e2d45"}`,
                 borderRadius: "8px", color: format === f ? color : "#6b7280",
                 cursor: "pointer", fontSize: "13px", fontWeight: format === f ? "700" : "400",
@@ -82,12 +82,12 @@ export default function ExportCenter({ user }) {
           </div>
         </div>
 
-        <div style={{ width: "1px", height: "40px", background: "rgba(255,255,255,0.08)" }} />
+        <div style={{ width: "1px", height: "40px", background: "var(--surface2)" }} />
 
         <div>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "8px" }}>{t("period") || "Period"}</div>
           <select value={range} onChange={e => setRange(e.target.value)} style={{
-            padding: "7px 14px", background: "rgba(255,255,255,0.08)",
+            padding: "7px 14px", background: "var(--surface2)",
             border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px",
             color: "white", fontSize: "13px", outline: "none",
           }}>
@@ -99,7 +99,7 @@ export default function ExportCenter({ user }) {
           </select>
         </div>
 
-        <div style={{ width: "1px", height: "40px", background: "rgba(255,255,255,0.08)" }} />
+        <div style={{ width: "1px", height: "40px", background: "var(--surface2)" }} />
 
         <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
           <input
@@ -144,7 +144,7 @@ export default function ExportCenter({ user }) {
                   key={item.id}
                   onClick={() => toggle(item.id)}
                   style={{
-                    background: isSel ? `${color}08` : "#1e293b",
+                    background: isSel ? `${color}08` : "var(--surface)",
                     border: `1px solid ${isSel ? color + "40" : "#1a2234"}`,
                     borderRadius: "12px", padding: "16px 18px",
                     cursor: "pointer", transition: "all 0.15s",

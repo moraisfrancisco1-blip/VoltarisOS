@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 24 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 24 };
 
 const roleColors = {
   admin: { bg: "#3730a3", text: "#a5b4fc" },
@@ -64,7 +64,7 @@ export default function UserManagement() {
     ? { ...x, status: x.status === "Active" ? "Inactive" : "Active" } : x));
 
   return (
-    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>User Management</h1>
@@ -105,15 +105,15 @@ export default function UserManagement() {
                 <input type={f.type} placeholder={f.placeholder} value={inviteForm[f.key]}
                   onChange={e => setInviteForm(p => ({ ...p, [f.key]: e.target.value }))}
                   style={{
-                    background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-                    padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%", boxSizing: "border-box",
+                    background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
+                    padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box",
                   }} />
               </div>
             ))}
             <div>
               <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Role</label>
               <select value={inviteForm.role} onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))}
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%" }}>
+                style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
                 <option value="admin">Admin</option>
                 <option value="operator">Operator</option>
                 <option value="investor">Investor</option>
@@ -123,7 +123,7 @@ export default function UserManagement() {
             <div>
               <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Site Access</label>
               <select value={inviteForm.site} onChange={e => setInviteForm(p => ({ ...p, site: e.target.value }))}
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "#f1f5f9", fontSize: 13, width: "100%" }}>
+                style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
                 <option>All Sites</option>
                 <option>Rotterdam</option>
                 <option>Rebordelo</option>
@@ -152,8 +152,8 @@ export default function UserManagement() {
           <input placeholder="Search by name or email..." value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-              padding: "8px 14px", color: "#f1f5f9", fontSize: 13, width: 240,
+              background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
+              padding: "8px 14px", color: "var(--text)", fontSize: 13, width: 240,
             }} />
         </div>
 
@@ -230,7 +230,7 @@ export default function UserManagement() {
           ].map(r => {
             const rc = roleColors[r.role];
             return (
-              <div key={r.role} style={{ background: "rgba(255,255,255,0.08)", padding: 14, borderRadius: 10 }}>
+              <div key={r.role} style={{ background: "var(--surface2)", padding: 14, borderRadius: 10 }}>
                 <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 99, background: rc.bg, color: rc.text, textTransform: "capitalize" }}>
                   {r.label}
                 </span>

@@ -267,7 +267,7 @@ export default function CarbonDashboard() {
                 const sc = c.status === "verified" ? C.green : c.status === "pending" ? C.amber : C.accent;
                 return (
                   <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)",
-                    background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.05)" }}>
+                    background: i % 2 === 0 ? "transparent" : "var(--surface2)" }}>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: C.accent, fontWeight: 700 }}>{c.id}</td>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: "#e2e8f0" }}>{c.type}</td>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: "#e2e8f0" }}>{c.qty}</td>

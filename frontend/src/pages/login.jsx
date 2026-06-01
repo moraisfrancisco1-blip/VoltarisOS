@@ -81,7 +81,7 @@ export default function Login({ onLogin }) {
       {/* Card */}
       <div style={{
         width: "440px", maxWidth: "90vw",
-        background: "rgba(10, 18, 32, 0.9)",
+        background: "var(--surface)",
         border: "1px solid rgba(255,255,255,0.07)",
         borderRadius: "24px",
         boxShadow: "0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(74,222,128,0.04), inset 0 1px 0 rgba(255,255,255,0.05)",
@@ -357,8 +357,8 @@ function inputStyle(active) {
   return {
     width: "100%",
     padding: "12px 14px",
-    background: active ? "rgba(74,222,128,0.04)" : "rgba(255,255,255,0.06)",
-    border: `1px solid ${active ? "rgba(74,222,128,0.4)" : "rgba(255,255,255,0.07)"}`,
+    background: active ? "rgba(74,222,128,0.04)" : "var(--surface2)",
+    border: `1px solid ${active ? "rgba(74,222,128,0.4)" : "var(--surface2)"}`,
     borderRadius: "10px",
     color: "white",
     fontSize: "14px",

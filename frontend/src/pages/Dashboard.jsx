@@ -30,7 +30,7 @@ function SoCRing({ soc, size = 56 }) {
         </filter>
       </defs>
       {/* Track */}
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={6} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--surface2)" strokeWidth={6} />
       {/* Fill shadow */}
       <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={9} opacity={0.1}
         strokeDasharray={`${fill} ${circ}`} strokeDashoffset={circ / 4} strokeLinecap="round" />
@@ -112,10 +112,10 @@ function PowerFlowDiagram({ solar, bess, grid, load }) {
           <rect x={n.x - 42} y={n.y - 23} width={84} height={50} rx={14} fill={n.color} opacity={0.07} />
           {/* Card body */}
           <rect x={n.x - 40} y={n.y - 21} width={80} height={46} rx={12}
-            fill="#1e293b" stroke={n.color} strokeWidth={1.5} />
+            fill="var(--surface)" stroke={n.color} strokeWidth={1.5} />
           {/* Top highlight (3D shine) */}
           <rect x={n.x - 38} y={n.y - 19} width={76} height={3} rx={3}
-            fill="rgba(255,255,255,0.08)" />
+            fill="var(--surface2)" />
           <text x={n.x} y={n.y - 4} textAnchor="middle" fill={n.color} fontSize={9.5} fontWeight={800}
             letterSpacing={0.8} style={{ textTransform: "uppercase" }}>{n.label}</text>
           <text x={n.x} y={n.y + 13} textAnchor="middle" fill="#fff" fontSize={12} fontWeight={900}
@@ -246,7 +246,7 @@ export default function Dashboard() {
               return (
                 <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 12,
                   padding: "8px 10px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <SoCRing soc={s.soc} size={50} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", lineHeight: 1.3 }}>{s.name}</div>
@@ -409,7 +409,7 @@ export default function Dashboard() {
           </div>
           <div style={{ marginTop: 14, textAlign: "center", position: "relative" }}>
             <button style={{
-              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)",
+              background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
               borderRadius: 10, padding: "7px 18px", fontSize: 12, color: "rgba(148,163,184,0.7)",
               cursor: "pointer", transition: "all 0.2s",
             }}>View All Alerts</button>
@@ -439,7 +439,7 @@ export default function Dashboard() {
               return (
                 <tr key={s.id} style={{
                   borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.05)",
+                  background: i % 2 === 0 ? "transparent" : "var(--surface2)",
                   transition: "background 0.15s",
                 }}>
                   <td style={{ padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "#e2e8f0" }}>{s.name}</td>

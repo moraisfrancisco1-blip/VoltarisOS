@@ -1,7 +1,7 @@
 import { useState } from "react"
 
 const CARD = {
-  background: "#1e293b",
+  background: "var(--surface)",
   border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: "12px",
   padding: "24px",
@@ -20,10 +20,10 @@ const LABEL = {
 
 const INPUT = {
   width: "100%",
-  background: "rgba(10,12,24,0.98)",
+  background: "var(--surface)",
   border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: "8px",
-  color: "#f1f5f9",
+  color: "var(--text)",
   fontSize: "14px",
   padding: "10px 14px",
   outline: "none",
@@ -86,7 +86,7 @@ export default function WhiteLabel({ user }) {
     <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
-        <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "#f1f5f9" }}>White-label & Multi-tenant</h1>
+        <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>White-label & Multi-tenant</h1>
         <p style={{ margin: "6px 0 0", color: "rgba(148,163,184,0.85)", fontSize: "14px" }}>Manage tenant brands, domains, and feature flags</p>
       </div>
 
@@ -100,14 +100,14 @@ export default function WhiteLabel({ user }) {
         ].map((s, i) => (
           <div key={i} style={{ ...CARD, marginBottom: 0, textAlign: "center" }}>
             <div style={{ fontSize: "28px", fontWeight: "700", color: i === 0 ? color : i === 1 ? "#4ade80" : i === 2 ? "#60a5fa" : "#f59e0b" }}>{s.value}</div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "#f1f5f9", margin: "4px 0 2px" }}>{s.label}</div>
+            <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text)", margin: "4px 0 2px" }}>{s.label}</div>
             <div style={{ fontSize: "11px", color: "rgba(148,163,184,0.85)" }}>{s.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "4px", width: "fit-content" }}>
+      <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "4px", width: "fit-content" }}>
         {[
           { id: "tenants", label: "Tenants" },
           { id: "brand", label: "Brand Config" },
@@ -134,7 +134,7 @@ export default function WhiteLabel({ user }) {
       {tab === "tenants" && (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-            <h3 style={{ margin: 0, fontSize: "15px", color: "#f1f5f9" }}>All Tenants</h3>
+            <h3 style={{ margin: 0, fontSize: "15px", color: "var(--text)" }}>All Tenants</h3>
             <button onClick={() => { setSelectedTenant(null); setBrandForm(f => ({ ...f, tenantName: "", domain: "" })); setTab("brand") }} style={{
               padding: "8px 16px", background: color + "22", border: `1px solid ${color}44`,
               borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600",
@@ -154,7 +154,7 @@ export default function WhiteLabel({ user }) {
                   <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: t.color }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "15px", fontWeight: "600", color: "#f1f5f9" }}>{t.name}</div>
+                  <div style={{ fontSize: "15px", fontWeight: "600", color: "var(--text)" }}>{t.name}</div>
                   <div style={{ fontSize: "12px", color: "rgba(148,163,184,0.85)", marginTop: "2px" }}>{t.domain}</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
@@ -187,7 +187,7 @@ export default function WhiteLabel({ user }) {
           {/* Left col */}
           <div>
             <div style={CARD}>
-              <h3 style={{ margin: "0 0 20px", fontSize: "15px", color: "#f1f5f9" }}>
+              <h3 style={{ margin: "0 0 20px", fontSize: "15px", color: "var(--text)" }}>
                 {selectedTenant ? `Edit: ${brandForm.tenantName}` : "New Tenant"}
               </h3>
 
@@ -239,7 +239,7 @@ export default function WhiteLabel({ user }) {
 
             {/* Logo upload */}
             <div style={CARD}>
-              <h3 style={{ margin: "0 0 16px", fontSize: "14px", color: "#f1f5f9" }}>Logo Upload</h3>
+              <h3 style={{ margin: "0 0 16px", fontSize: "14px", color: "var(--text)" }}>Logo Upload</h3>
               <label style={{
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 gap: "10px", border: "2px dashed #1a2234", borderRadius: "10px", padding: "28px",
@@ -264,14 +264,14 @@ export default function WhiteLabel({ user }) {
           {/* Right col — colors + preview */}
           <div>
             <div style={CARD}>
-              <h3 style={{ margin: "0 0 20px", fontSize: "14px", color: "#f1f5f9" }}>Brand Colors</h3>
+              <h3 style={{ margin: "0 0 20px", fontSize: "14px", color: "var(--text)" }}>Brand Colors</h3>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "20px" }}>
                 <div>
                   <label style={LABEL}>Primary Color</label>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <input type="color" value={brandForm.primaryColor}
                       onChange={e => setBrandForm(f => ({ ...f, primaryColor: e.target.value }))}
-                      style={{ width: "44px", height: "40px", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", background: "rgba(10,12,24,0.98)", cursor: "pointer" }}
+                      style={{ width: "44px", height: "40px", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", background: "var(--surface)", cursor: "pointer" }}
                     />
                     <input style={{ ...INPUT, flex: 1 }} value={brandForm.primaryColor}
                       onChange={e => setBrandForm(f => ({ ...f, primaryColor: e.target.value }))} />
@@ -282,7 +282,7 @@ export default function WhiteLabel({ user }) {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <input type="color" value={brandForm.accentColor}
                       onChange={e => setBrandForm(f => ({ ...f, accentColor: e.target.value }))}
-                      style={{ width: "44px", height: "40px", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", background: "rgba(10,12,24,0.98)", cursor: "pointer" }}
+                      style={{ width: "44px", height: "40px", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", background: "var(--surface)", cursor: "pointer" }}
                     />
                     <input style={{ ...INPUT, flex: 1 }} value={brandForm.accentColor}
                       onChange={e => setBrandForm(f => ({ ...f, accentColor: e.target.value }))} />
@@ -291,7 +291,7 @@ export default function WhiteLabel({ user }) {
               </div>
 
               {/* Mini preview */}
-              <div style={{ background: "rgba(10,12,24,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "16px" }}>
+              <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "16px" }}>
                 <div style={{ fontSize: "11px", color: "#374151", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Preview</div>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                   <div style={{ flex: 1, background: brandForm.primaryColor + "22", border: `1px solid ${brandForm.primaryColor}44`, borderRadius: "8px", padding: "10px", textAlign: "center" }}>
@@ -333,13 +333,13 @@ export default function WhiteLabel({ user }) {
       {tab === "domains" && (
         <div>
           <div style={CARD}>
-            <h3 style={{ margin: "0 0 20px", fontSize: "15px", color: "#f1f5f9" }}>Domain Configuration</h3>
+            <h3 style={{ margin: "0 0 20px", fontSize: "15px", color: "var(--text)" }}>Domain Configuration</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {tenants.map(t => (
-                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "14px 16px", background: "rgba(10,12,24,0.98)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
+                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "14px 16px", background: "var(--surface)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
                   <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: statusColor(t.status), flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#f1f5f9" }}>{t.domain}</div>
+                    <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text)" }}>{t.domain}</div>
                     <div style={{ fontSize: "12px", color: "rgba(148,163,184,0.85)", marginTop: "2px" }}>{t.name}</div>
                   </div>
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
@@ -349,7 +349,7 @@ export default function WhiteLabel({ user }) {
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: "20px", padding: "16px", background: "rgba(10,12,24,0.98)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
+            <div style={{ marginTop: "20px", padding: "16px", background: "var(--surface)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
               <div style={{ fontSize: "13px", color: "rgba(148,163,184,0.85)", marginBottom: "12px", fontWeight: "600" }}>Add New Domain</div>
               <div style={{ display: "flex", gap: "10px" }}>
                 <input style={{ ...INPUT, flex: 1 }} placeholder="custom.domain.com"
@@ -368,7 +368,7 @@ export default function WhiteLabel({ user }) {
       {/* FEATURES TAB */}
       {tab === "features" && (
         <div style={CARD}>
-          <h3 style={{ margin: "0 0 4px", fontSize: "15px", color: "#f1f5f9" }}>Feature Flags per Tenant</h3>
+          <h3 style={{ margin: "0 0 4px", fontSize: "15px", color: "var(--text)" }}>Feature Flags per Tenant</h3>
           <p style={{ margin: "0 0 24px", fontSize: "13px", color: "rgba(148,163,184,0.85)" }}>Control which modules each tenant can access</p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
@@ -388,7 +388,7 @@ export default function WhiteLabel({ user }) {
                       <td style={{ padding: "12px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                           <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: t.color, flexShrink: 0 }} />
-                          <span style={{ color: "#f1f5f9", fontWeight: "500" }}>{t.name}</span>
+                          <span style={{ color: "var(--text)", fontWeight: "500" }}>{t.name}</span>
                         </div>
                       </td>
                       {flags.map((on, fi) => (

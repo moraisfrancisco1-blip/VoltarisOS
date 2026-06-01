@@ -8,14 +8,14 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
 const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
-const val = { fontSize: 26, fontWeight: 700, color: "#f1f5f9" };
+const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+    <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
       <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
@@ -113,7 +113,7 @@ export default function CommandCenter() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "#f1f5f9" }}>Command Center</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Command Center</h1>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Fleet-wide BESS dispatch · Real-time controls · Event feed</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -149,9 +149,9 @@ export default function CommandCenter() {
             {["charge", "discharge", "standby", "fcr_mode"].map(m => (
               <button key={m} onClick={() => setBulkMode(m)} style={{
                 padding: "7px 14px", borderRadius: 8, fontSize: 12, cursor: "pointer",
-                background: bulkMode === m ? accent : "rgba(255,255,255,0.08)",
+                background: bulkMode === m ? accent : "var(--surface2)",
                 color: bulkMode === m ? "#fff" : "rgba(148,163,184,0.85)",
-                border: `1px solid ${bulkMode === m ? accent : "rgba(255,255,255,0.08)"}`,
+                border: `1px solid ${bulkMode === m ? accent : "var(--surface2)"}`,
               }}>{m.replace("_", " ").toUpperCase()}</button>
             ))}
           </div>
@@ -159,14 +159,14 @@ export default function CommandCenter() {
         <div>
           <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>SETPOINT (kW)</div>
           <input type="number" value={bulkSetpoint} onChange={e => setBulkSetpoint(Number(e.target.value))}
-            style={{ width: 80, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "7px 10px", color: "#f1f5f9", fontSize: 13 }} />
+            style={{ width: 80, background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
         </div>
         <div>
           <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>TARGET</div>
           <select onChange={e => {
             const v = e.target.value;
             setSelected(v === "all" ? [] : v === "online" ? sites.filter(s => s.status === "online").map(s => s.id) : []);
-          }} style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "7px 10px", color: "#f1f5f9", fontSize: 13 }}>
+          }} style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }}>
             <option value="all">All Sites</option>
             <option value="online">Online Only</option>
           </select>
@@ -189,7 +189,7 @@ export default function CommandCenter() {
               gap: 12, alignItems: "center", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.12)"
             }}>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#f1f5f9" }}>{site.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{site.name}</div>
                 <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Solar {site.solarMW} MW · Temp {site.temp.toFixed(1)}°C</div>
               </div>
               <div>
@@ -214,7 +214,7 @@ export default function CommandCenter() {
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ flex: 1, height: 8, background: "rgba(255,255,255,0.08)", borderRadius: 4 }}>
+                <div style={{ flex: 1, height: 8, background: "var(--surface2)", borderRadius: 4 }}>
                   <div style={{ width: `${site.soc}%`, height: "100%", borderRadius: 4,
                     background: site.soc > 70 ? green : site.soc > 40 ? amber : red }} />
                 </div>
@@ -224,9 +224,9 @@ export default function CommandCenter() {
                   {["charge", "discharge", "standby"].map(m => (
                     <button key={m} onClick={() => sendSiteCommand(site.id, m, site.setpoint)} style={{
                       padding: "4px 8px", borderRadius: 6, fontSize: 10, cursor: "pointer",
-                      background: site.mode === m ? accent : "rgba(255,255,255,0.08)",
+                      background: site.mode === m ? accent : "var(--surface2)",
                       color: site.mode === m ? "#fff" : "rgba(148,163,184,0.85)",
-                      border: `1px solid ${site.mode === m ? accent : "rgba(255,255,255,0.08)"}`,
+                      border: `1px solid ${site.mode === m ? accent : "var(--surface2)"}`,
                     }}>{m[0].toUpperCase()}</button>
                   ))}
                 </div>
@@ -242,7 +242,7 @@ export default function CommandCenter() {
           <div style={{ ...label, marginBottom: 12 }}>Fleet Power (Last 60 min)</div>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={powerHistory} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
               <XAxis dataKey="t" tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} />
               <YAxis tick={{ fontSize: 10, fill: "rgba(148,163,184,0.85)" }} unit=" MW" />
               <Tooltip content={<CustomTooltip />} />
@@ -259,7 +259,7 @@ export default function CommandCenter() {
               <div key={e.id} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <div style={{ width: 7, height: 7, borderRadius: "50%", marginTop: 4, flexShrink: 0, background: eventColor(e.type) }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: "#f1f5f9", lineHeight: 1.4 }}>{e.msg}</div>
+                  <div style={{ fontSize: 11, color: "var(--text)", lineHeight: 1.4 }}>{e.msg}</div>
                   <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>{e.ts}</div>
                 </div>
               </div>

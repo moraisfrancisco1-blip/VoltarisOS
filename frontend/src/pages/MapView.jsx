@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const accent = "#6366f1";
-const card = { background: "#1e293b", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 20 };
+const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 20 };
 
 const sites = [
   {
@@ -91,7 +91,7 @@ export default function MapView() {
   }, []);
 
   return (
-    <div style={{ padding: 32, color: "#f1f5f9", minHeight: "100vh", background: "rgba(10,12,24,0.98)" }}>
+    <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Site Map</h1>
       <p style={{ color: "rgba(148,163,184,0.85)", marginBottom: 24 }}>Geographic overview of all VPP assets</p>
 
@@ -135,7 +135,7 @@ export default function MapView() {
                 ...card,
                 cursor: "pointer",
                 border: `1px solid ${selected?.id === s.id ? accent : "#1f2937"}`,
-                background: selected?.id === s.id ? "rgba(255,255,255,0.08)" : "#1e293b",
+                background: selected?.id === s.id ? "var(--surface2)" : "var(--surface)",
               }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                 <div>
@@ -155,7 +155,7 @@ export default function MapView() {
                   { label: "Solar", val: `${s.solar} kW` },
                   { label: "Revenue", val: s.revenue },
                 ].map(m => (
-                  <div key={m.label} style={{ background: "rgba(255,255,255,0.08)", padding: "6px 10px", borderRadius: 6 }}>
+                  <div key={m.label} style={{ background: "var(--surface2)", padding: "6px 10px", borderRadius: 6 }}>
                     <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{m.label}</div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{m.val}</div>
                   </div>
