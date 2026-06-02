@@ -29,6 +29,7 @@ import RegulatoryCompliance from "./pages/RegulatoryCompliance"
 import CommandCenter from "./pages/CommandCenter"
 import ExecutiveScorecard from "./pages/ExecutiveScorecard"
 import AnomalyDetection from "./pages/AnomalyDetection"
+import Integrations from "./pages/Integrations"
 import AICopilot from "./components/AICopilot"
 import CommandPalette from "./components/CommandPalette"
 import ToastContainer from "./components/ToastContainer"
@@ -66,6 +67,7 @@ const PAGES = {
   command_center: CommandCenter,
   scorecard: ExecutiveScorecard,
   anomaly: AnomalyDetection,
+  integrations: Integrations,
 }
 
 function useIsMobile() {

@@ -36,6 +36,7 @@ const T = {
   nav_users:       { pt:"Utilizadores", en:"Users",   fr:"Utilisateurs", es:"Usuarios",    nl:"Gebruikers" },
   nav_settings:    { pt:"Definições", en:"Settings",   fr:"Paramètres",   es:"Ajustes",     nl:"Instellingen" },
   nav_whitelabel:  { pt:"White-label",en:"White-label",fr:"Marque Blanche",es:"Marca Blanca",nl:"White-label" },
+  nav_integrations:{ pt:"Integrações", en:"Integrations", fr:"Intégrations", es:"Integraciones", nl:"Integraties" },
   nav_audit:       { pt:"Registo de Auditoria", en:"Audit Log", fr:"Journal d'Audit", es:"Registro Auditoría", nl:"Auditlog" },
   nav_apikeys:     { pt:"Chaves API", en:"API Keys",   fr:"Clés API",     es:"Claves API",  nl:"API-sleutels" },
   nav_export:      { pt:"Centro de Exportação", en:"Export Center", fr:"Centre d'Export", es:"Centro de Exportación", nl:"Exportcentrum" },
