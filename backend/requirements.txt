@@ -9,3 +9,10 @@ scipy
 httpx
 python-multipart
 aiofiles
+weasyprint
+python-jose[cryptography]
+reportlab
+pymodbus
+asyncua
+python-dotenv
+passlib[bcrypt]

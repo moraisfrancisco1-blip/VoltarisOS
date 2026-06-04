@@ -30,6 +30,7 @@ import CommandCenter from "./pages/CommandCenter"
 import ExecutiveScorecard from "./pages/ExecutiveScorecard"
 import AnomalyDetection from "./pages/AnomalyDetection"
 import Integrations from "./pages/Integrations"
+import VirtualPowerPlant from "./pages/VirtualPowerPlant"
 import AICopilot from "./components/AICopilot"
 import CommandPalette from "./components/CommandPalette"
 import ToastContainer from "./components/ToastContainer"
@@ -68,6 +69,7 @@ const PAGES = {
   scorecard: ExecutiveScorecard,
   anomaly: AnomalyDetection,
   integrations: Integrations,
+  vpp: VirtualPowerPlant,
 }
 
 function useIsMobile() {
@@ -84,7 +86,41 @@ function AppShell({ user, onLogout }) {
   const [page, setPage] = useState("dashboard")
   const [mobileOpen, setMobileOpen] = useState(false)
   const isMobile = useIsMobile()
-  const { theme, simMode } = useAppStore()
+  const { theme, simMode, addToast } = useAppStore()
+
+  // ── WebSocket live alerts ──────────────────────────────────────────────────
+  useEffect(() => {
+    const proto = window.location.protocol === "https:" ? "wss:" : "ws:"
+    const host  = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+      ? `${window.location.hostname}:8000`
+      : window.location.host
+    const url = `${proto}//${host}/ws/alerts?token=demo`
+    let ws, reconnectTimer
+    const connect = () => {
+      try {
+        ws = new WebSocket(url)
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data)
+            if (msg.type === "alert") {
+              const severity = msg.severity || "info"
+              const color = severity === "critical" ? "#f87171" : severity === "warning" ? "#f59e0b" : "#4ade80"
+              addToast(`🔔 ${msg.message || msg.title || "New alert"}`, severity === "critical" ? "error" : "info")
+            } else if (msg.type === "ping") {
+              ws.send(JSON.stringify({ type: "pong" }))
+            }
+          } catch {}
+        }
+        ws.onerror = () => {}
+        ws.onclose = () => { reconnectTimer = setTimeout(connect, 8000) }
+      } catch {}
+    }
+    connect()
+    return () => {
+      clearTimeout(reconnectTimer)
+      if (ws) { ws.onclose = null; ws.close() }
+    }
+  }, [addToast])
 
   const handleSetPage = (p) => {
     setPage(p)

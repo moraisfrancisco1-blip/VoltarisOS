@@ -240,6 +240,8 @@ const T = {
   include_branding:   { pt:"Incluir logo & branding", en:"Include logo & branding", fr:"Inclure logo & branding", es:"Incluir logo & branding", nl:"Logo & branding opnemen" },
 
   // ─── NAV KEYS (new pages) ─────────────────────────────────────────────────
+  nav_vpp:           { pt:"Virtual Power Plant",en:"Virtual Power Plant",fr:"Centrale Virtuelle", es:"Planta Virtual",      nl:"Virtuele Centrale" },
+  nav_vpp_sub:       { pt:"Despacho e licitação VPP", en:"VPP dispatch & bidding", fr:"Dispatch et enchères VPP", es:"Despacho y pujas VPP", nl:"VPP dispatch & biedingen" },
   nav_command_center:{ pt:"Command Center",    en:"Command Center",    fr:"Centre de Commande", es:"Centro de Comando",   nl:"Commandocentrum" },
   nav_revenue_opt:   { pt:"Revenue Optimizer", en:"Revenue Optimizer", fr:"Optimiseur de Revenus", es:"Optimizador de Ingresos", nl:"Omzetoptimalisatie" },
   nav_compliance:    { pt:"Compliance",         en:"Compliance",        fr:"Conformité",         es:"Cumplimiento",        nl:"Compliance" },

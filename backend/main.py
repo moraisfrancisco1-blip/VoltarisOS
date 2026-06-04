@@ -20,6 +20,9 @@ from backend.routers.trading_agent import router as trading_agent_router
 from backend.routers.carbon import router as carbon_router
 from backend.routers.maintenance import router as maintenance_router
 from backend.routers.devices import router as devices_router
+from backend.routers.vpp import router as vpp_router
+from backend.routers.reports import router as reports_router
+from backend.routers.alerts_ws import router as alerts_ws_router
 import os
 
 models.Base.metadata.create_all(bind=engine)
@@ -45,6 +48,9 @@ app.include_router(devices_router)
 app.include_router(prices.router, prefix="/api")
 app.include_router(sites.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(vpp_router)
+app.include_router(reports_router)
+app.include_router(alerts_ws_router)
 
 
 @app.get("/ai_decision")
