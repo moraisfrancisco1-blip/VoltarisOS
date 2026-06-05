@@ -31,6 +31,11 @@ import ExecutiveScorecard from "./pages/ExecutiveScorecard"
 import AnomalyDetection from "./pages/AnomalyDetection"
 import Integrations from "./pages/Integrations"
 import VirtualPowerPlant from "./pages/VirtualPowerPlant"
+import GridResilienceScore from "./pages/GridResilienceScore"
+import AIDispatchCopilot from "./pages/AIDispatchCopilot"
+import EnergyMarketplace from "./pages/EnergyMarketplace"
+import CarbonCredit from "./pages/CarbonCredit"
+import CustomerPortal from "./pages/CustomerPortal"
 import AICopilot from "./components/AICopilot"
 import CommandPalette from "./components/CommandPalette"
 import ToastContainer from "./components/ToastContainer"
@@ -70,6 +75,11 @@ const PAGES = {
   anomaly: AnomalyDetection,
   integrations: Integrations,
   vpp: VirtualPowerPlant,
+  resilience: GridResilienceScore,
+  dispatch_copilot: AIDispatchCopilot,
+  marketplace: EnergyMarketplace,
+  carbon_credit: CarbonCredit,
+  customer_portal: CustomerPortal,
 }
 
 function useIsMobile() {

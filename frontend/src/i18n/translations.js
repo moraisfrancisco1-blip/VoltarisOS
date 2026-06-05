@@ -241,6 +241,11 @@ const T = {
 
   // ─── NAV KEYS (new pages) ─────────────────────────────────────────────────
   nav_vpp:           { pt:"Virtual Power Plant",en:"Virtual Power Plant",fr:"Centrale Virtuelle", es:"Planta Virtual",      nl:"Virtuele Centrale" },
+  nav_resilience:        { pt:"Resiliência da Rede",   en:"Grid Resilience",        fr:"Résilience Réseau",     es:"Resiliencia de Red",   nl:"Netveerkracht" },
+  nav_marketplace:       { pt:"Marketplace Energia",   en:"Energy Marketplace",     fr:"Marché Énergie",        es:"Mercado Energía",      nl:"Energiemarktplaats" },
+  nav_dispatch_copilot:  { pt:"Copiloto Despacho IA",  en:"AI Dispatch Copilot",    fr:"Copilote Dispatch IA",  es:"Copiloto Despacho IA", nl:"AI Dispatch Copiloot" },
+  nav_carbon_credit:     { pt:"Créditos de Carbono",   en:"Carbon Credits",         fr:"Crédits Carbone",       es:"Créditos de Carbono",  nl:"Koolstofkredieten" },
+  nav_customer_portal:   { pt:"Portal do Cliente",     en:"Customer Portal",        fr:"Portail Client",        es:"Portal del Cliente",   nl:"Klantenportaal" },
   nav_vpp_sub:       { pt:"Despacho e licitação VPP", en:"VPP dispatch & bidding", fr:"Dispatch et enchères VPP", es:"Despacho y pujas VPP", nl:"VPP dispatch & biedingen" },
   nav_command_center:{ pt:"Command Center",    en:"Command Center",    fr:"Centre de Commande", es:"Centro de Comando",   nl:"Commandocentrum" },
   nav_revenue_opt:   { pt:"Revenue Optimizer", en:"Revenue Optimizer", fr:"Optimiseur de Revenus", es:"Optimizador de Ingresos", nl:"Omzetoptimalisatie" },
