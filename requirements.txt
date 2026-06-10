@@ -12,3 +12,4 @@ aiofiles
 python-jose[cryptography]
 openai
 python-dotenv
+psycopg2-binary
