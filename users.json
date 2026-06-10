@@ -1,7 +1,6 @@
 [
   {
     "id": 1,
-<<<<<<< HEAD
     "email": "admin@voltarisos.com",
     "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
     "company": "VoltarisOS Admin",
@@ -17,12 +16,3 @@
     "role": "installer"
   }
 ]
-=======
-    "email": "admin@voltaris.com",
-    "password": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
-    "company": "VoltarisOS",
-    "color": "#4ade80",
-    "role": "admin"
-  }
-]
->>>>>>> adminVoltariOs/master
