@@ -36,6 +36,9 @@ import AIDispatchCopilot from "./pages/AIDispatchCopilot"
 import EnergyMarketplace from "./pages/EnergyMarketplace"
 import CarbonCredit from "./pages/CarbonCredit"
 import CustomerPortal from "./pages/CustomerPortal"
+import SolarMarketIntelligence from "./pages/SolarMarketIntelligence"
+import EnergyArbitrage from "./pages/EnergyArbitrage"
+import SolarDegradationLab from "./pages/SolarDegradationLab"
 import AICopilot from "./components/AICopilot"
 import CommandPalette from "./components/CommandPalette"
 import ToastContainer from "./components/ToastContainer"
@@ -80,6 +83,9 @@ const PAGES = {
   marketplace: EnergyMarketplace,
   carbon_credit: CarbonCredit,
   customer_portal: CustomerPortal,
+  solar_intel: SolarMarketIntelligence,
+  arbitrage: EnergyArbitrage,
+  degradation_lab: SolarDegradationLab,
 }
 
 function useIsMobile() {

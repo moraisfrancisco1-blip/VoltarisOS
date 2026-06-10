@@ -249,7 +249,10 @@ const T = {
   nav_vpp_sub:       { pt:"Despacho e licitação VPP", en:"VPP dispatch & bidding", fr:"Dispatch et enchères VPP", es:"Despacho y pujas VPP", nl:"VPP dispatch & biedingen" },
   nav_command_center:{ pt:"Command Center",    en:"Command Center",    fr:"Centre de Commande", es:"Centro de Comando",   nl:"Commandocentrum" },
   nav_revenue_opt:   { pt:"Revenue Optimizer", en:"Revenue Optimizer", fr:"Optimiseur de Revenus", es:"Optimizador de Ingresos", nl:"Omzetoptimalisatie" },
-  nav_compliance:    { pt:"Compliance",         en:"Compliance",        fr:"Conformité",         es:"Cumplimiento",        nl:"Compliance" },
+  nav_compliance:        { pt:"Compliance",            en:"Compliance",             fr:"Conformité",          es:"Cumplimiento",         nl:"Compliance" },
+  nav_solar_intel:       { pt:"Mercado Solar",          en:"Solar Market Intel",     fr:"Intel Marché Solaire",es:"Intel Mercado Solar",   nl:"Zonne Markt Intel" },
+  nav_arbitrage:         { pt:"Arbitragem Energia",     en:"Energy Arbitrage",       fr:"Arbitrage Énergie",   es:"Arbitraje Energía",     nl:"Energie Arbitrage" },
+  nav_degradation_lab:   { pt:"Lab de Degradação",      en:"Degradation Lab",        fr:"Lab Dégradation",     es:"Lab Degradación",       nl:"Degradatie Lab" },
   nav_scorecard:     { pt:"Executive Scorecard",en:"Executive Scorecard",fr:"Tableau de Bord Exec", es:"Cuadro de Mando",  nl:"Executive Scorecard" },
   nav_anomaly:       { pt:"Anomaly Detection",  en:"Anomaly Detection", fr:"Détection d'Anomalies", es:"Detección de Anomalías", nl:"Anomaliedetectie" },
 
