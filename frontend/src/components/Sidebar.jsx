@@ -1,65 +1,14 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
+import logoSidebar from "../logo_sidebar.png"
+import logoIcon from "../logo_icon.png"
 
-// Premium inline SVG logo — hex + lightning + gradient wordmark
 function VoltarisLogo({ collapsed }) {
   return collapsed ? (
-    // Collapsed: just the hex icon
-    <svg width="34" height="34" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="sl_grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f59e0b"/>
-          <stop offset="100%" stopColor="#f97316"/>
-        </linearGradient>
-        <filter id="sl_glow">
-          <feGaussianBlur stdDeviation="1.5" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      <polygon points="22,3 37,12 37,30 22,39 7,30 7,12"
-        fill="none" stroke="url(#sl_grad)" strokeWidth="2.2"/>
-      <polygon points="22,8 33,14.5 33,27.5 22,34 11,27.5 11,14.5"
-        fill="url(#sl_grad)" opacity="0.13"/>
-      <path d="M26 10 L18 22 L23 22 L18 34 L30 19 L24 19 Z"
-        fill="url(#sl_grad)" filter="url(#sl_glow)"/>
-    </svg>
+    <img src={logoIcon} alt="V" style={{ width: "34px", height: "34px", objectFit: "contain" }} />
   ) : (
-    // Expanded: hex + "Voltaris OS" wordmark
-    <svg height="38" viewBox="0 0 190 38" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flex: 1, minWidth: 0 }}>
-      <defs>
-        <linearGradient id="sl_grad2" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f59e0b"/>
-          <stop offset="100%" stopColor="#f97316"/>
-        </linearGradient>
-        <filter id="sl_glow2">
-          <feGaussianBlur stdDeviation="1.2" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <filter id="sl_pulse">
-          <feGaussianBlur stdDeviation="2" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      {/* Hex */}
-      <polygon points="19,2 31,9 31,23 19,30 7,23 7,9"
-        fill="none" stroke="url(#sl_grad2)" strokeWidth="1.8"/>
-      <polygon points="19,6 28,11.5 28,20.5 19,26 10,20.5 10,11.5"
-        fill="url(#sl_grad2)" opacity="0.11"/>
-      {/* Bolt */}
-      <path d="M22 5 L16 17 L20.5 17 L16 30 L27 15 L21.5 15 Z"
-        fill="url(#sl_grad2)" filter="url(#sl_glow2)"/>
-      {/* "Voltaris" */}
-      <text x="42" y="23" fontFamily="system-ui,-apple-system,sans-serif"
-        fontSize="16" fontWeight="800" fill="var(--text)" letterSpacing="-0.4">
-        Voltaris
-      </text>
-      {/* "OS" accent */}
-      <text x="136" y="23" fontFamily="system-ui,-apple-system,sans-serif"
-        fontSize="16" fontWeight="800" fill="url(#sl_grad2)" letterSpacing="-0.4">
-        OS
-      </text>
-    </svg>
+    <img src={logoSidebar} alt="VoltarisOS" style={{ height: "32px", objectFit: "contain", maxWidth: "160px" }} />
   )
 }
 

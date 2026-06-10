@@ -3,45 +3,12 @@ import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
 import { LANGUAGES } from "../i18n/translations"
 import axios from "axios"
+import logoFull from "../logo_full.png"
 
 function FloatingParticle({ style }) {
   return <div style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", ...style }} />
 }
 
-// Inline SVG logo — animated hex + lightning + wordmark
-function VoltarisLogo({ height = 42 }) {
-  return (
-    <svg height={height} viewBox="0 0 180 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="lg_login" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f59e0b"/>
-          <stop offset="100%" stopColor="#f97316"/>
-        </linearGradient>
-        <filter id="lg_glow">
-          <feGaussianBlur stdDeviation="1.5" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
-      {/* Hexagon */}
-      <polygon points="22,2 36,10 36,26 22,34 8,26 8,10"
-        fill="none" stroke="url(#lg_login)" strokeWidth="2"/>
-      <polygon points="22,6 32,12 32,24 22,30 12,24 12,12"
-        fill="url(#lg_login)" opacity="0.12"/>
-      {/* Lightning bolt */}
-      <path d="M25 8 L18 20 L23 20 L19 34 L28 18 L22.5 18 Z"
-        fill="url(#lg_login)" filter="url(#lg_glow)"/>
-      {/* Wordmark */}
-      <text x="46" y="26" fontFamily="system-ui,-apple-system,sans-serif"
-        fontSize="18" fontWeight="800" fill="#f1f5f9" letterSpacing="-0.5">
-        Voltaris
-      </text>
-      <text x="146" y="26" fontFamily="system-ui,-apple-system,sans-serif"
-        fontSize="18" fontWeight="800" fill="url(#lg_login)" letterSpacing="-0.5">
-        OS
-      </text>
-    </svg>
-  )
-}
 
 function LangSwitcher() {
   const { lang } = useTranslation()
@@ -225,14 +192,8 @@ export default function Login({ onLogin }) {
           display: "flex", flexDirection: "column", alignItems: "center",
           borderBottom: "1px solid rgba(255,255,255,0.08)",
         }}>
-          <div style={{
-            padding: "14px 28px",
-            background: "rgba(245,158,11,0.05)",
-            border: "1px solid rgba(245,158,11,0.15)",
-            borderRadius: "16px",
-            marginBottom: "20px",
-          }}>
-            <VoltarisLogo height={42} />
+          <div style={{ marginBottom: "20px" }}>
+            <img src={logoFull} alt="VoltarisOS" style={{ height: "56px", objectFit: "contain" }} />
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "4px" }}>
             <div style={{
