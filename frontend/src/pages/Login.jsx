@@ -189,14 +189,14 @@ export default function Login({ onLogin }) {
                   🔑 Código Beta
                 </label>
                 <input
-                  placeholder="VOLTARIS2026"
+                  placeholder="Código de acesso"
                   value={form.beta_code}
                   onChange={e => setForm({ ...form, beta_code: e.target.value.toUpperCase() })}
                   onFocus={() => setFocused("beta_code")}
                   onBlur={() => setFocused(null)}
                   style={{ ...inputStyle(focused === "beta_code"), fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase" }}
                 />
-                <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>Pede o código ao Francisco para aceder gratuitamente na fase beta.</div>
+                <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>Acesso apenas por convite.</div>
               </div>
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", textTransform: "uppercase" }}>
