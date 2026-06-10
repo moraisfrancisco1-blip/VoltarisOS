@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "../i18n/useTranslation"
+import { useAppStore } from "../store/appStore"
+import { LANGUAGES } from "../i18n/translations"
 import axios from "axios"
 
 function FloatingParticle({ style }) {
@@ -38,6 +40,83 @@ function VoltarisLogo({ height = 42 }) {
         OS
       </text>
     </svg>
+  )
+}
+
+function LangSwitcher() {
+  const { lang } = useTranslation()
+  const setLanguage = useAppStore(s => s.setLanguage)
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [])
+
+  const current = LANGUAGES[lang] || LANGUAGES["pt"]
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          display: "flex", alignItems: "center", gap: "6px",
+          background: "rgba(255,255,255,0.05)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "8px", padding: "6px 10px",
+          cursor: "pointer", color: "rgba(255,255,255,0.7)",
+          fontSize: "13px", fontWeight: "600",
+          transition: "all 0.15s",
+        }}
+        onMouseEnter={e => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
+        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+      >
+        <span style={{ fontSize: "16px" }}>{current.flag}</span>
+        <span>{current.code.toUpperCase()}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 6px)", right: 0,
+          background: "#0f1a2e", border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "10px", overflow: "hidden",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          zIndex: 100, minWidth: "150px",
+        }}>
+          {Object.values(LANGUAGES).map(l => (
+            <button
+              key={l.code}
+              onClick={() => { setLanguage(l.code); setOpen(false) }}
+              style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                width: "100%", padding: "10px 14px",
+                background: l.code === lang ? "rgba(245,158,11,0.1)" : "transparent",
+                border: "none", cursor: "pointer",
+                color: l.code === lang ? "#f59e0b" : "rgba(255,255,255,0.7)",
+                fontSize: "13px", fontWeight: l.code === lang ? "700" : "400",
+                textAlign: "left", transition: "background 0.15s",
+              }}
+              onMouseEnter={e => { if (l.code !== lang) e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
+              onMouseLeave={e => { if (l.code !== lang) e.currentTarget.style.background = "transparent" }}
+            >
+              <span style={{ fontSize: "18px" }}>{l.flag}</span>
+              <span>{l.label}</span>
+              {l.code === lang && (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3" style={{ marginLeft: "auto" }}>
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -155,11 +234,14 @@ export default function Login({ onLogin }) {
           }}>
             <VoltarisLogo height={42} />
           </div>
-          <div style={{
-            color: "rgba(255,255,255,0.85)", fontSize: "20px",
-            fontWeight: "700", marginBottom: "6px", letterSpacing: "-0.3px",
-          }}>
-            {mode === "login" ? t("auth_welcome_back") : t("auth_create_account")}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "4px" }}>
+            <div style={{
+              color: "rgba(255,255,255,0.85)", fontSize: "20px",
+              fontWeight: "700", letterSpacing: "-0.3px",
+            }}>
+              {mode === "login" ? t("auth_welcome_back") : t("auth_create_account")}
+            </div>
+            <LangSwitcher />
           </div>
           <div style={{ color: "var(--sub)", fontSize: "13px" }}>
             {mode === "login" ? t("auth_subtitle_login") : t("auth_setup_ws")}
