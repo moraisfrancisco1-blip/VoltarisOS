@@ -762,7 +762,7 @@ export default function Settings() {
                 <p style={{ fontSize: 13, color: SUB }}>Unlimited sites · AI trading · White-label · Priority support</p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: accent }}>€1,200</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: accent }}>€3,999</div>
                 <div style={{ fontSize: 12, color: SUB }}>/month</div>
               </div>
             </div>

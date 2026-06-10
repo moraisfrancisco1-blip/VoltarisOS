@@ -18,10 +18,10 @@ const PAGE_TITLE_KEYS = {
 const BILLING_URL = "https://se303bch6c5bf4hrjpjkj-preview-4200.runable.site"
 
 const PLANS = [
-  { id: "home",       name: "Home",       price: "€49",   period: "/mo",  desc: "1 site · up to 50 kWh",  color: "#10b981" },
-  { id: "starter",    name: "Starter",    price: "€299",  period: "/mo",  desc: "5 sites · up to 500 kWh", color: "#6366f1" },
-  { id: "pro",        name: "Pro",        price: "€899",  period: "/mo",  desc: "20 sites · advanced AI",  color: "#f59e0b" },
-  { id: "enterprise", name: "Enterprise", price: "€2 499", period: "/mo", desc: "Unlimited · white-label",  color: "#ec4899" },
+  { id: "home",       name: "Home",       price: "€69",    period: "/mo",  desc: "1 site · up to 50 kWh",  color: "#10b981", badge: null },
+  { id: "starter",    name: "Starter",    price: "€279",   period: "/mo",  desc: "5 sites · up to 500 kWh", color: "#6366f1", badge: "Most Popular" },
+  { id: "pro",        name: "Pro",        price: "€1 099", period: "/mo",  desc: "20 sites · advanced AI",  color: "#f59e0b", badge: "Best Value" },
+  { id: "enterprise", name: "Enterprise", price: "€3 999", period: "/mo",  desc: "Unlimited · white-label", color: "#ec4899", badge: null },
 ]
 
 export default function TopBar({ page, user, isMobile, onMenuToggle }) {
@@ -289,10 +289,17 @@ export default function TopBar({ page, user, isMobile, onMenuToggle }) {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                   <span style={{ fontSize: "14px", fontWeight: 700, color: plan.color }}>{plan.name}</span>
-                  <span style={{
-                    fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
-                    color: plan.color, background: `${plan.color}20`, padding: "2px 8px", borderRadius: "20px",
-                  }}>Select</span>
+                  {plan.badge ? (
+                    <span style={{
+                      fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
+                      color: "#fff", background: plan.color, padding: "2px 8px", borderRadius: "20px",
+                    }}>{plan.badge}</span>
+                  ) : (
+                    <span style={{
+                      fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
+                      color: plan.color, background: `${plan.color}20`, padding: "2px 8px", borderRadius: "20px",
+                    }}>Select</span>
+                  )}
                 </div>
                 <div style={{ marginBottom: "6px" }}>
                   <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--text)" }}>{plan.price}</span>
