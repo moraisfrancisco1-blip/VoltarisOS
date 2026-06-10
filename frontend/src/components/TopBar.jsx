@@ -15,13 +15,14 @@ const PAGE_TITLE_KEYS = {
   whitelabel: "page_whitelabel", audit: "page_audit", apikeys: "page_apikeys", export: "page_export",
 }
 
-const BILLING_URL = "https://se303bch6c5bf4hrjpjkj-preview-4200.runable.site"
+const BILLING_URL = "mailto:francisco@voltarisos.com?subject=VoltarisOS%20Plan%20Upgrade"
 
 const PLANS = [
-  { id: "home",       name: "Home",       price: "€69",    period: "/mo",  desc: "1 site · up to 50 kWh",  color: "#10b981", badge: null },
-  { id: "starter",    name: "Starter",    price: "€279",   period: "/mo",  desc: "5 sites · up to 500 kWh", color: "#6366f1", badge: "Most Popular" },
-  { id: "pro",        name: "Pro",        price: "€1 099", period: "/mo",  desc: "20 sites · advanced AI",  color: "#f59e0b", badge: "Best Value" },
-  { id: "enterprise", name: "Enterprise", price: "€3 999", period: "/mo",  desc: "Unlimited · white-label", color: "#ec4899", badge: null },
+  { id: "beta",       name: "Beta",       price: "Grátis", period: "",      desc: "Acesso antecipado · código beta necessário", color: "#4ade80", badge: "Beta Tester" },
+  { id: "home",       name: "Home",       price: "€69",    period: "/mo",   desc: "1 site · até 50 kWh",    color: "#10b981", badge: null },
+  { id: "starter",    name: "Starter",    price: "€279",   period: "/mo",   desc: "5 sites · até 500 kWh",  color: "#6366f1", badge: "Mais Popular" },
+  { id: "pro",        name: "Pro",        price: "€1 099", period: "/mo",   desc: "20 sites · AI avançada", color: "#f59e0b", badge: "Melhor Valor" },
+  { id: "enterprise", name: "Enterprise", price: "€3 999", period: "/mo",   desc: "Ilimitado · white-label", color: "#ec4899", badge: null },
 ]
 
 export default function TopBar({ page, user, isMobile, onMenuToggle }) {
@@ -255,14 +256,14 @@ export default function TopBar({ page, user, isMobile, onMenuToggle }) {
           transform: "translate(-50%, -50%)",
           background: "var(--surface)", border: "1px solid var(--border)",
           borderRadius: "16px", padding: "32px", zIndex: 1001,
-          width: "min(96vw, 680px)",
+          width: "min(96vw, 760px)",
           boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
         }}>
           {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
             <div>
               <h2 style={{ color: "var(--text)", margin: 0, fontSize: "20px", fontWeight: 700 }}>Choose your plan</h2>
-              <p style={{ color: "var(--sub)", margin: "4px 0 0", fontSize: "13px" }}>Upgrade or downgrade at any time. Billed monthly.</p>
+              <p style={{ color: "var(--sub)", margin: "4px 0 0", fontSize: "13px" }}>Plano beta gratuito disponível com código de acesso.</p>
             </div>
             <button
               onClick={() => setPlanOpen(false)}
@@ -271,7 +272,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle }) {
           </div>
 
           {/* Plans grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginBottom: "20px" }}>
             {PLANS.map(plan => (
               <a
                 key={plan.id}

@@ -21,7 +21,7 @@ COPY optimization/ ./optimization/
 COPY simulation/ ./simulation/
 COPY trading/ ./trading/
 COPY sites.json ./
-COPY users.json ./
+# users.json removed — users now stored in SQLite (energy.db via SQLAlchemy)
 
 # Copy built frontend
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist

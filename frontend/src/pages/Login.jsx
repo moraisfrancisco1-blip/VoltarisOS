@@ -44,7 +44,7 @@ function VoltarisLogo({ height = 42 }) {
 export default function Login({ onLogin }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState("login")
-  const [form, setForm] = useState({ email: "", password: "", company: "", color: "#4ade80" })
+  const [form, setForm] = useState({ email: "", password: "", company: "", color: "#4ade80", beta_code: "" })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -64,7 +64,13 @@ export default function Login({ onLogin }) {
         localStorage.setItem("color", res.data.color)
         onLogin(res.data)
       } else {
-        await axios.post("/api/auth/register", form)
+        await axios.post("/api/auth/register", {
+          email: form.email,
+          password: form.password,
+          company: form.company,
+          color: form.color,
+          beta_code: form.beta_code,
+        })
         setMode("login")
         setError(t("auth_account_created"))
       }
@@ -177,6 +183,20 @@ export default function Login({ onLogin }) {
                   onBlur={() => setFocused(null)}
                   style={inputStyle(focused === "company")}
                 />
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ color: "#4ade80", fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+                  🔑 Código Beta
+                </label>
+                <input
+                  placeholder="VOLTARIS2026"
+                  value={form.beta_code}
+                  onChange={e => setForm({ ...form, beta_code: e.target.value.toUpperCase() })}
+                  onFocus={() => setFocused("beta_code")}
+                  onBlur={() => setFocused(null)}
+                  style={{ ...inputStyle(focused === "beta_code"), fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase" }}
+                />
+                <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>Pede o código ao Francisco para aceder gratuitamente na fase beta.</div>
               </div>
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", textTransform: "uppercase" }}>
