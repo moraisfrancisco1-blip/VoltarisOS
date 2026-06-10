@@ -6,9 +6,15 @@ import logoIcon from "../logo_icon.png"
 
 function VoltarisLogo({ collapsed }) {
   return collapsed ? (
-    <img src={logoIcon} alt="V" style={{ width: "34px", height: "34px", objectFit: "contain" }} />
+    <img src={logoIcon} alt="V" style={{
+      width: "34px", height: "34px", objectFit: "contain",
+      filter: "drop-shadow(0 0 6px rgba(245,158,11,0.9)) drop-shadow(0 0 12px rgba(245,158,11,0.5)) brightness(1.3)",
+    }} />
   ) : (
-    <img src={logoSidebar} alt="VoltarisOS" style={{ height: "32px", objectFit: "contain", maxWidth: "160px" }} />
+    <img src={logoSidebar} alt="VoltarisOS" style={{
+      height: "32px", objectFit: "contain", maxWidth: "160px",
+      filter: "drop-shadow(0 0 8px rgba(245,158,11,0.8)) drop-shadow(0 0 16px rgba(245,158,11,0.4)) brightness(1.25)",
+    }} />
   )
 }
 
