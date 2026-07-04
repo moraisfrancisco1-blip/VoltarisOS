@@ -4,17 +4,15 @@ Users stored in SQLite (energy.db) via SQLAlchemy — persistent across deploys.
 """
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from jose import jwt, JWTError
+from jose import jwt
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-import hashlib, os
+from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin
+import os
 
 router = APIRouter()
-
-SECRET_KEY = os.environ.get("SECRET_KEY", "voltarisos-secret-2026-production")
-ALGORITHM  = "HS256"
 
 # ─── DB dependency ────────────────────────────────────────────────────────────
 def get_db():
@@ -39,9 +37,6 @@ class RegisterRequest(BaseModel):
 BETA_CODE = os.environ.get("BETA_CODE", "VOLTARIS2026")
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
-def hash_pw(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
 def create_token(data: dict) -> str:
     payload = data.copy()
     payload["exp"] = datetime.utcnow() + timedelta(hours=72)
@@ -103,10 +98,14 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     seed_admin(db)
     user = db.query(models.User).filter(models.User.email == req.email).first()
-    if not user or user.password_hash != hash_pw(req.password):
+    if not user or not verify_pw(req.password, user.password_hash):
         raise HTTPException(401, "Credenciais inválidas")
     if not user.active:
         raise HTTPException(403, "Conta desativada")
+
+    # Transparently upgrade legacy sha256 hashes to bcrypt on successful login
+    if not (user.password_hash.startswith("$2b$") or user.password_hash.startswith("$2a$")):
+        user.password_hash = hash_pw(req.password)
 
     # Update last_login
     user.last_login = datetime.utcnow()
@@ -130,7 +129,7 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/auth/users")
-def list_users(db: Session = Depends(get_db)):
+def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
     """Admin endpoint — list all users (no sensitive data)."""
     users = db.query(models.User).all()
     return [
@@ -149,7 +148,7 @@ def list_users(db: Session = Depends(get_db)):
 
 
 @router.delete("/auth/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Utilizador não encontrado")

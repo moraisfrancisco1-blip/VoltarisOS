@@ -23,38 +23,52 @@ from backend.routers.devices import router as devices_router
 from backend.routers.vpp import router as vpp_router
 from backend.routers.reports import router as reports_router
 from backend.routers.alerts_ws import router as alerts_ws_router
+from backend.security import get_current_user
+from fastapi import Depends
 import os
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Allowed origins — production Railway domain + local dev. No wildcard with credentials.
+ALLOWED_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        "CORS_ORIGINS",
+        "https://voltarisos-production.up.railway.app,http://localhost:5173,http://localhost:3000"
+    ).split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(optimization_router)
-app.include_router(trading_router)
-app.include_router(forecast_router)
-app.include_router(copilot_router)
-app.include_router(trading_agent_router)
-app.include_router(carbon_router)
-app.include_router(maintenance_router)
-app.include_router(devices_router)
-app.include_router(prices.router, prefix="/api")
-app.include_router(sites.router, prefix="/api")
-app.include_router(auth.router, prefix="/api")
-app.include_router(vpp_router)
-app.include_router(reports_router)
-app.include_router(alerts_ws_router)
+# All data/business routers require a valid JWT — only /health, /api/auth/login and
+# /api/auth/register (defined inside auth.router without this dependency) stay public.
+_auth_dep = [Depends(get_current_user)]
+
+app.include_router(optimization_router, dependencies=_auth_dep)
+app.include_router(trading_router, dependencies=_auth_dep)
+app.include_router(forecast_router, dependencies=_auth_dep)
+app.include_router(copilot_router, dependencies=_auth_dep)
+app.include_router(trading_agent_router, dependencies=_auth_dep)
+app.include_router(carbon_router, dependencies=_auth_dep)
+app.include_router(maintenance_router, dependencies=_auth_dep)
+app.include_router(devices_router, dependencies=_auth_dep)
+app.include_router(prices.router, prefix="/api", dependencies=_auth_dep)
+app.include_router(sites.router, prefix="/api", dependencies=_auth_dep)
+app.include_router(auth.router, prefix="/api")  # login/register must stay public; /users routes self-protect
+app.include_router(vpp_router, dependencies=_auth_dep)
+app.include_router(reports_router, dependencies=_auth_dep)
+app.include_router(alerts_ws_router)  # websocket does its own token check on connect
 
 
 @app.get("/ai_decision")
-def ai_decision(price: float, battery: float):
+def ai_decision(price: float, battery: float, _user: dict = Depends(get_current_user)):
     decision = optimize_energy(price, battery)
     return {"decision": decision}
 
@@ -83,7 +97,7 @@ else:
 
 
 @app.get("/simulation")
-def simulation():
+def simulation(_user: dict = Depends(get_current_user)):
     result = run_simulation()
     return {
         "solar": result["solar"],

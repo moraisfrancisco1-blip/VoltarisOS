@@ -16,6 +16,7 @@ import asyncio, json
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
+from backend.security import get_current_user
 
 router = APIRouter()
 
@@ -154,8 +155,8 @@ def _tenant_from_token(token: str) -> str:
     if token == "demo":
         return "1"
     try:
-        from jose import jwt
-        data = jwt.decode(token, "voltarisos-secret-2026", algorithms=["HS256"])
+        from backend.security import decode_token
+        data = decode_token(token)
         return str(data.get("tenant_id", 1))
     except Exception:
         return "1"
@@ -168,6 +169,7 @@ def list_alerts(
     unacked_only: bool = Query(default=False),
     limit: int = Query(default=50),
     db: Session = Depends(get_db),
+    _user: dict = Depends(get_current_user),
 ):
     q = db.query(models.Alert).filter(models.Alert.tenant_id == tenant_id)
     if unacked_only:
@@ -176,7 +178,7 @@ def list_alerts(
 
 
 @router.post("/api/alerts/{alert_id}/ack")
-def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get_db)):
+def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
     a = db.query(models.Alert).filter(models.Alert.id == alert_id).first()
     if not a:
         raise HTTPException(404, "Alert not found")
@@ -222,12 +224,12 @@ async def fire_alert(body: FireAlertRequest, db: Session = Depends(get_db)):
 
 # ─── REST: Alert Rules ────────────────────────────────────────────────────────
 @router.get("/api/alert-rules", response_model=List[AlertRuleOut])
-def list_rules(tenant_id: int = Query(default=1), db: Session = Depends(get_db)):
+def list_rules(tenant_id: int = Query(default=1), db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
     return db.query(models.AlertRule).filter(models.AlertRule.tenant_id == tenant_id).all()
 
 
 @router.post("/api/alert-rules", response_model=AlertRuleOut, status_code=201)
-def create_rule(body: AlertRuleCreate, tenant_id: int = Query(default=1), db: Session = Depends(get_db)):
+def create_rule(body: AlertRuleCreate, tenant_id: int = Query(default=1), db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
     rule = models.AlertRule(tenant_id=tenant_id, **body.dict())
     db.add(rule)
     db.commit()
@@ -236,7 +238,7 @@ def create_rule(body: AlertRuleCreate, tenant_id: int = Query(default=1), db: Se
 
 
 @router.delete("/api/alert-rules/{rule_id}", status_code=204)
-def delete_rule(rule_id: int, db: Session = Depends(get_db)):
+def delete_rule(rule_id: int, db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
     rule = db.query(models.AlertRule).filter(models.AlertRule.id == rule_id).first()
     if not rule:
         raise HTTPException(404)
