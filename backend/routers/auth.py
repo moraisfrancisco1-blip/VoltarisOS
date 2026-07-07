@@ -39,6 +39,15 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
+ALLOWED_INVITE_ROLES = ("operator", "viewer", "investor")  # "admin"/"superadmin" can never be granted via this endpoint
+
+class InviteUserRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+    role: str = "operator"
+    color: str = "#4ade80"
+
 BETA_CODE = os.environ.get("BETA_CODE", "VOLTARIS2026")
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -150,6 +159,35 @@ def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), c
     return {"message": "Password alterada com sucesso"}
 
 
+@router.post("/auth/invite")
+def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: dict = Depends(require_admin)):
+    """Admin-only: create a teammate account directly (no beta code needed).
+    Role is restricted to operator/viewer/investor — admin/superadmin can NEVER be
+    granted through this endpoint, only via seed_admin() on first boot."""
+    role = req.role if req.role in ALLOWED_INVITE_ROLES else "operator"
+
+    if db.query(models.User).filter(models.User.email == req.email).first():
+        raise HTTPException(400, "Email já registado")
+    if len(req.password) < 8:
+        raise HTTPException(400, "A password deve ter pelo menos 8 caracteres")
+
+    inviting_admin = db.query(models.User).filter(models.User.email == admin.get("sub")).first()
+    tenant_id = inviting_admin.tenant_id if inviting_admin else 1
+
+    user = models.User(
+        tenant_id=tenant_id,
+        email=req.email,
+        password_hash=hash_pw(req.password),
+        name=req.name,
+        role=role,
+        color=req.color,
+        active=True,
+    )
+    db.add(user)
+    db.commit()
+    return {"message": "Utilizador convidado com sucesso", "role": role}
+
+
 @router.get("/auth/users")
 def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
     """Admin endpoint — list all users (no sensitive data)."""
@@ -169,11 +207,26 @@ def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_adm
     ]
 
 
+@router.patch("/auth/users/{user_id}/toggle-active")
+def toggle_active(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin)):
+    """Admin-only: enable/disable a user account. Cannot deactivate the superadmin account."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(404, "Utilizador não encontrado")
+    if user.role == "superadmin":
+        raise HTTPException(403, "Não é possível desativar a conta superadmin")
+    user.active = not user.active
+    db.commit()
+    return {"id": user.id, "active": user.active}
+
+
 @router.delete("/auth/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(404, "Utilizador não encontrado")
+    if user.role == "superadmin":
+        raise HTTPException(403, "Não é possível remover a conta superadmin")
     db.delete(user)
     db.commit()
     return {"message": "Utilizador removido"}

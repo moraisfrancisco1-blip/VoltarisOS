@@ -1,88 +1,137 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 const accent = "#6366f1";
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 24 };
 
 const roleColors = {
+  superadmin: { bg: "#3730a3", text: "#a5b4fc" },
   admin: { bg: "#3730a3", text: "#a5b4fc" },
   operator: { bg: "#1e3a5f", text: "#60a5fa" },
   viewer: { bg: "#1f2937", text: "#9ca3af" },
   investor: { bg: "#064e3b", text: "#10b981" },
 };
 
-const mockUsers = [
-  { id: 1, name: "Francisco Morais", email: "admin@voltaris.com", role: "admin", site: "All Sites", status: "Active", lastLogin: "2 min ago", avatar: "FM" },
-  { id: 2, name: "Ana Silva", email: "ana@voltaris.com", role: "operator", site: "Rotterdam", status: "Active", lastLogin: "1h ago", avatar: "AS" },
-  { id: 3, name: "João Santos", email: "joao@voltaris.com", role: "operator", site: "Rebordelo", status: "Active", lastLogin: "3h ago", avatar: "JS" },
-  { id: 4, name: "Emma Müller", email: "emma@investor.com", role: "investor", site: "Read-only", status: "Active", lastLogin: "Yesterday", avatar: "EM" },
-  { id: 5, name: "Carlos Rivera", email: "carlos@voltaris.com", role: "viewer", site: "All Sites", status: "Inactive", lastLogin: "2 weeks ago", avatar: "CR" },
-];
+function timeAgo(iso) {
+  if (!iso) return "Nunca";
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Agora mesmo";
+  if (mins < 60) return `${mins} min atrás`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h atrás`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d atrás`;
+}
+
+function initials(name, email) {
+  const src = (name || email || "?").trim();
+  const parts = src.split(" ").filter(Boolean);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return src.slice(0, 2).toUpperCase();
+}
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ name: "", email: "", role: "operator", site: "All Sites" });
+  const [inviteForm, setInviteForm] = useState({ name: "", email: "", password: "", role: "operator" });
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [inviteError, setInviteError] = useState("");
   const [search, setSearch] = useState("");
 
+  const loadUsers = async () => {
+    setLoading(true);
+    setErrorMsg("");
+    try {
+      const res = await axios.get("/api/auth/users");
+      setUsers(res.data || []);
+    } catch (e) {
+      if (e.response?.status === 403) {
+        setErrorMsg("Só administradores podem ver a lista de utilizadores.");
+      } else {
+        setErrorMsg("Não foi possível carregar os utilizadores.");
+      }
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadUsers(); }, []);
+
   const filtered = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+    (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const handleInvite = async () => {
-    if (!inviteForm.email || !inviteForm.name) return;
+    if (!inviteForm.email || !inviteForm.name || !inviteForm.password) return;
     setInviteLoading(true);
+    setInviteError("");
     try {
-      // Attempt real API call
-      await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: inviteForm.email, password: "voltaris2025!", username: inviteForm.name }),
+      await axios.post("/api/auth/invite", {
+        email: inviteForm.email,
+        password: inviteForm.password,
+        name: inviteForm.name,
+        role: inviteForm.role,
       });
-    } catch (_) {}
-    await new Promise(r => setTimeout(r, 600));
-    setUsers(prev => [...prev, {
-      id: prev.length + 1,
-      name: inviteForm.name,
-      email: inviteForm.email,
-      role: inviteForm.role,
-      site: inviteForm.site,
-      status: "Invited",
-      lastLogin: "Never",
-      avatar: inviteForm.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2),
-    }]);
-    setInviteForm({ name: "", email: "", role: "operator", site: "All Sites" });
-    setInviteLoading(false);
-    setInviteSuccess(true);
-    setTimeout(() => { setInviteSuccess(false); setShowInvite(false); }, 2000);
+      setInviteForm({ name: "", email: "", password: "", role: "operator" });
+      setInviteSuccess(true);
+      await loadUsers();
+      setTimeout(() => { setInviteSuccess(false); setShowInvite(false); }, 1600);
+    } catch (e) {
+      setInviteError(e.response?.data?.detail || "Erro ao convidar utilizador");
+    } finally {
+      setInviteLoading(false);
+    }
   };
 
-  const removeUser = id => setUsers(u => u.filter(x => x.id !== id));
-  const toggleStatus = id => setUsers(u => u.map(x => x.id === id
-    ? { ...x, status: x.status === "Active" ? "Inactive" : "Active" } : x));
+  const removeUser = async (id) => {
+    if (!window.confirm("Remover este utilizador definitivamente?")) return;
+    try {
+      await axios.delete(`/api/auth/users/${id}`);
+      setUsers(u => u.filter(x => x.id !== id));
+    } catch (e) {
+      alert(e.response?.data?.detail || "Erro ao remover utilizador");
+    }
+  };
+
+  const toggleStatus = async (id) => {
+    try {
+      const res = await axios.patch(`/api/auth/users/${id}/toggle-active`);
+      setUsers(u => u.map(x => x.id === id ? { ...x, active: res.data.active } : x));
+    } catch (e) {
+      alert(e.response?.data?.detail || "Erro ao alterar estado");
+    }
+  };
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>User Management</h1>
-          <p style={{ color: "rgba(148,163,184,0.85)" }}>Manage team access, roles, and site permissions</p>
+          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Gestão de Utilizadores</h1>
+          <p style={{ color: "rgba(148,163,184,0.85)" }}>Equipa real ligada à base de dados — sem dados de exemplo.</p>
         </div>
-        <button onClick={() => setShowInvite(!showInvite)} style={{
+        <button onClick={() => { setShowInvite(!showInvite); setInviteError(""); }} style={{
           background: accent, color: "#fff", border: "none",
           borderRadius: 8, padding: "10px 20px", cursor: "pointer", fontSize: 14, fontWeight: 500,
-        }}>+ Invite User</button>
+        }}>+ Convidar Utilizador</button>
       </div>
+
+      {errorMsg && (
+        <div style={{ ...card, marginBottom: 20, border: "1px solid #7f1d1d", color: "#f87171" }}>{errorMsg}</div>
+      )}
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 28 }}>
         {[
-          { label: "Total Users", value: users.length },
-          { label: "Active", value: users.filter(u => u.status === "Active").length, color: "#10b981" },
-          { label: "Admins", value: users.filter(u => u.role === "admin").length, color: accent },
-          { label: "Operators", value: users.filter(u => u.role === "operator").length, color: "#60a5fa" },
+          { label: "Total de Utilizadores", value: users.length },
+          { label: "Ativos", value: users.filter(u => u.active).length, color: "#10b981" },
+          { label: "Admins", value: users.filter(u => u.role === "admin" || u.role === "superadmin").length, color: accent },
+          { label: "Operadores", value: users.filter(u => u.role === "operator").length, color: "#60a5fa" },
         ].map(k => (
           <div key={k.label} style={card}>
             <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
@@ -94,53 +143,50 @@ export default function UserManagement() {
       {/* Invite form */}
       {showInvite && (
         <div style={{ ...card, marginBottom: 24, border: `1px solid ${accent}` }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Invite New User</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
-            {[
-              { label: "Full Name", key: "name", type: "text", placeholder: "e.g. Maria Kovacs" },
-              { label: "Email", key: "email", type: "email", placeholder: "user@company.com" },
-            ].map(f => (
-              <div key={f.key}>
-                <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>{f.label}</label>
-                <input type={f.type} placeholder={f.placeholder} value={inviteForm[f.key]}
-                  onChange={e => setInviteForm(p => ({ ...p, [f.key]: e.target.value }))}
-                  style={{
-                    background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
-                    padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box",
-                  }} />
-              </div>
-            ))}
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Convidar Novo Utilizador</h2>
+          <p style={{ fontSize: 12, color: "rgba(148,163,184,0.7)", marginBottom: 16 }}>
+            Por segurança, o role "Admin" não pode ser atribuído aqui — apenas o superadmin original tem esse acesso.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 8 }}>
+            <div>
+              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Nome Completo</label>
+              <input type="text" placeholder="ex: Maria Kovacs" value={inviteForm.name}
+                onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))}
+                style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Email</label>
+              <input type="email" placeholder="user@empresa.com" value={inviteForm.email}
+                onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))}
+                style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Password Inicial</label>
+              <input type="text" placeholder="mín. 8 caracteres" value={inviteForm.password}
+                onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))}
+                style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
+            </div>
             <div>
               <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Role</label>
               <select value={inviteForm.role} onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))}
                 style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
-                <option value="admin">Admin</option>
                 <option value="operator">Operator</option>
                 <option value="investor">Investor</option>
                 <option value="viewer">Viewer</option>
               </select>
             </div>
-            <div>
-              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Site Access</label>
-              <select value={inviteForm.site} onChange={e => setInviteForm(p => ({ ...p, site: e.target.value }))}
-                style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
-                <option>All Sites</option>
-                <option>Rotterdam</option>
-                <option>Rebordelo</option>
-                <option>Read-only</option>
-              </select>
-            </div>
           </div>
+          {inviteError && <div style={{ color: "#f87171", fontSize: 12, marginBottom: 12 }}>{inviteError}</div>}
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={handleInvite} disabled={inviteLoading} style={{
               background: inviteSuccess ? "#064e3b" : accent, color: inviteSuccess ? "#10b981" : "#fff",
               border: "none", borderRadius: 8, padding: "9px 24px", cursor: "pointer", fontSize: 13,
             }}>
-              {inviteLoading ? "Sending..." : inviteSuccess ? "Invited!" : "Send Invite"}
+              {inviteLoading ? "A enviar..." : inviteSuccess ? "Convidado!" : "Enviar Convite"}
             </button>
             <button onClick={() => setShowInvite(false)} style={{
               background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontSize: 13,
-            }}>Cancel</button>
+            }}>Cancelar</button>
           </div>
         </div>
       )}
@@ -148,8 +194,8 @@ export default function UserManagement() {
       {/* Search + table */}
       <div style={card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600 }}>Team Members</h2>
-          <input placeholder="Search by name or email..." value={search}
+          <h2 style={{ fontSize: 16, fontWeight: 600 }}>Membros da Equipa</h2>
+          <input placeholder="Procurar por nome ou email..." value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
               background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8,
@@ -157,10 +203,13 @@ export default function UserManagement() {
             }} />
         </div>
 
+        {loading ? (
+          <div style={{ padding: 24, textAlign: "center", color: "rgba(148,163,184,0.7)" }}>A carregar...</div>
+        ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ color: "rgba(148,163,184,0.85)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-              {["User", "Role", "Site Access", "Status", "Last Login", ""].map(h => (
+              {["Utilizador", "Role", "Estado", "Último Login", ""].map(h => (
                 <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
               ))}
             </tr>
@@ -168,6 +217,7 @@ export default function UserManagement() {
           <tbody>
             {filtered.map(u => {
               const rc = roleColors[u.role] || roleColors.viewer;
+              const isSuperadmin = u.role === "superadmin";
               return (
                 <tr key={u.id} style={{ borderBottom: "1px solid #0d1117" }}>
                   <td style={{ padding: "12px 12px" }}>
@@ -176,9 +226,9 @@ export default function UserManagement() {
                         width: 34, height: 34, borderRadius: "50%", background: accent + "33",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 12, fontWeight: 700, color: accent, flexShrink: 0,
-                      }}>{u.avatar}</div>
+                      }}>{initials(u.name, u.email)}</div>
                       <div>
-                        <div style={{ fontWeight: 500 }}>{u.name}</div>
+                        <div style={{ fontWeight: 500 }}>{u.name || "—"}</div>
                         <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{u.email}</div>
                       </div>
                     </div>
@@ -188,45 +238,50 @@ export default function UserManagement() {
                       {u.role}
                     </span>
                   </td>
-                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.85)" }}>{u.site}</td>
                   <td style={{ padding: "12px" }}>
                     <span style={{
                       fontSize: 12, padding: "3px 10px", borderRadius: 99,
-                      background: u.status === "Active" ? "#064e3b" : u.status === "Invited" ? "#1e3a5f" : "#1f2937",
-                      color: u.status === "Active" ? "#10b981" : u.status === "Invited" ? "#60a5fa" : "#6b7280",
-                    }}>{u.status}</span>
+                      background: u.active ? "#064e3b" : "#1f2937",
+                      color: u.active ? "#10b981" : "#6b7280",
+                    }}>{u.active ? "Ativo" : "Inativo"}</span>
                   </td>
-                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.85)" }}>{u.lastLogin}</td>
+                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.85)" }}>{timeAgo(u.last_login)}</td>
                   <td style={{ padding: "12px" }}>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button onClick={() => toggleStatus(u.id)} style={{
-                        background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none",
-                        borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11,
-                      }}>{u.status === "Active" ? "Disable" : "Enable"}</button>
-                      {u.id !== 1 && (
+                    {isSuperadmin ? (
+                      <span style={{ fontSize: 11, color: "rgba(148,163,184,0.5)" }}>Conta protegida</span>
+                    ) : (
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => toggleStatus(u.id)} style={{
+                          background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none",
+                          borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11,
+                        }}>{u.active ? "Desativar" : "Ativar"}</button>
                         <button onClick={() => removeUser(u.id)} style={{
                           background: "#7f1d1d", color: "#ef4444", border: "none",
                           borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11,
-                        }}>Remove</button>
-                      )}
-                    </div>
+                        }}>Remover</button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               );
             })}
+            {filtered.length === 0 && !loading && (
+              <tr><td colSpan={5} style={{ padding: 24, textAlign: "center", color: "rgba(148,163,184,0.6)" }}>Nenhum utilizador encontrado</td></tr>
+            )}
           </tbody>
         </table>
+        )}
       </div>
 
       {/* Role reference */}
       <div style={{ ...card, marginTop: 20 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Role Permissions Reference</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12 }}>Referência de Permissões</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
           {[
-            { role: "admin", label: "Admin", perms: ["Full access", "User management", "Settings", "API keys"] },
-            { role: "operator", label: "Operator", perms: ["View + control", "Trading", "Grid services", "Alerts"] },
-            { role: "investor", label: "Investor", perms: ["Read-only", "Financials", "Reports", "No control"] },
-            { role: "viewer", label: "Viewer", perms: ["Read-only", "Dashboard", "Basic metrics", "No actions"] },
+            { role: "superadmin", label: "Superadmin", perms: ["Acesso total", "Único, não atribuível", "Gestão de utilizadores", "Toda a configuração"] },
+            { role: "operator", label: "Operator", perms: ["Ver + controlar", "Trading", "Serviços de rede", "Alertas"] },
+            { role: "investor", label: "Investor", perms: ["Só leitura", "Financeiro", "Relatórios", "Sem controlo"] },
+            { role: "viewer", label: "Viewer", perms: ["Só leitura", "Dashboard", "Métricas básicas", "Sem ações"] },
           ].map(r => {
             const rc = roleColors[r.role];
             return (
