@@ -16,7 +16,7 @@ import asyncio, json
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import get_current_user
+from backend.security import get_current_user, require_gateway_key
 
 router = APIRouter()
 
@@ -110,13 +110,16 @@ class FireAlertRequest(BaseModel):
 
 # ─── WebSocket endpoint ──────────────────────────────────────────────────────
 @router.websocket("/ws/alerts")
-async def alerts_ws(ws: WebSocket, token: str = Query(default="demo")):
+async def alerts_ws(ws: WebSocket, token: str = Query(default="")):
     """
     Connect: ws://host/ws/alerts?token=<jwt>
-    For demo: token=demo → tenant_id=1
+    A valid JWT (same one used for the REST API) is required — connection is
+    rejected before accept() if the token is missing or invalid.
     """
-    # Decode tenant from token (simplified — production would verify JWT)
     tenant_id = _tenant_from_token(token)
+    if tenant_id is None:
+        await ws.close(code=4401)  # custom close code: unauthorized
+        return
     await manager.connect(ws, tenant_id)
     try:
         # Send last 10 unacknowledged alerts on connect
@@ -151,15 +154,16 @@ async def alerts_ws(ws: WebSocket, token: str = Query(default="demo")):
         manager.disconnect(ws, tenant_id)
 
 
-def _tenant_from_token(token: str) -> str:
-    if token == "demo":
-        return "1"
+def _tenant_from_token(token: str):
+    """Returns the tenant_id string for a valid JWT, or None if the token is missing/invalid."""
+    if not token:
+        return None
     try:
         from backend.security import decode_token
         data = decode_token(token)
         return str(data.get("tenant_id", 1))
     except Exception:
-        return "1"
+        return None
 
 
 # ─── REST: Alerts ─────────────────────────────────────────────────────────────
@@ -190,8 +194,9 @@ def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get
 
 
 @router.post("/api/alerts/fire")
-async def fire_alert(body: FireAlertRequest, db: Session = Depends(get_db)):
-    """Called by gateway or rules engine to fire an alert."""
+async def fire_alert(body: FireAlertRequest, db: Session = Depends(get_db), _svc: None = Depends(require_gateway_key)):
+    """Called by the device gateway / rules engine (service-to-service), not by a logged-in user.
+    Protected by GATEWAY_API_KEY, separate from user JWTs."""
     alert = models.Alert(
         tenant_id=body.tenant_id,
         device_id=body.device_id,

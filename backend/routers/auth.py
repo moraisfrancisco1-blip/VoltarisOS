@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin
+from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, limiter
+from fastapi import Request
 import os
 
 router = APIRouter()
@@ -33,6 +34,10 @@ class RegisterRequest(BaseModel):
     company: str
     color: str = "#4ade80"
     beta_code: str = ""        # optional beta invite code
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 BETA_CODE = os.environ.get("BETA_CODE", "VOLTARIS2026")
 
@@ -70,7 +75,8 @@ def seed_admin(db: Session):
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 @router.post("/auth/register")
-def register(req: RegisterRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
     # Beta gate — require code unless admin
     code_ok = (req.beta_code.upper() == BETA_CODE)
     if not code_ok:
@@ -95,7 +101,8 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/auth/login")
-def login(req: LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     seed_admin(db)
     user = db.query(models.User).filter(models.User.email == req.email).first()
     if not user or not verify_pw(req.password, user.password_hash):
@@ -126,6 +133,21 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role,
         "email": user.email,
     }
+
+
+@router.post("/auth/change-password")
+def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
+    """Any logged-in user can change their own password."""
+    user = db.query(models.User).filter(models.User.email == current.get("sub")).first()
+    if not user:
+        raise HTTPException(404, "Utilizador não encontrado")
+    if not verify_pw(req.current_password, user.password_hash):
+        raise HTTPException(401, "Password atual incorreta")
+    if len(req.new_password) < 8:
+        raise HTTPException(400, "A nova password deve ter pelo menos 8 caracteres")
+    user.password_hash = hash_pw(req.new_password)
+    db.commit()
+    return {"message": "Password alterada com sucesso"}
 
 
 @router.get("/auth/users")

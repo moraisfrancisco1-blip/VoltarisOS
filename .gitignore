@@ -1,5 +1,7 @@
 node_modules
 .env
+.env.*
 energy.db
+task.md
 __pycache__/
 *.pyc

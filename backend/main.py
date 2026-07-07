@@ -23,13 +23,19 @@ from backend.routers.devices import router as devices_router
 from backend.routers.vpp import router as vpp_router
 from backend.routers.reports import router as reports_router
 from backend.routers.alerts_ws import router as alerts_ws_router
-from backend.security import get_current_user
-from fastapi import Depends
+from backend.security import get_current_user, limiter
+from fastapi import Depends, Request
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import os
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Rate limiting — protects /api/auth/login and /api/auth/register from brute-force/spam
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Allowed origins — production Railway domain + local dev. No wildcard with credentials.
 ALLOWED_ORIGINS = [

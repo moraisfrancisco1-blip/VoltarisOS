@@ -110,7 +110,8 @@ function AppShell({ user, onLogout }) {
     const host  = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
       ? `${window.location.hostname}:8000`
       : window.location.host
-    const url = `${proto}//${host}/ws/alerts?token=demo`
+    const authToken = localStorage.getItem("token") || ""
+    const url = `${proto}//${host}/ws/alerts?token=${encodeURIComponent(authToken)}`
     let ws, reconnectTimer
     const connect = () => {
       try {

@@ -11,11 +11,17 @@ import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "voltarisos-secret-2026-production")
 ALGORITHM = "HS256"
 
 _bearer = HTTPBearer(auto_error=False)
+
+# Shared limiter instance — must be the SAME object used in app.state.limiter (main.py)
+# and in @limiter.limit(...) decorators across routers, otherwise slowapi can't track state.
+limiter = Limiter(key_func=get_remote_address)
 
 
 # ─── Password hashing (bcrypt directly — no passlib, avoids version conflicts) ─
@@ -59,3 +65,19 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict:
     if user.get("role") not in ("superadmin", "admin"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito a administradores")
     return user
+
+
+# ─── Service-to-service auth (gateway/rules engine, not a logged-in user) ────
+GATEWAY_API_KEY = os.environ.get("GATEWAY_API_KEY", "")
+
+_gateway_bearer = HTTPBearer(auto_error=False)
+
+
+async def require_gateway_key(creds: HTTPAuthorizationCredentials = Depends(_gateway_bearer)) -> None:
+    """Protects endpoints called by internal services (e.g. device gateway firing alerts),
+    not by logged-in users. Requires GATEWAY_API_KEY env var to be set in production."""
+    if not GATEWAY_API_KEY:
+        # No key configured — fail closed in any environment that isn't local dev.
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gateway auth not configured")
+    if creds is None or creds.credentials != GATEWAY_API_KEY:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chave de serviço inválida")

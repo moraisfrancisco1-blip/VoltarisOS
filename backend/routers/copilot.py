@@ -97,32 +97,34 @@ def get_openai_response(message: str, context: dict) -> str:
             temperature=0.7,
         )
         
-        return response.choices[0].message.content
-    
+        return response.choices[0].message.content, False
+
     except Exception as e:
-        # Fallback to static responses if API fails
-        return get_fallback_response(message, str(e))
+        # Fallback to static responses if API fails — caller must disclose this to the user
+        return get_fallback_response(message, str(e)), True
 
 
 def get_fallback_response(message: str, error: str = "") -> str:
     """Fallback responses when OpenAI is unavailable."""
     msg = message.lower()
     
+    _SIM = "⚠️ *Dados simulados (VoltarisAI indisponível de momento)* — "
+
     RESPONSES = {
         "receita": [
-            "Com base nos dados atuais, a receita de hoje está em **€382** — acima da média semanal em 8.4%. O pico de preço às 18h deverá gerar mais **€45-60** se a bateria descarregar como planeado.",
+            _SIM + "Com base num exemplo, a receita de hoje está em **€382** — acima da média semanal em 8.4%. O pico de preço às 18h deverá gerar mais **€45-60** se a bateria descarregar como planeado.",
         ],
         "bateria": [
-            "Rotterdam está a **78% SoC** — boa posição para o pico das 18h. Rebordelo: 45%. Recomendo manter Rebordelo acima de 20% — previsão de baixa irradiância amanhã.",
+            _SIM + "Rotterdam está a **78% SoC** — boa posição para o pico das 18h. Rebordelo: 45%. Recomendo manter Rebordelo acima de 20% — previsão de baixa irradiância amanhã.",
         ],
         "trading": [
-            "Preço day-ahead pico: **€127/MWh** às 18:00. Estratégia: carregar 02:00-05:00 (€38/MWh), descarregar no pico. Margem estimada: **€89/MWh**.",
+            _SIM + "Preço day-ahead pico: **€127/MWh** às 18:00. Estratégia: carregar 02:00-05:00 (€38/MWh), descarregar no pico. Margem estimada: **€89/MWh**.",
         ],
         "solar": [
-            "Produção solar hoje: **1,847 kWh**. Rotterdam: 156 kW ativos. Irradiância: 612 W/m². Performance ratio: 91%.",
+            _SIM + "Produção solar hoje: **1,847 kWh**. Rotterdam: 156 kW ativos. Irradiância: 612 W/m². Performance ratio: 91%.",
         ],
         "default": [
-            f"⚠️ VoltarisAI temporariamente indisponível. A operar em modo fallback. Tenho acesso a dados básicos: 2 sites ativos, 4.8 MWh capacidade, sistema operacional a 94% eficiência.",
+            "⚠️ **Dados simulados** — VoltarisAI (GPT-4o) está temporariamente indisponível. Isto é uma resposta de exemplo, não reflete os dados reais da tua conta.",
         ]
     }
     
@@ -141,13 +143,14 @@ def get_fallback_response(message: str, error: str = "") -> str:
 @router.post("/api/copilot")
 def copilot(req: CopilotRequest):
     start = datetime.datetime.utcnow()
-    response = get_openai_response(req.message, req.context)
+    response, simulated = get_openai_response(req.message, req.context)
     elapsed_ms = int((datetime.datetime.utcnow() - start).total_seconds() * 1000)
-    
+
     return {
         "response": response,
+        "simulated": simulated,  # true when GPT-4o was unavailable and this is a canned fallback
         "timestamp": datetime.datetime.utcnow().isoformat(),
-        "model": "gpt-4o",
+        "model": "gpt-4o" if not simulated else "fallback",
         "tokens": len(response.split()) * 2,  # rough estimate
         "latency_ms": elapsed_ms,
     }
