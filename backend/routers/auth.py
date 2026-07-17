@@ -35,12 +35,14 @@ class RegisterRequest(BaseModel):
     color: str = "#4ade80"
     beta_code: str = ""        # optional beta invite code
     terms_accepted: bool = False   # digital acceptance of Terms of Use / no-reverse-engineering clause
+    role: str = "operator"     # self-selected account type — validated against ALLOWED_REGISTER_ROLES below
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
 
 ALLOWED_INVITE_ROLES = ("operator", "viewer", "investor")  # "admin"/"superadmin" can never be granted via this endpoint
+ALLOWED_REGISTER_ROLES = ("operator", "viewer", "investor")  # self-registration — same restriction as invite
 
 class InviteUserRequest(BaseModel):
     email: str
@@ -99,13 +101,15 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     if db.query(models.User).filter(models.User.email == req.email).first():
         raise HTTPException(400, "Email já registado")
 
+    role = req.role if req.role in ALLOWED_REGISTER_ROLES else "operator"
+
     tenant = get_or_create_tenant(db, req.company, plan="beta")
     user = models.User(
         tenant_id=tenant.id,
         email=req.email,
         password_hash=hash_pw(req.password),
         name=req.company,
-        role="operator",
+        role=role,
         color=req.color,
         active=True,
         terms_accepted_at=datetime.utcnow(),

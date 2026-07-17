@@ -46,6 +46,7 @@ import ShortcutsOverlay from "./components/ShortcutsOverlay"
 import SimBanner from "./components/SimBanner"
 import OnboardingWizard from "./components/OnboardingWizard"
 import { useAppStore, THEMES } from "./store/appStore"
+import { canAccessPage } from "./config/roleAccess"
 import "./index.css"
 
 const PAGES = {
@@ -140,9 +141,16 @@ function AppShell({ user, onLogout }) {
   }, [addToast])
 
   const handleSetPage = (p) => {
+    if (!canAccessPage(user?.role, p)) return
     setPage(p)
     if (isMobile) setMobileOpen(false)
   }
+
+  // Guard against direct/stale navigation to a page the current role can't access
+  // (e.g. role changed, or page was set before this guard existed).
+  useEffect(() => {
+    if (!canAccessPage(user?.role, page)) setPage("dashboard")
+  }, [user?.role, page])
 
   useEffect(() => {
     if (!isMobile) setMobileOpen(false)

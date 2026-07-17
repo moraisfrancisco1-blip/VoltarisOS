@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
 import { LANGUAGES } from "../i18n/translations"
+import { SELF_REGISTER_ROLES } from "../config/roleAccess"
 import axios from "axios"
 import logoFull from "../logo_full.png"
 
@@ -139,7 +140,7 @@ function LangSwitcher() {
 export default function Login({ onLogin }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState("login")
-  const [form, setForm] = useState({ email: "", password: "", company: "", color: "#4ade80", beta_code: "" })
+  const [form, setForm] = useState({ email: "", password: "", company: "", color: "#4ade80", beta_code: "", role: "operator" })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -173,6 +174,7 @@ export default function Login({ onLogin }) {
           color: form.color,
           beta_code: form.beta_code,
           terms_accepted: termsAccepted,
+          role: form.role,
         })
         setMode("login")
         setError(t("auth_account_created"))
@@ -297,6 +299,22 @@ export default function Login({ onLogin }) {
                   style={{ ...inputStyle(focused === "beta_code"), fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase" }}
                 />
                 <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>Acesso apenas por convite.</div>
+              </div>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+                  {t("auth_account_type") || "Tipo de Conta"}
+                </label>
+                <select
+                  value={form.role}
+                  onChange={e => setForm({ ...form, role: e.target.value })}
+                  onFocus={() => setFocused("role")}
+                  onBlur={() => setFocused(null)}
+                  style={{ ...inputStyle(focused === "role"), cursor: "pointer" }}
+                >
+                  {SELF_REGISTER_ROLES.map(r => (
+                    <option key={r.value} value={r.value}>{t(r.labelKey) || r.value}</option>
+                  ))}
+                </select>
               </div>
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", textTransform: "uppercase" }}>

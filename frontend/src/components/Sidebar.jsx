@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
+import { canAccessPage, isAdminRole } from "../config/roleAccess"
 import logoSidebar from "../logo_sidebar.png"
 import logoIcon from "../logo_icon.png"
 
@@ -92,6 +93,17 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
       ]
     }
   ]
+
+  // Filter nav groups by role: admin group is admin/superadmin only; other
+  // groups/items are filtered against ROLE_PAGE_ACCESS. Empty groups are dropped.
+  const role = user?.role || "operator"
+  const VISIBLE_NAV_GROUPS = NAV_GROUPS
+    .filter(group => group.labelKey !== "nav_admin" || isAdminRole(role))
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => canAccessPage(role, item.id)),
+    }))
+    .filter(group => group.items.length > 0)
 
   // Collapsed is irrelevant on mobile (always show full sidebar)
   const showCollapsed = isMobile ? false : collapsed
@@ -194,7 +206,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: "8px 0", overflowY: "auto", overflowX: "hidden" }}>
-        {NAV_GROUPS.map((group, gi) => (
+        {VISIBLE_NAV_GROUPS.map((group, gi) => (
           <div key={gi} style={{ marginBottom: "4px" }}>
             {!showCollapsed && (
               <div style={{

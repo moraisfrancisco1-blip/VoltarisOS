@@ -67,6 +67,20 @@ async def require_admin(user: dict = Depends(get_current_user)) -> dict:
     return user
 
 
+def require_role(*allowed_roles: str):
+    """Factory for a FastAPI dependency restricting an endpoint to specific roles.
+    superadmin/admin always pass regardless of the list (they retain full access).
+    Usage: Depends(require_role("operator", "admin"))"""
+    async def _dep(user: dict = Depends(get_current_user)) -> dict:
+        role = user.get("role")
+        if role in ("superadmin", "admin"):
+            return user
+        if role not in allowed_roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso não permitido para este tipo de conta")
+        return user
+    return _dep
+
+
 # ─── Service-to-service auth (gateway/rules engine, not a logged-in user) ────
 GATEWAY_API_KEY = os.environ.get("GATEWAY_API_KEY", "")
 
