@@ -9,6 +9,55 @@ function FloatingParticle({ style }) {
   return <div style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", ...style }} />
 }
 
+// ─── Terms of Use modal ────────────────────────────────────────────────────
+// Condensed from legal/LICENSE.md — full ownership + no-reverse-engineering
+// clause. Beta testers must tick "read & accept" before an account is created;
+// backend also rejects registration without terms_accepted=true and stamps
+// terms_accepted_at on the user record server-side.
+function TermsModal({ onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: "rgba(5,10,20,0.75)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: "24px",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: "560px", maxWidth: "92vw", maxHeight: "80vh", overflowY: "auto",
+          background: "#0a0f1a", border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: "16px", padding: "28px 30px", color: "rgba(255,255,255,0.85)",
+        }}
+      >
+        <h3 style={{ margin: "0 0 14px", fontSize: "16px", color: "#f59e0b" }}>Termos de Uso — VoltarisOS</h3>
+        <div style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.7)" }}>
+          <p>Ao criar conta e utilizar o VoltarisOS ("Software") aceita, de forma vinculativa, que:</p>
+          <ul style={{ paddingLeft: "18px" }}>
+            <li>O Software, incluindo código-fonte, algoritmos, interfaces e documentação, é propriedade exclusiva de VoltarisOS e protegido por direitos de autor (Diretiva 2009/24/CE, Convenção de Berna, TRIPS).</li>
+            <li>É <strong>expressamente proibido</strong>: copiar, distribuir, modificar, fazer engenharia reversa, descompilar, desmontar ou tentar extrair a lógica/algoritmos do Software.</li>
+            <li>O Software contém segredos comerciais confidenciais — não pode divulgar, partilhar ou reutilizar essa informação para fins não autorizados, mesmo tendo acesso legítimo em fase de teste (beta).</li>
+            <li>O acesso concedido durante o período beta é revogável a qualquer momento e não confere qualquer direito de propriedade ou licença permanente.</li>
+            <li>Qualquer violação destes termos pode resultar em revogação imediata de acesso e responsabilização civil.</li>
+          </ul>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "12px" }}>Texto integral: Licença de Software Proprietário VoltarisOS (documento legal completo disponível mediante pedido).</p>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: "18px", width: "100%", padding: "11px",
+            background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+            border: "none", borderRadius: "10px", color: "#0a0f1a",
+            fontWeight: "700", fontSize: "13px", cursor: "pointer",
+          }}
+        >Fechar</button>
+      </div>
+    </div>
+  )
+}
+
 
 function LangSwitcher() {
   const { lang } = useTranslation()
@@ -96,6 +145,8 @@ export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(null)
   const [mounted, setMounted] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [showTerms, setShowTerms] = useState(false)
 
   useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
 
@@ -110,12 +161,18 @@ export default function Login({ onLogin }) {
         localStorage.setItem("color", res.data.color)
         onLogin(res.data)
       } else {
+        if (!termsAccepted) {
+          setError("Tens de aceitar os Termos de Uso para criar conta.")
+          setLoading(false)
+          return
+        }
         await axios.post("/api/auth/register", {
           email: form.email,
           password: form.password,
           company: form.company,
           color: form.color,
           beta_code: form.beta_code,
+          terms_accepted: termsAccepted,
         })
         setMode("login")
         setError(t("auth_account_created"))
@@ -350,19 +407,46 @@ export default function Login({ onLogin }) {
             }}>{error}</div>
           )}
 
+          {/* Terms acceptance (register only) */}
+          {mode === "register" && (
+            <label style={{
+              display: "flex", alignItems: "flex-start", gap: "10px",
+              marginBottom: "18px", cursor: "pointer", fontSize: "12.5px",
+              color: "rgba(255,255,255,0.65)", lineHeight: 1.5,
+            }}>
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={e => setTermsAccepted(e.target.checked)}
+                style={{ marginTop: "2px", accentColor: "#f59e0b", width: "15px", height: "15px", flexShrink: 0, cursor: "pointer" }}
+              />
+              <span>
+                Li e aceito os{" "}
+                <button
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); setShowTerms(true) }}
+                  style={{ background: "none", border: "none", padding: 0, color: "#f59e0b", textDecoration: "underline", cursor: "pointer", fontSize: "inherit" }}
+                >Termos de Uso</button>
+                {" "}e reconheço que é proibida a engenharia reversa ou cópia do Software.
+              </span>
+            </label>
+          )}
+
+          {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
+
           {/* Submit */}
           <button
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || (mode === "register" && !termsAccepted)}
             style={{
               width: "100%", padding: "14px",
-              background: loading
+              background: (loading || (mode === "register" && !termsAccepted))
                 ? "#1f2937"
                 : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
               border: "none", borderRadius: "12px",
-              color: loading ? "#4b5563" : "#0a0f1a",
+              color: (loading || (mode === "register" && !termsAccepted)) ? "#4b5563" : "#0a0f1a",
               fontWeight: "800", fontSize: "15px",
-              cursor: loading ? "not-allowed" : "pointer",
+              cursor: (loading || (mode === "register" && !termsAccepted)) ? "not-allowed" : "pointer",
               marginBottom: "20px",
               boxShadow: loading ? "none" : "0 4px 24px rgba(245,158,11,0.3)",
               transition: "all 0.2s",

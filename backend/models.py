@@ -32,6 +32,7 @@ class User(Base):
     active = Column(Boolean, default=True)
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    terms_accepted_at = Column(DateTime, nullable=True)   # digital acceptance of Terms of Use / EULA
 
 
 # ─── Devices / Readings ────────────────────────────────────────────────────────

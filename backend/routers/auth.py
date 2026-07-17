@@ -34,6 +34,7 @@ class RegisterRequest(BaseModel):
     company: str
     color: str = "#4ade80"
     beta_code: str = ""        # optional beta invite code
+    terms_accepted: bool = False   # digital acceptance of Terms of Use / no-reverse-engineering clause
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
@@ -91,6 +92,9 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     if not code_ok:
         raise HTTPException(400, f"Código beta inválido. Pede o código ao Francisco.")
 
+    if not req.terms_accepted:
+        raise HTTPException(400, "É necessário aceitar os Termos de Uso para criar conta.")
+
     if db.query(models.User).filter(models.User.email == req.email).first():
         raise HTTPException(400, "Email já registado")
 
@@ -103,6 +107,7 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
         role="operator",
         color=req.color,
         active=True,
+        terms_accepted_at=datetime.utcnow(),
     )
     db.add(user)
     db.commit()

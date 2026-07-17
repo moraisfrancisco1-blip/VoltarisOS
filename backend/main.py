@@ -31,6 +31,22 @@ import os
 
 models.Base.metadata.create_all(bind=engine)
 
+# Lightweight migration: add columns introduced after the table already existed
+# in production. create_all() only creates missing tables, never alters existing
+# ones, so new nullable columns need an explicit ALTER TABLE (safe/idempotent,
+# works on both SQLite and Postgres).
+def _migrate_add_missing_columns():
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    if "users" not in inspector.get_table_names():
+        return
+    existing = {c["name"] for c in inspector.get_columns("users")}
+    if "terms_accepted_at" not in existing:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN terms_accepted_at TIMESTAMP"))
+
+_migrate_add_missing_columns()
+
 app = FastAPI()
 
 # Rate limiting — protects /api/auth/login and /api/auth/register from brute-force/spam
