@@ -6,7 +6,7 @@ from xml.etree import ElementTree as ET
 
 router = APIRouter()
 
-ENTSOE_TOKEN = "ebdcc2e4-482b-4e28-9ec7-67097b3875d6"
+ENTSOE_TOKEN = os.environ.get("ENTSOE_TOKEN", "PENDING")
 NL_ZONE = "10YNL----------L"
 PT_ZONE = "10YPT-REN------W"
 

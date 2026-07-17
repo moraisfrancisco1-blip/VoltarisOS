@@ -31,30 +31,27 @@ function syntheticPrices() {
 }
 
 // ── Arbitrage signal calculator ───────────────────────────────────────────────
-function calcSignals(prices, bessKwh = 500, efficiency = 0.92) {
+// The actual scoring/dispatch logic now lives server-side (backend/routers/
+// trading_api.py -> /api/arbitrage-signals). Keeping proprietary thresholds
+// out of the shipped JS bundle. This calls the API; on failure it falls back
+// to a trivial "hold everything" state (no real logic exposed client-side).
+async function calcSignals(prices, bessKwh = 500, efficiency = 0.92) {
   if (!prices.length) return []
-  const vals = prices.map(p => p.price)
-  const avg  = vals.reduce((a, b) => a + b, 0) / vals.length
-  const min3 = [...vals].sort((a, b) => a - b).slice(0, 3)
-  const max3  = [...vals].sort((a, b) => b - a).slice(0, 3)
-
-  return prices.map(p => {
-    let action = "hold"
-    let score  = 50
-    if (min3.includes(p.price) && p.price < avg * 0.75) { action = "charge"; score = 90 + Math.random() * 9 }
-    else if (max3.includes(p.price) && p.price > avg * 1.25) { action = "discharge"; score = 88 + Math.random() * 11 }
-    else if (p.price < avg * 0.9) { action = "charge"; score = 60 + Math.random() * 15 }
-    else if (p.price > avg * 1.1) { action = "discharge"; score = 62 + Math.random() * 18 }
-
-    const spread = p.price - avg
-    const potential = action === "discharge"
-      ? (p.price * bessKwh * efficiency) / 1000
-      : action === "charge"
-        ? -(p.price * bessKwh) / 1000
-        : 0
-
-    return { ...p, action, score: Math.round(score), spread: Math.round(spread), potential: Math.round(potential) }
-  })
+  try {
+    const res = await fetch(`${API}/api/arbitrage-signals`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {}),
+      },
+      body: JSON.stringify({ prices, bess_kwh: bessKwh, efficiency }),
+    })
+    const data = await res.json()
+    if (data.signals) return data.signals
+    throw new Error("no signals")
+  } catch {
+    return prices.map(p => ({ ...p, action: "hold", score: 50, spread: 0, potential: 0 }))
+  }
 }
 
 // ── PnL history (30 days simulated based on realistic spreads) ────────────────
@@ -107,13 +104,13 @@ export default function EnergyArbitrage() {
       if (data.prices && data.prices.length > 0) {
         const mapped = data.prices.map(p => ({ h: p.hour, price: p.price, forecast: p.price * (0.97 + Math.random() * 0.06) }))
         setPrices(mapped)
-        setSignals(calcSignals(mapped, bessKwh))
+        setSignals(await calcSignals(mapped, bessKwh))
         setSource(data.source || "entsoe")
       } else { throw new Error("empty") }
     } catch {
       const synthetic = syntheticPrices()
       setPrices(synthetic)
-      setSignals(calcSignals(synthetic, bessKwh))
+      setSignals(await calcSignals(synthetic, bessKwh))
       setSource("synthetic")
     } finally { setLoading(false) }
   }, [zone, bessKwh])
