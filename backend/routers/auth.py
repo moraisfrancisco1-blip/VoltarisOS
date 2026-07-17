@@ -87,8 +87,9 @@ def seed_admin(db: Session):
 @router.post("/auth/register")
 @limiter.limit("5/minute")
 def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
-    # Beta gate — require code unless admin
-    code_ok = (req.beta_code.upper() == BETA_CODE)
+    # Beta gate — require code unless admin (case-insensitive on both sides —
+    # BETA_CODE in Railway may have mixed case, e.g. "Kiko2026")
+    code_ok = (req.beta_code.upper() == BETA_CODE.upper())
     if not code_ok:
         raise HTTPException(400, f"Código beta inválido. Pede o código ao Francisco.")
 
