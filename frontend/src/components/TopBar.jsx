@@ -289,7 +289,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
                 onMouseLeave={e => { e.currentTarget.style.borderColor = `${plan.color}44`; e.currentTarget.style.background = "var(--surface2)" }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "14px", fontWeight: 700, color: plan.color }}>{plan.name}</span>
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#1a1a1a" }}>{plan.name}</span>
                   {plan.badge ? (
                     <span style={{
                       fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
@@ -298,15 +298,16 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
                   ) : (
                     <span style={{
                       fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
-                      color: plan.color, background: `${plan.color}20`, padding: "2px 8px", borderRadius: "20px",
+                      color: "#1a1a1a", background: `${plan.color}25`, padding: "2px 8px", borderRadius: "20px",
+                      border: `1px solid ${plan.color}40`,
                     }}>Select</span>
                   )}
                 </div>
                 <div style={{ marginBottom: "6px" }}>
-                  <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--text)" }}>{plan.price}</span>
-                  <span style={{ fontSize: "12px", color: "var(--sub)", marginLeft: "2px" }}>{plan.period}</span>
+                  <span style={{ fontSize: "22px", fontWeight: 800, color: "#000" }}>{plan.price}</span>
+                  <span style={{ fontSize: "12px", color: "#4b5563", marginLeft: "2px" }}>{plan.period}</span>
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--sub)" }}>{plan.desc}</div>
+                <div style={{ fontSize: "12px", color: "#4b5563" }}>{plan.desc}</div>
               </a>
             ))}
           </div>
