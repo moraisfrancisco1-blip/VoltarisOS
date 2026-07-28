@@ -25,7 +25,7 @@ const PLANS = [
   { id: "enterprise", name: "Enterprise", price: "€3 999", period: "/mo",   desc: "Ilimitado · white-label", color: "#ec4899", badge: null },
 ]
 
-export default function TopBar({ page, user, isMobile, onMenuToggle }) {
+export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) {
   const { theme, setTheme, simMode, setSimMode, setCmdOpen, addToast, language, setLanguage, accentColor } = useAppStore()
   const { t } = useTranslation()
   const color = user?.color || accentColor || "#4ade80"
@@ -312,14 +312,34 @@ export default function TopBar({ page, user, isMobile, onMenuToggle }) {
           </div>
 
           {/* Footer */}
-          <div style={{ textAlign: "center" }}>
+          <div style={{ textAlign: "center", display: "flex", justifyContent: "center", gap: "16px" }}>
+            <button
+              onClick={() => {
+                setPlanOpen(false);
+                if (setPage) {
+                  setPage("settings");
+                  // Scroll to billing section after a short delay
+                  setTimeout(() => {
+                    const billingTab = document.querySelector('[data-billing-tab]');
+                    if (billingTab) billingTab.click();
+                  }, 100);
+                }
+              }}
+              style={{
+                background: "none", border: "none", color: color, fontSize: "12px",
+                textDecoration: "underline", cursor: "pointer", padding: 0,
+                fontWeight: "600",
+              }}
+            >
+              Manage billing & invoices →
+            </button>
             <a
               href={BILLING_URL}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "var(--sub)", fontSize: "12px", textDecoration: "underline" }}
             >
-              Manage billing &amp; invoices →
+              Contact support
             </a>
           </div>
         </div>

@@ -946,6 +946,7 @@ export default function Settings() {
 
       {/* ─── BILLING ─────────────────────────────────────────────────────────── */}
       {tab === "billing" && (
+        <div data-billing-section>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {/* Current plan */}
           <div style={{ ...card, background: `linear-gradient(135deg, ${accent}18, ${SURF})`, border: `1px solid ${accent}44` }}>
@@ -1048,6 +1049,7 @@ export default function Settings() {
               </table>
             </div>
           </div>
+        </div>
         </div>
       )}
 

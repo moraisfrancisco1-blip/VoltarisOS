@@ -236,6 +236,7 @@ function AppShell({ user, onLogout }) {
           user={user}
           isMobile={isMobile}
           onMenuToggle={() => setMobileOpen(o => !o)}
+          setPage={handleSetPage}
         />
         <main style={{ flex: 1, overflow: "auto" }}>
           <PageComponent user={user} setPage={handleSetPage} />
