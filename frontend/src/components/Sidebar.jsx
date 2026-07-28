@@ -130,11 +130,14 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
     display: "flex",
     flexDirection: "column",
     transition: "width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1)",
-    minHeight: "100vh",
+    height: "100vh",
     position: "sticky",
     top: 0,
-    overflow: "hidden",
+    overflowY: "auto",
+    overflowX: "hidden",
     zIndex: 100,
+    scrollbarWidth: "thin",
+    scrollbarColor: "rgba(255,255,255,0.15) transparent",
   }
 
   return (
