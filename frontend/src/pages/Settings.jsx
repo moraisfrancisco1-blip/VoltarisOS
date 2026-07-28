@@ -205,8 +205,25 @@ export default function Settings() {
   const [cardCVC, setCardCVC] = useState("");
   const [cardName, setCardName] = useState("");
   const [paymentSaved, setPaymentSaved] = useState(false);
+  const [planModal, setPlanModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState("enterprise");
+  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [planChanged, setPlanChanged] = useState(false);
 
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  const PLANS = [
+    { id: "starter", name: "Starter", monthly: 499, yearly: 4490, color: "#60a5fa",
+      features: ["Up to 3 sites", "5 BESS units", "Basic analytics", "Email support", "Standard dashboards", "CSV exports"],
+      limits: { sites: 3, bess: 5, users: 5, api: "10k/mo" } },
+    { id: "pro", name: "Pro", monthly: 1499, yearly: 13490, color: "#a78bfa",
+      features: ["Up to 10 sites", "25 BESS units", "AI trading engine", "Priority support", "Advanced analytics", "API access", "Custom alerts", "White-label (basic)"],
+      limits: { sites: 10, bess: 25, users: 15, api: "100k/mo" } },
+    { id: "enterprise", name: "Enterprise", monthly: 3999, yearly: 35990, color: accent,
+      features: ["Unlimited sites", "Unlimited BESS", "Full AI suite", "Dedicated support", "Custom integrations", "White-label (full)", "SLA guarantee", "On-premise option", "SSO/SAML", "Audit logs"],
+      limits: { sites: "∞", bess: "∞", users: "∞", api: "Unlimited" } },
+  ];
 
   const tabLabel = (id) => {
     const map = {
@@ -773,7 +790,7 @@ export default function Settings() {
               </div>
             </div>
             <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-              <Btn variant="outline" accent={accent} onClick={() => alert("Change Plan — feature coming soon")}>Change Plan</Btn>
+              <Btn variant="outline" accent={accent} onClick={() => setPlanModal(true)}>Change Plan</Btn>
               <Btn variant="secondary" accent={accent} onClick={() => alert("Download Contract — feature coming soon")}>Download Contract</Btn>
             </div>
           </div>
@@ -1082,6 +1099,179 @@ export default function Settings() {
                   <Btn onClick={() => setPaymentSaved(true)} accent={accent} style={{ flex: 1 }}>
                     {paymentModal === "update" ? "Update Card" : "Add Card"}
                   </Btn>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── PLAN SELECTION MODAL ───────────────────────────────────────────── */}
+      {planModal && (
+        <div style={{ position: "fixed", inset: 0, background: "#000000cc", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          onClick={() => { setPlanModal(false); setTermsAccepted(false); setPlanChanged(false); setBillingCycle("monthly"); }}>
+          <div style={{ background: SURF, border: `1px solid ${BORD}`, borderRadius: 20, padding: 0, width: 820, maxHeight: "92vh", overflow: "auto" }}
+            onClick={e => e.stopPropagation()}>
+
+            {planChanged ? (
+              <div style={{ textAlign: "center", padding: 48 }}>
+                <div style={{ fontSize: 64, marginBottom: 20 }}>🎉</div>
+                <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Plan Changed Successfully!</h2>
+                <p style={{ fontSize: 14, color: SUB, marginBottom: 8 }}>
+                  You are now on the <b style={{ color: PLANS.find(p => p.id === selectedPlan)?.color }}>{PLANS.find(p => p.id === selectedPlan)?.name}</b> plan.
+                </p>
+                <p style={{ fontSize: 13, color: SUB, marginBottom: 28 }}>
+                  {billingCycle === "monthly"
+                    ? `€${PLANS.find(p => p.id === selectedPlan)?.monthly.toLocaleString()}/month`
+                    : `€${PLANS.find(p => p.id === selectedPlan)?.yearly.toLocaleString()}/year (save ${Math.round((1 - PLANS.find(p => p.id === selectedPlan)?.yearly / (PLANS.find(p => p.id === selectedPlan)?.monthly * 12)) * 100)}%)`}
+                </p>
+                <Btn onClick={() => { setPlanModal(false); setTermsAccepted(false); setPlanChanged(false); setBillingCycle("monthly"); }} accent={accent}>Done</Btn>
+              </div>
+            ) : (
+              <>
+                {/* Header */}
+                <div style={{ padding: "28px 32px 0", borderBottom: "none" }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>Choose Your Plan</h2>
+                  <p style={{ fontSize: 13, color: SUB, marginBottom: 20 }}>Select the plan that best fits your energy portfolio needs.</p>
+
+                  {/* Billing cycle toggle */}
+                  <div style={{ display: "flex", justifyContent: "center", gap: 0, marginBottom: 24 }}>
+                    <button onClick={() => setBillingCycle("monthly")} style={{
+                      padding: "10px 28px", borderRadius: "10px 0 0 10px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      background: billingCycle === "monthly" ? accent : SURF2,
+                      color: billingCycle === "monthly" ? "#000" : SUB,
+                      border: `1px solid ${billingCycle === "monthly" ? accent : BORD}`,
+                      borderRight: "none", transition: "all 0.2s",
+                    }}>Monthly</button>
+                    <button onClick={() => setBillingCycle("yearly")} style={{
+                      padding: "10px 28px", borderRadius: "0 10px 10px 0", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                      background: billingCycle === "yearly" ? accent : SURF2,
+                      color: billingCycle === "yearly" ? "#000" : SUB,
+                      border: `1px solid ${billingCycle === "yearly" ? accent : BORD}`,
+                      transition: "all 0.2s", position: "relative",
+                    }}>Yearly <span style={{ fontSize: 10, color: billingCycle === "yearly" ? "#000" : "#10b981", fontWeight: 700, marginLeft: 4 }}>Save 25%</span></button>
+                  </div>
+                </div>
+
+                {/* Plan cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, padding: "0 32px" }}>
+                  {PLANS.map(plan => {
+                    const isSelected = selectedPlan === plan.id;
+                    const isCurrent = plan.id === "enterprise";
+                    const price = billingCycle === "monthly" ? plan.monthly : plan.yearly;
+                    const perMonth = billingCycle === "yearly" ? Math.round(plan.yearly / 12) : plan.monthly;
+                    return (
+                      <div key={plan.id} onClick={() => setSelectedPlan(plan.id)} style={{
+                        border: `2px solid ${isSelected ? plan.color : BORD}`,
+                        borderRadius: 16, padding: 0, cursor: "pointer",
+                        background: isSelected ? `${plan.color}08` : "transparent",
+                        transition: "all 0.2s", overflow: "hidden",
+                        boxShadow: isSelected ? `0 0 0 1px ${plan.color}40, 0 8px 32px ${plan.color}15` : "none",
+                        transform: isSelected ? "scale(1.02)" : "scale(1)",
+                      }}>
+                        {/* Plan header */}
+                        <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${BORD}` }}>
+                          {isCurrent && (
+                            <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 99, background: `${accent}20`, color: accent, fontWeight: 700, letterSpacing: 0.5, marginBottom: 8, display: "inline-block" }}>CURRENT PLAN</span>
+                          )}
+                          <div style={{ fontSize: 18, fontWeight: 800, color: plan.color, marginBottom: 4 }}>{plan.name}</div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
+                            <span style={{ fontSize: 28, fontWeight: 900, color: "#fff" }}>€{perMonth.toLocaleString()}</span>
+                            <span style={{ fontSize: 12, color: SUB }}>/month</span>
+                          </div>
+                          {billingCycle === "yearly" && (
+                            <div style={{ fontSize: 11, color: SUB }}>€{price.toLocaleString()} billed annually</div>
+                          )}
+                        </div>
+                        {/* Features */}
+                        <div style={{ padding: "16px 20px" }}>
+                          {plan.features.map(f => (
+                            <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: "#e2e8f0" }}>
+                              <span style={{ color: plan.color, fontSize: 12, fontWeight: 700 }}>✓</span> {f}
+                            </div>
+                          ))}
+                          {/* Limits */}
+                          <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORD}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                            {Object.entries(plan.limits).map(([key, val]) => (
+                              <div key={key} style={{ fontSize: 10, color: SUB }}>
+                                <span style={{ textTransform: "uppercase" }}>{key}</span>: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{val}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {/* Selected indicator */}
+                        {isSelected && (
+                          <div style={{ padding: "8px 20px", background: `${plan.color}15`, borderTop: `1px solid ${plan.color}30`, textAlign: "center" }}>
+                            <span style={{ fontSize: 11, color: plan.color, fontWeight: 700 }}>✓ Selected</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Order summary + Terms */}
+                <div style={{ padding: "24px 32px" }}>
+                  {/* Summary */}
+                  <div style={{ background: SURF2, borderRadius: 12, padding: 20, marginBottom: 20, border: `1px solid ${BORD}` }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, color: SUB }}>Plan</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: PLANS.find(p => p.id === selectedPlan)?.color }}>
+                        {PLANS.find(p => p.id === selectedPlan)?.name}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, color: SUB }}>Billing</span>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>
+                        {billingCycle === "monthly" ? "Monthly" : "Annual (25% off)"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 12, borderTop: `1px solid ${BORD}` }}>
+                      <span style={{ fontSize: 14, fontWeight: 700 }}>Total</span>
+                      <span style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>
+                        €{(billingCycle === "monthly" ? PLANS.find(p => p.id === selectedPlan)?.monthly : PLANS.find(p => p.id === selectedPlan)?.yearly).toLocaleString()}
+                        <span style={{ fontSize: 12, fontWeight: 400, color: SUB }}>{billingCycle === "monthly" ? "/mo" : "/yr"}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Terms agreement */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 20, padding: 16, background: SURF2, borderRadius: 10, border: `1px solid ${BORD}` }}>
+                    <div onClick={() => setTermsAccepted(!termsAccepted)} style={{
+                      width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
+                      background: termsAccepted ? accent : "transparent",
+                      border: `2px solid ${termsAccepted ? accent : "#4b5563"}`,
+                      cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "all 0.15s",
+                    }}>
+                      {termsAccepted && <span style={{ color: "#000", fontSize: 14, fontWeight: 900 }}>✓</span>}
+                    </div>
+                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(148,163,184,0.85)" }}>
+                      I agree to the <span style={{ color: accent, cursor: "pointer", textDecoration: "underline" }}>Terms of Service</span>,{" "}
+                      <span style={{ color: accent, cursor: "pointer", textDecoration: "underline" }}>Privacy Policy</span>, and{" "}
+                      <span style={{ color: accent, cursor: "pointer", textDecoration: "underline" }}>Service Level Agreement (SLA)</span>. I understand that:
+                      <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
+                        <li>Plan changes take effect immediately</li>
+                        <li>Annual plans are non-refundable after 14 days</li>
+                        <li>Usage exceeding plan limits may incur additional charges</li>
+                        <li>I can downgrade at any time (changes apply next billing cycle)</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{ display: "flex", gap: 12 }}>
+                    <Btn variant="secondary" accent={accent} onClick={() => { setPlanModal(false); setTermsAccepted(false); setBillingCycle("monthly"); }} style={{ flex: 1 }}>Cancel</Btn>
+                    <button disabled={!termsAccepted || selectedPlan === "enterprise"} onClick={() => setPlanChanged(true)} style={{
+                      flex: 2, padding: "12px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: termsAccepted && selectedPlan !== "enterprise" ? "pointer" : "not-allowed",
+                      background: termsAccepted && selectedPlan !== "enterprise" ? `linear-gradient(135deg, ${accent}, #4f46e5)` : "#374151",
+                      color: termsAccepted && selectedPlan !== "enterprise" ? "#fff" : "#6b7280",
+                      border: "none", transition: "all 0.2s",
+                      boxShadow: termsAccepted && selectedPlan !== "enterprise" ? `0 4px 20px ${accent}40` : "none",
+                    }}>
+                      {selectedPlan === "enterprise" ? "Current Plan" : `Change to ${PLANS.find(p => p.id === selectedPlan)?.name} — €${(billingCycle === "monthly" ? PLANS.find(p => p.id === selectedPlan)?.monthly : PLANS.find(p => p.id === selectedPlan)?.yearly).toLocaleString()}${billingCycle === "monthly" ? "/mo" : "/yr"}`}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
