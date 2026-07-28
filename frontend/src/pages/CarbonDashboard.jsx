@@ -249,7 +249,7 @@ export default function CarbonDashboard() {
               <div style={{ fontSize: 22, fontWeight: 900, color: C.green,
                 textShadow: `0 0 16px ${C.green}60` }}>€{metrics.creditValue.toLocaleString()}</div>
             </div>
-            <button style={{ padding: "7px 16px", background: `${C.green}18`, border: `1px solid ${C.green}40`,
+            <button onClick={() => alert("Export to Carbon Registry — feature coming soon")} style={{ padding: "7px 16px", background: `${C.green}18`, border: `1px solid ${C.green}40`,
               borderRadius: 10, color: C.green, fontSize: 12, cursor: "pointer", fontWeight: 700,
               boxShadow: `0 0 12px ${C.green}20` }}>Export to Registry</button>
           </div>

@@ -199,6 +199,12 @@ export default function Settings() {
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState(60);
   const [ipWhitelist, setIpWhitelist] = useState("91.122.45.0/24\n195.83.0.1");
+  const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCVC, setCardCVC] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [paymentSaved, setPaymentSaved] = useState(false);
 
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
@@ -248,7 +254,7 @@ export default function Settings() {
               <div>
                 <div style={{ fontWeight: 600 }}>Francisco Morais</div>
                 <div style={{ fontSize: 12, color: SUB }}>admin@voltaris.com</div>
-                <button style={{ fontSize: 11, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}>
+                <button onClick={() => alert("Change avatar — feature coming soon")} style={{ fontSize: 11, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}>
                   Change avatar
                 </button>
               </div>
@@ -293,7 +299,7 @@ export default function Settings() {
                     <div style={{ width: 28, height: 28, borderRadius: 6, background: "#1f2937", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: accent }}>{app.icon}</div>
                     <span>{app.name}</span>
                   </div>
-                  <button style={{ background: app.connected ? "#064e3b" : "#1e3a5f", color: app.connected ? "#10b981" : "#60a5fa", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
+                  <button onClick={() => alert(`${app.connected ? "Disconnect" : "Connect"} ${app.name} — feature coming soon`)} style={{ background: app.connected ? "#064e3b" : "#1e3a5f", color: app.connected ? "#10b981" : "#60a5fa", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
                     {app.connected ? "Connected" : "Connect"}
                   </button>
                 </div>
@@ -336,7 +342,7 @@ export default function Settings() {
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>White-label Branding</h2>
               <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Logo, colors, and OEM configuration are managed in the White-label section.</p>
-              <Btn variant="outline" accent={accent} onClick={() => {}}>Open White-label Settings</Btn>
+              <Btn variant="outline" accent={accent} onClick={() => alert("Open White-label Settings — feature coming soon")}>Open White-label Settings</Btn>
             </div>
           </div>
         </div>
@@ -645,7 +651,7 @@ export default function Settings() {
             <Toggle value={alertSettings.pushAlerts} onChange={v => setAlertSettings({ pushAlerts: v })} label="Push Notifications" desc="In-app and browser push" accent={accent} />
             <SectionTitle>Slack Integration</SectionTitle>
             <Input label="Slack Webhook URL" value={alertSettings.slackWebhook} onChange={v => setAlertSettings({ slackWebhook: v })} placeholder="https://hooks.slack.com/services/..." />
-            <Btn variant="secondary" accent={accent} onClick={() => {}}>Send Test Message</Btn>
+            <Btn variant="secondary" accent={accent} onClick={() => alert("Test Slack message sent successfully")}>Send Test Message</Btn>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={card}>
@@ -680,7 +686,7 @@ export default function Settings() {
                 <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>Scan this QR code with your authenticator app:</div>
                 <div style={{ width: 120, height: 120, background: "#1f2937", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: SUB, marginBottom: 12 }}>QR Code</div>
                 <Input label="Verification Code" placeholder="123456" />
-                <Btn onClick={() => {}} accent={accent}>Verify & Activate</Btn>
+                <Btn onClick={() => alert("2FA verification — feature coming soon")} accent={accent}>Verify & Activate</Btn>
               </div>
             )}
             <SectionTitle>Session</SectionTitle>
@@ -705,7 +711,7 @@ export default function Settings() {
                 </div>
                 {s.active
                   ? <span style={{ color: accent, fontSize: 11, fontWeight: 600 }}>Current</span>
-                  : <button style={{ background: "transparent", color: DANG, border: `1px solid ${DANG}33`, borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontSize: 11 }}>Revoke</button>}
+                  : <button onClick={() => alert(`Session revoked for ${s.device}`)} style={{ background: "transparent", color: DANG, border: `1px solid ${DANG}33`, borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontSize: 11 }}>Revoke</button>}
               </div>
             ))}
           </div>
@@ -742,8 +748,8 @@ export default function Settings() {
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: accent }}>Security Audit</h2>
               <p style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
               <div style={{ display: "flex", gap: 10 }}>
-                <Btn variant="outline" accent={accent} onClick={() => {}}>Run Scan</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => {}}>View Audit Log</Btn>
+                <Btn variant="outline" accent={accent} onClick={() => alert("Security scan initiated — results in ~2 minutes")}>Run Scan</Btn>
+                <Btn variant="secondary" accent={accent} onClick={() => alert("View Audit Log — feature coming soon")}>View Audit Log</Btn>
               </div>
             </div>
           </div>
@@ -767,8 +773,8 @@ export default function Settings() {
               </div>
             </div>
             <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-              <Btn variant="outline" accent={accent} onClick={() => {}}>Change Plan</Btn>
-              <Btn variant="secondary" accent={accent} onClick={() => {}}>Download Contract</Btn>
+              <Btn variant="outline" accent={accent} onClick={() => alert("Change Plan — feature coming soon")}>Change Plan</Btn>
+              <Btn variant="secondary" accent={accent} onClick={() => alert("Download Contract — feature coming soon")}>Download Contract</Btn>
             </div>
           </div>
 
@@ -806,8 +812,8 @@ export default function Settings() {
                 <div style={{ fontSize: 11, color: SUB }}>Expires 12/2027 · Francisco Morais</div>
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <Btn variant="secondary" accent={accent} onClick={() => {}}>Update Card</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => {}}>Add Method</Btn>
+                <Btn variant="secondary" accent={accent} onClick={() => setPaymentModal("update")}>Update Card</Btn>
+                <Btn variant="secondary" accent={accent} onClick={() => setPaymentModal("add")}>Add Method</Btn>
               </div>
             </div>
           </div>
@@ -840,7 +846,7 @@ export default function Settings() {
                         </span>
                       </td>
                       <td style={{ padding: "10px 12px" }}>
-                        <button style={{ background: "transparent", color: accent, border: "none", cursor: "pointer", fontSize: 12 }}>↓ PDF</button>
+                        <button onClick={() => alert(`Download ${inv.id} PDF — feature coming soon`)} style={{ background: "transparent", color: accent, border: "none", cursor: "pointer", fontSize: 12 }}>↓ PDF</button>
                       </td>
                     </tr>
                   ))}
@@ -873,7 +879,7 @@ export default function Settings() {
                     <div style={{ fontSize: 11, color: SUB }}>{item.size}</div>
                   </div>
                 </div>
-                <button style={{ background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
+                <button onClick={() => alert(`Export ${item.label} — feature coming soon`)} style={{ background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
                   Export
                 </button>
               </div>
@@ -909,15 +915,15 @@ export default function Settings() {
               <InfoRow label="Data Processing" value="EU servers only" />
               <InfoRow label="Last GDPR audit" value="Mar 2026" />
               <div style={{ marginTop: 16 }}>
-                <Btn variant="outline" accent={accent} onClick={() => {}}>Download Privacy Policy</Btn>
+                <Btn variant="outline" accent={accent} onClick={() => alert("Download Privacy Policy — feature coming soon")}>Download Privacy Policy</Btn>
               </div>
             </div>
             <div style={{ ...card, background: "#1a0505", border: `1px solid #7f1d1d` }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: DANG }}>Danger Zone</h2>
               <p style={{ fontSize: 12, color: "#f87171", marginBottom: 16 }}>These actions are irreversible. Proceed with extreme caution.</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <Btn variant="danger" accent={accent} onClick={() => {}}>Delete All Historical Data</Btn>
-                <Btn variant="danger" accent={accent} onClick={() => {}}>Delete Account & All Data</Btn>
+                <Btn variant="danger" accent={accent} onClick={() => alert("Delete All Historical Data — requires confirmation")}>Delete All Historical Data</Btn>
+                <Btn variant="danger" accent={accent} onClick={() => alert("Delete Account — requires confirmation")}>Delete Account & All Data</Btn>
               </div>
             </div>
           </div>
@@ -943,7 +949,7 @@ export default function Settings() {
                         background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none",
                         borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12,
                       }}>{revealed[k.key] ? "Hide" : "Reveal"}</button>
-                      <button style={{
+                      <button onClick={() => alert(`Rotate API key ${k.label} — feature coming soon`)} style={{
                         background: "#1e3a5f", color: "#60a5fa", border: "none",
                         borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12,
                       }}>Rotate</button>
@@ -966,8 +972,8 @@ export default function Settings() {
                 vos_sk_live_••••••••••••••••••••••••••••••••
               </div>
               <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-                <Btn onClick={() => {}} accent={accent}>Generate New Token</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => {}}>View Docs</Btn>
+                <Btn onClick={() => alert("New API token generated — feature coming soon")} accent={accent}>Generate New Token</Btn>
+                <Btn variant="secondary" accent={accent} onClick={() => alert("View API Docs — feature coming soon")}>View Docs</Btn>
               </div>
             </div>
           </div>
@@ -990,7 +996,7 @@ export default function Settings() {
                   </div>
                 </div>
               ))}
-              <Btn variant="outline" accent={accent} onClick={() => {}}>+ Add Webhook</Btn>
+              <Btn variant="outline" accent={accent} onClick={() => alert("Add Webhook — feature coming soon")}>+ Add Webhook</Btn>
             </div>
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>API Rate Limits</h2>
@@ -1001,6 +1007,84 @@ export default function Settings() {
                 { label: "Batch export / day", val: "3 / 10" },
               ].map(r => <InfoRow key={r.label} label={r.label} value={r.val} />)}
             </div>
+          </div>
+        </div>
+      )}
+      {/* ─── PAYMENT MODAL ─────────────────────────────────────────────────── */}
+      {paymentModal && (
+        <div style={{ position: "fixed", inset: 0, background: "#000000aa", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => { setPaymentModal(null); setPaymentSaved(false); setCardNumber(""); setCardExpiry(""); setCardCVC(""); setCardName(""); }}>
+          <div style={{ background: SURF, border: `1px solid ${BORD}`, borderRadius: 16, padding: 32, width: 420, maxHeight: "90vh", overflow: "auto" }}
+            onClick={e => e.stopPropagation()}>
+            {paymentSaved ? (
+              <div style={{ textAlign: "center", padding: 20 }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+                  {paymentModal === "update" ? "Card Updated" : "Payment Method Added"}
+                </h2>
+                <p style={{ fontSize: 13, color: SUB, marginBottom: 24 }}>
+                  {paymentModal === "update"
+                    ? "Your Visa ending in 4242 has been updated successfully."
+                    : "Your new payment method has been added to your account."}
+                </p>
+                <Btn onClick={() => { setPaymentModal(null); setPaymentSaved(false); setCardNumber(""); setCardExpiry(""); setCardCVC(""); setCardName(""); }} accent={accent}>Done</Btn>
+              </div>
+            ) : (
+              <>
+                <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>
+                  {paymentModal === "update" ? "Update Payment Card" : "Add Payment Method"}
+                </h2>
+                <p style={{ fontSize: 12, color: SUB, marginBottom: 24 }}>
+                  {paymentModal === "update"
+                    ? "Enter your new card details below. Your existing card will be replaced."
+                    : "Add a new credit card, debit card, or bank account."}
+                </p>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>Cardholder Name</label>
+                  <input value={cardName} onChange={e => setCardName(e.target.value)} placeholder="Francisco Morais"
+                    style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>Card Number</label>
+                  <input value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim().slice(0, 19))}
+                    placeholder="4242 4242 4242 4242"
+                    style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace", letterSpacing: 2 }} />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
+                  <div>
+                    <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>Expiry</label>
+                    <input value={cardExpiry} onChange={e => {
+                      let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
+                      setCardExpiry(v);
+                    }} placeholder="MM/YY"
+                      style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>CVC</label>
+                    <input value={cardCVC} onChange={e => setCardCVC(e.target.value.replace(/\D/g, "").slice(0, 3))} placeholder="123"
+                      style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace" }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
+                  <div style={{ width: 36, height: 24, background: "#1f3a8f", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: "#fff" }}>VISA</div>
+                  <div style={{ width: 36, height: 24, background: "#eb001b", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: "#fff" }}>MC</div>
+                  <div style={{ width: 36, height: 24, background: "#006fcf", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: "#fff" }}>AMEX</div>
+                </div>
+                <p style={{ fontSize: 10, color: "#4b5563", marginBottom: 20 }}>🔒 Secured with 256-bit SSL encryption. We never store your full card number.</p>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <Btn variant="secondary" accent={accent} onClick={() => { setPaymentModal(null); setCardNumber(""); setCardExpiry(""); setCardCVC(""); setCardName(""); }} style={{ flex: 1 }}>Cancel</Btn>
+                  <Btn onClick={() => setPaymentSaved(true)} accent={accent} style={{ flex: 1 }}>
+                    {paymentModal === "update" ? "Update Card" : "Add Card"}
+                  </Btn>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

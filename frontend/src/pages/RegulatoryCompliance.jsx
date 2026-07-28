@@ -80,7 +80,7 @@ export default function RegulatoryCompliance() {
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Deadlines · Risk tracking · Certifications · ESG reporting</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ padding: "8px 16px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
+          <button onClick={() => alert("Export Compliance Report — feature coming soon")} style={{ padding: "8px 16px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
             Export Report
           </button>
           <button onClick={() => setShowModal(true)}
@@ -199,11 +199,11 @@ export default function RegulatoryCompliance() {
                 </span>
                 <div style={{ display: "flex", gap: 6 }}>
                   {d.status !== "done" && (
-                    <button style={{ padding: "4px 10px", background: "#10b98120", border: "1px solid #10b981", borderRadius: 6, color: green, fontSize: 10, cursor: "pointer" }}>
+                    <button onClick={() => alert(`"${d.title}" marked as done`)} style={{ padding: "4px 10px", background: "#10b98120", border: "1px solid #10b981", borderRadius: 6, color: green, fontSize: 10, cursor: "pointer" }}>
                       Mark Done
                     </button>
                   )}
-                  <button style={{ padding: "4px 10px", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "rgba(148,163,184,0.85)", fontSize: 10, cursor: "pointer" }}>
+                  <button onClick={() => alert(`Edit "${d.title}" — feature coming soon`)} style={{ padding: "4px 10px", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "rgba(148,163,184,0.85)", fontSize: 10, cursor: "pointer" }}>
                     Edit
                   </button>
                 </div>

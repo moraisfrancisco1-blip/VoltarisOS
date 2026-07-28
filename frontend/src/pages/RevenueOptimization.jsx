@@ -222,10 +222,10 @@ export default function RevenueOptimization() {
           </tbody>
         </table>
         <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-          <button style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+          <button onClick={() => alert("Apply All AI Recommendations — feature coming soon")} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
             Apply All Recommendations
           </button>
-          <button style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
+          <button onClick={() => alert("Review & Modify Dispatch — feature coming soon")} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
             Review & Modify
           </button>
         </div>

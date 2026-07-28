@@ -223,7 +223,7 @@ export default function ReportsAnalytics() {
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "#1f2937" }}>{r.type}</span>
                   </td>
                   <td style={{ padding: "10px 12px" }}>
-                    <button style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
+                    <button onClick={() => alert(`Download "${r.name}" — feature coming soon`)} style={{ background: accent, color: "#fff", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
                       Download
                     </button>
                   </td>

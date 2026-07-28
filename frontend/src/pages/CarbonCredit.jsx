@@ -221,7 +221,7 @@ export default function CarbonCredit() {
                 </div>
               </div>
             ))}
-            <button style={{
+            <button onClick={() => alert("Export Compliance Report (PDF) — feature coming soon")} style={{
               marginTop: "12px", width: "100%", padding: "8px", borderRadius: "7px",
               border: `1px solid ${color}40`, background: `${color}10`, color, cursor: "pointer", fontSize: "12px", fontWeight: "600"
             }}>

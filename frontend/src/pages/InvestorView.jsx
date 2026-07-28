@@ -83,7 +83,7 @@ export default function InvestorView() {
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Investor View</h1>
           <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Portfolio financials · IRR/NPV · BESS degradation · Revenue waterfall</div>
         </div>
-        <button style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+        <button onClick={() => alert("Export Investor Report — feature coming soon")} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Export Report
         </button>
       </div>

@@ -107,10 +107,10 @@ export default function PredictiveMaintenance() {
           <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 14 }}>AI-driven asset health monitoring, RUL prediction & automated work order management</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button style={{ background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
+          <button onClick={() => alert(`${critical} critical assets need attention`)} style={{ background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
             🚨 {critical} Critical
           </button>
-          <button style={{ background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>
+          <button onClick={() => alert("Create Work Order — feature coming soon")} style={{ background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>
             + Work Order
           </button>
         </div>
@@ -260,7 +260,7 @@ export default function PredictiveMaintenance() {
                   {asset.parts.map(p => (
                     <div key={p} style={{ background: "#451a03", border: "1px solid #92400e", borderRadius: 8, padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={{ fontSize: 13, color: amber }}>{p}</span>
-                      <button style={{ fontSize: 10, padding: "2px 8px", background: amber, color: "#000", border: "none", borderRadius: 4, cursor: "pointer" }}>Order</button>
+                      <button onClick={() => alert(`Order part "${p}" — feature coming soon`)} style={{ fontSize: 10, padding: "2px 8px", background: amber, color: "#000", border: "none", borderRadius: 4, cursor: "pointer" }}>Order</button>
                     </div>
                   ))}
                 </div>
@@ -374,8 +374,8 @@ export default function PredictiveMaintenance() {
                   <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 4 }}>Detected at {a.time} today</div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button style={{ fontSize: 11, padding: "4px 10px", background: accent, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Create WO</button>
-                  <button style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "rgba(148,163,184,0.85)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
+                  <button onClick={() => alert(`Create Work Order for ${a.asset} — feature coming soon`)} style={{ fontSize: 11, padding: "4px 10px", background: accent, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Create WO</button>
+                  <button onClick={() => alert(`Anomaly dismissed for ${a.asset}`)} style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "rgba(148,163,184,0.85)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
                 </div>
               </div>
             ))}

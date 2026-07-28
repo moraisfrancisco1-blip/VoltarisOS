@@ -160,7 +160,7 @@ export default function GridServices() {
             <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Today's Grid Revenue</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: green }}>€{totalRevenue}</div>
           </div>
-          <button style={{ background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}>
+          <button onClick={() => alert("Submit Market Bids — feature coming soon")} style={{ background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}>
             Submit Bids
           </button>
         </div>

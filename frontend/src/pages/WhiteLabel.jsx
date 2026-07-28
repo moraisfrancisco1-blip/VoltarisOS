@@ -307,10 +307,10 @@ export default function WhiteLabel({ user }) {
                   <div style={{ width: "74%", height: "100%", background: `linear-gradient(90deg, ${brandForm.primaryColor}, ${brandForm.accentColor})`, borderRadius: "4px" }} />
                 </div>
                 <div style={{ marginTop: "10px", display: "flex", gap: "6px" }}>
-                  <button style={{ flex: 1, padding: "7px", background: brandForm.primaryColor + "22", border: `1px solid ${brandForm.primaryColor}44`, borderRadius: "6px", color: brandForm.primaryColor, fontSize: "12px", cursor: "pointer" }}>
+                  <button onClick={() => alert(`Primary color: ${brandForm.primaryColor}`)} style={{ flex: 1, padding: "7px", background: brandForm.primaryColor + "22", border: `1px solid ${brandForm.primaryColor}44`, borderRadius: "6px", color: brandForm.primaryColor, fontSize: "12px", cursor: "pointer" }}>
                     Primary
                   </button>
-                  <button style={{ flex: 1, padding: "7px", background: brandForm.accentColor + "22", border: `1px solid ${brandForm.accentColor}44`, borderRadius: "6px", color: brandForm.accentColor, fontSize: "12px", cursor: "pointer" }}>
+                  <button onClick={() => alert(`Accent color: ${brandForm.accentColor}`)} style={{ flex: 1, padding: "7px", background: brandForm.accentColor + "22", border: `1px solid ${brandForm.accentColor}44`, borderRadius: "6px", color: brandForm.accentColor, fontSize: "12px", cursor: "pointer" }}>
                     Accent
                   </button>
                 </div>
@@ -356,7 +356,7 @@ export default function WhiteLabel({ user }) {
                   onFocus={e => e.target.style.borderColor = color}
                   onBlur={e => e.target.style.borderColor = "#1a2234"}
                 />
-                <button style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
+                <button onClick={() => alert("Provision SSL — feature coming soon")} style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
                   Provision SSL
                 </button>
               </div>

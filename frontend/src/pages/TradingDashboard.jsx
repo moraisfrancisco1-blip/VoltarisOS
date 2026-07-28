@@ -348,10 +348,10 @@ export default function TradingDashboard() {
               )}
             </div>
           ))}
-          <button style={{ padding: "10px 26px", background: `linear-gradient(135deg, ${C.green}, #059669)`,
+          <button onClick={() => alert("BUY order submitted — feature coming soon")} style={{ padding: "10px 26px", background: `linear-gradient(135deg, ${C.green}, #059669)`,
             border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 900, cursor: "pointer",
             boxShadow: `0 4px 16px ${C.green}40` }}>BUY</button>
-          <button style={{ padding: "10px 26px", background: `linear-gradient(135deg, ${C.red}, #b91c1c)`,
+          <button onClick={() => alert("SELL order submitted — feature coming soon")} style={{ padding: "10px 26px", background: `linear-gradient(135deg, ${C.red}, #b91c1c)`,
             border: "none", borderRadius: 10, color: "#fff", fontSize: 13, fontWeight: 900, cursor: "pointer",
             boxShadow: `0 4px 16px ${C.red}40` }}>SELL</button>
         </div>

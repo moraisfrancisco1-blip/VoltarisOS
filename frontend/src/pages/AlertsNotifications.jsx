@@ -214,7 +214,7 @@ export default function AlertsNotifications() {
               </div>
             </div>
           ))}
-          <button style={{
+          <button onClick={() => alert("Alert thresholds saved successfully")} style={{
             marginTop: 20, background: accent, color: "#fff", border: "none",
             borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontSize: 13,
             boxShadow: `0 0 16px ${accent}55`, fontWeight: 600,

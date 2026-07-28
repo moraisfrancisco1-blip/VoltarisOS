@@ -195,7 +195,7 @@ export default function BatteryManagement() {
             <span style={{ color: "rgba(148,163,184,0.7)", marginLeft: 6 }}>Live</span>
             <span style={{ color: "rgba(148,163,184,0.7)", marginLeft: 6 }}>· {tick * 2.5 | 0}s ago</span>
           </div>
-          <button style={{
+          <button onClick={() => alert("Add BESS Unit — feature coming soon")} style={{
             background: `linear-gradient(135deg, ${accent}, #4f46e5)`,
             color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px",
             fontSize: 13, cursor: "pointer", fontWeight: 700,
@@ -645,7 +645,7 @@ export default function BatteryManagement() {
                       <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{p.l}</span>
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <span style={{ fontSize: 12, fontWeight: 600 }}>{p.v}</span>
-                        {p.editable && <button style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "var(--surface2)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}
+                        {p.editable && <button onClick={() => alert(`Edit ${p.l} — currently: ${p.v}`)} style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "var(--surface2)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}
                       </div>
                     </div>
                   ))}

@@ -423,7 +423,7 @@ export default function Dashboard() {
             })}
           </div>
           <div style={{ marginTop: 14, textAlign: "center", position: "relative" }}>
-            <button style={{
+            <button onClick={() => alert("View All Alerts — feature coming soon")} style={{
               background: "var(--surface2)", border: "1px solid var(--border)",
               borderRadius: 10, padding: "7px 18px", fontSize: 12, color: "var(--sub)",
               cursor: "pointer", transition: "all 0.2s",

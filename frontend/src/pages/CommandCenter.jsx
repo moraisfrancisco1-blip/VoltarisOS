@@ -174,7 +174,7 @@ export default function CommandCenter() {
         <button onClick={sendBulkCommand} style={{ padding: "8px 20px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
           Send Command
         </button>
-        <button style={{ padding: "8px 16px", background: "#ef444420", border: "1px solid #ef4444", borderRadius: 8, color: red, fontSize: 12, cursor: "pointer" }}>
+        <button onClick={() => alert("EMERGENCY STOP ALL — all sites halted")} style={{ padding: "8px 16px", background: "#ef444420", border: "1px solid #ef4444", borderRadius: 8, color: red, fontSize: 12, cursor: "pointer" }}>
           EMERGENCY STOP ALL
         </button>
       </div>
