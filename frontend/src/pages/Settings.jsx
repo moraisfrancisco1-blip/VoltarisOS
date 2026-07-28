@@ -147,6 +147,171 @@ function DashWidgetRow({ wkey, label, accent }) {
   );
 }
 
+// ─── Helper functions for billing ─────────────────────────────────────────────
+const downloadFile = (content, filename, mimeType) => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+const generateInvoicePDF = (invoice) => {
+  const companyName = "Voltaris Energy B.V.";
+  const companyAddress = "Coolsingel 1, 3012 AA Rotterdam, Netherlands";
+  const companyVAT = "NL123456789B01";
+  const billingEmail = "billing@voltaris.energy";
+  
+  return `
+════════════════════════════════════════════════════════════════════════════════
+                              INVOICE
+════════════════════════════════════════════════════════════════════════════════
+
+${companyName}
+${companyAddress}
+VAT: ${companyVAT}
+Email: ${billingEmail}
+
+════════════════════════════════════════════════════════════════════════════════
+
+Invoice Number: ${invoice.id}
+Invoice Date:   ${invoice.date}
+Due Date:       ${invoice.date}
+
+Bill To:
+  Francisco Morais
+  admin@voltaris.com
+  Voltaris Energy B.V.
+
+════════════════════════════════════════════════════════════════════════════════
+
+DESCRIPTION                          AMOUNT
+─────────────────────────────────────────────────────────────────────────────────
+VoltarisOS Enterprise Plan           ${invoice.amount}
+Monthly Subscription
+
+════════════════════════════════════════════════════════════════════════════════
+
+Subtotal:                            ${invoice.amount}
+VAT (0% - B2B):                      €0.00
+─────────────────────────────────────────────────────────────────────────────────
+TOTAL:                               ${invoice.amount}
+
+════════════════════════════════════════════════════════════════════════════════
+
+Payment Status: ${invoice.status.toUpperCase()}
+Payment Method: Visa •••• 4242
+
+════════════════════════════════════════════════════════════════════════════════
+
+Thank you for your business!
+
+For questions regarding this invoice, please contact:
+${billingEmail}
+
+════════════════════════════════════════════════════════════════════════════════
+`.trim();
+};
+
+const generateContractPDF = () => {
+  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  
+  return `
+════════════════════════════════════════════════════════════════════════════════
+                    VOLTARISOS ENTERPRISE SERVICE AGREEMENT
+════════════════════════════════════════════════════════════════════════════════
+
+Contract Date: ${today}
+Contract Number: VOS-ENT-${new Date().getFullYear()}-001
+
+════════════════════════════════════════════════════════════════════════════════
+
+PARTIES:
+
+Service Provider:
+  Voltaris Energy B.V.
+  Coolsingel 1, 3012 AA Rotterdam
+  Netherlands
+  VAT: NL123456789B01
+  Email: support@voltaris.energy
+
+Customer:
+  Francisco Morais
+  admin@voltaris.com
+
+════════════════════════════════════════════════════════════════════════════════
+
+1. SERVICE DESCRIPTION
+
+VoltarisOS Enterprise Plan includes:
+  - Unlimited sites and BESS units
+  - Full AI trading suite
+  - White-label (full customization)
+  - Dedicated priority support
+  - Custom integrations
+  - SLA guarantee (99.9% uptime)
+  - On-premise deployment option
+  - SSO/SAML authentication
+  - Complete audit logs
+
+2. BILLING
+
+  Monthly Fee: €3,999.00
+  Billing Cycle: Monthly (due on 1st of each month)
+  Payment Method: Credit Card (Visa •••• 4242)
+  Currency: EUR (Euro)
+
+3. PAYMENT TERMS
+
+  - Payment is due within 30 days of invoice date
+  - Late payments may incur a 1.5% monthly interest charge
+  - All prices are exclusive of applicable taxes
+  - Invoices are generated automatically on the 1st of each month
+
+4. SERVICE LEVEL AGREEMENT (SLA)
+
+  - Guaranteed Uptime: 99.9%
+  - Support Response Time: < 2 hours (critical), < 24 hours (standard)
+  - Data Backup: Daily automated backups with 30-day retention
+  - Security: 256-bit SSL encryption, SOC 2 compliant
+
+5. DATA PROCESSING
+
+  - All data processed within EU servers
+  - GDPR compliant
+  - Customer retains full ownership of all data
+  - Data export available at any time
+
+6. TERMINATION
+
+  - Either party may terminate with 30 days written notice
+  - Annual plans: Non-refundable after 14-day cooling period
+  - Upon termination, data export available for 90 days
+
+7. CONFIDENTIALITY
+
+  Both parties agree to maintain confidentiality of all proprietary
+  information exchanged during the term of this agreement.
+
+8. LIMITATION OF LIABILITY
+
+  Voltaris Energy B.V. liability is limited to the amount paid by
+  the customer in the 12 months preceding the claim.
+
+════════════════════════════════════════════════════════════════════════════════
+
+By using the VoltarisOS platform, you agree to these terms.
+
+For questions, contact: legal@voltaris.energy
+
+════════════════════════════════════════════════════════════════════════════════
+`.trim();
+};
+
 // ─── API Keys data ────────────────────────────────────────────────────────────
 const API_KEYS = [
   { label: "ENTSO-E API Key", key: "ENTSOE_API_KEY", value: "d8c3e2a1-****-****-****-7f4b19e2c0d1", scope: "Price forecasting" },
@@ -797,7 +962,10 @@ export default function Settings() {
             </div>
             <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
               <Btn variant="outline" accent={accent} onClick={() => setPlanModal(true)}>Change Plan</Btn>
-              <Btn variant="secondary" accent={accent} onClick={() => alert("Download Contract — feature coming soon")}>Download Contract</Btn>
+              <Btn variant="secondary" accent={accent} onClick={() => {
+                const contractContent = generateContractPDF();
+                downloadFile(contractContent, "VoltarisOS_Enterprise_Contract.txt", "text/plain");
+              }}>Download Contract</Btn>
             </div>
           </div>
 
@@ -869,7 +1037,10 @@ export default function Settings() {
                         </span>
                       </td>
                       <td style={{ padding: "10px 12px" }}>
-                        <button onClick={() => alert(`Download ${inv.id} PDF — feature coming soon`)} style={{ background: "transparent", color: accent, border: "none", cursor: "pointer", fontSize: 12 }}>↓ PDF</button>
+                        <button onClick={() => {
+                          const invoiceContent = generateInvoicePDF(inv);
+                          downloadFile(invoiceContent, `${inv.id}.txt`, "text/plain");
+                        }} style={{ background: "transparent", color: accent, border: "none", cursor: "pointer", fontSize: 12 }}>↓ PDF</button>
                       </td>
                     </tr>
                   ))}
