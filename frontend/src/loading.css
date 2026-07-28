@@ -1,0 +1,15 @@
+/* Prevent FOUC and blank page on load */
+html, body { margin: 0; padding: 0; background: #080d18; color: #e2e8f0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+#root { min-height: 100vh; }
+/* Loading spinner while React hydrates */
+#root:empty::after {
+  content: '';
+  display: block;
+  width: 40px; height: 40px;
+  margin: 40vh auto;
+  border: 3px solid rgba(99,102,241,0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
