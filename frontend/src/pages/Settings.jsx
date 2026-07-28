@@ -214,13 +214,19 @@ export default function Settings() {
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
   const PLANS = [
-    { id: "starter", name: "Starter", monthly: 499, yearly: 4490, color: "#60a5fa",
+    { id: "home", name: "Home", monthly: 99, yearly: 890, color: "#10b981", badge: null,
+      features: ["1 site", "2 BESS units", "Basic monitoring", "Mobile app access", "Email alerts", "CSV exports"],
+      limits: { sites: 1, bess: 2, users: 1, api: "1k/mo" } },
+    { id: "starter", name: "Starter", monthly: 499, yearly: 4490, color: "#60a5fa", badge: null,
       features: ["Up to 3 sites", "5 BESS units", "Basic analytics", "Email support", "Standard dashboards", "CSV exports"],
       limits: { sites: 3, bess: 5, users: 5, api: "10k/mo" } },
-    { id: "pro", name: "Pro", monthly: 1499, yearly: 13490, color: "#a78bfa",
+    { id: "beta", name: "Beta", monthly: 999, yearly: 8990, color: "#f59e0b", badge: "POPULAR",
+      features: ["Up to 5 sites", "15 BESS units", "AI trading (beta)", "Priority support", "Advanced analytics", "API access", "Custom alerts"],
+      limits: { sites: 5, bess: 15, users: 10, api: "50k/mo" } },
+    { id: "pro", name: "Pro", monthly: 1499, yearly: 13490, color: "#a78bfa", badge: null,
       features: ["Up to 10 sites", "25 BESS units", "AI trading engine", "Priority support", "Advanced analytics", "API access", "Custom alerts", "White-label (basic)"],
       limits: { sites: 10, bess: 25, users: 15, api: "100k/mo" } },
-    { id: "enterprise", name: "Enterprise", monthly: 3999, yearly: 35990, color: accent,
+    { id: "enterprise", name: "Enterprise", monthly: 3999, yearly: 35990, color: accent, badge: "FULL SUITE",
       features: ["Unlimited sites", "Unlimited BESS", "Full AI suite", "Dedicated support", "Custom integrations", "White-label (full)", "SLA guarantee", "On-premise option", "SSO/SAML", "Audit logs"],
       limits: { sites: "∞", bess: "∞", users: "∞", api: "Unlimited" } },
   ];
@@ -1154,7 +1160,7 @@ export default function Settings() {
                 </div>
 
                 {/* Plan cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, padding: "0 32px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, padding: "0 24px" }}>
                   {PLANS.map(plan => {
                     const isSelected = selectedPlan === plan.id;
                     const isCurrent = plan.id === "enterprise";
@@ -1170,30 +1176,33 @@ export default function Settings() {
                         transform: isSelected ? "scale(1.02)" : "scale(1)",
                       }}>
                         {/* Plan header */}
-                        <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${BORD}` }}>
-                          {isCurrent && (
-                            <span style={{ fontSize: 9, padding: "2px 8px", borderRadius: 99, background: `${accent}20`, color: accent, fontWeight: 700, letterSpacing: 0.5, marginBottom: 8, display: "inline-block" }}>CURRENT PLAN</span>
+                        <div style={{ padding: "16px 14px 12px", borderBottom: `1px solid ${BORD}`, position: "relative" }}>
+                          {plan.badge && (
+                            <span style={{ fontSize: 8, padding: "2px 6px", borderRadius: 99, background: `${plan.color}25`, color: plan.color, fontWeight: 700, letterSpacing: 0.5, display: "inline-block", marginBottom: 6 }}>{plan.badge}</span>
                           )}
-                          <div style={{ fontSize: 18, fontWeight: 800, color: plan.color, marginBottom: 4 }}>{plan.name}</div>
-                          <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 4 }}>
-                            <span style={{ fontSize: 28, fontWeight: 900, color: "#fff" }}>€{perMonth.toLocaleString()}</span>
-                            <span style={{ fontSize: 12, color: SUB }}>/month</span>
+                          {isCurrent && !plan.badge && (
+                            <span style={{ fontSize: 8, padding: "2px 6px", borderRadius: 99, background: `${accent}20`, color: accent, fontWeight: 700, letterSpacing: 0.5, display: "inline-block", marginBottom: 6 }}>CURRENT PLAN</span>
+                          )}
+                          <div style={{ fontSize: 16, fontWeight: 800, color: plan.color, marginBottom: 4 }}>{plan.name}</div>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 2 }}>
+                            <span style={{ fontSize: 22, fontWeight: 900, color: "#f1f5f9" }}>€{perMonth.toLocaleString()}</span>
+                            <span style={{ fontSize: 10, color: "#94a3b8" }}>/mo</span>
                           </div>
                           {billingCycle === "yearly" && (
                             <div style={{ fontSize: 11, color: SUB }}>€{price.toLocaleString()} billed annually</div>
                           )}
                         </div>
                         {/* Features */}
-                        <div style={{ padding: "16px 20px" }}>
+                        <div style={{ padding: "12px 14px" }}>
                           {plan.features.map(f => (
-                            <div key={f} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0", fontSize: 12, color: "#e2e8f0" }}>
-                              <span style={{ color: plan.color, fontSize: 12, fontWeight: 700 }}>✓</span> {f}
+                            <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", fontSize: 11, color: "#e2e8f0" }}>
+                              <span style={{ color: plan.color, fontSize: 11, fontWeight: 700 }}>✓</span> {f}
                             </div>
                           ))}
                           {/* Limits */}
-                          <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORD}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                          <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORD}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                             {Object.entries(plan.limits).map(([key, val]) => (
-                              <div key={key} style={{ fontSize: 10, color: SUB }}>
+                              <div key={key} style={{ fontSize: 9, color: SUB }}>
                                 <span style={{ textTransform: "uppercase" }}>{key}</span>: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{val}</span>
                               </div>
                             ))}
@@ -1211,7 +1220,7 @@ export default function Settings() {
                 </div>
 
                 {/* Order summary + Terms */}
-                <div style={{ padding: "24px 32px" }}>
+                <div style={{ padding: "20px 24px" }}>
                   {/* Summary */}
                   <div style={{ background: SURF2, borderRadius: 12, padding: 20, marginBottom: 20, border: `1px solid ${BORD}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
