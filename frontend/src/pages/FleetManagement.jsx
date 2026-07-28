@@ -37,7 +37,7 @@ const genHourly = () => Array.from({ length: 24 }, (_, i) => ({
   revenue: rand(200, 800, 0),
 }));
 
-export default function FleetManagement() {
+export default function FleetManagement({ setPage }) {
   const [fleet, setFleet] = useState(initFleet());
   const [hourly] = useState(genHourly());
   const [filter, setFilter] = useState("all");
@@ -100,9 +100,9 @@ export default function FleetManagement() {
           { label: "BESS Dispatched", value: `${metrics.totalBess} MW`, color: purple },
           { label: "Today Revenue", value: `€${metrics.totalRevenue.toLocaleString()}`, color: green },
           { label: "Sites Online", value: `${metrics.online} / ${fleet.length}`, color: green },
-          { label: "Active Alerts", value: metrics.alerts, color: metrics.alerts > 0 ? red : green },
+          { label: "Active Alerts", value: metrics.alerts, color: metrics.alerts > 0 ? red : green, clickable: true },
         ].map(k => (
-          <div key={k.label} style={card}>
+          <div key={k.label} style={{ ...card, cursor: k.clickable ? "pointer" : "default" }} onClick={k.clickable ? () => setPage && setPage("alerts") : undefined}>
             <div style={label}>{k.label}</div>
             <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
           </div>

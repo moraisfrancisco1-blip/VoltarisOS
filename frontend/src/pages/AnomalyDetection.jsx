@@ -137,7 +137,7 @@ const TYPE_BREAKDOWN = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
-export default function AnomalyDetection() {
+export default function AnomalyDetection({ setPage }) {
   const [feed, setFeed] = useState(genFeed)
   const [heatAnoms, setHeatAnoms] = useState(genHeatmapAnomalies)
   const [trend] = useState(genTrendData)
@@ -204,10 +204,16 @@ export default function AnomalyDetection() {
               <span style={{ color: "rgba(148,163,184,0.85)", fontSize: 12 }}> · Temp +18°C above baseline · Auto-throttle engaged · 14:23</span>
             </div>
           </div>
-          <button onClick={() => setThermalAlert(false)} style={{
-            background: `${red}20`, border: `1px solid ${red}40`, borderRadius: 8,
-            padding: "4px 14px", fontSize: 12, color: red, cursor: "pointer", fontWeight: 600
-          }}>Acknowledge</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setPage && setPage("alerts")} style={{
+              background: `${red}20`, border: `1px solid ${red}40`, borderRadius: 8,
+              padding: "4px 14px", fontSize: 12, color: red, cursor: "pointer", fontWeight: 600
+            }}>View All Alerts</button>
+            <button onClick={() => setThermalAlert(false)} style={{
+              background: `${red}20`, border: `1px solid ${red}40`, borderRadius: 8,
+              padding: "4px 14px", fontSize: 12, color: red, cursor: "pointer", fontWeight: 600
+            }}>Acknowledge</button>
+          </div>
         </div>
       )}
 

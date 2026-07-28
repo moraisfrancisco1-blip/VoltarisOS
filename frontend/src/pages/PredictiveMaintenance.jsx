@@ -57,7 +57,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function PredictiveMaintenance() {
+export default function PredictiveMaintenance({ setPage }) {
   const [selected, setSelected] = useState(0);
   const [tab, setTab] = useState("Assets");
   const [filter, setFilter] = useState("All");
@@ -107,7 +107,7 @@ export default function PredictiveMaintenance() {
           <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 14 }}>AI-driven asset health monitoring, RUL prediction & automated work order management</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => alert(`${critical} critical assets need attention`)} style={{ background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
+          <button onClick={() => setPage && setPage("alerts")} style={{ background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
             🚨 {critical} Critical
           </button>
           <button onClick={() => alert("Create Work Order — feature coming soon")} style={{ background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer" }}>

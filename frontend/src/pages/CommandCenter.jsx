@@ -50,7 +50,7 @@ const genEvents = () => Array.from({ length: 12 }, (_, i) => ({
   ][i],
 }));
 
-export default function CommandCenter() {
+export default function CommandCenter({ setPage }) {
   const [sites, setSites] = useState(initSites());
   const [events, setEvents] = useState(genEvents());
   const [metrics, setMetrics] = useState({ online: 4, total: 5, totalPower: 10.2, activeAlerts: 2, cmdSent: 14 });
@@ -120,9 +120,9 @@ export default function CommandCenter() {
           <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#10b98120", color: green, border: "1px solid #10b981" }}>
             {metrics.online}/{metrics.total} sites online
           </span>
-          <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#ef444420", color: red, border: "1px solid #ef4444" }}>
+          <button onClick={() => setPage && setPage("alerts")} style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#ef444420", color: red, border: "1px solid #ef4444", cursor: "pointer" }}>
             {metrics.activeAlerts} active alerts
-          </span>
+          </button>
         </div>
       </div>
 
@@ -132,9 +132,9 @@ export default function CommandCenter() {
           { label: "Fleet Solar Output", value: `${metrics.totalPower} MW`, color: amber },
           { label: "Sites Online", value: `${metrics.online} / ${metrics.total}`, color: green },
           { label: "Commands Sent Today", value: metrics.cmdSent, color: accent },
-          { label: "Active Alerts", value: metrics.activeAlerts, color: red },
+          { label: "Active Alerts", value: metrics.activeAlerts, color: red, clickable: true },
         ].map(k => (
-          <div key={k.label} style={card}>
+          <div key={k.label} style={{ ...card, cursor: k.clickable ? "pointer" : "default" }} onClick={k.clickable ? () => setPage && setPage("alerts") : undefined}>
             <div style={label}>{k.label}</div>
             <div style={{ ...val, color: k.color }}>{k.value}</div>
           </div>
