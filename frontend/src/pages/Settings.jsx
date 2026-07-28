@@ -1009,7 +1009,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <div style={card}>
+          <div style={card} data-invoice-section>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Invoice History</h2>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -1302,7 +1302,21 @@ export default function Settings() {
                     ? `€${PLANS.find(p => p.id === selectedPlan)?.monthly.toLocaleString()}/month`
                     : `€${PLANS.find(p => p.id === selectedPlan)?.yearly.toLocaleString()}/year (save ${Math.round((1 - PLANS.find(p => p.id === selectedPlan)?.yearly / (PLANS.find(p => p.id === selectedPlan)?.monthly * 12)) * 100)}%)`}
                 </p>
-                <Btn onClick={() => { setPlanModal(false); setTermsAccepted(false); setPlanChanged(false); setBillingCycle("monthly"); }} accent={accent}>Done</Btn>
+                <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+                  <Btn onClick={() => { setPlanModal(false); setTermsAccepted(false); setPlanChanged(false); setBillingCycle("monthly"); }} accent={accent}>Done</Btn>
+                  <Btn variant="secondary" accent={accent} onClick={() => {
+                    setPlanModal(false);
+                    setTermsAccepted(false);
+                    setPlanChanged(false);
+                    setBillingCycle("monthly");
+                    // Switch to billing tab and scroll to invoice section
+                    setTab("billing");
+                    setTimeout(() => {
+                      const invoiceSection = document.querySelector('[data-invoice-section]');
+                      if (invoiceSection) invoiceSection.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}>Manage Billing & Invoices</Btn>
+                </div>
               </div>
             ) : (
               <>
