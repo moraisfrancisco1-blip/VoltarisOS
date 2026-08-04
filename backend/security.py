@@ -1,0 +1,97 @@
+"""
+security.py — shared auth used by every router.
+- Single SECRET_KEY (env var, no more mismatched hardcoded strings)
+- bcrypt password hashing (passlib) with legacy sha256 fallback for old accounts
+- get_current_user: FastAPI dependency that validates the JWT and 401s if missing/invalid
+"""
+import hashlib
+import os
+
+import bcrypt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "voltarisos-secret-2026-production")
+ALGORITHM = "HS256"
+
+_bearer = HTTPBearer(auto_error=False)
+
+# Shared limiter instance — must be the SAME object used in app.state.limiter (main.py)
+# and in @limiter.limit(...) decorators across routers, otherwise slowapi can't track state.
+limiter = Limiter(key_func=get_remote_address)
+
+
+# ─── Password hashing (bcrypt directly — no passlib, avoids version conflicts) ─
+def hash_pw(password: str) -> str:
+    """New passwords always get bcrypt."""
+    return bcrypt.hashpw(password.encode("utf-8")[:72], bcrypt.gensalt()).decode("utf-8")
+
+
+def _legacy_sha256(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def verify_pw(password: str, stored_hash: str) -> bool:
+    """Verify against bcrypt hash, falling back to legacy sha256 for pre-migration accounts."""
+    if stored_hash.startswith("$2b$") or stored_hash.startswith("$2a$") or stored_hash.startswith("$2y$"):
+        try:
+            return bcrypt.checkpw(password.encode("utf-8")[:72], stored_hash.encode("utf-8"))
+        except Exception:
+            return False
+    # legacy sha256 hash (accounts created before the bcrypt migration)
+    return stored_hash == _legacy_sha256(password)
+
+
+# ─── JWT ──────────────────────────────────────────────────────────────────────
+def decode_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido ou expirado")
+
+
+async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
+    """FastAPI dependency — require a valid Bearer JWT. Raises 401 if missing/invalid."""
+    if creds is None or not creds.credentials:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autenticação necessária")
+    return decode_token(creds.credentials)
+
+
+async def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    """FastAPI dependency — require superadmin/admin role."""
+    if user.get("role") not in ("superadmin", "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito a administradores")
+    return user
+
+
+def require_role(*allowed_roles: str):
+    """Factory for a FastAPI dependency restricting an endpoint to specific roles.
+    superadmin/admin always pass regardless of the list (they retain full access).
+    Usage: Depends(require_role("operator", "admin"))"""
+    async def _dep(user: dict = Depends(get_current_user)) -> dict:
+        role = user.get("role")
+        if role in ("superadmin", "admin"):
+            return user
+        if role not in allowed_roles:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso não permitido para este tipo de conta")
+        return user
+    return _dep
+
+
+# ─── Service-to-service auth (gateway/rules engine, not a logged-in user) ────
+GATEWAY_API_KEY = os.environ.get("GATEWAY_API_KEY", "")
+
+_gateway_bearer = HTTPBearer(auto_error=False)
+
+
+async def require_gateway_key(creds: HTTPAuthorizationCredentials = Depends(_gateway_bearer)) -> None:
+    """Protects endpoints called by internal services (e.g. device gateway firing alerts),
+    not by logged-in users. Requires GATEWAY_API_KEY env var to be set in production."""
+    if not GATEWAY_API_KEY:
+        # No key configured — fail closed in any environment that isn't local dev.
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gateway auth not configured")
+    if creds is None or creds.credentials != GATEWAY_API_KEY:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chave de serviço inválida")

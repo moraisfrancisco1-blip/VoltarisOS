@@ -1,0 +1,153 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS variable defaults (dark / Obsidian theme) ── */
+:root {
+  --bg:           #0f172a;
+  --sidebar:      #0c1322;
+  --topbar:       #0c1322;
+  --surface:      #1e293b;
+  --surface2:     #162032;
+  --surface-glass: #1e293b;
+  --border:       rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+  --text:         #cbd5e1;
+  --sub:          #64748b;
+  --sidebar-text: #cbd5e1;
+  --sidebar-sub:  #94a3b8;
+  --glow:         #3b82f6;
+  --grid-line:    rgba(255,255,255,0.06);
+  --tooltip-bg:   #1e293b;
+  --gradient:     linear-gradient(135deg, #1e293b 0%, #162032 100%);
+}
+
+/* ── Base ── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong, #253450);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sub, #6b7280);
+}
+
+/* ── Recharts override for theme vars ── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--grid-line) !important;
+}
+
+/* ── Card / panel utility — always solid ── */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+/* ── Darken overly bright text for better readability ── */
+/* Override inline styles that use too-bright colors */
+[style*="color: #fff"],
+[style*="color:#fff"],
+[style*="color: \"#fff\""],
+[style*="color:'#fff'"] {
+  color: #e2e8f0 !important;
+}
+
+[style*="color: rgba(255,255,255,0.7)"],
+[style*="color:rgba(255,255,255,0.7)"] {
+  color: rgba(226,232,240,0.85) !important;
+}
+
+[style*="color: rgba(255,255,255,0.8)"],
+[style*="color:rgba(255,255,255,0.8)"] {
+  color: rgba(226,232,240,0.9) !important;
+}
+
+[style*="color: rgba(255,255,255,0.9)"],
+[style*="color:rgba(255,255,255,0.9)"] {
+  color: rgba(226,232,240,0.95) !important;
+}
+
+/* Darken bright chart colors when used as text */
+[style*="color: #fbbf24"],
+[style*="color:#fbbf24"],
+[style*="color: #f87171"],
+[style*="color:#f87171"],
+[style*="color: #34d399"],
+[style*="color:#34d399"],
+[style*="color: #60a5fa"],
+[style*="color:#60a5fa"],
+[style*="color: #c084fc"],
+[style*="color:#c084fc"],
+[style*="color: #818cf8"],
+[style*="color:#818cf8"],
+[style*="color: #2dd4bf"],
+[style*="color:#2dd4bf"],
+[style*="color: #fb7185"],
+[style*="color:#fb7185"],
+[style*="color: #a5b4fc"],
+[style*="color:#a5b4fc"],
+[style*="color: #38bdf8"],
+[style*="color:#38bdf8"] {
+  filter: brightness(0.7) saturate(1.2) !important;
+}
+
+/* Keep buttons and interactive elements bright */
+button[style*="color: #fff"],
+button[style*="color:#fff"],
+a[style*="color: #fff"],
+a[style*="color:#fff"],
+button[style*="color: #fbbf24"],
+button[style*="color:#fbbf24"],
+button[style*="color: #f87171"],
+button[style*="color:#f87171"],
+button[style*="color: #34d399"],
+button[style*="color:#34d399"],
+button[style*="color: #60a5fa"],
+button[style*="color:#60a5fa"],
+button[style*="color: #c084fc"],
+button[style*="color:#c084fc"],
+button[style*="color: #818cf8"],
+button[style*="color:#818cf8"] {
+  filter: none !important;
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 767px) {
+  main > * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  main {
+    -webkit-overflow-scrolling: touch;
+  }
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
