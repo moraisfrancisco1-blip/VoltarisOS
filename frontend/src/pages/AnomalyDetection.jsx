@@ -18,13 +18,21 @@ const card = {
   position: "relative",
   overflow: "hidden",
 }
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => (
         <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>
       ))}
@@ -201,7 +209,11 @@ export default function AnomalyDetection({ setPage }) {
             }} />
             <div>
               <span style={{ fontWeight: 700, color: red, fontSize: 13 }}>THERMAL RUNAWAY RISK — Rotterdam Pack C · Cell 47 </span>
+<<<<<<< HEAD
               <span style={{ color: "var(--sub)", fontSize: 12 }}> · Temp +18°C above baseline · Auto-throttle engaged · 14:23</span>
+=======
+              <span style={{ color: "rgba(148,163,184,0.85)", fontSize: 12 }}> · Temp +18°C above baseline · Auto-throttle engaged · 14:23</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
@@ -221,7 +233,11 @@ export default function AnomalyDetection({ setPage }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Anomaly Detection</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 12, marginTop: 2 }}>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginTop: 2 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             BESS cell-level fault isolation · Real-time · Updated {ticker > 0 ? "just now" : "loading…"}
           </div>
         </div>
@@ -232,7 +248,11 @@ export default function AnomalyDetection({ setPage }) {
             padding: "5px 14px", fontSize: 12
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: green, animation: "pulse 2s infinite" }} />
+<<<<<<< HEAD
             <span style={{ color: "var(--sub)" }}>Live Monitoring</span>
+=======
+            <span style={{ color: "rgba(148,163,184,0.85)" }}>Live Monitoring</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         </div>
       </div>
@@ -252,7 +272,11 @@ export default function AnomalyDetection({ setPage }) {
           }}>
             <div style={label}>{k.label}</div>
             <div style={{ fontSize: 30, fontWeight: 800, color: k.color, lineHeight: 1 }}>{k.value}</div>
+<<<<<<< HEAD
             <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 6 }}>{k.sub}</div>
+=======
+            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 6 }}>{k.sub}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -263,7 +287,11 @@ export default function AnomalyDetection({ setPage }) {
         <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
           <div style={{ ...label, textAlign: "center" }}>Fleet Risk Score</div>
           <SeverityGauge score={riskScore} size={120} />
+<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textAlign: "center" }}>
+=======
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "center" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {riskScore > 70 ? "🔴 High Risk" : riskScore > 40 ? "🟡 Elevated" : "🟢 Normal"}
           </div>
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
@@ -284,13 +312,21 @@ export default function AnomalyDetection({ setPage }) {
               {[["green", "OK"], [amber, "Warn"], [orange, "High"], [red, "Critical"]].map(([c, l]) => (
                 <div key={l} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <div style={{ width: 8, height: 8, borderRadius: 2, background: c === "green" ? green : c }} />
+<<<<<<< HEAD
                   <span style={{ fontSize: 10, color: "var(--sub)" }}>{l}</span>
+=======
+                  <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{l}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               ))}
             </div>
           </div>
           <CellHeatmap rows={6} cols={16} anomalyCells={heatAnoms} />
+<<<<<<< HEAD
           <div style={{ marginTop: 10, fontSize: 11, color: "var(--sub)" }}>
+=======
+          <div style={{ marginTop: 10, fontSize: 11, color: "rgba(148,163,184,0.85)" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {heatAnoms.filter(x => x.sev === "critical").length} critical · {heatAnoms.filter(x => x.sev === "high").length} high · {heatAnoms.filter(x => x.sev === "medium").length} medium
             &nbsp;· Refreshes every 2.5s
           </div>
@@ -368,16 +404,28 @@ export default function AnomalyDetection({ setPage }) {
                 boxShadow: a.sev === "critical" ? `0 0 0 3px ${red}30` : "none",
               }} />
               <div style={{ width: 65, fontSize: 11, fontWeight: 700, color: SEV_COLORS[a.sev], textTransform: "uppercase" }}>{a.sev}</div>
+<<<<<<< HEAD
               <div style={{ width: 110, fontSize: 12, color: "var(--sub)", fontWeight: 600 }}>{a.site}</div>
               <div style={{ width: 60, fontSize: 11, color: "var(--sub)" }}>{a.pack}</div>
               <div style={{ flex: 1, fontSize: 12, color: "var(--text)", fontWeight: 500 }}>{a.type}</div>
               <div style={{ width: 70, fontSize: 11, color: a.delta < -20 ? red : amber, textAlign: "right" }}>{a.delta}%</div>
               <div style={{ width: 50, fontSize: 11, color: "var(--sub)", textAlign: "right" }}>{a.ts}</div>
+=======
+              <div style={{ width: 110, fontSize: 12, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{a.site}</div>
+              <div style={{ width: 60, fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{a.pack}</div>
+              <div style={{ flex: 1, fontSize: 12, color: "var(--text)", fontWeight: 500 }}>{a.type}</div>
+              <div style={{ width: 70, fontSize: 11, color: a.delta < -20 ? red : amber, textAlign: "right" }}>{a.delta}%</div>
+              <div style={{ width: 50, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "right" }}>{a.ts}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <button
                 onClick={() => setFeed(f => f.map(x => x.id === a.id ? { ...x, ack: true } : x))}
                 style={{
                   padding: "2px 10px", borderRadius: 8, fontSize: 10, cursor: "pointer",
+<<<<<<< HEAD
                   border: "1px solid rgba(255,255,255,0.12)", background: "var(--surface2)", color: "var(--sub)"
+=======
+                  border: "1px solid rgba(255,255,255,0.12)", background: "var(--surface2)", color: "rgba(148,163,184,0.85)"
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 }}
               >{a.ack ? "ACK" : "Ack"}</button>
             </div>

@@ -36,7 +36,11 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
     <>
     <div style={{
       height: "56px",
+<<<<<<< HEAD
       background: "var(--sidebar)",
+=======
+      background: "var(--topbar, var(--sidebar))",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       borderBottom: "1px solid var(--border)",
       display: "flex", alignItems: "center",
       padding: isMobile ? "0 12px" : "0 24px",
@@ -49,7 +53,11 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
         <button
           onClick={onMenuToggle}
           style={{
+<<<<<<< HEAD
             background: "none", border: "none", color: "var(--sidebar-text)",
+=======
+            background: "none", border: "none", color: "var(--text)",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             cursor: "pointer", padding: "6px", borderRadius: "8px",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}
@@ -65,9 +73,15 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
       {/* Page title */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <span style={{
+<<<<<<< HEAD
           color: "var(--sidebar-text)", fontWeight: "600",
           fontSize: isMobile ? "14px" : "15px",
           WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block",
+=======
+          color: "var(--text)", fontWeight: "600",
+          fontSize: isMobile ? "14px" : "15px",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         }}>
           {t(PAGE_TITLE_KEYS[page] || "page_dashboard")}
         </span>
@@ -79,6 +93,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
         style={{
           display: "flex", alignItems: "center", gap: "8px",
           padding: isMobile ? "7px 10px" : "7px 14px",
+<<<<<<< HEAD
           background: "rgba(255,255,255,0.06)",
           border: "1px solid var(--border)", borderRadius: "8px",
           color: "var(--sidebar-sub)", cursor: "pointer", fontSize: "13px",
@@ -86,6 +101,15 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
         }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--sidebar-text)" }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--sidebar-sub)" }}
+=======
+          background: "var(--surface2)",
+          border: "1px solid var(--border)", borderRadius: "8px",
+          color: "var(--sub)", cursor: "pointer", fontSize: "13px",
+          transition: "all 0.15s", flexShrink: 0,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-strong)"; e.currentTarget.style.color = "var(--text)" }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--sub)" }}
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
@@ -105,9 +129,15 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           title={simMode ? "Desativar simulação" : "Ativar simulação"}
           style={{
             padding: "7px 12px",
+<<<<<<< HEAD
             background: simMode ? "#78350f30" : "rgba(255,255,255,0.06)",
             border: simMode ? "1px solid #f59e0b44" : "1px solid var(--border)",
             borderRadius: "8px", color: simMode ? "#f59e0b" : "var(--sidebar-sub)",
+=======
+            background: simMode ? "#78350f30" : "var(--surface2)",
+            border: simMode ? "1px solid #f59e0b44" : "1px solid var(--border)",
+            borderRadius: "8px", color: simMode ? "#f59e0b" : "var(--sub)",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             cursor: "pointer", fontSize: "12px", fontWeight: "600",
             transition: "all 0.15s", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0,
           }}
@@ -122,6 +152,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         title={t("app_theme")}
         style={{
+<<<<<<< HEAD
           background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px",
           color: "var(--sidebar-sub)", cursor: "pointer", width: "36px", height: "36px",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -129,6 +160,15 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
         }}
         onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "var(--sidebar-text)" }}
         onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "var(--sidebar-sub)" }}
+=======
+          background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px",
+          color: "var(--sub)", cursor: "pointer", width: "36px", height: "36px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "all 0.15s", fontSize: "16px", flexShrink: 0,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.color = "var(--text)" }}
+        onMouseLeave={e => { e.currentTarget.style.background = "var(--surface2)"; e.currentTarget.style.color = "var(--sub)" }}
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       >
         {theme === "dark" ? "☀" : "🌙"}
       </button>
@@ -139,6 +179,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           <button
             onClick={() => setLangOpen(!langOpen)}
             style={{
+<<<<<<< HEAD
               background: "rgba(255,255,255,0.06)", border: "1px solid var(--border)", borderRadius: "8px",
               color: "var(--sidebar-sub)", cursor: "pointer", padding: "6px 10px", height: "36px",
               display: "flex", alignItems: "center", gap: "6px", fontSize: "13px",
@@ -146,6 +187,15 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
             }}
             onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "var(--border-strong)" }}
             onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "var(--border)" }}
+=======
+              background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px",
+              color: "var(--sub)", cursor: "pointer", padding: "6px 10px", height: "36px",
+              display: "flex", alignItems: "center", gap: "6px", fontSize: "13px",
+              transition: "all 0.15s", flexShrink: 0,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.borderColor = "var(--border-strong)" }}
+            onMouseLeave={e => { e.currentTarget.style.background = "var(--surface2)"; e.currentTarget.style.borderColor = "var(--border)" }}
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           >
             <span style={{ fontSize: "15px" }}>{LANGUAGES[language]?.flag}</span>
             <span style={{ fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.5px" }}>{language}</span>
@@ -225,7 +275,11 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
       <div style={{
         display: "flex", alignItems: "center", gap: "6px",
         padding: isMobile ? "5px 8px" : "5px 10px",
+<<<<<<< HEAD
         background: "rgba(255,255,255,0.06)",
+=======
+        background: "var(--surface2)",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         border: "1px solid var(--border)", borderRadius: "8px", flexShrink: 0,
       }}>
         <div style={{
@@ -237,7 +291,11 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           {(user?.company || "V").charAt(0).toUpperCase()}
         </div>
         {!isMobile && (
+<<<<<<< HEAD
           <span style={{ color: "var(--sidebar-sub)", fontSize: "12px", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", WhiteSpace: "nowrap" }}>
+=======
+          <span style={{ color: "var(--sub)", fontSize: "12px", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {user?.company || "Admin"}
           </span>
         )}
@@ -289,7 +347,11 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
                 onMouseLeave={e => { e.currentTarget.style.borderColor = `${plan.color}44`; e.currentTarget.style.background = "var(--surface2)" }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+<<<<<<< HEAD
                   <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--text)" }}>{plan.name}</span>
+=======
+                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#1a1a1a" }}>{plan.name}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {plan.badge ? (
                     <span style={{
                       fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
@@ -298,16 +360,27 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
                   ) : (
                     <span style={{
                       fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
+<<<<<<< HEAD
                       color: "var(--text)", background: `${plan.color}25`, padding: "2px 8px", borderRadius: "20px",
+=======
+                      color: "#1a1a1a", background: `${plan.color}25`, padding: "2px 8px", borderRadius: "20px",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       border: `1px solid ${plan.color}40`,
                     }}>Select</span>
                   )}
                 </div>
                 <div style={{ marginBottom: "6px" }}>
+<<<<<<< HEAD
                   <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--text)" }}>{plan.price}</span>
                   <span style={{ fontSize: "12px", color: "var(--sub)", marginLeft: "2px" }}>{plan.period}</span>
                 </div>
                 <div style={{ fontSize: "12px", color: "var(--sub)" }}>{plan.desc}</div>
+=======
+                  <span style={{ fontSize: "22px", fontWeight: 800, color: "#000" }}>{plan.price}</span>
+                  <span style={{ fontSize: "12px", color: "#4b5563", marginLeft: "2px" }}>{plan.period}</span>
+                </div>
+                <div style={{ fontSize: "12px", color: "#4b5563" }}>{plan.desc}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </a>
             ))}
           </div>

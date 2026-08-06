@@ -17,7 +17,11 @@ import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard 
 
 const API = import.meta.env.VITE_API_URL || ""
 
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 // ── Fallback: realistic intraday profile when API is unavailable ──────────────
 function syntheticPrices() {
@@ -152,19 +156,33 @@ export default function EnergyArbitrage() {
             }}>
               {source === "entsoe" ? "● ENTSO-E Live" : "● Synthetic (add site to get live prices)"}
             </div>
+<<<<<<< HEAD
             {loading && <div style={{ fontSize: 11, color: "var(--sub)" }}>Refreshing…</div>}
           </div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Energy Arbitrage Engine</h1>
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>
+=======
+            {loading && <div style={{ fontSize: 11, color: "rgba(148,163,184,0.5)" }}>Refreshing…</div>}
+          </div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Energy Arbitrage Engine</h1>
+          <div style={{ color: "rgba(148,163,184,0.7)", fontSize: 13, marginTop: 2 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Day-ahead prices · optimal charge/discharge windows · live P&amp;L tracker
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <div>
+<<<<<<< HEAD
             <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 3 }}>BESS Size (kWh)</div>
             <input type="number" value={bessKwh} onChange={e => setBessKwh(Number(e.target.value))}
               style={{ width: 90, background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: 8, padding: "6px 10px", color: "var(--text)", fontSize: 12 }} />
+=======
+            <div style={{ fontSize: 10, color: "rgba(148,163,184,0.5)", marginBottom: 3 }}>BESS Size (kWh)</div>
+            <input type="number" value={bessKwh} onChange={e => setBessKwh(Number(e.target.value))}
+              style={{ width: 90, background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 8, padding: "6px 10px", color: "#e2e8f0", fontSize: 12 }} />
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
           {["NL", "PT"].map(z => (
             <button key={z} onClick={() => setZone(z)} style={{
@@ -231,7 +249,11 @@ export default function EnergyArbitrage() {
                 strokeDasharray="4 2" dot={false} name="Forecast" />
             </ComposedChart>
           </ResponsiveContainer>
+<<<<<<< HEAD
           <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 11, color: "var(--sub)" }}>
+=======
+          <div style={{ display: "flex", gap: 16, marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.6)" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <span><span style={{ color: C.green }}>■</span> Charge window (buy cheap)</span>
             <span><span style={{ color: C.red }}>■</span> Discharge window (sell peak)</span>
             <span><span style={{ color: C.blue }}>■</span> Hold</span>
@@ -249,7 +271,11 @@ export default function EnergyArbitrage() {
                 <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   {["Hour", "Price €/MWh", "vs Avg", "Action", "Confidence", "Est. P&L"].map(h => (
                     <th key={h} style={{ textAlign: "left", padding: "8px 14px", fontSize: 10,
+<<<<<<< HEAD
                       color: "var(--sub)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+=======
+                      color: "rgba(148,163,184,0.7)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   ))}
                 </tr>
               </thead>
@@ -340,16 +366,26 @@ export default function EnergyArbitrage() {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
               <thead>
                 <tr>
+<<<<<<< HEAD
                   <th style={{ padding: "6px 10px", fontSize: 10, color: "var(--sub)", textAlign: "left" }}>Hour</th>
                   {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
                     <th key={d} style={{ padding: "6px 10px", fontSize: 10, color: "var(--sub)", textAlign: "center" }}>{d}</th>
+=======
+                  <th style={{ padding: "6px 10px", fontSize: 10, color: "rgba(148,163,184,0.6)", textAlign: "left" }}>Hour</th>
+                  {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
+                    <th key={d} style={{ padding: "6px 10px", fontSize: 10, color: "rgba(148,163,184,0.6)", textAlign: "center" }}>{d}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {SPREAD_HEATMAP.map((row, i) => (
                   <tr key={i}>
+<<<<<<< HEAD
                     <td style={{ padding: "4px 10px", fontSize: 11, color: "var(--sub)", fontWeight: 600 }}>{row.h}</td>
+=======
+                    <td style={{ padding: "4px 10px", fontSize: 11, color: "rgba(148,163,184,0.7)", fontWeight: 600 }}>{row.h}</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     {["mon","tue","wed","thu","fri","sat","sun"].map(d => {
                       const v = row[d]
                       const intensity = Math.min(1, Math.max(0, (v - 20) / 100))
@@ -371,7 +407,11 @@ export default function EnergyArbitrage() {
               </tbody>
             </table>
           </div>
+<<<<<<< HEAD
           <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 11, color: "var(--sub)" }}>
+=======
+          <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 11, color: "rgba(148,163,184,0.6)" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <span><span style={{ color: C.green }}>■</span> Charge (low price)</span>
             <span><span style={{ color: C.red }}>■</span> Discharge (high price)</span>
           </div>

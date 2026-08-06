@@ -40,7 +40,11 @@ const MOCK_BATTERIES = [
 ];
 
 const TABS = ["Overview", "Cell Diagnostics", "Thermal", "Cycle Analysis", "Degradation", "BMS Config"];
+<<<<<<< HEAD
 const STATUS_COLORS = { Charging: green, Discharging: red, Idle: "var(--sub)", Fault: red, Balancing: amber };
+=======
+const STATUS_COLORS = { Charging: green, Discharging: red, Idle: "#6b7280", Fault: red, Balancing: amber };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 const STATUS_BG = { Charging: "#064e3b", Discharging: "#7f1d1d", Idle: "#1f2937", Fault: "#7f1d1d", Balancing: "#451a03" };
 
 const CustomTooltip = (props) => <PremiumTooltip {...props} />;
@@ -192,8 +196,13 @@ export default function BatteryManagement() {
         <div style={{ display: "flex", gap: 8 }}>
           <div style={{ background: "rgba(16,185,129,0.08)", border: `1px solid ${green}30`, borderRadius: 8, padding: "6px 14px", fontSize: 12 }}>
             <span style={{ color: green, textShadow: `0 0 8px ${green}` }}>●</span>
+<<<<<<< HEAD
             <span style={{ color: "var(--sub)", marginLeft: 6 }}>Live</span>
             <span style={{ color: "var(--sub)", marginLeft: 6 }}>· {tick * 2.5 | 0}s ago</span>
+=======
+            <span style={{ color: "rgba(148,163,184,0.7)", marginLeft: 6 }}>Live</span>
+            <span style={{ color: "rgba(148,163,184,0.7)", marginLeft: 6 }}>· {tick * 2.5 | 0}s ago</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
           <button onClick={() => alert("Add BESS Unit — feature coming soon")} style={{
             background: `linear-gradient(135deg, ${accent}, #4f46e5)`,
@@ -217,9 +226,15 @@ export default function BatteryManagement() {
           { label: "Avg RTE", value: `${(batteries.reduce((a, b) => a + b.rte, 0) / batteries.length).toFixed(1)}%`, sub: "round-trip eff.", color: "#a78bfa" },
         ].map(k => (
           <div key={k.label} style={{ ...card2, textAlign: "center" }}>
+<<<<<<< HEAD
             <div style={{ color: "var(--sub)", fontSize: 10, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{k.label}</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: k.color }}>{k.value}</div>
             <div style={{ color: "var(--sub)", fontSize: 10, marginTop: 2 }}>{k.sub}</div>
+=======
+            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 10, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{k.label}</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: k.color }}>{k.value}</div>
+            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 10, marginTop: 2 }}>{k.sub}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -255,27 +270,47 @@ export default function BatteryManagement() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div>
                       <span style={{ fontWeight: 700, fontSize: 14 }}>{b.id}</span>
+<<<<<<< HEAD
                       <div style={{ color: "var(--sub)", fontSize: 11, marginTop: 2 }}>{b.site} · {b.chemistry} · {(b.capacity / 1000).toFixed(1)} MWh</div>
+=======
+                      <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginTop: 2 }}>{b.site} · {b.chemistry} · {(b.capacity / 1000).toFixed(1)} MWh</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     </div>
                     <span style={{
                       fontSize: 10, padding: "2px 8px", borderRadius: 99, fontWeight: 600,
                       background: STATUS_BG[b.status] || "#1f2937",
+<<<<<<< HEAD
                       color: STATUS_COLORS[b.status] || "var(--sub)"
                     }}>{b.status}</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                     <span style={{ fontSize: 11, color: "var(--sub)", width: 52 }}>SoC {b.soc}%</span>
+=======
+                      color: STATUS_COLORS[b.status] || "#6b7280"
+                    }}>{b.status}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", width: 52 }}>SoC {b.soc}%</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ flex: 1 }}><SoCBar value={b.soc} /></div>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
                     {[
                       { l: "Health", v: `${b.health}%`, c: b.health > 90 ? green : b.health > 75 ? amber : red },
                       { l: "Temp", v: `${b.temp}°C`, c: b.temp > 40 ? red : b.temp > 32 ? amber : green },
+<<<<<<< HEAD
                       { l: "Power", v: `${Math.abs(b.current * 48 / 1000).toFixed(1)} kW`, c: "var(--text)" },
                       { l: "Cycles", v: b.cycles, c: "rgba(148,163,184,0.85)" },
                     ].map(m => (
                       <div key={m.l} style={{ textAlign: "center" }}>
                         <div style={{ fontSize: 9, color: "var(--sub)" }}>{m.l}</div>
+=======
+                      { l: "Power", v: `${Math.abs(b.current * 48 / 1000).toFixed(1)} kW`, c: "#f1f5f9" },
+                      { l: "Cycles", v: b.cycles, c: "rgba(148,163,184,0.85)" },
+                    ].map(m => (
+                      <div key={m.l} style={{ textAlign: "center" }}>
+                        <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                         <div style={{ fontSize: 12, fontWeight: 600, color: m.c }}>{m.v}</div>
                       </div>
                     ))}
@@ -290,7 +325,11 @@ export default function BatteryManagement() {
             <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Fleet SoC Distribution</div>
             {batteries.map(b => (
               <div key={b.id} style={{ marginBottom: 8 }}>
+<<<<<<< HEAD
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--sub)", marginBottom: 3 }}>
+=======
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 3 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <span>{b.id}</span><span>{b.soc}%</span>
                 </div>
                 <SoCBar value={b.soc} height={6} />
@@ -309,11 +348,19 @@ export default function BatteryManagement() {
                 <HealthRing value={bat.health} size={80} />
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 800 }}>{bat.id}</div>
+<<<<<<< HEAD
                   <div style={{ color: "var(--sub)", fontSize: 13 }}>{bat.site}</div>
                   <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: STATUS_BG[bat.status], color: STATUS_COLORS[bat.status], fontWeight: 600 }}>{bat.status}</span>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "var(--surface2)", color: "var(--sub)" }}>{bat.chemistry} — {CHEMISTRIES[bat.chemistry]?.desc}</span>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "var(--surface2)", color: "var(--sub)" }}>FW {bat.firmware}</span>
+=======
+                  <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13 }}>{bat.site}</div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: STATUS_BG[bat.status], color: STATUS_COLORS[bat.status], fontWeight: 600 }}>{bat.status}</span>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "var(--surface2)", color: "rgba(148,163,184,0.85)" }}>{bat.chemistry} — {CHEMISTRIES[bat.chemistry]?.desc}</span>
+                    <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: "var(--surface2)", color: "rgba(148,163,184,0.85)" }}>FW {bat.firmware}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 </div>
               </div>
@@ -325,7 +372,11 @@ export default function BatteryManagement() {
                   { l: "Installed", v: bat.installed },
                 ].map(m => (
                   <div key={m.l}>
+<<<<<<< HEAD
                     <div style={{ fontSize: 10, color: "var(--sub)" }}>{m.l}</div>
+=======
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ fontWeight: 700, fontSize: 14 }}>{m.v}</div>
                   </div>
                 ))}
@@ -339,13 +390,21 @@ export default function BatteryManagement() {
                 { l: "Voltage", v: `${bat.voltage}V`, c: blue, icon: "⚡" },
                 { l: "Current", v: `${bat.current > 0 ? "+" : ""}${bat.current}A`, c: bat.current > 0 ? green : red, icon: "↕" },
                 { l: "Temperature", v: `${bat.temp}°C`, c: bat.temp > 40 ? red : bat.temp > 32 ? amber : green, icon: "🌡" },
+<<<<<<< HEAD
                 { l: "Cycles", v: bat.cycles, c: "var(--text)", icon: "🔄" },
+=======
+                { l: "Cycles", v: bat.cycles, c: "#f1f5f9", icon: "🔄" },
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 { l: "Cells", v: `${bat.cells} / ${bat.strings}S`, c: "rgba(148,163,184,0.85)", icon: "⬛" },
               ].map(m => (
                 <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 10, padding: "12px 10px", textAlign: "center" }}>
                   <div style={{ fontSize: 16, marginBottom: 4 }}>{m.icon}</div>
                   <div style={{ fontSize: 18, fontWeight: 800, color: m.c }}>{m.v}</div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 2 }}>{m.l}</div>
+=======
+                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               ))}
             </div>
@@ -422,7 +481,11 @@ export default function BatteryManagement() {
           {tab === "Cell Diagnostics" && (
             <div style={card}>
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Cell-Level Voltage & Temperature ({bat.cells} cells, {bat.strings} strings)</div>
+<<<<<<< HEAD
               <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 12 }}>Each column = 1 cell. Color = voltage deviation from nominal.</p>
+=======
+              <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 12 }}>Each column = 1 cell. Color = voltage deviation from nominal.</p>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(bat.cells, 24)}, 1fr)`, gap: 2, marginBottom: 16 }}>
                 {cellData.slice(0, 24).map(c => {
                   const dev = Math.abs(c.voltage - (bat.voltage / (bat.cells / bat.strings)));
@@ -432,7 +495,11 @@ export default function BatteryManagement() {
                     <div key={c.cell} style={{ background: bg, borderRadius: 3, padding: "6px 2px", textAlign: "center", cursor: "pointer" }}
                       title={`Cell ${c.cell}: ${c.voltage.toFixed(3)}V, ${c.temp.toFixed(1)}°C`}>
                       <div style={{ fontSize: 8, color: col, fontWeight: 700 }}>{c.voltage.toFixed(2)}</div>
+<<<<<<< HEAD
                       <div style={{ fontSize: 7, color: "var(--sub)", marginTop: 1 }}>{c.cell}</div>
+=======
+                      <div style={{ fontSize: 7, color: "rgba(148,163,184,0.85)", marginTop: 1 }}>{c.cell}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     </div>
                   );
                 })}
@@ -446,7 +513,11 @@ export default function BatteryManagement() {
                   { l: "Balancing", v: `${cellData.filter(c => c.balance > 50).length} cells`, c: blue },
                 ].map(m => (
                   <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 8, padding: 12, textAlign: "center" }}>
+<<<<<<< HEAD
                     <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4 }}>{m.l}</div>
+=======
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ fontSize: 16, fontWeight: 700, color: m.c }}>{m.v}</div>
                   </div>
                 ))}
@@ -472,7 +543,11 @@ export default function BatteryManagement() {
                     );
                   })}
                 </div>
+<<<<<<< HEAD
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, color: "var(--sub)" }}>
+=======
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 10, color: "rgba(148,163,184,0.85)" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <span style={{ color: blue }}>Cool ({(bat.temp - 6).toFixed(0)}°C)</span>
                   <span>Thermal Heatmap</span>
                   <span style={{ color: red }}>Hot ({(bat.temp + 8).toFixed(0)}°C)</span>
@@ -497,7 +572,11 @@ export default function BatteryManagement() {
                     { l: "Cooling Status", v: bat.temp > 35 ? "Active" : "Standby", c: bat.temp > 35 ? amber : green },
                   ].map(m => (
                     <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 8, padding: 10, textAlign: "center" }}>
+<<<<<<< HEAD
                       <div style={{ fontSize: 10, color: "var(--sub)" }}>{m.l}</div>
+=======
+                      <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       <div style={{ fontSize: 15, fontWeight: 700, color: m.c, marginTop: 4 }}>{m.v}</div>
                     </div>
                   ))}
@@ -543,7 +622,11 @@ export default function BatteryManagement() {
                     { l: "Calendar Age", v: `${new Date().getFullYear() - parseInt(bat.installed.split("-")[0])} yr` },
                   ].map(m => (
                     <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 10, padding: 14, textAlign: "center" }}>
+<<<<<<< HEAD
                       <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4 }}>{m.l}</div>
+=======
+                      <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       <div style={{ fontSize: 18, fontWeight: 800, color: "var(--text)" }}>{m.v}</div>
                     </div>
                   ))}
@@ -556,7 +639,11 @@ export default function BatteryManagement() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div style={{ ...card, gridColumn: "span 2" }}>
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>SoH Degradation Forecast by Chemistry</div>
+<<<<<<< HEAD
                 <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 12 }}>Projected State of Health over 10 years. EOL at 80% SoH.</p>
+=======
+                <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 12 }}>Projected State of Health over 10 years. EOL at 80% SoH.</p>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={degradationData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--surface2)" />
@@ -598,12 +685,20 @@ export default function BatteryManagement() {
                 ].map(f => (
                   <div key={f.factor} style={{ marginBottom: 12 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+<<<<<<< HEAD
                       <span>{f.factor}</span><span style={{ color: "var(--sub)" }}>{f.impact}%</span>
+=======
+                      <span>{f.factor}</span><span style={{ color: "rgba(148,163,184,0.85)" }}>{f.impact}%</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     </div>
                     <div style={{ background: "#1f2937", borderRadius: 4, height: 6 }}>
                       <div style={{ width: `${f.impact}%`, height: "100%", background: accent, borderRadius: 4 }} />
                     </div>
+<<<<<<< HEAD
                     <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 2 }}>{f.desc}</div>
+=======
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{f.desc}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 ))}
               </div>
@@ -642,7 +737,11 @@ export default function BatteryManagement() {
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, color: accent }}>{section.title}</div>
                   {section.params.map(p => (
                     <div key={p.l} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+<<<<<<< HEAD
                       <span style={{ fontSize: 12, color: "var(--sub)" }}>{p.l}</span>
+=======
+                      <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{p.l}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <span style={{ fontSize: 12, fontWeight: 600 }}>{p.v}</span>
                         {p.editable && <button onClick={() => alert(`Edit ${p.l} — currently: ${p.v}`)} style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "var(--surface2)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}

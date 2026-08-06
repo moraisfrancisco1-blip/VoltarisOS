@@ -16,7 +16,11 @@ import {
 } from "recharts"
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme"
 
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 // ── Real degradation model (IEC 61215 + NREL data) ────────────────────────────
 function calcDegradation(params) {
@@ -131,10 +135,17 @@ export default function SolarDegradationLab() {
             background: `${C.teal}22`, color: C.teal, border: `1px solid ${C.teal}44`, letterSpacing: 1 }}>
             DEGRADATION LAB
           </div>
+<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)" }}>Physics model: IEC 61215 · NREL 2022 · Fraunhofer ISE</div>
         </div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Solar Panel Degradation Lab</h1>
         <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>
+=======
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.5)" }}>Physics model: IEC 61215 · NREL 2022 · Fraunhofer ISE</div>
+        </div>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Solar Panel Degradation Lab</h1>
+        <div style={{ color: "rgba(148,163,184,0.7)", fontSize: 13, marginTop: 2 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           Real physics model · fleet health scoring · repowering decision engine · warranty breach detection
         </div>
       </div>
@@ -169,7 +180,11 @@ export default function SolarDegradationLab() {
                   { lbl: "Shading (%)",          key: "shadingPct",  min: 0,  max: 30, step: 1 },
                 ].map(f => (
                   <div key={f.key}>
+<<<<<<< HEAD
                     <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 3 }}>{f.lbl}</div>
+=======
+                    <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", marginBottom: 3 }}>{f.lbl}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <input type="range" min={f.min} max={f.max} step={f.step} value={params[f.key]}
                       onChange={e => set(f.key, Number(e.target.value))}
                       style={{ width: "100%", accentColor: C.teal }} />
@@ -177,10 +192,17 @@ export default function SolarDegradationLab() {
                   </div>
                 ))}
                 <div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 3 }}>Panel Technology</div>
                   <select value={params.panelType} onChange={e => set("panelType", e.target.value)}
                     style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
                       padding: "6px 10px", color: "var(--text)", fontSize: 12, width: "100%" }}>
+=======
+                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", marginBottom: 3 }}>Panel Technology</div>
+                  <select value={params.panelType} onChange={e => set("panelType", e.target.value)}
+                    style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
+                      padding: "6px 10px", color: "#e2e8f0", fontSize: 12, width: "100%" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <option value="mono_perc">Mono PERC (0.45%/yr)</option>
                     <option value="bifacial">Bifacial (0.38%/yr)</option>
                     <option value="hjt">HJT Premium (0.25%/yr)</option>
@@ -189,10 +211,17 @@ export default function SolarDegradationLab() {
                   </select>
                 </div>
                 <div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 3 }}>PID Risk Level</div>
                   <select value={params.pidRisk} onChange={e => set("pidRisk", e.target.value)}
                     style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
                       padding: "6px 10px", color: "var(--text)", fontSize: 12, width: "100%" }}>
+=======
+                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", marginBottom: 3 }}>PID Risk Level</div>
+                  <select value={params.pidRisk} onChange={e => set("pidRisk", e.target.value)}
+                    style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
+                      padding: "6px 10px", color: "#e2e8f0", fontSize: 12, width: "100%" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <option value="low">Low (anti-PID glass)</option>
                     <option value="medium">Medium (standard glass)</option>
                     <option value="high">High (no mitigation)</option>
@@ -270,15 +299,26 @@ export default function SolarDegradationLab() {
                   cursor: "pointer",
                 }} onClick={() => setSelectedSite(selectedSite?.id === site.id ? null : site)}>
                   <div style={{ minWidth: 70 }}>
+<<<<<<< HEAD
                     <div style={{ fontSize: 10, color: "var(--sub)" }}>{site.id}</div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{site.name}</div>
                   </div>
                   <div style={{ minWidth: 80, fontSize: 11, color: "var(--sub)" }}>
+=======
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.5)" }}>{site.id}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)" }}>{site.name}</div>
+                  </div>
+                  <div style={{ minWidth: 80, fontSize: 11, color: "rgba(148,163,184,0.7)" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     {site.panels.toLocaleString()} panels · {site.type.replace("_"," ")} · {site.age}yr old
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+<<<<<<< HEAD
                       <span style={{ fontSize: 11, color: "var(--sub)" }}>Health</span>
+=======
+                      <span style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>Health</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       <span style={{ fontSize: 12, fontWeight: 700,
                         color: site.health > 90 ? C.green : site.health > 80 ? C.amber : C.red }}>{site.health}%</span>
                     </div>
@@ -310,7 +350,11 @@ export default function SolarDegradationLab() {
                   { l: "PID Risk", v: selectedSite.pid.toUpperCase() },
                 ].map(kv => (
                   <div key={kv.l} style={{ background: "var(--surface2)", borderRadius: 8, padding: 12 }}>
+<<<<<<< HEAD
                     <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4 }}>{kv.l}</div>
+=======
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>{kv.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)" }}>{kv.v}</div>
                   </div>
                 ))}
@@ -351,7 +395,11 @@ export default function SolarDegradationLab() {
                   }}>{f.severity}</span>
                 </div>
                 <div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4 }}>Probability</div>
+=======
+                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.6)", marginBottom: 4 }}>Probability</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <div style={{ height: 5, borderRadius: 2, background: "rgba(255,255,255,0.08)", marginBottom: 3 }}>
                     <div style={{ width: `${f.prob}%`, height: "100%", borderRadius: 2,
                       background: f.prob > 70 ? C.red : f.prob > 40 ? C.amber : C.green }} />
@@ -359,7 +407,11 @@ export default function SolarDegradationLab() {
                   <div style={{ fontSize: 11, fontWeight: 600,
                     color: f.prob > 70 ? C.red : f.prob > 40 ? C.amber : C.green }}>{f.prob}%</div>
                 </div>
+<<<<<<< HEAD
                 <div style={{ fontSize: 11, color: "var(--sub)", lineHeight: 1.5 }}>
+=======
+                <div style={{ fontSize: 11, color: "rgba(148,163,184,0.75)", lineHeight: 1.5 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <strong style={{ color: "rgba(148,163,184,0.9)" }}>Impact:</strong> {f.impact}
                 </div>
                 <div style={{ fontSize: 11, color: "rgba(148,163,184,0.65)", lineHeight: 1.5 }}>

@@ -9,14 +9,22 @@ const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -81,10 +89,17 @@ export default function RevenueOptimization() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Revenue Optimization</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>AI dispatch · Scenario analysis · Price forecast integration</div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ fontSize: 12, color: "var(--sub)" }}>Auto-Dispatch</span>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>AI dispatch · Scenario analysis · Price forecast integration</div>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Auto-Dispatch</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <div onClick={() => setAutoDispatch(!autoDispatch)} style={{
             width: 40, height: 22, borderRadius: 11, cursor: "pointer",
             background: autoDispatch ? green : "var(--surface2)", position: "relative"
@@ -149,10 +164,17 @@ export default function RevenueOptimization() {
                   background: selectedScenario === s.name ? `${s.color}12` : "var(--surface2)",
                 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+<<<<<<< HEAD
                   <div style={{ fontSize: 14, fontWeight: 700, color: selectedScenario === s.name ? s.color : "var(--text)" }}>{s.name}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: green }}>€{s.revenue.toLocaleString()}</div>
                 </div>
                 <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 4 }}>
+=======
+                  <div style={{ fontSize: 14, fontWeight: 700, color: selectedScenario === s.name ? s.color : "#f1f5f9" }}>{s.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: green }}>€{s.revenue.toLocaleString()}</div>
+                </div>
+                <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 4 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   Arbitrage €{s.arbitrage} · FCR €{s.fcr} · Risk:
                   <span style={{ color: s.risk === "Low" ? green : s.risk === "Medium" ? amber : red, marginLeft: 4 }}>{s.risk}</span>
                 </div>
@@ -178,8 +200,13 @@ export default function RevenueOptimization() {
             </BarChart>
           </ResponsiveContainer>
           <div style={{ marginTop: 10, padding: 10, background: "var(--surface2)", borderRadius: 8, border: `1px solid ${selected?.color}` }}>
+<<<<<<< HEAD
             <div style={{ fontSize: 12, color: "var(--sub)" }}>Active: <b style={{ color: selected?.color }}>{selectedScenario}</b></div>
             <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 2 }}>Expected revenue: <b style={{ color: green }}>€{selected?.revenue.toLocaleString()}</b> · Risk: <b style={{ color: selected?.risk === "Low" ? green : selected?.risk === "Medium" ? amber : red }}>{selected?.risk}</b></div>
+=======
+            <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Active: <b style={{ color: selected?.color }}>{selectedScenario}</b></div>
+            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>Expected revenue: <b style={{ color: green }}>€{selected?.revenue.toLocaleString()}</b> · Risk: <b style={{ color: selected?.risk === "Low" ? green : selected?.risk === "Medium" ? amber : red }}>{selected?.risk}</b></div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         </div>
       </div>
@@ -196,18 +223,30 @@ export default function RevenueOptimization() {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
               {["Time Window", "Action", "Site", "Volume", "Reason", "Confidence", "Est. Revenue"].map(h => (
+<<<<<<< HEAD
                 <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600 }}>{h}</th>
+=======
+                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               ))}
             </tr>
           </thead>
           <tbody>
             {AI_DISPATCH.map((d, i) => (
               <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+<<<<<<< HEAD
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--sub)" }}>{d.time}</td>
                 <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: accent }}>{d.action}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>{d.site}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: amber }}>{d.volume}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--sub)" }}>{d.reason}</td>
+=======
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.time}</td>
+                <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: accent }}>{d.action}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>{d.site}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: amber }}>{d.volume}</td>
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.reason}</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <td style={{ padding: "8px 10px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 40, height: 5, background: "var(--surface2)", borderRadius: 3 }}>
@@ -225,7 +264,11 @@ export default function RevenueOptimization() {
           <button onClick={() => alert("Apply All AI Recommendations — feature coming soon")} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
             Apply All Recommendations
           </button>
+<<<<<<< HEAD
           <button onClick={() => alert("Review & Modify Dispatch — feature coming soon")} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>
+=======
+          <button onClick={() => alert("Review & Modify Dispatch — feature coming soon")} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Review & Modify
           </button>
         </div>

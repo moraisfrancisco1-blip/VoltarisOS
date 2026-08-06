@@ -7,10 +7,17 @@ const CT = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
     <div style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "10px 14px", fontSize: "12px" }}>
+<<<<<<< HEAD
       <div style={{ color: "var(--sub)", marginBottom: "6px" }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color, display: "flex", gap: "8px" }}>
           <span>{p.name}</span><span style={{ color: "var(--text)", fontWeight: "600" }}>{p.value}</span>
+=======
+      <div style={{ color: "rgba(148,163,184,0.85)", marginBottom: "6px" }}>{label}</div>
+      {payload.map(p => (
+        <div key={p.dataKey} style={{ color: p.color, display: "flex", gap: "8px" }}>
+          <span>{p.name}</span><span style={{ color: "white", fontWeight: "600" }}>{p.value}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
       ))}
     </div>
@@ -55,7 +62,11 @@ export default function AutonomousTrading({ user }) {
           </div>
           <div>
             <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Autonomous Trading Agent</h1>
+<<<<<<< HEAD
             <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>AI executa ordens automaticamente · Override manual disponível</p>
+=======
+            <p style={{ color: "rgba(148,163,184,0.85)", fontSize: "13px", marginTop: "2px" }}>AI executa ordens automaticamente · Override manual disponível</p>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         </div>
         <button onClick={toggle} style={{
@@ -78,10 +89,17 @@ export default function AutonomousTrading({ user }) {
             { label: "Trades Hoje", value: status.trades_today, color: color },
             { label: "Trades Total", value: status.trades_total, color: "#60a5fa" },
             { label: "Win Rate", value: `${(status.win_rate * 100).toFixed(0)}%`, color: "#a78bfa" },
+<<<<<<< HEAD
             { label: "Última Ação", value: status.last_action, color: "var(--sub)", small: true },
           ].map((s, i) => (
             <div key={i} style={{ background: "var(--surface)", borderRadius: "12px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
               <div style={{ color: "var(--sub)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>{s.label}</div>
+=======
+            { label: "Última Ação", value: status.last_action, color: "rgba(148,163,184,0.85)", small: true },
+          ].map((s, i) => (
+            <div key={i} style={{ background: "var(--surface)", borderRadius: "12px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
+              <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>{s.label}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ color: s.color, fontWeight: "700", fontSize: s.small ? "11px" : "18px", display: "flex", alignItems: "center" }}>
                 {s.extra}{s.value}
               </div>
@@ -94,6 +112,7 @@ export default function AutonomousTrading({ user }) {
         {/* P&L Chart */}
         <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>P&L em Tempo Real</div>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>Lucro acumulado do agente (€)</div>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={pnlHistory} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
@@ -101,6 +120,15 @@ export default function AutonomousTrading({ user }) {
               <YAxis stroke="var(--surface2)" tick={{ fill: "var(--sub)", fontSize: 10 }} />
               <Tooltip content={<CT />} />
               <ReferenceLine y={0} stroke="var(--sub)" strokeDasharray="3 2" />
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "11px", marginBottom: "16px" }}>Lucro acumulado do agente (€)</div>
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={pnlHistory} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+              <XAxis dataKey="t" stroke="var(--surface2)" tick={{ fill: "#374151", fontSize: 9 }} interval="preserveStartEnd" />
+              <YAxis stroke="var(--surface2)" tick={{ fill: "#374151", fontSize: 10 }} />
+              <Tooltip content={<CT />} />
+              <ReferenceLine y={0} stroke="#374151" strokeDasharray="3 2" />
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <Line type="monotone" dataKey="pnl" name="P&L €" stroke="#4ade80" strokeWidth={2.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -117,14 +145,22 @@ export default function AutonomousTrading({ user }) {
             { label: "Max trade (kWh)", key: "max_trade_kwh" },
           ].map(f => (
             <div key={f.key} style={{ marginBottom: "12px" }}>
+<<<<<<< HEAD
               <label style={{ color: "var(--sub)", fontSize: "11px", display: "block", marginBottom: "4px" }}>{f.label}</label>
+=======
+              <label style={{ color: "rgba(148,163,184,0.85)", fontSize: "11px", display: "block", marginBottom: "4px" }}>{f.label}</label>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <input
                 type="number"
                 value={config[f.key]}
                 onChange={e => setConfig(c => ({ ...c, [f.key]: +e.target.value }))}
                 style={{
                   width: "100%", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
+<<<<<<< HEAD
                   borderRadius: "6px", padding: "7px 10px", color: "var(--text)",
+=======
+                  borderRadius: "6px", padding: "7px 10px", color: "white",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   fontSize: "13px", outline: "none", boxSizing: "border-box",
                 }}
               />
@@ -143,7 +179,11 @@ export default function AutonomousTrading({ user }) {
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
           <div style={{ fontWeight: "700", fontSize: "14px" }}>Log de Decisões</div>
           {isRunning && <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", animation: "blink 1s infinite" }} />}
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: "11px" }}>atualiza a cada 4s</div>
+=======
+          <div style={{ color: "#374151", fontSize: "11px" }}>atualiza a cada 4s</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div ref={logRef} style={{ maxHeight: "300px", overflowY: "auto" }}>
           {log.map((entry, i) => (
@@ -151,17 +191,30 @@ export default function AutonomousTrading({ user }) {
               display: "grid", gridTemplateColumns: "80px 60px 70px 80px 80px 1fr",
               gap: "12px", padding: "10px 12px", borderRadius: "8px",
               background: i % 2 === 0 ? "var(--surface2)" : "transparent",
+<<<<<<< HEAD
               borderLeft: `3px solid ${ACTION_COLORS[entry.action] || "var(--sub)"}`,
               marginBottom: "3px", fontSize: "12px", alignItems: "center",
             }}>
               <div style={{ color: "var(--sub)" }}>{entry.date} {entry.time}</div>
               <div style={{ fontWeight: "700", color: ACTION_COLORS[entry.action] }}>{entry.action}</div>
               <div style={{ color: "var(--text)" }}>{entry.qty} kWh</div>
+=======
+              borderLeft: `3px solid ${ACTION_COLORS[entry.action] || "#374151"}`,
+              marginBottom: "3px", fontSize: "12px", alignItems: "center",
+            }}>
+              <div style={{ color: "rgba(148,163,184,0.85)" }}>{entry.date} {entry.time}</div>
+              <div style={{ fontWeight: "700", color: ACTION_COLORS[entry.action] }}>{entry.action}</div>
+              <div style={{ color: "white" }}>{entry.qty} kWh</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ color: "#f59e0b" }}>€{entry.price}/MWh</div>
               <div style={{ color: entry.pnl >= 0 ? "#4ade80" : "#f87171", fontWeight: "700" }}>
                 {entry.pnl >= 0 ? "+" : ""}€{entry.pnl?.toFixed(2)}
               </div>
+<<<<<<< HEAD
               <div style={{ color: "var(--sub)", fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", WhiteSpace: "nowrap" }}>{entry.reason}</div>
+=======
+              <div style={{ color: "#374151", fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.reason}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
           ))}
         </div>

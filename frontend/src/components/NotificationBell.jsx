@@ -28,12 +28,21 @@ export default function NotificationBell({ color = "#4ade80" }) {
         style={{
           position: "relative",
           background: "none", border: "none", cursor: "pointer",
+<<<<<<< HEAD
           color: "var(--sub)", padding: "8px", borderRadius: "8px",
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "all 0.15s",
         }}
         onMouseEnter={e => { e.currentTarget.style.background = "#ffffff0a"; e.currentTarget.style.color = "var(--text)" }}
         onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--sub)" }}
+=======
+          color: "#6b7280", padding: "8px", borderRadius: "8px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          transition: "all 0.15s",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = "#ffffff0a"; e.currentTarget.style.color = "#d1d5db" }}
+        onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "#6b7280" }}
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -43,7 +52,11 @@ export default function NotificationBell({ color = "#4ade80" }) {
           <span style={{
             position: "absolute", top: "4px", right: "4px",
             width: "16px", height: "16px", borderRadius: "50%",
+<<<<<<< HEAD
             background: "#ef4444", color: "var(--text)",
+=======
+            background: "#ef4444", color: "white",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             fontSize: "9px", fontWeight: "700",
             display: "flex", alignItems: "center", justifyContent: "center",
             border: "2px solid #0a0f1a",
@@ -65,7 +78,11 @@ export default function NotificationBell({ color = "#4ade80" }) {
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+<<<<<<< HEAD
               <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>Notificações</span>
+=======
+              <span style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>Notificações</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               {unread > 0 && (
                 <span style={{
                   padding: "1px 7px", background: "#ef444420", color: "#f87171",
@@ -105,6 +122,7 @@ export default function NotificationBell({ color = "#4ade80" }) {
                     fontSize: "16px", flexShrink: 0,
                   }}>{ti.icon}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
+<<<<<<< HEAD
                     <div style={{ color: n.read ? "var(--sub)" : "var(--text)", fontSize: "13px", fontWeight: n.read ? "400" : "600", marginBottom: "2px" }}>
                       {n.title}
                     </div>
@@ -112,6 +130,15 @@ export default function NotificationBell({ color = "#4ade80" }) {
                       {n.body}
                     </div>
                     <div style={{ color: "var(--sub)", fontSize: "11px" }}>{n.time}</div>
+=======
+                    <div style={{ color: n.read ? "#9ca3af" : "white", fontSize: "13px", fontWeight: n.read ? "400" : "600", marginBottom: "2px" }}>
+                      {n.title}
+                    </div>
+                    <div style={{ color: "#6b7280", fontSize: "12px", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {n.body}
+                    </div>
+                    <div style={{ color: "#374151", fontSize: "11px" }}>{n.time}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                   {!n.read && (
                     <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: color, flexShrink: 0, marginTop: "6px" }} />
@@ -126,11 +153,19 @@ export default function NotificationBell({ color = "#4ade80" }) {
             <button style={{
               width: "100%", padding: "8px", background: "#0d1525",
               border: "1px solid #1a2234", borderRadius: "8px",
+<<<<<<< HEAD
               color: "var(--sub)", cursor: "pointer", fontSize: "12px",
               transition: "all 0.15s",
             }}
               onMouseEnter={e => { e.currentTarget.style.background = "#1a2234"; e.currentTarget.style.color = "var(--sub)" }}
               onMouseLeave={e => { e.currentTarget.style.background = "#0d1525"; e.currentTarget.style.color = "var(--sub)" }}
+=======
+              color: "#6b7280", cursor: "pointer", fontSize: "12px",
+              transition: "all 0.15s",
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = "#1a2234"; e.currentTarget.style.color = "#9ca3af" }}
+              onMouseLeave={e => { e.currentTarget.style.background = "#0d1525"; e.currentTarget.style.color = "#6b7280" }}
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             >Ver todas as notificações</button>
           </div>
         </div>

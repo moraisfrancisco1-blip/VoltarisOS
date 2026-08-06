@@ -7,7 +7,11 @@ import {
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 const gen48h = () => Array.from({ length: 48 }, (_, i) => {
   const h = i % 24;
@@ -121,11 +125,19 @@ export default function ForecastingDashboard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Forecasting</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>AI-powered solar · wind · price · load prediction</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)}
             style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 12px", color: "var(--text)", fontSize: 12 }}>
+=======
+          <div style={{ color: "rgba(148,163,184,0.7)", fontSize: 13, marginTop: 2 }}>AI-powered solar · wind · price · load prediction</div>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <select value={selectedSite} onChange={e => setSelectedSite(e.target.value)}
+            style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "7px 12px", color: "#e2e8f0", fontSize: 12 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {SITES.map(s => <option key={s}>{s}</option>)}
           </select>
           {["24h", "48h", "7d"].map(h => (
@@ -158,12 +170,20 @@ export default function ForecastingDashboard() {
               background: "var(--surface2)", borderRadius: 10, padding: "12px 8px", textAlign: "center",
               border: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(4px)",
             }}>
+<<<<<<< HEAD
               <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 6 }}>{w.day}</div>
+=======
+              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 6 }}>{w.day}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ fontSize: 22, marginBottom: 6 }}>{w.icon}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 4 }}>{w.temp}°C</div>
               <div style={{ fontSize: 10, color: C.amber }}>☀️ {w.irr} W/m²</div>
               <div style={{ fontSize: 10, color: C.blue }}>💨 {w.wind} m/s</div>
+<<<<<<< HEAD
               <div style={{ fontSize: 10, color: "var(--sub)" }}>☁️ {w.cloud}%</div>
+=======
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.75)" }}>☁️ {w.cloud}%</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
           ))}
         </div>
@@ -173,7 +193,11 @@ export default function ForecastingDashboard() {
       <div style={glassCard(C.amber)}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={label}>Solar Generation Forecast (MW) — with confidence interval</div>
+<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)" }}>Shaded area = 80% confidence band</div>
+=======
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.75)" }}>Shaded area = 80% confidence band</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <ComposedChart data={displayData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
@@ -271,7 +295,11 @@ export default function ForecastingDashboard() {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
               {["Model", "MAE (kWh)", "RMSE (kWh)", "R² Score", "Status"].map(h => (
+<<<<<<< HEAD
                 <th key={h} style={{ textAlign: "left", padding: "6px 12px", fontSize: 10, color: "var(--sub)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+=======
+                <th key={h} style={{ textAlign: "left", padding: "6px 12px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               ))}
             </tr>
           </thead>

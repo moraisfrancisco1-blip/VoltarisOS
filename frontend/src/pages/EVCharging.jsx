@@ -9,14 +9,22 @@ const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -91,7 +99,11 @@ export default function EVCharging() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>EV Charging</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Solar + BESS + V2G Integration</div>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Solar + BESS + V2G Integration</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           {[
@@ -99,7 +111,11 @@ export default function EVCharging() {
             { label: "Smart Charging", val: smartMode, set: setSmartMode, color: accent },
           ].map(sw => (
             <div key={sw.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+<<<<<<< HEAD
               <span style={{ fontSize: 12, color: "var(--sub)" }}>{sw.label}</span>
+=======
+              <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{sw.label}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div onClick={() => sw.set(!sw.val)} style={{
                 width: 40, height: 22, borderRadius: 11, cursor: "pointer",
                 background: sw.val ? sw.color : "var(--surface2)", position: "relative", transition: "background 0.2s"
@@ -146,14 +162,22 @@ export default function EVCharging() {
                 <rect x={20} y={n.y - 18} width={90} height={36} rx={8}
                   fill="var(--surface2)" stroke={n.color} strokeWidth={1.5} />
                 <text x={65} y={n.y - 3} textAnchor="middle" fill={n.color} fontSize={11} fontWeight={700}>{n.label}</text>
+<<<<<<< HEAD
                 <text x={65} y={n.y + 11} textAnchor="middle" fill="var(--text)" fontSize={10}>{n.val}</text>
+=======
+                <text x={65} y={n.y + 11} textAnchor="middle" fill="#f1f5f9" fontSize={10}>{n.val}</text>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <line x1={110} y1={n.y} x2={200} y2={100} stroke={n.color} strokeWidth={2} strokeDasharray="4 2" opacity={0.7} />
               </g>
             ))}
             {/* Hub */}
             <rect x={195} y={70} width={80} height={60} rx={10} fill="var(--surface2)" stroke={green} strokeWidth={2} />
             <text x={235} y={97} textAnchor="middle" fill={green} fontSize={11} fontWeight={700}>EV Hub</text>
+<<<<<<< HEAD
             <text x={235} y={113} textAnchor="middle" fill="var(--text)" fontSize={10}>{flow.evTotal} MW</text>
+=======
+            <text x={235} y={113} textAnchor="middle" fill="#f1f5f9" fontSize={10}>{flow.evTotal} MW</text>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <line x1={275} y1={100} x2={340} y2={100} stroke={green} strokeWidth={2} />
             {/* EV */}
             <rect x={340} y={78} width={50} height={44} rx={8} fill="var(--surface2)" stroke={green} strokeWidth={1.5} />
@@ -176,14 +200,22 @@ export default function EVCharging() {
                 <div key={s.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <div style={{ width: 10, height: 10, borderRadius: "50%", background: s.fill }} />
+<<<<<<< HEAD
                     <span style={{ fontSize: 12, color: "var(--sub)" }}>{s.name}</span>
+=======
+                    <span style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{s.name}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{s.value}%</span>
                 </div>
               ))}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 8 }}>
                 <div style={{ fontSize: 11, color: green }}>Solar self-consumption: {metrics.solarSelf}%</div>
+<<<<<<< HEAD
                 <div style={{ fontSize: 11, color: "var(--sub)" }}>Target: &gt;70%</div>
+=======
+                <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>Target: &gt;70%</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             </div>
           </div>
@@ -225,7 +257,11 @@ export default function EVCharging() {
           </ResponsiveContainer>
           <div style={{ display: "flex", gap: 12, marginTop: 8, flexWrap: "wrap" }}>
             {[{c: amber, n:"Solar"},{c: purple, n:"BESS"},{c: blue, n:"Grid"},{c: red, n:"V2G"}].map(l => (
+<<<<<<< HEAD
               <div key={l.n} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "var(--sub)" }}>
+=======
+              <div key={l.n} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "rgba(148,163,184,0.85)" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <div style={{ width: 8, height: 8, background: l.c, borderRadius: 2 }} />{l.n}
               </div>
             ))}
@@ -241,14 +277,22 @@ export default function EVCharging() {
                   background: c.status === "charging" ? green : c.status === "discharging" ? purple : "var(--surface2)" }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{c.id} · {c.vehicle}</div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 10, color: "var(--sub)" }}>{c.location} · {c.power} kW · {c.mode}</div>
+=======
+                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>{c.location} · {c.power} kW · {c.mode}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
                 {c.soc > 0 && (
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 60, height: 6, background: "var(--surface2)", borderRadius: 3 }}>
                       <div style={{ width: `${c.soc}%`, height: "100%", background: c.soc > 70 ? green : c.soc > 40 ? amber : red, borderRadius: 3 }} />
                     </div>
+<<<<<<< HEAD
                     <span style={{ fontSize: 10, color: "var(--sub)", width: 32 }}>{c.soc}%</span>
+=======
+                    <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", width: 32 }}>{c.soc}%</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 )}
                 {c.v2g && <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 8, background: "#a78bfa20", color: purple }}>V2G</span>}

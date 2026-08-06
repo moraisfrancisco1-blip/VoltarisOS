@@ -9,13 +9,21 @@ const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -79,7 +87,11 @@ export default function FleetManagement({ setPage }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Fleet Management</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Multi-site Solar + BESS portfolio overview</div>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Multi-site Solar + BESS portfolio overview</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {["all", "online", "warning", "offline"].map(f => (
@@ -162,7 +174,11 @@ export default function FleetManagement({ setPage }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
           <div style={label}>Site Details ({filtered.length})</div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+<<<<<<< HEAD
             <span style={{ fontSize: 11, color: "var(--sub)" }}>Sort by:</span>
+=======
+            <span style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>Sort by:</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {["revenue", "soc", "solarNow", "uptime"].map(s => (
               <button key={s} onClick={() => setSortBy(s)} style={{
                 padding: "4px 10px", borderRadius: 8, fontSize: 11, cursor: "pointer",
@@ -187,14 +203,22 @@ export default function FleetManagement({ setPage }) {
               </div>
 
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 2, paddingRight: 60 }}>{site.name}</div>
+<<<<<<< HEAD
               <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 12 }}>
+=======
+              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 12 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 {site.type.replace("_", " ")} · {site.country} · {site.lastSync}
               </div>
 
               {/* SoC bar */}
               <div style={{ marginBottom: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+<<<<<<< HEAD
                   <span style={{ fontSize: 10, color: "var(--sub)" }}>BESS SoC</span>
+=======
+                  <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>BESS SoC</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <span style={{ fontSize: 11, fontWeight: 700, color: site.soc > 70 ? green : site.soc > 40 ? amber : red }}>{site.soc}%</span>
                 </div>
                 <div style={{ height: 5, background: "var(--surface2)", borderRadius: 3 }}>
@@ -210,11 +234,19 @@ export default function FleetManagement({ setPage }) {
                   { l: "BESS", v: `${site.bessNow} MW`, c: purple },
                   { l: "Revenue", v: `€${site.revenue}`, c: green },
                   { l: "Uptime", v: `${site.uptime}%`, c: site.uptime > 95 ? green : amber },
+<<<<<<< HEAD
                   { l: "Temp", v: `${site.temp}°C`, c: site.temp > 40 ? red : "var(--text)" },
                   { l: site.solarKw > 0 ? `${(site.solarKw/1000).toFixed(1)} MWp` : `${(site.bessKwh/1000).toFixed(1)} MWh`, v: "capacity", c: "rgba(148,163,184,0.85)" },
                 ].map(m => (
                   <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 10px" }}>
                     <div style={{ fontSize: 9, color: "var(--sub)", marginBottom: 2 }}>{m.l}</div>
+=======
+                  { l: "Temp", v: `${site.temp}°C`, c: site.temp > 40 ? red : "#f1f5f9" },
+                  { l: site.solarKw > 0 ? `${(site.solarKw/1000).toFixed(1)} MWp` : `${(site.bessKwh/1000).toFixed(1)} MWh`, v: "capacity", c: "rgba(148,163,184,0.85)" },
+                ].map(m => (
+                  <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 8, padding: "8px 10px" }}>
+                    <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)", marginBottom: 2 }}>{m.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ fontSize: 12, fontWeight: 700, color: m.c }}>{m.v}</div>
                   </div>
                 ))}
@@ -231,7 +263,11 @@ export default function FleetManagement({ setPage }) {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
               {["Site", "Type", "Status", "Solar Now", "BESS SoC", "Revenue", "Uptime", "Temp", "Alerts"].map(h => (
+<<<<<<< HEAD
                 <th key={h} style={{ textAlign: "left", padding: "5px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600 }}>{h}</th>
+=======
+                <th key={h} style={{ textAlign: "left", padding: "5px 10px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               ))}
             </tr>
           </thead>
@@ -239,7 +275,11 @@ export default function FleetManagement({ setPage }) {
             {fleet.map(s => (
               <tr key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "var(--text)" }}>{s.name}</td>
+<<<<<<< HEAD
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--sub)" }}>{s.type.replace("_", " ")}</td>
+=======
+                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{s.type.replace("_", " ")}</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <td style={{ padding: "8px 10px" }}>
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10, background: statusBg(s.status), color: statusColor(s.status) }}>{s.status}</span>
                 </td>
@@ -247,7 +287,11 @@ export default function FleetManagement({ setPage }) {
                 <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 700, color: s.soc > 70 ? green : s.soc > 40 ? amber : red }}>{s.soc}%</td>
                 <td style={{ padding: "8px 10px", fontSize: 12, color: green }}>€{s.revenue.toLocaleString()}</td>
                 <td style={{ padding: "8px 10px", fontSize: 12, color: s.uptime > 95 ? green : s.uptime > 0 ? amber : red }}>{s.uptime}%</td>
+<<<<<<< HEAD
                 <td style={{ padding: "8px 10px", fontSize: 12, color: s.temp > 40 ? red : "var(--text)" }}>{s.temp}°C</td>
+=======
+                <td style={{ padding: "8px 10px", fontSize: 12, color: s.temp > 40 ? red : "#f1f5f9" }}>{s.temp}°C</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <td style={{ padding: "8px 10px" }}>
                   {s.alerts > 0
                     ? <span style={{ fontSize: 11, fontWeight: 700, color: red }}>{s.alerts}</span>

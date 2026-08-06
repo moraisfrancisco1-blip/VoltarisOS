@@ -9,14 +9,22 @@ const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -114,7 +122,11 @@ export default function CommandCenter({ setPage }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Command Center</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Fleet-wide BESS dispatch · Real-time controls · Event feed</div>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Fleet-wide BESS dispatch · Real-time controls · Event feed</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 20, background: "#10b98120", color: green, border: "1px solid #10b981" }}>
@@ -144,7 +156,11 @@ export default function CommandCenter({ setPage }) {
       {/* Bulk command bar */}
       <div style={{ ...card, display: "flex", gap: 14, alignItems: "flex-end", flexWrap: "wrap" }}>
         <div>
+<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>BULK COMMAND</div>
+=======
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>BULK COMMAND</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <div style={{ display: "flex", gap: 8 }}>
             {["charge", "discharge", "standby", "fcr_mode"].map(m => (
               <button key={m} onClick={() => setBulkMode(m)} style={{
@@ -157,12 +173,20 @@ export default function CommandCenter({ setPage }) {
           </div>
         </div>
         <div>
+<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>SETPOINT (kW)</div>
+=======
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>SETPOINT (kW)</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <input type="number" value={bulkSetpoint} onChange={e => setBulkSetpoint(Number(e.target.value))}
             style={{ width: 80, background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
         </div>
         <div>
+<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>TARGET</div>
+=======
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>TARGET</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <select onChange={e => {
             const v = e.target.value;
             setSelected(v === "all" ? [] : v === "online" ? sites.filter(s => s.status === "online").map(s => s.id) : []);
@@ -190,7 +214,11 @@ export default function CommandCenter({ setPage }) {
             }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{site.name}</div>
+<<<<<<< HEAD
                 <div style={{ fontSize: 10, color: "var(--sub)" }}>Solar {site.solarMW} MW · Temp {site.temp.toFixed(1)}°C</div>
+=======
+                <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Solar {site.solarMW} MW · Temp {site.temp.toFixed(1)}°C</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
               <div>
                 <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: statusBg(site.status), color: statusColor(site.status) }}>
@@ -198,6 +226,7 @@ export default function CommandCenter({ setPage }) {
                 </span>
               </div>
               <div>
+<<<<<<< HEAD
                 <div style={{ fontSize: 10, color: "var(--sub)" }}>SoC</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: site.soc > 70 ? green : site.soc > 40 ? amber : red }}>{site.soc}%</div>
               </div>
@@ -207,6 +236,17 @@ export default function CommandCenter({ setPage }) {
               </div>
               <div>
                 <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 2 }}>Mode</div>
+=======
+                <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>SoC</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: site.soc > 70 ? green : site.soc > 40 ? amber : red }}>{site.soc}%</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>BESS</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: purple }}>{site.bessMW} MW</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 2 }}>Mode</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 8,
                   background: site.mode === "charge" ? "#10b98120" : site.mode === "discharge" ? "#ef444420" : "#f59e0b20",
                   color: site.mode === "charge" ? green : site.mode === "discharge" ? red : amber }}>
@@ -260,7 +300,11 @@ export default function CommandCenter({ setPage }) {
                 <div style={{ width: 7, height: 7, borderRadius: "50%", marginTop: 4, flexShrink: 0, background: eventColor(e.type) }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 11, color: "var(--text)", lineHeight: 1.4 }}>{e.msg}</div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 9, color: "var(--sub)" }}>{e.ts}</div>
+=======
+                  <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>{e.ts}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               </div>
             ))}

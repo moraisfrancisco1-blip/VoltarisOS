@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Login from "./pages/Login"
+import PaymentSuccess from "./pages/PaymentSuccess"
+import PaymentCancel from "./pages/PaymentCancel"
 import Sidebar from "./components/Sidebar"
 import TopBar from "./components/TopBar"
 import Dashboard from "./pages/Dashboard"
@@ -147,7 +150,6 @@ function AppShell({ user, onLogout }) {
   }
 
   // Guard against direct/stale navigation to a page the current role can't access
-  // (e.g. role changed, or page was set before this guard existed).
   useEffect(() => {
     if (!canAccessPage(user?.role, page)) setPage("dashboard")
   }, [user?.role, page])
@@ -265,10 +267,25 @@ export default function App() {
 
   const handleLogout = () => { localStorage.clear(); setUser(null) }
 
-  if (!user) return <Login onLogin={(u) => {
-    localStorage.setItem("role", u.role || "admin")
-    setUser({ ...u, role: u.role || "admin" })
-  }} />
-
-  return <AppShell user={user} onLogout={handleLogout} />
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Payment routes - public */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
+        
+        {/* Main app routes */}
+        <Route path="/*" element={
+          !user ? (
+            <Login onLogin={(u) => {
+              localStorage.setItem("role", u.role || "admin")
+              setUser({ ...u, role: u.role || "admin" })
+            }} />
+          ) : (
+            <AppShell user={user} onLogout={handleLogout} />
+          )
+        } />
+      </Routes>
+    </BrowserRouter>
+  )
 }

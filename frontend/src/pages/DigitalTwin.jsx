@@ -41,12 +41,20 @@ function FlowArrow({ x1, y1, x2, y2, active, color, label, value }) {
         <circle key={i} cx={d.x} cy={d.y} r={4} fill={color} opacity={1 - i * 0.2} />
       ))}
       {label && (
+<<<<<<< HEAD
         <text x={mx} y={my - 8} textAnchor="middle" fill={active ? color : "var(--sub)"} fontSize="10" fontWeight={active ? "600" : "400"}>
+=======
+        <text x={mx} y={my - 8} textAnchor="middle" fill={active ? color : "#374151"} fontSize="10" fontWeight={active ? "600" : "400"}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           {label}
         </text>
       )}
       {value && (
+<<<<<<< HEAD
         <text x={mx} y={my + 18} textAnchor="middle" fill={active ? "var(--sub)" : "var(--sub)"} fontSize="9">
+=======
+        <text x={mx} y={my + 18} textAnchor="middle" fill={active ? "#9ca3af" : "#374151"} fontSize="9">
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           {value}
         </text>
       )}
@@ -61,9 +69,15 @@ function Component({ x, y, w, h, label, value, unit, color, icon, status }) {
     <g>
       <rect x={x} y={y} width={w} height={h} rx="10" fill={color + "15"} stroke={color + "55"} strokeWidth="1.5" />
       <text x={x + w / 2} y={y + 18} textAnchor="middle" fill={color} fontSize="18">{icon}</text>
+<<<<<<< HEAD
       <text x={x + w / 2} y={y + 36} textAnchor="middle" fill="var(--sub)" fontSize="10">{label}</text>
       <text x={x + w / 2} y={y + 54} textAnchor="middle" fill="var(--text)" fontSize="14" fontWeight="700">{value}</text>
       <text x={x + w / 2} y={y + 68} textAnchor="middle" fill="var(--sub)" fontSize="9">{unit}</text>
+=======
+      <text x={x + w / 2} y={y + 36} textAnchor="middle" fill="#9ca3af" fontSize="10">{label}</text>
+      <text x={x + w / 2} y={y + 54} textAnchor="middle" fill="white" fontSize="14" fontWeight="700">{value}</text>
+      <text x={x + w / 2} y={y + 68} textAnchor="middle" fill="#6b7280" fontSize="9">{unit}</text>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       <circle cx={x + w - 10} cy={y + 10} r={4} fill={sc} />
     </g>
   )
@@ -73,9 +87,15 @@ const CT = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
     <div style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px", padding: "8px 12px", fontSize: "11px" }}>
+<<<<<<< HEAD
       <div style={{ color: "var(--sub)", marginBottom: "4px" }}>{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} style={{ color: p.color }}>{p.name}: <span style={{ color: "var(--text)", fontWeight: "600" }}>{p.value}</span></div>
+=======
+      <div style={{ color: "rgba(148,163,184,0.85)", marginBottom: "4px" }}>{label}</div>
+      {payload.map(p => (
+        <div key={p.dataKey} style={{ color: p.color }}>{p.name}: <span style={{ color: "white", fontWeight: "600" }}>{p.value}</span></div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       ))}
     </div>
   )
@@ -139,7 +159,11 @@ export default function DigitalTwin({ user }) {
           </div>
           <div>
             <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Digital Twin</h1>
+<<<<<<< HEAD
             <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Espelho digital em tempo real · Simulação física do site</p>
+=======
+            <p style={{ color: "rgba(148,163,184,0.85)", fontSize: "13px", marginTop: "2px" }}>Espelho digital em tempo real · Simulação física do site</p>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -148,7 +172,11 @@ export default function DigitalTwin({ user }) {
               padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600",
               border: "none", cursor: "pointer",
               background: site === k ? color + "22" : "var(--surface)",
+<<<<<<< HEAD
               color: site === k ? color : "var(--sub)",
+=======
+              color: site === k ? color : "#6b7280",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               border: `1px solid ${site === k ? color + "44" : "#1a2234"}`,
             }}>{v.name}</button>
           ))}
@@ -162,7 +190,11 @@ export default function DigitalTwin({ user }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <div>
               <div style={{ fontWeight: "700", fontSize: "14px" }}>Diagrama de Energia</div>
+<<<<<<< HEAD
               <div style={{ color: "var(--sub)", fontSize: "11px" }}>{SITES[site].name} · {SITES[site].capacity} · {SITES[site].panels} painéis</div>
+=======
+              <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "11px" }}>{SITES[site].name} · {SITES[site].capacity} · {SITES[site].panels} painéis</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#4ade80" }}>
               <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", animation: "pulse 1.5s infinite" }} />
@@ -197,20 +229,32 @@ export default function DigitalTwin({ user }) {
               { l: "Eficiência", v: "94.2%", c: color },
             ].map(m => (
               <div key={m.l} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
+<<<<<<< HEAD
                 <span style={{ color: "var(--sub)", fontSize: "12px" }}>{m.l}</span>
+=======
+                <span style={{ color: "rgba(148,163,184,0.85)", fontSize: "12px" }}>{m.l}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <span style={{ color: m.c, fontWeight: "700", fontSize: "13px" }}>{m.v}</span>
               </div>
             ))}
           </div>
           <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)", flex: 1 }}>
             <div style={{ fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>Previsão SoC</div>
+<<<<<<< HEAD
             <div style={{ color: "var(--sub)", fontSize: "10px", marginBottom: "10px" }}>próximas 24h</div>
+=======
+            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "10px", marginBottom: "10px" }}>próximas 24h</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {[15, 30, 60].map(min => {
               const projected = Math.min(100, Math.max(0, data.soc + (battCharging ? min * 0.08 : -min * 0.05)))
               return (
                 <div key={min} style={{ marginBottom: "10px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+<<<<<<< HEAD
                     <span style={{ color: "var(--sub)", fontSize: "10px" }}>+{min} min</span>
+=======
+                    <span style={{ color: "rgba(148,163,184,0.85)", fontSize: "10px" }}>+{min} min</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <span style={{ color: projected > 60 ? "#4ade80" : "#f59e0b", fontWeight: "700", fontSize: "11px" }}>{projected.toFixed(0)}%</span>
                   </div>
                   <div style={{ height: "3px", background: "#1f2937", borderRadius: "4px" }}>
@@ -234,8 +278,13 @@ export default function DigitalTwin({ user }) {
             <div style={{ fontWeight: "600", fontSize: "13px", marginBottom: "12px" }}>{c.label}</div>
             <ResponsiveContainer width="100%" height={100}>
               <LineChart data={ts} margin={{ top: 0, right: 0, left: -30, bottom: 0 }}>
+<<<<<<< HEAD
                 <XAxis dataKey="time" stroke="var(--surface2)" tick={{ fill: "var(--sub)", fontSize: 8 }} interval={11} />
                 <YAxis stroke="var(--surface2)" tick={{ fill: "var(--sub)", fontSize: 8 }} />
+=======
+                <XAxis dataKey="time" stroke="var(--surface2)" tick={{ fill: "#374151", fontSize: 8 }} interval={11} />
+                <YAxis stroke="var(--surface2)" tick={{ fill: "#374151", fontSize: 8 }} />
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <Tooltip content={<CT />} />
                 <Line type="monotone" dataKey={c.key} stroke={c.color} strokeWidth={2} dot={false} name={c.label} />
               </LineChart>

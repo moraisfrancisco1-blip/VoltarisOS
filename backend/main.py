@@ -23,6 +23,7 @@ from backend.routers.devices import router as devices_router
 from backend.routers.vpp import router as vpp_router
 from backend.routers.reports import router as reports_router
 from backend.routers.alerts_ws import router as alerts_ws_router
+from backend.routers.payments import router as payments_router
 from backend.security import get_current_user, limiter
 from fastapi import Depends, Request
 from slowapi import _rate_limit_exceeded_handler
@@ -87,6 +88,7 @@ app.include_router(auth.router, prefix="/api")  # login/register must stay publi
 app.include_router(vpp_router, dependencies=_auth_dep)
 app.include_router(reports_router, dependencies=_auth_dep)
 app.include_router(alerts_ws_router)  # websocket does its own token check on connect
+app.include_router(payments_router)  # Stripe payments - public endpoints
 
 
 @app.get("/ai_decision")

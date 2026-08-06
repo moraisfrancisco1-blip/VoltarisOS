@@ -18,11 +18,19 @@ const Toggle = ({ value, onChange, label, desc, badge, revenue }) => (
         <span style={{ fontSize: 13, fontWeight: 500 }}>{label}</span>
         {badge && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 99, background: "#064e3b", color: "#10b981" }}>{badge}</span>}
       </div>
+<<<<<<< HEAD
       {desc && <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 2 }}>{desc}</div>}
     </div>
     {revenue && <span style={{ fontSize: 12, color: green, marginRight: 12 }}>+€{revenue}/h</span>}
     <div onClick={() => onChange(!value)} style={{
       width: 40, height: 22, borderRadius: 11, background: value ? accent : "var(--sub)",
+=======
+      {desc && <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{desc}</div>}
+    </div>
+    {revenue && <span style={{ fontSize: 12, color: green, marginRight: 12 }}>+€{revenue}/h</span>}
+    <div onClick={() => onChange(!value)} style={{
+      width: 40, height: 22, borderRadius: 11, background: value ? accent : "#374151",
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0
     }}>
       <div style={{ position: "absolute", top: 2, left: value ? 20 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
@@ -34,7 +42,11 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
+<<<<<<< HEAD
       <div style={{ color: "var(--sub)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
+=======
+      <div style={{ color: "rgba(148,163,184,0.85)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map(p => (
         <div key={p.dataKey} style={{ display: "flex", gap: 12, justifyContent: "space-between", marginBottom: 3 }}>
           <span style={{ color: p.color }}>{p.name}</span>
@@ -130,9 +142,15 @@ export default function GridServices() {
   const marketPrices = {
     FCR: [{ product: "FCR-N Up", price: "42.50 €/MW/h", bid: "35 MW", status: "Won", color: green }, { product: "FCR-N Down", price: "38.20 €/MW/h", bid: "35 MW", status: "Won", color: green }, { product: "FCR-D Up", price: "88.10 €/MW/h", bid: "20 MW", status: "Pending", color: amber }, { product: "FCR-D Down", price: "71.40 €/MW/h", bid: "20 MW", status: "Pending", color: amber }],
     aFRR: [{ product: "aFRR Capacity Up", price: "52.00 €/MW/h", bid: "50 MW", status: "Won", color: green }, { product: "aFRR Capacity Down", price: "48.80 €/MW/h", bid: "50 MW", status: "Won", color: green }, { product: "aFRR Energy", price: "110.00 €/MWh", bid: "N/A", status: "Settled", color: blue }],
+<<<<<<< HEAD
     mFRR: [{ product: "mFRR Up", price: "120.00 €/MW/h", bid: "0 MW", status: "Not offered", color: "var(--sub)" }, { product: "mFRR Down", price: "95.00 €/MW/h", bid: "0 MW", status: "Not offered", color: "var(--sub)" }],
     TERRE: [{ product: "TERRE Up", price: "135.00 €/MWh", bid: "15 MW", status: "Won", color: green }],
     imFRR: [{ product: "imFRR Fast Up", price: "160.00 €/MWh", bid: "0 MW", status: "No bid", color: "var(--sub)" }],
+=======
+    mFRR: [{ product: "mFRR Up", price: "120.00 €/MW/h", bid: "0 MW", status: "Not offered", color: "rgba(148,163,184,0.85)" }, { product: "mFRR Down", price: "95.00 €/MW/h", bid: "0 MW", status: "Not offered", color: "rgba(148,163,184,0.85)" }],
+    TERRE: [{ product: "TERRE Up", price: "135.00 €/MWh", bid: "15 MW", status: "Won", color: green }],
+    imFRR: [{ product: "imFRR Fast Up", price: "160.00 €/MWh", bid: "0 MW", status: "No bid", color: "rgba(148,163,184,0.85)" }],
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   };
 
   const events = [
@@ -153,11 +171,19 @@ export default function GridServices() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Grid Services & Ancillary Markets</h1>
+<<<<<<< HEAD
           <p style={{ color: "var(--sub)", fontSize: 14 }}>FCR, aFRR, mFRR, Demand Response, Peak Shaving & Voltage Regulation</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 14px" }}>
             <div style={{ fontSize: 10, color: "var(--sub)" }}>Today's Grid Revenue</div>
+=======
+          <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 14 }}>FCR, aFRR, mFRR, Demand Response, Peak Shaving & Voltage Regulation</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 14px" }}>
+            <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Today's Grid Revenue</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <div style={{ fontSize: 20, fontWeight: 800, color: green }}>€{totalRevenue}</div>
           </div>
           <button onClick={() => alert("Submit Market Bids — feature coming soon")} style={{ background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, cursor: "pointer" }}>
@@ -171,11 +197,19 @@ export default function GridServices() {
 
         {/* Frequency gauge */}
         <div style={card}>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 11, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Live Grid Frequency</div>
           <div style={{ fontSize: 44, fontWeight: 900, color: freqColor, fontVariantNumeric: "tabular-nums", textShadow: `0 0 20px ${freqColor}60` }}>
             {freqValue.toFixed(3)} Hz
           </div>
           <div style={{ fontSize: 12, color: "var(--sub)", marginTop: 4 }}>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>Live Grid Frequency</div>
+          <div style={{ fontSize: 44, fontWeight: 900, color: freqColor, fontVariantNumeric: "tabular-nums", textShadow: `0 0 20px ${freqColor}60` }}>
+            {freqValue.toFixed(3)} Hz
+          </div>
+          <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginTop: 4 }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Deviation: <span style={{ color: freqColor, fontWeight: 700 }}>{freqDev > 0 ? "+" : ""}{(freqValue - 50).toFixed(3)} Hz</span>
           </div>
           <div style={{ marginTop: 12, background: "var(--surface2)", borderRadius: 8, padding: 10, fontSize: 11 }}>
@@ -186,12 +220,20 @@ export default function GridServices() {
             ].map(b => (
               <div key={b.band} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, padding: "4px 6px", borderRadius: 4, background: b.active ? "var(--surface)" : "transparent" }}>
                 <span style={{ color: b.active ? freqColor : "rgba(148,163,184,0.85)", fontWeight: b.active ? 700 : 400 }}>{b.band}</span>
+<<<<<<< HEAD
                 <span style={{ color: "var(--sub)" }}>{b.range}</span>
+=======
+                <span style={{ color: "rgba(148,163,184,0.85)" }}>{b.range}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             ))}
           </div>
           <div style={{ marginTop: 10 }}>
+<<<<<<< HEAD
             <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>FCR Response Readiness</div>
+=======
+            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>FCR Response Readiness</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <div style={{ background: "#1f2937", borderRadius: 4, height: 6 }}>
               <div style={{ width: "87%", height: "100%", background: green, borderRadius: 4 }} />
             </div>
@@ -209,7 +251,11 @@ export default function GridServices() {
               <YAxis yAxisId="freq" domain={[49.5, 50.5]} tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <YAxis yAxisId="resp" orientation="right" tick={{ fontSize: 9, fill: "rgba(148,163,184,0.85)" }} />
               <Tooltip content={<CustomTooltip />} />
+<<<<<<< HEAD
               <ReferenceLine yAxisId="freq" y={50.0} stroke="var(--sub)" strokeDasharray="3 3" />
+=======
+              <ReferenceLine yAxisId="freq" y={50.0} stroke="#374151" strokeDasharray="3 3" />
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <ReferenceLine yAxisId="freq" y={49.9} stroke={amber} strokeDasharray="2 2" />
               <ReferenceLine yAxisId="freq" y={50.1} stroke={amber} strokeDasharray="2 2" />
               <Line yAxisId="freq" type="monotone" dataKey="freq" stroke={freqColor} strokeWidth={2} dot={false} name="Hz" />
@@ -220,14 +266,22 @@ export default function GridServices() {
 
         {/* DR status */}
         <div style={card}>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 11, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Demand Response</div>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Demand Response</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           {activeDR ? (
             <>
               <div style={{ fontSize: 20, fontWeight: 800, color: amber }}>ACTIVE EVENT</div>
               <div style={{ fontSize: 36, fontWeight: 900, fontVariantNumeric: "tabular-nums", color: amber, marginTop: 4 }}>{formatTime(drCountdown)}</div>
               <div style={{ background: "#451a03", border: "1px solid #92400e", borderRadius: 8, padding: 10, marginTop: 10, fontSize: 12 }}>
                 <div style={{ color: amber, fontWeight: 600 }}>Target: reduce 150 kW</div>
+<<<<<<< HEAD
                 <div style={{ color: "var(--sub)", fontSize: 11, marginTop: 2 }}>Estimated revenue: €{(drCountdown / 1800 * 35).toFixed(2)}</div>
+=======
+                <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginTop: 2 }}>Estimated revenue: €{(drCountdown / 1800 * 35).toFixed(2)}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
               <button onClick={() => setActiveDR(false)} style={{ marginTop: 10, background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, width: "100%" }}>
                 Emergency Stop
@@ -236,6 +290,7 @@ export default function GridServices() {
           ) : (
             <>
               <div style={{ fontSize: 20, fontWeight: 800, color: green }}>STANDBY</div>
+<<<<<<< HEAD
               <div style={{ fontSize: 12, color: "var(--sub)", marginTop: 4, marginBottom: 12 }}>Ready for TSO activation</div>
               <div style={{ fontSize: 11, background: "var(--surface2)", borderRadius: 8, padding: 10, marginBottom: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -243,6 +298,15 @@ export default function GridServices() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--sub)" }}>Response time</span><span>&lt; 30 min</span>
+=======
+              <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginTop: 4, marginBottom: 12 }}>Ready for TSO activation</div>
+              <div style={{ fontSize: 11, background: "var(--surface2)", borderRadius: 8, padding: 10, marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                  <span style={{ color: "rgba(148,163,184,0.85)" }}>Available capacity</span><span style={{ color: green }}>150 kW</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "rgba(148,163,184,0.85)" }}>Response time</span><span>&lt; 30 min</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               </div>
               <button onClick={() => setActiveDR(true)} style={{ background: "#451a03", color: amber, border: "1px solid #92400e", padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontSize: 12, width: "100%" }}>
@@ -259,7 +323,11 @@ export default function GridServices() {
         {/* Service controls */}
         <div style={card}>
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Service Controls</h2>
+<<<<<<< HEAD
           <p style={{ color: "var(--sub)", fontSize: 11, marginBottom: 6 }}>Enable/disable ancillary market participation</p>
+=======
+          <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginBottom: 6 }}>Enable/disable ancillary market participation</p>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <Toggle value={services.fcr} onChange={v => setServices(s => ({ ...s, fcr: v }))} label="FCR-N / FCR-D" desc="Frequency containment reserve ±0.2 Hz" badge="Live" revenue="14.20" />
           <Toggle value={services.afrr} onChange={v => setServices(s => ({ ...s, afrr: v }))} label="aFRR (Automatic FRR)" desc="Automatic restoration reserve — ENTSO-E" badge="Active" revenue="18.40" />
           <Toggle value={services.mfrr} onChange={v => setServices(s => ({ ...s, mfrr: v }))} label="mFRR (Manual FRR)" desc="Manual restoration reserve — 30min notice" />
@@ -273,12 +341,20 @@ export default function GridServices() {
         {/* Capacity allocation */}
         <div style={card}>
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Capacity Allocation</h2>
+<<<<<<< HEAD
           <p style={{ color: "var(--sub)", fontSize: 11, marginBottom: 12 }}>BESS capacity reserved per service (750 kW / 1500 kWh total)</p>
+=======
+          <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 11, marginBottom: 12 }}>BESS capacity reserved per service (750 kW / 1500 kWh total)</p>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           {capacityAlloc.map(s => (
             <div key={s.label} style={{ marginBottom: 12, opacity: s.active ? 1 : 0.4 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
                 <span>{s.label}</span>
+<<<<<<< HEAD
                 <span style={{ color: "var(--sub)" }}>{s.pct}% · {s.kw} kW</span>
+=======
+                <span style={{ color: "rgba(148,163,184,0.85)" }}>{s.pct}% · {s.kw} kW</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
               <div style={{ background: "#1f2937", borderRadius: 4, height: 7 }}>
                 <div style={{ width: `${s.pct}%`, height: "100%", background: s.color, borderRadius: 4, boxShadow: `0 0 6px ${s.color}60` }} />
@@ -292,7 +368,11 @@ export default function GridServices() {
               { l: "Available reserve", v: "150 kW" },
             ].map(m => (
               <div key={m.l} style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+<<<<<<< HEAD
                 <span style={{ color: "var(--sub)" }}>{m.l}</span><span>{m.v}</span>
+=======
+                <span style={{ color: "rgba(148,163,184,0.85)" }}>{m.l}</span><span>{m.v}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             ))}
           </div>
@@ -316,7 +396,11 @@ export default function GridServices() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 10 }}>
             {Object.entries(todayRevenue).map(([k, v]) => (
               <div key={k} style={{ background: "var(--surface2)", borderRadius: 6, padding: "6px 10px", display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+<<<<<<< HEAD
                 <span style={{ color: "var(--sub)", textTransform: "uppercase", fontSize: 10 }}>{k}</span>
+=======
+                <span style={{ color: "rgba(148,163,184,0.85)", textTransform: "uppercase", fontSize: 10 }}>{k}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <span style={{ color: green, fontWeight: 700 }}>€{v.toFixed(2)}</span>
               </div>
             ))}
@@ -341,7 +425,11 @@ export default function GridServices() {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
               {["Product", "Price", "Bid Volume", "Status"].map(h => (
+<<<<<<< HEAD
                 <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "var(--sub)", fontWeight: 500, fontSize: 12 }}>{h}</th>
+=======
+                <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "rgba(148,163,184,0.85)", fontWeight: 500, fontSize: 12 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               ))}
             </tr>
           </thead>
@@ -368,17 +456,28 @@ export default function GridServices() {
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 {["Time", "Service", "Action", "Duration", "Revenue", "Status"].map(h => (
+<<<<<<< HEAD
                   <th key={h} style={{ padding: "8px 10px", textAlign: "left", color: "var(--sub)", fontWeight: 500 }}>{h}</th>
+=======
+                  <th key={h} style={{ padding: "8px 10px", textAlign: "left", color: "rgba(148,163,184,0.85)", fontWeight: 500 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 ))}
               </tr>
             </thead>
             <tbody>
               {events.map((e, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
+<<<<<<< HEAD
                   <td style={{ padding: "10px 10px", color: "var(--sub)" }}>{e.time}</td>
                   <td style={{ padding: "10px 10px", color: accent, fontWeight: 600 }}>{e.type}</td>
                   <td style={{ padding: "10px 10px" }}>{e.action}</td>
                   <td style={{ padding: "10px 10px", color: "var(--sub)" }}>{e.duration}</td>
+=======
+                  <td style={{ padding: "10px 10px", color: "rgba(148,163,184,0.85)" }}>{e.time}</td>
+                  <td style={{ padding: "10px 10px", color: accent, fontWeight: 600 }}>{e.type}</td>
+                  <td style={{ padding: "10px 10px" }}>{e.action}</td>
+                  <td style={{ padding: "10px 10px", color: "rgba(148,163,184,0.85)" }}>{e.duration}</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <td style={{ padding: "10px 10px", color: green, fontWeight: 600 }}>{e.revenue}</td>
                   <td style={{ padding: "10px 10px" }}>
                     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "#064e3b", color: green }}>{e.status}</span>
@@ -395,11 +494,19 @@ export default function GridServices() {
             <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: "#064e3b", color: green }}>● Live</span>
           </div>
           {dispatchLog.length === 0 ? (
+<<<<<<< HEAD
             <div style={{ color: "var(--sub)", fontSize: 12, textAlign: "center", padding: 20 }}>Awaiting dispatch events...</div>
           ) : (
             dispatchLog.map((e, i) => (
               <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.12)", display: "flex", gap: 10 }}>
                 <div style={{ fontSize: 10, color: "var(--sub)", width: 56, flexShrink: 0 }}>{e.time}</div>
+=======
+            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, textAlign: "center", padding: 20 }}>Awaiting dispatch events...</div>
+          ) : (
+            dispatchLog.map((e, i) => (
+              <div key={i} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.12)", display: "flex", gap: 10 }}>
+                <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", width: 56, flexShrink: 0 }}>{e.time}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <div style={{ flex: 1, fontSize: 12 }}>{e.msg}</div>
                 <div style={{ color: green, fontWeight: 700, fontSize: 12 }}>+€{e.revenue}</div>
               </div>

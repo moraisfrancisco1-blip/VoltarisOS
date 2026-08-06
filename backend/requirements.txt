@@ -16,3 +16,4 @@ pymodbus
 asyncua
 python-dotenv
 passlib[bcrypt]
+stripe

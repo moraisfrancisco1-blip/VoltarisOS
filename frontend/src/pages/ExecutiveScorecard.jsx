@@ -17,13 +17,21 @@ const card = {
   position: "relative",
   overflow: "hidden",
 }
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => (
         <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>
       ))}
@@ -137,13 +145,21 @@ export default function ExecutiveScorecard() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Executive Scorecard</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 12, marginTop: 2 }}>Portfolio performance · Investor summary · {new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginTop: 2 }}>Portfolio performance · Investor summary · {new Date().toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {["5 Sites", "€1.24M YTD", "87 MW Portfolio"].map(t => (
             <span key={t} style={{
               background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
+<<<<<<< HEAD
               borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "var(--sub)"
+=======
+              borderRadius: 20, padding: "4px 12px", fontSize: 12, color: "rgba(148,163,184,0.85)"
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             }}>{t}</span>
           ))}
         </div>
@@ -154,7 +170,11 @@ export default function ExecutiveScorecard() {
         {/* Health ring */}
         <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 12px" }}>
           <HealthRing score={healthScore} size={140} />
+<<<<<<< HEAD
           <div style={{ marginTop: 8, fontSize: 11, color: "var(--sub)", textAlign: "center" }}>
+=======
+          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "center" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {healthScore >= 85 ? "Excellent" : healthScore >= 70 ? "Good" : "Needs Attention"}
           </div>
         </div>
@@ -162,8 +182,13 @@ export default function ExecutiveScorecard() {
         {/* Revenue gauge */}
         <div style={{ ...card, display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 12px" }}>
           <RevenueGauge pct={+revPct.toFixed(0)} size={140} />
+<<<<<<< HEAD
           <div style={{ marginTop: 8, fontSize: 11, color: "var(--sub)", textAlign: "center" }}>Revenue vs Target</div>
           <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 2 }}>€1.24M / €1.30M</div>
+=======
+          <div style={{ marginTop: 8, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "center" }}>Revenue vs Target</div>
+          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>€1.24M / €1.30M</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
 
         {/* 8 KPI cards grid */}
@@ -175,10 +200,17 @@ export default function ExecutiveScorecard() {
               borderTop: `3px solid ${k.color}50`,
               borderRadius: 10, padding: "12px 14px"
             }}>
+<<<<<<< HEAD
               <div style={{ fontSize: 10, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{k.label}</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: k.color }}>{k.value}</div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 <span style={{ fontSize: 10, color: "var(--sub)" }}>Target: {k.target}</span>
+=======
+              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 4 }}>{k.label}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: k.color }}>{k.value}</div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                <span style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>Target: {k.target}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <span style={{ fontSize: 10, fontWeight: 700, color: k.up ? green : red }}>{k.trend}</span>
               </div>
               {/* Mini progress */}
@@ -198,7 +230,11 @@ export default function ExecutiveScorecard() {
             {[[green, "Revenue"], [accent, "Target"], [purple, "EBITDA"]].map(([c, l]) => (
               <div key={l} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 10, height: 3, borderRadius: 2, background: c }} />
+<<<<<<< HEAD
                 <span style={{ fontSize: 11, color: "var(--sub)" }}>{l}</span>
+=======
+                <span style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{l}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             ))}
           </div>
@@ -225,7 +261,11 @@ export default function ExecutiveScorecard() {
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 {["Site", "Revenue (k€)", "Target", "vs Target", "ROI", "Uptime", "MoM", "Grade"].map(h => (
+<<<<<<< HEAD
                   <th key={h} style={{ textAlign: "left", padding: "6px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
+=======
+                  <th key={h} style={{ textAlign: "left", padding: "6px 10px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 ))}
               </tr>
             </thead>
@@ -237,7 +277,11 @@ export default function ExecutiveScorecard() {
                   <tr key={s.name} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                     <td style={{ padding: "10px 10px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{s.name}</td>
                     <td style={{ padding: "10px 10px", fontSize: 13, color: green, fontWeight: 700 }}>{s.revenue}</td>
+<<<<<<< HEAD
                     <td style={{ padding: "10px 10px", fontSize: 12, color: "var(--sub)" }}>{s.target}</td>
+=======
+                    <td style={{ padding: "10px 10px", fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{s.target}</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <td style={{ padding: "10px 10px" }}>
                       <span style={{
                         fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 8,
@@ -278,7 +322,11 @@ export default function ExecutiveScorecard() {
                   <div style={{ width: 7, height: 7, borderRadius: "50%", background: SEV_COL[r.sev], flexShrink: 0, marginTop: 4 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, color: "var(--text)", lineHeight: 1.4 }}>{r.text}</div>
+<<<<<<< HEAD
                     <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 3 }}>Owner: {r.owner}</div>
+=======
+                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 3 }}>Owner: {r.owner}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 </div>
               ))}
@@ -303,7 +351,11 @@ export default function ExecutiveScorecard() {
               ].map(item => (
                 <div key={item.l} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 800, color: item.c }}>{item.v}</div>
+<<<<<<< HEAD
                   <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 2 }}>{item.l}</div>
+=======
+                  <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{item.l}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               ))}
             </div>

@@ -4,7 +4,11 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
+<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+=======
+const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 const INITIAL_SITES = [
   { id: 1, name: "Herdade Solar Norte", lat: 38.72, lng: -8.89, solarKwp: 4200, bessKwh: 8400, bessKw: 2100, inverter: "SMA Sunny Tripower", chemistry: "LFP", status: "online", installed: "2022-03-15", country: "PT" },
@@ -30,7 +34,11 @@ const statusBg = (s) => `${statusColor(s)}20`;
 function InputField({ label: lb, value, onChange, type = "text", options, unit, readOnly = false }) {
   return (
     <div>
+<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}{unit && <span style={{ color: "var(--sub)", marginLeft: 4 }}>({unit})</span>}</div>
+=======
+      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}{unit && <span style={{ color: "rgba(148,163,184,0.85)", marginLeft: 4 }}>({unit})</span>}</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {options ? (
         <select value={value} onChange={e => onChange(e.target.value)} disabled={readOnly}
           style={{ width: "100%", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 10px", color: "var(--text)", fontSize: 13 }}>
@@ -80,7 +88,11 @@ export default function Sites() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Sites</h1>
+<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Manage solar + BESS park configurations</div>
+=======
+          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Manage solar + BESS park configurations</div>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sites..."
@@ -114,7 +126,11 @@ export default function Sites() {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
               {["Name", "Country", "Solar (kWp)", "BESS (kWh)", "BESS Power (kW)", "Inverter", "Chemistry", "Status", "Installed", ""].map(h => (
+<<<<<<< HEAD
                 <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600, WhiteSpace: "nowrap" }}>{h}</th>
+=======
+                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               ))}
             </tr>
           </thead>
@@ -122,22 +138,38 @@ export default function Sites() {
             {filtered.map(s => (
               <tr key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 <td style={{ padding: "10px 10px", fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{s.name}</td>
+<<<<<<< HEAD
                 <td style={{ padding: "10px 10px", fontSize: 12, color: "var(--sub)" }}>{s.country}</td>
+=======
+                <td style={{ padding: "10px 10px", fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{s.country}</td>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <td style={{ padding: "10px 10px", fontSize: 12, color: amber }}>{Number(s.solarKwp).toLocaleString()}</td>
                 <td style={{ padding: "10px 10px", fontSize: 12, color: purple }}>{Number(s.bessKwh).toLocaleString()}</td>
                 <td style={{ padding: "10px 10px", fontSize: 12, color: blue }}>{Number(s.bessKw).toLocaleString()}</td>
                 <td style={{ padding: "10px 10px", fontSize: 11, color: "var(--text)" }}>{s.inverter}</td>
                 <td style={{ padding: "10px 10px" }}>
+<<<<<<< HEAD
                   <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, background: "var(--surface2)", color: "var(--sub)", border: "1px solid rgba(255,255,255,0.12)" }}>{s.chemistry}</span>
+=======
+                  <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, background: "var(--surface2)", color: "rgba(148,163,184,0.85)", border: "1px solid rgba(255,255,255,0.12)" }}>{s.chemistry}</span>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </td>
                 <td style={{ padding: "10px 10px" }}>
                   <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: statusBg(s.status), color: statusColor(s.status) }}>{s.status}</span>
                 </td>
+<<<<<<< HEAD
                 <td style={{ padding: "10px 10px", fontSize: 11, color: "var(--sub)" }}>{s.installed}</td>
                 <td style={{ padding: "10px 10px" }}>
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => openEdit(s)}
                       style={{ padding: "4px 10px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "var(--sub)", fontSize: 11, cursor: "pointer" }}>Edit</button>
+=======
+                <td style={{ padding: "10px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{s.installed}</td>
+                <td style={{ padding: "10px 10px" }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => openEdit(s)}
+                      style={{ padding: "4px 10px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "rgba(148,163,184,0.85)", fontSize: 11, cursor: "pointer" }}>Edit</button>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <button onClick={() => setDeleteId(s.id)}
                       style={{ padding: "4px 10px", background: "#ef444415", border: "1px solid #ef4444", borderRadius: 6, color: red, fontSize: 11, cursor: "pointer" }}>Del</button>
                   </div>
@@ -184,7 +216,11 @@ export default function Sites() {
 
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
               <button onClick={() => setShowForm(false)}
+<<<<<<< HEAD
                 style={{ padding: "8px 20px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 13, cursor: "pointer" }}>
+=======
+                style={{ padding: "8px 20px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 13, cursor: "pointer" }}>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 Cancel
               </button>
               <button onClick={saveForm}
@@ -201,10 +237,17 @@ export default function Sites() {
         <div style={{ position: "fixed", inset: 0, background: "#00000088", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 28, width: 360 }}>
             <h3 style={{ margin: "0 0 10px", color: "var(--text)" }}>Delete Site</h3>
+<<<<<<< HEAD
             <p style={{ color: "var(--sub)", fontSize: 13 }}>Are you sure you want to delete <b>{sites.find(s => s.id === deleteId)?.name}</b>? This action cannot be undone.</p>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
               <button onClick={() => setDeleteId(null)}
                 style={{ padding: "7px 16px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+=======
+            <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 13 }}>Are you sure you want to delete <b>{sites.find(s => s.id === deleteId)?.name}</b>? This action cannot be undone.</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 16 }}>
+              <button onClick={() => setDeleteId(null)}
+                style={{ padding: "7px 16px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+>>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <button onClick={confirmDelete}
                 style={{ padding: "7px 16px", background: red, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Delete</button>
             </div>
