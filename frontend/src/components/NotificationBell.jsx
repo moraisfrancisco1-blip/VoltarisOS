@@ -108,7 +108,7 @@ export default function NotificationBell({ color = "#4ade80" }) {
                     <div style={{ color: n.read ? "var(--sub)" : "var(--text)", fontSize: "13px", fontWeight: n.read ? "400" : "600", marginBottom: "2px" }}>
                       {n.title}
                     </div>
-                    <div style={{ color: "var(--sub)", fontSize: "12px", marginBottom: "4px", WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <div style={{ color: "var(--sub)", fontSize: "12px", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                       {n.body}
                     </div>
                     <div style={{ color: "var(--sub)", fontSize: "11px" }}>{n.time}</div>

@@ -19,6 +19,7 @@ import logging
 from datetime import datetime
 from typing import Dict, Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
+from sqlalchemy.orm import joinedload
 from backend.security import decode_token
 
 logger = logging.getLogger(__name__)
@@ -121,23 +122,42 @@ async def websocket_dashboard(
                 avg_soc = 0.5
                 device_count = 0
                 
-                # Get devices for this tenant
-                devices = db.query(models.Device).filter(
+                # Get devices with latest readings in one optimized query
+                from sqlalchemy import and_, desc
+                
+                # Get all device IDs for this tenant first
+                device_ids = [d.id for d in db.query(models.Device.id).filter(
                     models.Device.tenant_id == tenant_id,
                     models.Device.enabled == True,
-                ).all()
+                ).all()]
                 
-                for device in devices:
-                    reading = db.query(models.DeviceReading).filter(
-                        models.DeviceReading.device_id == device.id
-                    ).order_by(models.DeviceReading.timestamp.desc()).first()
+                if device_ids:
+                    # Get latest reading for each device using a correlated subquery
+                    from sqlalchemy import select, func
+                    subq = (
+                        select(
+                            models.DeviceReading.device_id,
+                            func.max(models.DeviceReading.timestamp).label('max_ts')
+                        )
+                        .where(models.DeviceReading.device_id.in_(device_ids))
+                        .group_by(models.DeviceReading.device_id)
+                        .subquery()
+                    )
                     
-                    if reading and reading.power_kw:
-                        total_power += reading.power_kw
-                        device_count += 1
+                    latest_readings = db.query(models.DeviceReading).join(
+                        subq,
+                        and_(
+                            models.DeviceReading.device_id == subq.c.device_id,
+                            models.DeviceReading.timestamp == subq.c.max_ts
+                        )
+                    ).all()
                     
-                    if reading and reading.soc_pct:
-                        avg_soc += reading.soc_pct
+                    for reading in latest_readings:
+                        if reading.power_kw:
+                            total_power += reading.power_kw
+                            device_count += 1
+                        if reading.soc_pct:
+                            avg_soc += reading.soc_pct
                 
                 if device_count > 0:
                     avg_soc = avg_soc / device_count / 100  # Convert to 0-1

@@ -193,7 +193,7 @@ export default function ApiKeys({ user }) {
                 flex: 1, padding: "8px 14px", background: "var(--surface2)",
                 border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px",
                 color: "var(--sub)", fontSize: "12px", fontFamily: "monospace",
-                overflow: "hidden", textOverflow: "ellipsis", WhiteSpace: "nowrap",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}>
                 {revealed[k.id] ? k.key : k.key.slice(0, 12) + "•".repeat(20)}
               </code>

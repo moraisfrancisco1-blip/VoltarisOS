@@ -89,7 +89,7 @@ export default function ShortcutsOverlay() {
                 <kbd style={{
                   padding: "3px 8px", background: "#1f2937", border: "1px solid var(--sub)",
                   borderRadius: "6px", fontSize: "11px", color: "var(--text)",
-                  fontFamily: "monospace", WhiteSpace: "nowrap",
+                  fontFamily: "monospace", whiteSpace: "nowrap",
                 }}>{s.key}</kbd>
               </div>
             )

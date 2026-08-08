@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from pydantic import BaseModel
 from typing import Optional
 import stripe
-from config import settings
+from backend.config import settings
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 

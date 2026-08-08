@@ -34,7 +34,7 @@ const Input = ({ label, value, onChange, type = "text", placeholder, unit, readO
       {unit && (
         <div style={{
           background: "#1f2937", border: `1px solid ${BORD}`, borderLeft: "none",
-          borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, WhiteSpace: "nowrap",
+          borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, whiteSpace: "nowrap",
         }}>{unit}</div>
       )}
     </div>
@@ -57,7 +57,7 @@ const NumInput = ({ label, value, onChange, min, max, step = 1, unit }) => (
       {unit && (
         <div style={{
           background: "#1f2937", border: `1px solid ${BORD}`, borderLeft: "none",
-          borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, WhiteSpace: "nowrap",
+          borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, whiteSpace: "nowrap",
         }}>{unit}</div>
       )}
     </div>

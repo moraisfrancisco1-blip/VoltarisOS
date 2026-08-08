@@ -639,7 +639,7 @@ export default function Integrations() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{ background: "var(--surface2)", borderRadius: 10, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", marginBottom: 8 }}>INSTALL</div>
-            <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", WhiteSpace: "pre-wrap" }}>
+            <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
 {`pip install pymodbus asyncua httpx
 python -m gateway.gateway \\
   --api https://your-backend.up.railway.app \\
@@ -648,7 +648,7 @@ python -m gateway.gateway \\
           </div>
           <div style={{ background: "var(--surface2)", borderRadius: 10, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", marginBottom: 8 }}>DOCKER (RASPBERRY PI)</div>
-            <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", WhiteSpace: "pre-wrap" }}>
+            <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
 {`docker run voltarisos/gateway \\
   -e VOLTARIS_API_URL=https://... \\
   -e GATEWAY_INTERVAL=30 \\

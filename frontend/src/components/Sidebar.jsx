@@ -210,7 +210,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
           background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
           flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-          <div style={{ color: "var(--sidebar-sub)", fontSize: "12px", fontWeight: "500", WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ color: "var(--sidebar-sub)", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {user?.company || "Voltaris"}
           </div>
           <div style={{
@@ -230,7 +230,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
             {!showCollapsed && (
               <div style={{
                 padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
-                color: "var(--sidebar-sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", WhiteSpace: "nowrap",
+                color: "var(--sidebar-sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
               }}>
                 {t(group.labelKey)}
               </div>
@@ -259,7 +259,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--sidebar-sub)" } }}
                 >
                   <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
-                  {!showCollapsed && <span style={{ WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
+                  {!showCollapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
                   {active && !showCollapsed && (
                     <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: color, flexShrink: 0 }} />
                   )}

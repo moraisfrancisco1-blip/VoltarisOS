@@ -279,7 +279,7 @@ export default function CustomerPortal() {
             <pre style={{
               background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "8px",
               padding: "14px", fontSize: "12px", color: "#10b981", fontFamily: "monospace",
-              overflowX: "auto", WhiteSpace: "pre-wrap", margin: 0
+              overflowX: "auto", whiteSpace: "pre-wrap", margin: 0
             }}>
               {embedCode}
             </pre>

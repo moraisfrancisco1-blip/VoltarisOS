@@ -193,8 +193,8 @@ function LoadingScreen() {
 // ─── LOGIN ────────────────────────────────────────────────────────
 function LoginScreen() {
   const auth = useAuth()
-  const [email, setEmail] = useState("admin@voltaris.com")
-  const [pass, setPass] = useState("admin123")
+  const [email, setEmail] = useState("")
+  const [pass, setPass] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const slideAnim = useRef(new Animated.Value(40)).current

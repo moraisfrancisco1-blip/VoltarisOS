@@ -67,7 +67,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
         <span style={{
           color: "var(--sidebar-text)", fontWeight: "600",
           fontSize: isMobile ? "14px" : "15px",
-          WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block",
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block",
         }}>
           {t(PAGE_TITLE_KEYS[page] || "page_dashboard")}
         </span>
@@ -237,7 +237,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           {(user?.company || "V").charAt(0).toUpperCase()}
         </div>
         {!isMobile && (
-          <span style={{ color: "var(--sidebar-sub)", fontSize: "12px", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", WhiteSpace: "nowrap" }}>
+          <span style={{ color: "var(--sidebar-sub)", fontSize: "12px", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {user?.company || "Admin"}
           </span>
         )}

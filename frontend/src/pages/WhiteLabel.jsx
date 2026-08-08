@@ -356,7 +356,7 @@ export default function whitelabel({ user }) {
                   onFocus={e => e.target.style.borderColor = color}
                   onBlur={e => e.target.style.borderColor = "#1a2234"}
                 />
-                <button onClick={() => alert("Provision SSL — feature coming soon")} style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", WhiteSpace: "nowrap" }}>
+                <button onClick={() => alert("Provision SSL — feature coming soon")} style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
                   Provision SSL
                 </button>
               </div>

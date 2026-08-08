@@ -161,7 +161,7 @@ export default function AutonomousTrading({ user }) {
               <div style={{ color: entry.pnl >= 0 ? "#4ade80" : "#f87171", fontWeight: "700" }}>
                 {entry.pnl >= 0 ? "+" : ""}€{entry.pnl?.toFixed(2)}
               </div>
-              <div style={{ color: "var(--sub)", fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", WhiteSpace: "nowrap" }}>{entry.reason}</div>
+              <div style={{ color: "var(--sub)", fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{entry.reason}</div>
             </div>
           ))}
         </div>

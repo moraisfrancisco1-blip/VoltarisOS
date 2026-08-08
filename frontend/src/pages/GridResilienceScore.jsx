@@ -238,7 +238,7 @@ export default function GridResilienceScore() {
                           height: `${(h.score / 100) * 110}px`,
                           background: scoreColor(h.score), opacity: 0.8, transition: "height 0.5s ease"
                         }} />
-                        {i % 4 === 0 && <div style={{ fontSize: "9px", color: "var(--sub)", WhiteSpace: "nowrap" }}>{h.hour}</div>}
+                        {i % 4 === 0 && <div style={{ fontSize: "9px", color: "var(--sub)", whiteSpace: "nowrap" }}>{h.hour}</div>}
                       </div>
                     ))}
                   </div>

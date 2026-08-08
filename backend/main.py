@@ -1,6 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
 from datetime import datetime
 from optimization.ai_optimizer import optimize_energy
 from fastapi import FastAPI
@@ -63,7 +64,6 @@ from backend.security import get_current_user, limiter
 from fastapi import Depends, Request
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-import os
 
 models.Base.metadata.create_all(bind=engine)
 

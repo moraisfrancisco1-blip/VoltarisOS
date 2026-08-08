@@ -286,12 +286,16 @@ def run_milp_optimization(self):
                 
                 initial_soc = battery_state.soc if battery_state else 0.5
                 
-                # Get recent price data (or use default)
-                cutoff = datetime.utcnow() - timedelta(hours=24)
-                # In production, fetch from EnergyPriceTS or market API
-                prices = [50.0 + (i % 6) * 10 for i in range(24)]  # Simulated price pattern
+                # Get price forecast from forecasting module
+                try:
+                    from forecasting.price_forecast import forecast_prices
+                    prices = forecast_prices()
+                except (ImportError, Exception):
+                    # Fallback: simulated price pattern
+                    prices = [50.0 + (i % 6) * 10 for i in range(24)]
                 
                 # Get load forecast (from forecasting or recent readings)
+                cutoff = datetime.utcnow() - timedelta(hours=24)
                 readings = db.query(models.DeviceReading).filter(
                     models.DeviceReading.tenant_id == tenant.id,
                     models.DeviceReading.timestamp >= cutoff,

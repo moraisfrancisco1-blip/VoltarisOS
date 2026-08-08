@@ -120,7 +120,7 @@ export default function AuditLog({ user }) {
                   onMouseEnter={e => e.currentTarget.style.background = "#ffffff04"}
                   onMouseLeave={e => e.currentTarget.style.background = "none"}
                 >
-                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace", WhiteSpace: "nowrap" }}>
+                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace", whiteSpace: "nowrap" }}>
                     {fmt(entry.time)}
                   </td>
                   <td style={{ padding: "12px 16px" }}>

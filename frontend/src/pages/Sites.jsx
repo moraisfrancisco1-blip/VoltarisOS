@@ -114,7 +114,7 @@ export default function Sites() {
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
               {["Name", "Country", "Solar (kWp)", "BESS (kWh)", "BESS Power (kW)", "Inverter", "Chemistry", "Status", "Installed", ""].map(h => (
-                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600, WhiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr>
           </thead>

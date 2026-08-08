@@ -16,6 +16,7 @@ pymodbus
 asyncua
 python-dotenv
 passlib[bcrypt]
+bcrypt
 stripe
 # Phase 2+ dependencies
 sentry-sdk[fastapi]
