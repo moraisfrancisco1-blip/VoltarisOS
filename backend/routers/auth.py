@@ -12,6 +12,9 @@ from backend import models
 from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, limiter
 from fastapi import Request
 import os
+import sys
+from backend.audit import log_user_login
+from backend.twofa import verify_totp_code
 
 router = APIRouter()
 
@@ -27,6 +30,7 @@ def get_db():
 class LoginRequest(BaseModel):
     email: str
     password: str
+    totp_code: str | None = None  # Optional TOTP code for 2FA
 
 class RegisterRequest(BaseModel):
     email: str
@@ -51,7 +55,15 @@ class InviteUserRequest(BaseModel):
     role: str = "operator"
     color: str = "#4ade80"
 
-BETA_CODE = os.environ.get("BETA_CODE", "VOLTARIS2026")
+# BETA_CODE must come from environment — no hardcoded fallback
+BETA_CODE = os.environ.get("BETA_CODE", "")
+if not BETA_CODE:
+    import warnings
+    warnings.warn(
+        "BETA_CODE is not set. Registration will require a beta code but none is configured. "
+        "Set BETA_CODE in your .env file.",
+        stacklevel=2,
+    )
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 def create_token(data: dict) -> str:
@@ -70,13 +82,34 @@ def get_or_create_tenant(db: Session, name: str, plan: str = "beta") -> models.T
     return tenant
 
 def seed_admin(db: Session):
-    """Ensure default admin exists on first boot."""
+    """Ensure default admin exists on first boot.
+    
+    The initial admin password MUST be set via ADMIN_INITIAL_PASSWORD env var.
+    If not set, a random password is generated and printed to stderr (first boot only).
+    The admin should change this password immediately after first login.
+    """
     if not db.query(models.User).filter(models.User.email == "admin@voltaris.com").first():
         tenant = get_or_create_tenant(db, "VoltarisOS Admin", plan="enterprise")
+        
+        # Get initial password from env, or generate a random one
+        initial_password = os.environ.get("ADMIN_INITIAL_PASSWORD")
+        if not initial_password:
+            import secrets
+            initial_password = secrets.token_urlsafe(16)
+            print(
+                f"\n{'='*60}\n"
+                f"  FIRST BOOT: Admin account created with random password\n"
+                f"  Email: admin@voltaris.com\n"
+                f"  Password: {initial_password}\n"
+                f"  CHANGE THIS PASSWORD IMMEDIATELY AFTER LOGIN!\n"
+                f"{'='*60}\n",
+                file=sys.stderr,
+            )
+        
         admin = models.User(
             tenant_id=tenant.id,
             email="admin@voltaris.com",
-            password_hash=hash_pw("admin123"),
+            password_hash=hash_pw(initial_password),
             name="Francisco Morais",
             role="superadmin",
             color="#f59e0b",
@@ -137,6 +170,19 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     user.last_login = datetime.utcnow()
     db.commit()
 
+    # Check if 2FA is enabled
+    if user.totp_enabled:
+        if not req.totp_code:
+            # 2FA is enabled but no code provided — require 2FA verification
+            return {
+                "requires_2fa": True,
+                "message": "Código TOTP necessário. Forneça o código da sua aplicação autenticadora.",
+            }
+        
+        # Verify TOTP code
+        if not verify_totp_code(user.totp_secret, req.totp_code):
+            raise HTTPException(401, "Código TOTP inválido")
+    
     tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
     token = create_token({
         "sub": user.email,
@@ -145,12 +191,25 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role,
         "tenant_id": user.tenant_id,
     })
+    
+    # Log successful login
+    log_user_login(
+        db=db,
+        user_id=user.id,
+        tenant_id=user.tenant_id,
+        user_email=user.email,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        success=True,
+    )
+    
     return {
         "token": token,
         "company": tenant.name if tenant else user.name,
         "color": user.color,
         "role": user.role,
         "email": user.email,
+        "2fa_enabled": user.totp_enabled,
     }
 
 

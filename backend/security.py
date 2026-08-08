@@ -6,6 +6,10 @@ security.py — shared auth used by every router.
 """
 import hashlib
 import os
+import sys
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import bcrypt
 from fastapi import Depends, HTTPException, status
@@ -14,7 +18,21 @@ from jose import JWTError, jwt
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "voltarisos-secret-2026-production")
+
+def _require_secret(key: str) -> str:
+    """Return env var or exit — secrets must never have hardcoded fallbacks."""
+    value = os.environ.get(key)
+    if not value:
+        print(
+            f"ERROR: Required secret '{key}' is not set. "
+            f"Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return value
+
+
+SECRET_KEY = _require_secret("SECRET_KEY")
 ALGORITHM = "HS256"
 
 _bearer = HTTPBearer(auto_error=False)
@@ -82,7 +100,14 @@ def require_role(*allowed_roles: str):
 
 
 # ─── Service-to-service auth (gateway/rules engine, not a logged-in user) ────
+# GATEWAY_API_KEY must be set in production; empty string only acceptable in local dev
 GATEWAY_API_KEY = os.environ.get("GATEWAY_API_KEY", "")
+# Warn at import time if not set (but don't crash — gateway auth is optional in dev)
+if not GATEWAY_API_KEY and os.environ.get("ENVIRONMENT", "development") != "development":
+    print(
+        "WARNING: GATEWAY_API_KEY is not set. Gateway-to-backend auth will fail.",
+        file=sys.stderr,
+    )
 
 _gateway_bearer = HTTPBearer(auto_error=False)
 

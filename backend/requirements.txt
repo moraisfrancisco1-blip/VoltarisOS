@@ -17,3 +17,9 @@ asyncua
 python-dotenv
 passlib[bcrypt]
 stripe
+# Phase 2+ dependencies
+sentry-sdk[fastapi]
+celery
+redis
+pyotp
+pulp

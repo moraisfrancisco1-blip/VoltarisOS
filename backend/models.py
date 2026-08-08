@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, DateTime, String, JSON, Boolean, ForeignKey, Text
+from sqlalchemy import Column, Integer, Float, DateTime, String, JSON, Boolean, ForeignKey, Text, Index
 from datetime import datetime
 from backend.database import Base
 
@@ -33,6 +33,11 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     terms_accepted_at = Column(DateTime, nullable=True)   # digital acceptance of Terms of Use / EULA
+    
+    # 2FA / TOTP fields
+    totp_secret = Column(String, nullable=True)  # Encrypted TOTP secret (base32)
+    totp_enabled = Column(Boolean, default=False)  # Whether 2FA is active for this user
+    totp_backup_codes = Column(JSON, nullable=True)  # Hashed backup codes for recovery
 
 
 # ─── Devices / Readings ────────────────────────────────────────────────────────
@@ -169,3 +174,41 @@ class ReportJob(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
     requested_by = Column(String, nullable=True)
+
+
+# ─── Audit Logs ──────────────────────────────────────────────────────────────
+
+class AuditLog(Base):
+    """Immutable audit trail for critical actions (trading, asset changes, admin actions).
+    
+    This table is APPEND-ONLY — no UPDATE or DELETE operations should ever be performed.
+    Used for GDPR compliance, NIS2 audit requirements, and trading traceability.
+    """
+    __tablename__ = "audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    user_email = Column(String, nullable=True)  # Denormalized for faster queries
+    
+    # Action details
+    action = Column(String, nullable=False, index=True)  # e.g., "trade.create", "asset.modify", "user.login"
+    target_resource = Column(String, nullable=True)  # e.g., "vpp_bid:123", "device:456"
+    target_id = Column(Integer, nullable=True)  # ID of the affected resource
+    
+    # Context
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    details = Column(JSON, nullable=True)  # Additional context (before/after values, etc.)
+    
+    # Timestamp
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    # Composite index for common queries
+    __table_args__ = (
+        Index("ix_audit_logs_tenant_timestamp", "tenant_id", "timestamp"),
+        Index("ix_audit_logs_user_timestamp", "user_id", "timestamp"),
+    )
+    
+    def __repr__(self):
+        return f"<AuditLog(id={self.id}, action='{self.action}', user_id={self.user_id}, timestamp={self.timestamp})>"

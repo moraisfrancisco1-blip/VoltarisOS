@@ -8,14 +8,14 @@ POST /api/vpp/{id}/bid           — submeter bid ao mercado
 GET  /api/vpp/{id}/bids          — histórico de bids
 GET  /api/vpp/{id}/dispatch      — calcular dispatch por site
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timedelta
-import random, json, os
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
+from backend.audit import log_audit_event
 
 router = APIRouter(prefix="/api/vpp", tags=["vpp"])
 
@@ -158,9 +158,8 @@ def aggregate(vpp_id: int, db: Session = Depends(get_db)):
             if reading and reading.power_kw:
                 site_power += reading.power_kw
 
-        # Simulated if no real data
-        if site_power == 0:
-            site_power = round(random.uniform(80, 450), 1)
+        # No simulation — return 0 if no real data available
+        # This ensures decisions are based on actual telemetry, not fake data
 
         total_power_kw += site_power * m.weight
         site_data.append({
@@ -170,9 +169,10 @@ def aggregate(vpp_id: int, db: Session = Depends(get_db)):
             "contribution_kw": site_power * m.weight,
         })
 
-    # Market signal simulation
-    spot_price = round(random.uniform(45, 180), 2)
-    fcr_price = round(random.uniform(8, 35), 2)
+    # Market signals — use real price feed when available, otherwise indicate unavailable
+    # In production, this would fetch from ENTSO-E, EEX, or market API
+    spot_price = None  # Real price feed not yet integrated
+    fcr_price = None   # Real FCR price not yet integrated
     is_peak = datetime.utcnow().hour in range(7, 22)
 
     return {
@@ -189,7 +189,8 @@ def aggregate(vpp_id: int, db: Session = Depends(get_db)):
             "spot_price_eur_mwh": spot_price,
             "fcr_price_eur_mw": fcr_price,
             "is_peak_hour": is_peak,
-            "recommendation": _recommend(g.strategy, total_power_kw, spot_price, g.min_bid_kw),
+            "price_feed_status": "unavailable" if spot_price is None else "live",
+            "recommendation": _recommend(g.strategy, total_power_kw, spot_price or 0, g.min_bid_kw),
         },
         "timestamp": datetime.utcnow().isoformat(),
     }
@@ -239,30 +240,68 @@ def dispatch_plan(vpp_id: int, target_kw: float = Query(default=0), db: Session 
 
 
 @router.post("/{vpp_id}/bid", response_model=BidOut, status_code=201)
-def submit_bid(vpp_id: int, body: BidBody, tenant_id: int = Query(default=1), db: Session = Depends(get_db)):
+def submit_bid(
+    vpp_id: int,
+    body: BidBody,
+    request: Request,
+    tenant_id: int = Query(default=1),
+    db: Session = Depends(get_db),
+):
+    """Submit a bid to the energy market.
+    
+    Bids are validated and logged to audit trail.
+    In production, this would submit to actual market (MIBEL, EPEX, etc.)
+    For now, bids are stored with 'pending' status for manual/automated processing.
+    """
     g = db.query(models.VPPGroup).filter(models.VPPGroup.id == vpp_id).first()
     if not g:
-        raise HTTPException(404)
+        raise HTTPException(404, "VPP group not found")
+    
+    # Validate minimum bid quantity
+    if body.quantity_kw < g.min_bid_kw:
+        raise HTTPException(400, f"Bid quantity ({body.quantity_kw} kW) below minimum ({g.min_bid_kw} kW)")
+    
+    # Validate direction
+    valid_directions = ["sell", "buy", "fcr_up", "fcr_down", "afrr_up", "afrr_down"]
+    if body.direction not in valid_directions:
+        raise HTTPException(400, f"Invalid direction. Must be one of: {valid_directions}")
 
-    # Simulate market acceptance
-    accepted = random.random() > 0.25
-    price = body.price_eur_mwh or round(random.uniform(60, 120), 2)
-    pnl = round(body.quantity_kw / 1000 * price * random.uniform(0.8, 1.2), 2) if accepted else 0
-
+    # Create bid with 'pending' status (no simulation)
+    # In production, this would submit to market API and update status based on response
     bid = models.VPPBid(
         tenant_id=tenant_id,
         vpp_id=vpp_id,
         market=g.market,
         quantity_kw=body.quantity_kw,
-        price_eur_mwh=price,
+        price_eur_mwh=body.price_eur_mwh,
         direction=body.direction,
         delivery_period=body.delivery_period or (datetime.utcnow() + timedelta(hours=1)).strftime("%Y-%m-%dT%H:00"),
-        status="accepted" if accepted else "rejected",
-        pnl_eur=pnl,
+        status="pending",  # Pending until market confirmation
+        pnl_eur=None,  # PnL calculated after market settlement
     )
     db.add(bid)
     db.commit()
     db.refresh(bid)
+    
+    # Log to audit trail (critical for NIS2 compliance)
+    log_audit_event(
+        db=db,
+        action="vpp.bid.submitted",
+        tenant_id=tenant_id,
+        target_resource="vpp_bid",
+        target_id=bid.id,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+        details={
+            "vpp_id": vpp_id,
+            "quantity_kw": body.quantity_kw,
+            "price_eur_mwh": body.price_eur_mwh,
+            "direction": body.direction,
+            "market": g.market,
+            "delivery_period": bid.delivery_period,
+        },
+    )
+    
     return bid
 
 

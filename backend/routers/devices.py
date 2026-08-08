@@ -1,13 +1,19 @@
 """
-/api/devices  — CRUD + connection test + readings
+/api/devices  — CRUD + connection test + readings + batch ingest
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from pydantic import BaseModel
 from typing import Optional, Any, Dict, List
 from datetime import datetime
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
+from backend.schemas import (
+    DeviceReadingBatchRequest,
+    DeviceReadingBatchResponse,
+    DeviceReadingBatchItem,
+)
+from backend.audit import log_audit_event
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
 
@@ -162,6 +168,111 @@ def ingest_reading(device_id: int, reading: dict, db: Session = Depends(get_db))
     dev.last_seen = datetime.utcnow()
     db.commit()
     return {"ok": True, "id": r.id}
+
+
+# ── Batch Ingest Endpoint ─────────────────────────────────────────────────────
+
+def _validate_reading(reading: DeviceReadingBatchItem, device_ids: set) -> tuple:
+    """Validate a single reading against business rules."""
+    if reading.device_id not in device_ids:
+        return False, f"Device {reading.device_id} not found"
+    
+    if reading.power_kw is not None:
+        if reading.power_kw < 0:
+            return False, f"power_kw cannot be negative for device {reading.device_id}"
+        if reading.power_kw > 100000:
+            return False, f"power_kw exceeds maximum for device {reading.device_id}"
+    
+    if reading.soc_pct is not None:
+        if reading.soc_pct < 0 or reading.soc_pct > 100:
+            return False, f"soc_pct must be 0-100 for device {reading.device_id}"
+    
+    if reading.timestamp is not None:
+        if reading.timestamp > datetime.utcnow():
+            return False, f"timestamp cannot be in the future for device {reading.device_id}"
+    
+    return True, ""
+
+
+@router.post("/ingest/batch", response_model=DeviceReadingBatchResponse, status_code=202)
+def ingest_batch(
+    request: Request,
+    batch: DeviceReadingBatchRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Batch ingest endpoint for high-throughput telemetry.
+    
+    Accepts up to 10,000 readings in a single request.
+    Returns 202 Accepted immediately; processing happens synchronously
+    but the response format is designed for async compatibility.
+    
+    Use this endpoint instead of individual /{device_id}/ingest when:
+    - Ingesting from multiple devices simultaneously
+    - Gateway is pushing buffered readings
+    - High-frequency telemetry (sub-second intervals)
+    """
+    device_ids = {r.device_id for r in batch.readings}
+    
+    # Get all devices in one query
+    devices = {d.id: d for d in db.query(models.Device).filter(models.Device.id.in_(list(device_ids))).all()}
+    
+    accepted = 0
+    rejected = 0
+    errors = []
+    readings_to_insert = []
+    
+    for i, reading in enumerate(batch.readings):
+        valid, error_msg = _validate_reading(reading, set(devices.keys()))
+        
+        if not valid:
+            rejected += 1
+            errors.append({"index": i, "device_id": reading.device_id, "error": error_msg})
+            continue
+        
+        db_reading = models.DeviceReading(
+            device_id=reading.device_id,
+            tenant_id=devices[reading.device_id].tenant_id,
+            power_kw=reading.power_kw,
+            energy_kwh=reading.energy_kwh,
+            soc_pct=reading.soc_pct,
+            temp_c=reading.temp_c,
+            voltage_v=reading.voltage_v,
+            current_a=reading.current_a,
+            frequency_hz=reading.frequency_hz,
+            raw=reading.raw,
+            timestamp=reading.timestamp or datetime.utcnow(),
+        )
+        readings_to_insert.append(db_reading)
+        
+        devices[reading.device_id].status = "online"
+        devices[reading.device_id].last_seen = datetime.utcnow()
+    
+    if readings_to_insert:
+        db.bulk_save_objects(readings_to_insert)
+        accepted = len(readings_to_insert)
+    
+    db.commit()
+    
+    if accepted > 0:
+        log_audit_event(
+            db=db,
+            action="device.readings.batch_ingest",
+            details={
+                "total_readings": len(batch.readings),
+                "accepted": accepted,
+                "rejected": rejected,
+                "device_count": len(device_ids),
+            },
+            ip_address=request.client.host if request.client else None,
+        )
+    
+    return DeviceReadingBatchResponse(
+        accepted=accepted,
+        rejected=rejected,
+        errors=errors,
+        timestamp=datetime.utcnow(),
+    )
 
 
 # ── Internal test helpers ─────────────────────────────────────────────────────

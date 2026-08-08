@@ -1,52 +1,92 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-import random
+from fastapi import APIRouter, Request
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+from backend.audit import log_audit_event
+from backend.database import SessionLocal
 
 router = APIRouter(prefix="/api")
 
 
 # ─── Arbitrage signal engine ────────────────────────────────────────────────
-# Moved from the frontend (was previously computed client-side in
-# EnergyArbitrage.jsx, fully readable in the shipped JS bundle). The scoring
-# thresholds and dispatch logic are the actual IP of the VPP dispatch engine,
-# so they now live here, server-side, and the browser only ever sees results.
+# Deterministic scoring based on price analysis — no randomness.
+# The scoring thresholds and dispatch logic are the actual IP of the VPP
+# dispatch engine, living server-side.
 
 class PricePoint(BaseModel):
-    h: str
-    price: float
-    forecast: float | None = None
+    h: str = Field(..., description="Hour identifier")
+    price: float = Field(..., ge=0, description="Price in EUR/MWh")
+    forecast: Optional[float] = Field(None, ge=0, description="Forecasted price")
 
 
 class SignalsRequest(BaseModel):
-    prices: list[PricePoint]
-    bess_kwh: float = 500
-    efficiency: float = 0.92
+    prices: List[PricePoint] = Field(..., min_length=1, description="List of price points")
+    bess_kwh: float = Field(500, gt=0, le=10000, description="Battery capacity in kWh")
+    efficiency: float = Field(0.92, gt=0, le=1, description="Round-trip efficiency")
+
+
+class SignalOut(BaseModel):
+    h: str
+    price: float
+    forecast: Optional[float]
+    action: str  # "charge", "discharge", "hold"
+    score: int = Field(..., ge=0, le=100)
+    spread: float
+    potential: float
 
 
 @router.post("/arbitrage-signals")
 def arbitrage_signals(payload: SignalsRequest):
+    """
+    Calculate deterministic arbitrage signals based on price analysis.
+    
+    Scoring is based on:
+    - Price deviation from average (spread)
+    - Position in price ranking (percentile)
+    - Forecast vs actual price comparison
+    
+    No randomness — same input always produces same output.
+    """
     prices = payload.prices
     if not prices:
-        return {"signals": []}
+        return {"signals": [], "generated_at": datetime.utcnow().isoformat()}
 
     vals = [p.price for p in prices]
     avg = sum(vals) / len(vals)
-    min3 = sorted(vals)[:3]
-    max3 = sorted(vals, reverse=True)[:3]
+    
+    # Calculate percentiles deterministically
+    sorted_vals = sorted(vals)
+    n = len(sorted_vals)
+    p20_idx = max(0, int(n * 0.2) - 1)
+    p80_idx = min(n - 1, int(n * 0.8))
+    low_threshold = sorted_vals[p20_idx]
+    high_threshold = sorted_vals[p80_idx]
 
     signals = []
     for p in prices:
-        action, score = "hold", 50.0
-        if p.price in min3 and p.price < avg * 0.75:
-            action, score = "charge", 90 + random.random() * 9
-        elif p.price in max3 and p.price > avg * 1.25:
-            action, score = "discharge", 88 + random.random() * 11
-        elif p.price < avg * 0.9:
-            action, score = "charge", 60 + random.random() * 15
-        elif p.price > avg * 1.1:
-            action, score = "discharge", 62 + random.random() * 18
-
+        # Deterministic scoring based on price position
         spread = p.price - avg
+        spread_pct = (spread / avg) * 100 if avg > 0 else 0
+        
+        # Score calculation (deterministic)
+        if p.price <= low_threshold and p.price < avg * 0.75:
+            action = "charge"
+            # Score based on how far below average (max 100)
+            score = min(100, int(70 + abs(spread_pct) * 0.5))
+        elif p.price >= high_threshold and p.price > avg * 1.25:
+            action = "discharge"
+            score = min(100, int(70 + abs(spread_pct) * 0.5))
+        elif p.price < avg * 0.9:
+            action = "charge"
+            score = min(70, int(50 + abs(spread_pct) * 0.3))
+        elif p.price > avg * 1.1:
+            action = "discharge"
+            score = min(70, int(50 + abs(spread_pct) * 0.3))
+        else:
+            action = "hold"
+            score = max(0, int(50 - abs(spread_pct) * 0.5))
+
+        # Potential profit calculation
         if action == "discharge":
             potential = (p.price * payload.bess_kwh * payload.efficiency) / 1000
         elif action == "charge":
@@ -54,44 +94,50 @@ def arbitrage_signals(payload: SignalsRequest):
         else:
             potential = 0
 
-        signals.append({
-            "h": p.h,
-            "price": p.price,
-            "forecast": p.forecast,
-            "action": action,
-            "score": round(score),
-            "spread": round(spread),
-            "potential": round(potential),
-        })
+        signals.append(SignalOut(
+            h=p.h,
+            price=p.price,
+            forecast=p.forecast,
+            action=action,
+            score=score,
+            spread=round(spread, 2),
+            potential=round(potential, 2),
+        ))
 
-    return {"signals": signals}
+    return {
+        "signals": [s.model_dump() for s in signals],
+        "generated_at": datetime.utcnow().isoformat(),
+        "summary": {
+            "avg_price": round(avg, 2),
+            "low_threshold": round(low_threshold, 2),
+            "high_threshold": round(high_threshold, 2),
+            "charge_signals": sum(1 for s in signals if s.action == "charge"),
+            "discharge_signals": sum(1 for s in signals if s.action == "discharge"),
+            "hold_signals": sum(1 for s in signals if s.action == "hold"),
+        }
+    }
 
-total_profit = 0
+
+# ─── Trade endpoint (deprecated — use VPP bids instead) ─────────────────────
+# This endpoint is kept for backward compatibility but should not be used
+# for new integrations. Use POST /api/vpp/{id}/bid instead.
 
 @router.get("/trade")
 def trade():
-
-    global total_profit
-
-    price = random.uniform(20,100)
-    battery = random.uniform(20,100)
-
-    if price > 70:
-        action = "SELL"
-        profit = price * 0.2
-    elif price < 40:
-        action = "BUY"
-        profit = -price * 0.1
-    else:
-        action = "HOLD"
-        profit = 0
-
-    total_profit += profit
-
+    """
+    DEPRECATED: This endpoint returns mock data for demo purposes only.
+    
+    For real trading, use:
+    - POST /api/vpp/{id}/bid — Submit bids to energy markets
+    - POST /api/arbitrage-signals — Get deterministic trading signals
+    
+    This endpoint will be removed in a future version.
+    """
     return {
-        "price": round(price,2),
-        "battery": round(battery,2),
-        "action": action,
-        "profit": round(profit,2),
-        "total_profit": round(total_profit,2)
+        "deprecated": True,
+        "message": "This endpoint is deprecated. Use POST /api/vpp/{id}/bid for real trading.",
+        "migration_guide": {
+            "submit_bid": "POST /api/vpp/{vpp_id}/bid",
+            "get_signals": "POST /api/arbitrage-signals",
+        }
     }
