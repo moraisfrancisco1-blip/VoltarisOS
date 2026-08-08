@@ -42,11 +42,7 @@ function ChartBar({ data, maxVal, color }) {
             height: `${(d.val / maxVal) * 70}px`,
             background: d.color || color, opacity: 0.85, transition: "height 0.5s ease"
           }} />
-<<<<<<< HEAD
           <div style={{ fontSize: "9px", color: "var(--sub)", WhiteSpace: "nowrap" }}>{d.label}</div>
-=======
-          <div style={{ fontSize: "9px", color: "var(--sub)", whiteSpace: "nowrap" }}>{d.label}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
       ))}
     </div>

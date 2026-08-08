@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
 import { canAccessPage, isAdminRole } from "../config/roleAccess"
-<<<<<<< HEAD
 import logoFull from "../logo_full.png"
 
 // V dourado component for collapsed state
@@ -30,19 +29,6 @@ function VoltarisLogo({ collapsed }) {
     <GoldenV size={34} />
   ) : (
     <img src={logoFull} alt="VoltarisOS" style={{
-=======
-import logoSidebar from "../logo_sidebar.png"
-import logoIcon from "../logo_icon.png"
-
-function VoltarisLogo({ collapsed }) {
-  return collapsed ? (
-    <img src={logoIcon} alt="V" style={{
-      width: "34px", height: "34px", objectFit: "contain",
-      filter: "drop-shadow(0 0 6px rgba(245,158,11,0.9)) drop-shadow(0 0 12px rgba(245,158,11,0.5)) brightness(1.3)",
-    }} />
-  ) : (
-    <img src={logoSidebar} alt="VoltarisOS" style={{
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       height: "32px", objectFit: "contain", maxWidth: "160px",
       filter: "drop-shadow(0 0 8px rgba(245,158,11,0.8)) drop-shadow(0 0 16px rgba(245,158,11,0.4)) brightness(1.25)",
     }} />
@@ -189,19 +175,11 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
             title={collapsed ? "Expand" : "Collapse"}
             style={{
               marginLeft: collapsed ? "auto" : 0, background: "none", border: "none",
-<<<<<<< HEAD
               color: "var(--sidebar-sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
             }}
             onMouseEnter={e => e.currentTarget.style.color = "var(--sidebar-text)"}
             onMouseLeave={e => e.currentTarget.style.color = "var(--sidebar-sub)"}
-=======
-              color: "var(--sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--sub)"}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           >
             {collapsed
               ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -213,11 +191,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
           <button
             onClick={() => setMobileOpen(false)}
             style={{
-<<<<<<< HEAD
               background: "none", border: "none", color: "var(--sidebar-sub)",
-=======
-              background: "none", border: "none", color: "var(--sub)",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               cursor: "pointer", padding: "4px", borderRadius: "6px",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}
@@ -236,11 +210,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
           background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
           flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
-<<<<<<< HEAD
           <div style={{ color: "var(--sidebar-sub)", fontSize: "12px", fontWeight: "500", WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-=======
-          <div style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {user?.company || "Voltaris"}
           </div>
           <div style={{
@@ -260,11 +230,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
             {!showCollapsed && (
               <div style={{
                 padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
-<<<<<<< HEAD
                 color: "var(--sidebar-sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", WhiteSpace: "nowrap",
-=======
-                color: "var(--sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               }}>
                 {t(group.labelKey)}
               </div>
@@ -285,7 +251,6 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
                     justifyContent: showCollapsed ? "center" : "flex-start",
                     background: active ? `${color}14` : "none", border: "none",
                     borderLeft: active ? `2px solid ${color}` : "2px solid transparent",
-<<<<<<< HEAD
                     color: active ? color : "var(--sidebar-sub)",
                     cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
                     textAlign: "left", transition: "all 0.12s",
@@ -295,17 +260,6 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
                 >
                   <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
                   {!showCollapsed && <span style={{ WhiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
-=======
-                    color: active ? color : "var(--sub)",
-                    cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
-                    textAlign: "left", transition: "all 0.12s",
-                  }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "var(--surface)"; e.currentTarget.style.color = "var(--text)" } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--sub)" } }}
-                >
-                  <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
-                  {!showCollapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {active && !showCollapsed && (
                     <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: color, flexShrink: 0 }} />
                   )}

@@ -8,11 +8,7 @@ const ACTION_COLORS = {
   "Exportou relatório": "#22d3ee",
   "Alterou white-label": "#f59e0b",
   "Trading agent ativado": "#a78bfa",
-<<<<<<< HEAD
   "Alterou settings": "var(--sub)",
-=======
-  "Alterou settings": "#6b7280",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   "Apagou site": "#f87171",
   "Criou site": "#4ade80",
   "API Key gerada": "#f59e0b",
@@ -40,13 +36,8 @@ export default function AuditLog({ user }) {
     <div style={{ padding: "32px", maxWidth: "1100px" }}>
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
-<<<<<<< HEAD
         <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>
         <p style={{ color: "var(--sub)", fontSize: "14px" }}>Registo completo de todas as ações realizadas no sistema</p>
-=======
-        <h1 style={{ color: "white", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>
-        <p style={{ color: "rgba(148,163,184,0.85)", fontSize: "14px" }}>Registo completo de todas as ações realizadas no sistema</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       </div>
 
       {/* Stats */}
@@ -62,11 +53,7 @@ export default function AuditLog({ user }) {
             borderRadius: "12px", padding: "18px 20px",
           }}>
             <div style={{ color: s.color, fontSize: "24px", fontWeight: "700" }}>{s.value}</div>
-<<<<<<< HEAD
             <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "4px" }}>{s.label}</div>
-=======
-            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "12px", marginTop: "4px" }}>{s.label}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -74,11 +61,7 @@ export default function AuditLog({ user }) {
       {/* Search */}
       <div style={{ marginBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
         <div style={{ flex: 1, position: "relative" }}>
-<<<<<<< HEAD
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" strokeWidth="2"
-=======
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4b5563" strokeWidth="2"
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)" }}>
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
@@ -89,11 +72,7 @@ export default function AuditLog({ user }) {
             style={{
               width: "100%", padding: "10px 12px 10px 38px",
               background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
-<<<<<<< HEAD
               borderRadius: "10px", color: "var(--text)", fontSize: "14px",
-=======
-              borderRadius: "10px", color: "white", fontSize: "14px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               outline: "none", boxSizing: "border-box",
             }}
             onFocus={e => e.target.style.borderColor = color}
@@ -122,11 +101,7 @@ export default function AuditLog({ user }) {
               {["Timestamp", "Utilizador", "Ação", "Recurso", "IP"].map(h => (
                 <th key={h} style={{
                   padding: "12px 16px", textAlign: "left",
-<<<<<<< HEAD
                   color: "var(--sub)", fontSize: "11px", fontWeight: "700",
-=======
-                  color: "#374151", fontSize: "11px", fontWeight: "700",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   textTransform: "uppercase", letterSpacing: "0.5px",
                 }}>{h}</th>
               ))}
@@ -134,11 +109,7 @@ export default function AuditLog({ user }) {
           </thead>
           <tbody>
             {filtered.map((entry, i) => {
-<<<<<<< HEAD
               const ac = ACTION_COLORS[entry.action] || "var(--sub)"
-=======
-              const ac = ACTION_COLORS[entry.action] || "#6b7280"
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               return (
                 <tr
                   key={entry.id}
@@ -149,11 +120,7 @@ export default function AuditLog({ user }) {
                   onMouseEnter={e => e.currentTarget.style.background = "#ffffff04"}
                   onMouseLeave={e => e.currentTarget.style.background = "none"}
                 >
-<<<<<<< HEAD
                   <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace", WhiteSpace: "nowrap" }}>
-=======
-                  <td style={{ padding: "12px 16px", color: "rgba(148,163,184,0.85)", fontSize: "12px", fontFamily: "monospace", whiteSpace: "nowrap" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     {fmt(entry.time)}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
@@ -164,11 +131,7 @@ export default function AuditLog({ user }) {
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "10px", fontWeight: "700", color: color, flexShrink: 0,
                       }}>{entry.user.charAt(0).toUpperCase()}</div>
-<<<<<<< HEAD
                       <span style={{ color: "var(--sub)", fontSize: "13px" }}>{entry.user}</span>
-=======
-                      <span style={{ color: "rgba(148,163,184,0.85)", fontSize: "13px" }}>{entry.user}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     </div>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
@@ -178,24 +141,15 @@ export default function AuditLog({ user }) {
                       borderRadius: "20px", color: ac, fontSize: "12px", fontWeight: "600",
                     }}>{entry.action}</span>
                   </td>
-<<<<<<< HEAD
                   <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "13px" }}>{entry.resource}</td>
                   <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace" }}>{entry.ip}</td>
-=======
-                  <td style={{ padding: "12px 16px", color: "rgba(148,163,184,0.85)", fontSize: "13px" }}>{entry.resource}</td>
-                  <td style={{ padding: "12px 16px", color: "#374151", fontSize: "12px", fontFamily: "monospace" }}>{entry.ip}</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </tr>
               )
             })}
           </tbody>
         </table>
         {filtered.length === 0 && (
-<<<<<<< HEAD
           <div style={{ padding: "40px", textAlign: "center", color: "var(--sub)" }}>
-=======
-          <div style={{ padding: "40px", textAlign: "center", color: "#374151" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Nenhum evento encontrado
           </div>
         )}

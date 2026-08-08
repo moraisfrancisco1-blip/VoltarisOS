@@ -68,17 +68,10 @@ export default function CarbonDashboard() {
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff", letterSpacing: -0.8,
             textShadow: `0 0 30px ${C.green}40` }}>Carbon Dashboard</h1>
-<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 3 }}>Emissions tracking · Carbon credits · Scope 1/2/3</div>
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <div style={{ fontSize: 12, color: "var(--sub)" }}>Grid intensity:</div>
-=======
-          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 3 }}>Emissions tracking · Carbon credits · Scope 1/2/3</div>
-        </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>Grid intensity:</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <div style={{ fontSize: 16, fontWeight: 900, color: giColor, textShadow: `0 0 12px ${giColor}60` }}>
             {gridIntensity} gCO₂/kWh
           </div>
@@ -106,11 +99,7 @@ export default function CarbonDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.green}08, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Monthly CO₂ Avoided vs Emissions
           </div>
           <ResponsiveContainer width="100%" height={210} style={{ position: "relative" }}>
@@ -138,11 +127,7 @@ export default function CarbonDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.blue}08, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Scope Breakdown
           </div>
           <div style={{ position: "relative", display: "flex", justifyContent: "center" }}>
@@ -168,11 +153,7 @@ export default function CarbonDashboard() {
               <div style={{ fontSize: 11, fontWeight: 900, color: "#fff" }}>
                 {(metrics.scope1 + metrics.scope2 + metrics.scope3).toFixed(0)}
               </div>
-<<<<<<< HEAD
               <div style={{ fontSize: 9, color: "var(--sub)" }}>tCO₂e</div>
-=======
-              <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>tCO₂e</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
           </div>
           <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10, position: "relative" }}>
@@ -184,13 +165,8 @@ export default function CarbonDashboard() {
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: s.fill,
                     boxShadow: `0 0 6px ${s.fill}` }} />
                   <div>
-<<<<<<< HEAD
                     <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>{s.name}</div>
                     <div style={{ fontSize: 9, color: "var(--sub)" }}>{s.desc}</div>
-=======
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{s.name}</div>
-                    <div style={{ fontSize: 9, color: "rgba(148,163,184,0.75)" }}>{s.desc}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 900, color: s.fill,
@@ -206,11 +182,7 @@ export default function CarbonDashboard() {
         <div style={{ position: "absolute", inset: 0,
           background: `radial-gradient(ellipse at 50% 0%, ${C.purple}06, transparent 70%)`,
           pointerEvents: "none" }} />
-<<<<<<< HEAD
         <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
-=======
-        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           Per-Site CO₂ Avoided vs Emissions
         </div>
         <ResponsiveContainer width="100%" height={210} style={{ position: "relative" }}>
@@ -243,11 +215,7 @@ export default function CarbonDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.amber}07, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Carbon Credits Generated (Monthly)
           </div>
           <ResponsiveContainer width="100%" height={175} style={{ position: "relative" }}>
@@ -272,20 +240,12 @@ export default function CarbonDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.green}07, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: 700, position: "relative" }}>
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, fontWeight: 700, position: "relative" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Carbon Credit Registry
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, position: "relative" }}>
             <div>
-<<<<<<< HEAD
               <div style={{ fontSize: 11, color: "var(--sub)" }}>Portfolio Value</div>
-=======
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>Portfolio Value</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ fontSize: 22, fontWeight: 900, color: C.green,
                 textShadow: `0 0 16px ${C.green}60` }}>€{metrics.creditValue.toLocaleString()}</div>
             </div>
@@ -298,11 +258,7 @@ export default function CarbonDashboard() {
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                 {["ID", "Type", "Qty", "Price", "Status"].map(h => (
                   <th key={h} style={{ textAlign: "left", padding: "4px 6px", fontSize: 10,
-<<<<<<< HEAD
                     color: "var(--sub)", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
-=======
-                    color: "rgba(148,163,184,0.75)", fontWeight: 700, textTransform: "uppercase" }}>{h}</th>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 ))}
               </tr>
             </thead>
@@ -313,13 +269,8 @@ export default function CarbonDashboard() {
                   <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)",
                     background: i % 2 === 0 ? "transparent" : "var(--surface2)" }}>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: C.accent, fontWeight: 700 }}>{c.id}</td>
-<<<<<<< HEAD
                     <td style={{ padding: "7px 6px", fontSize: 11, color: "var(--text)" }}>{c.type}</td>
                     <td style={{ padding: "7px 6px", fontSize: 11, color: "var(--text)" }}>{c.qty}</td>
-=======
-                    <td style={{ padding: "7px 6px", fontSize: 11, color: "#e2e8f0" }}>{c.type}</td>
-                    <td style={{ padding: "7px 6px", fontSize: 11, color: "#e2e8f0" }}>{c.qty}</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <td style={{ padding: "7px 6px", fontSize: 11, color: C.amber, fontWeight: 700 }}>€{c.price}</td>
                     <td style={{ padding: "7px 6px" }}>
                       <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 10,
@@ -346,11 +297,7 @@ export default function CarbonDashboard() {
               background: `radial-gradient(ellipse at 50% 20%, ${k.color}10, transparent 70%)`,
               pointerEvents: "none" }} />
             <div style={{ fontSize: 36, marginBottom: 8, position: "relative" }}>{k.icon}</div>
-<<<<<<< HEAD
             <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               letterSpacing: 1, marginBottom: 8, fontWeight: 700, position: "relative" }}>{k.label}</div>
             <div style={{ fontSize: 20, fontWeight: 900, color: k.color, position: "relative",
               textShadow: `0 0 16px ${k.color}60` }}>{k.value}</div>

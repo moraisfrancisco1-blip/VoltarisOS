@@ -24,11 +24,11 @@ const footerLinks = {
     { label: "Privacy Policy", href: "#" },
   ],
   legal: [
-    { label: "Terms of Service", href: "#" },
-    { label: "Privacy Policy", href: "#" },
-    { label: "Cookie Policy", href: "#" },
-    { label: "GDPR", href: "#" },
-    { label: "DPA", href: "#" },
+    { label: "Terms of Service", href: "/legal/terms-of-service" },
+    { label: "Privacy Policy", href: "/legal/privacy-policy" },
+    { label: "Cookie Policy", href: "/legal/cookie-policy" },
+    { label: "GDPR", href: "/legal/privacy-policy#6-your-rights-gdpr" },
+    { label: "DPA", href: "/legal/terms-of-service#8-data-processing" },
   ],
 };
 
@@ -187,13 +187,13 @@ export function Footer() {
             © {new Date().getFullYear()} VoltarisOS. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-sm text-surface-500 hover:text-white transition-colors">
+            <a href="/legal/terms-of-service" className="text-sm text-surface-500 hover:text-white transition-colors">
               Terms
             </a>
-            <a href="#" className="text-sm text-surface-500 hover:text-white transition-colors">
+            <a href="/legal/privacy-policy" className="text-sm text-surface-500 hover:text-white transition-colors">
               Privacy
             </a>
-            <a href="#" className="text-sm text-surface-500 hover:text-white transition-colors">
+            <a href="/legal/cookie-policy" className="text-sm text-surface-500 hover:text-white transition-colors">
               Cookies
             </a>
           </div>

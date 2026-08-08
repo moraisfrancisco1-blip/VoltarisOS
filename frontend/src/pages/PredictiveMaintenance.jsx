@@ -46,11 +46,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontSize: 12 }}>
-<<<<<<< HEAD
       <div style={{ color: "var(--sub)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
-=======
-      <div style={{ color: "rgba(148,163,184,0.85)", marginBottom: 6, fontWeight: 700 }}>{label}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map(p => (
         <div key={p.dataKey} style={{ display: "flex", gap: 12, justifyContent: "space-between", marginBottom: 3 }}>
           <span style={{ color: p.color }}>{p.name}</span>
@@ -108,11 +104,7 @@ export default function PredictiveMaintenance({ setPage }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>Predictive Maintenance</h1>
-<<<<<<< HEAD
           <p style={{ color: "var(--sub)", fontSize: 14 }}>AI-driven asset health monitoring, RUL prediction & automated work order management</p>
-=======
-          <p style={{ color: "rgba(148,163,184,0.85)", fontSize: 14 }}>AI-driven asset health monitoring, RUL prediction & automated work order management</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => setPage && setPage("alerts")} style={{ background: red, color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", fontWeight: 600 }}>
@@ -135,11 +127,7 @@ export default function PredictiveMaintenance({ setPage }) {
           { l: "Avoided Failures", v: "€32.6k", c: green },
         ].map(k => (
           <div key={k.l} style={{ ...card, padding: 14, textAlign: "center" }}>
-<<<<<<< HEAD
             <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.l}</div>
-=======
-            <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.04em" }}>{k.l}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <div style={{ fontSize: 22, fontWeight: 800, color: k.c }}>{k.v}</div>
           </div>
         ))}
@@ -180,11 +168,7 @@ export default function PredictiveMaintenance({ setPage }) {
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 14 }}>{a.id}</div>
-<<<<<<< HEAD
                       <div style={{ fontSize: 11, color: "var(--sub)" }}>{a.type} · {a.site}</div>
-=======
-                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{a.type} · {a.site}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     </div>
                     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 99, background: STATUS_BG[a.status], color: STATUS_COLOR[a.status], fontWeight: 600, alignSelf: "flex-start" }}>{a.status}</span>
                   </div>
@@ -195,11 +179,7 @@ export default function PredictiveMaintenance({ setPage }) {
                       { l: "Alerts", v: a.alerts, c: a.alerts > 0 ? red : green },
                     ].map(m => (
                       <div key={m.l} style={{ textAlign: "center", background: "var(--surface2)", borderRadius: 6, padding: "6px 4px" }}>
-<<<<<<< HEAD
                         <div style={{ fontSize: 9, color: "var(--sub)" }}>{m.l}</div>
-=======
-                        <div style={{ fontSize: 9, color: "rgba(148,163,184,0.85)" }}>{m.l}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                         <div style={{ fontSize: 14, fontWeight: 700, color: m.c }}>{m.v}</div>
                       </div>
                     ))}
@@ -222,11 +202,7 @@ export default function PredictiveMaintenance({ setPage }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 800 }}>{asset.id} — {asset.model}</div>
-<<<<<<< HEAD
                   <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>{asset.type} · {asset.site} · Age: {asset.age}y · {asset.runtime.toLocaleString()} h runtime</div>
-=======
-                  <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>{asset.type} · {asset.site} · Age: {asset.age}y · {asset.runtime.toLocaleString()} h runtime</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
                 <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 99, background: STATUS_BG[asset.status], color: STATUS_COLOR[asset.status], fontWeight: 700 }}>{asset.status}</span>
               </div>
@@ -236,17 +212,10 @@ export default function PredictiveMaintenance({ setPage }) {
                   { l: "Remaining Life", v: `${asset.rul} years`, c: asset.rul < 3 ? red : amber },
                   { l: "Efficiency", v: `${asset.efficiency}%`, c: green },
                   { l: "Active Alerts", v: asset.alerts, c: asset.alerts > 0 ? red : green },
-<<<<<<< HEAD
                   { l: "Next PM", v: asset.nextPM, c: "var(--text)" },
                 ].map(m => (
                   <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 10, padding: 12, textAlign: "center" }}>
                     <div style={{ fontSize: 10, color: "var(--sub)", marginBottom: 4 }}>{m.l}</div>
-=======
-                  { l: "Next PM", v: asset.nextPM, c: "#f1f5f9" },
-                ].map(m => (
-                  <div key={m.l} style={{ background: "var(--surface2)", borderRadius: 10, padding: 12, textAlign: "center" }}>
-                    <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{m.l}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ fontSize: 16, fontWeight: 800, color: m.c }}>{m.v}</div>
                   </div>
                 ))}
@@ -305,21 +274,13 @@ export default function PredictiveMaintenance({ setPage }) {
         <div style={card}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
             <h2 style={{ fontSize: 16, fontWeight: 700 }}>Active Work Orders</h2>
-<<<<<<< HEAD
             <div style={{ fontSize: 13, color: "var(--sub)" }}>Total budget: <span style={{ color: blue, fontWeight: 700 }}>€{maintenanceCost.toLocaleString()}</span></div>
-=======
-            <div style={{ fontSize: 13, color: "rgba(148,163,184,0.85)" }}>Total budget: <span style={{ color: blue, fontWeight: 700 }}>€{maintenanceCost.toLocaleString()}</span></div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 {["WO #", "Asset", "Description", "Priority", "Assigned To", "Due Date", "Cost", "Status"].map(h => (
-<<<<<<< HEAD
                   <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "var(--sub)", fontWeight: 500, fontSize: 12 }}>{h}</th>
-=======
-                  <th key={h} style={{ padding: "8px 12px", textAlign: "left", color: "rgba(148,163,184,0.85)", fontWeight: 500, fontSize: 12 }}>{h}</th>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 ))}
               </tr>
             </thead>
@@ -332,13 +293,8 @@ export default function PredictiveMaintenance({ setPage }) {
                   <td style={{ padding: "12px" }}>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: w.priority === "Critical" ? "#7f1d1d" : w.priority === "High" ? "#451a03" : "var(--surface2)", color: PRIORITY_COLOR[w.priority] }}>{w.priority}</span>
                   </td>
-<<<<<<< HEAD
                   <td style={{ padding: "12px", color: w.assigned === "Unassigned" ? red : "var(--text)" }}>{w.assigned}</td>
                   <td style={{ padding: "12px", color: "var(--sub)" }}>{w.due}</td>
-=======
-                  <td style={{ padding: "12px", color: w.assigned === "Unassigned" ? red : "#f1f5f9" }}>{w.assigned}</td>
-                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.85)" }}>{w.due}</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <td style={{ padding: "12px", color: blue, fontWeight: 600 }}>€{w.cost.toLocaleString()}</td>
                   <td style={{ padding: "12px" }}>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 99, background: w.status === "In Progress" ? "#1e3a5f" : w.status === "Open" ? "#451a03" : "var(--surface2)", color: w.status === "In Progress" ? blue : w.status === "Open" ? amber : "rgba(148,163,184,0.85)" }}>{w.status}</span>
@@ -379,11 +335,7 @@ export default function PredictiveMaintenance({ setPage }) {
               { l: "Avg MTTR", v: "6.4 hours", c: amber },
             ].map(m => (
               <div key={m.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.12)", fontSize: 13 }}>
-<<<<<<< HEAD
                 <span style={{ color: "var(--sub)" }}>{m.l}</span>
-=======
-                <span style={{ color: "rgba(148,163,184,0.85)" }}>{m.l}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <span style={{ color: m.c, fontWeight: 700 }}>{m.v}</span>
               </div>
             ))}
@@ -415,7 +367,6 @@ export default function PredictiveMaintenance({ setPage }) {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 4 }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{a.asset}</span>
-<<<<<<< HEAD
                     <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: "var(--surface2)", color: "var(--sub)" }}>{a.type}</span>
                     <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: STATUS_BG[a.sev] || "#451a03", color: STATUS_COLOR[a.sev] || amber }}>{a.sev}</span>
                   </div>
@@ -425,17 +376,6 @@ export default function PredictiveMaintenance({ setPage }) {
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => alert(`Create Work Order for ${a.asset} — feature coming soon`)} style={{ fontSize: 11, padding: "4px 10px", background: accent, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Create WO</button>
                   <button onClick={() => alert(`Anomaly dismissed for ${a.asset}`)} style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "var(--sub)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
-=======
-                    <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: "var(--surface2)", color: "rgba(148,163,184,0.85)" }}>{a.type}</span>
-                    <span style={{ fontSize: 11, padding: "1px 8px", borderRadius: 99, background: STATUS_BG[a.sev] || "#451a03", color: STATUS_COLOR[a.sev] || amber }}>{a.sev}</span>
-                  </div>
-                  <div style={{ fontSize: 13, color: "var(--text)" }}>{a.msg}</div>
-                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 4 }}>Detected at {a.time} today</div>
-                </div>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => alert(`Create Work Order for ${a.asset} — feature coming soon`)} style={{ fontSize: 11, padding: "4px 10px", background: accent, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Create WO</button>
-                  <button onClick={() => alert(`Anomaly dismissed for ${a.asset}`)} style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "rgba(148,163,184,0.85)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               </div>
             ))}
@@ -451,11 +391,7 @@ export default function PredictiveMaintenance({ setPage }) {
               { l: "Next full scan", v: "in 14 min" },
             ].map(m => (
               <div key={m.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.12)", fontSize: 13 }}>
-<<<<<<< HEAD
                 <span style={{ color: "var(--sub)" }}>{m.l}</span>
-=======
-                <span style={{ color: "rgba(148,163,184,0.85)" }}>{m.l}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <span style={{ fontWeight: 700 }}>{m.v}</span>
               </div>
             ))}
@@ -468,11 +404,7 @@ export default function PredictiveMaintenance({ setPage }) {
             ].map(f => (
               <div key={f.type} style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 3 }}>
-<<<<<<< HEAD
                   <span>{f.type}</span><span style={{ color: "var(--sub)" }}>{f.pct}%</span>
-=======
-                  <span>{f.type}</span><span style={{ color: "rgba(148,163,184,0.85)" }}>{f.pct}%</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
                 <div style={{ background: "#1f2937", borderRadius: 3, height: 5 }}>
                   <div style={{ width: `${f.pct}%`, height: "100%", background: f.color, borderRadius: 3 }} />

@@ -37,11 +37,7 @@ export default class ErrorBoundary extends Component {
             boxShadow: "0 40px 120px rgba(0,0,0,0.6)",
           }}>
             <div style={{ fontSize: "42px", marginBottom: "12px" }}>⚠️</div>
-<<<<<<< HEAD
             <div style={{ color: "var(--text)", fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>
-=======
-            <div style={{ color: "#f1f5f9", fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               Algo correu mal nesta página
             </div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", marginBottom: "24px", lineHeight: 1.5 }}>

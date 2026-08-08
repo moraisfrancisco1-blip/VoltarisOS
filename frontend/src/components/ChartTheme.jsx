@@ -3,10 +3,7 @@
  * All backgrounds use CSS vars → adapts to any theme automatically.
  */
 
-<<<<<<< HEAD
 // Chart colors (bright for graphs)
-=======
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 export const C = {
   accent:  "#818cf8",
   green:   "#34d399",
@@ -20,7 +17,6 @@ export const C = {
   sky:     "#38bdf8",
 };
 
-<<<<<<< HEAD
 // Darker versions for text readability
 export const CT = {
   accent:  "#6366f1",
@@ -35,8 +31,6 @@ export const CT = {
   sky:     "#0ea5e9",
 };
 
-=======
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 // ── Gradient definitions ──────────────────────────────────────────────────────
 export function ChartDefs() {
   const gradients = [

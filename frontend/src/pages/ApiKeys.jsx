@@ -49,13 +49,8 @@ export default function ApiKeys({ user }) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px" }}>
         <div>
-<<<<<<< HEAD
           <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>API Keys</h1>
           <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("apikeys_sub") || "Access tokens to integrate external systems with VoltarisOS"}</p>
-=======
-          <h1 style={{ color: "white", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>API Keys</h1>
-          <p style={{ color: "rgba(148,163,184,0.85)", fontSize: "14px" }}>{t("apikeys_sub") || "Access tokens to integrate external systems with VoltarisOS"}</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -63,11 +58,7 @@ export default function ApiKeys({ user }) {
             padding: "10px 20px",
             background: `linear-gradient(135deg, ${color}, #22d3ee)`,
             border: "none", borderRadius: "10px",
-<<<<<<< HEAD
             color: "var(--text)", cursor: "pointer",
-=======
-            color: "#0a0f1a", cursor: "pointer",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             fontWeight: "700", fontSize: "13px",
             display: "flex", alignItems: "center", gap: "8px",
           }}
@@ -88,22 +79,14 @@ export default function ApiKeys({ user }) {
             <div style={{ color: "#4ade80", fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>
               Nova key criada! Copia agora — não voltará a ser mostrada.
             </div>
-<<<<<<< HEAD
             <code style={{ color: "var(--text)", fontSize: "12px", fontFamily: "monospace", wordBreak: "break-all" }}>{newKey}</code>
-=======
-            <code style={{ color: "#d1d5db", fontSize: "12px", fontFamily: "monospace", wordBreak: "break-all" }}>{newKey}</code>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
           <button onClick={() => copyKey(newKey)} style={{
             padding: "8px 14px", background: "#4ade8020", border: "1px solid #4ade8040",
             borderRadius: "8px", color: "#4ade80", cursor: "pointer", fontSize: "12px", fontWeight: "600",
           }}>Copiar</button>
           <button onClick={() => setNewKey(null)} style={{
-<<<<<<< HEAD
             background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "20px",
-=======
-            background: "none", border: "none", color: "rgba(148,163,184,0.85)", cursor: "pointer", fontSize: "20px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           }}>×</button>
         </div>
       )}
@@ -114,17 +97,10 @@ export default function ApiKeys({ user }) {
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "14px", padding: "24px", marginBottom: "24px",
         }}>
-<<<<<<< HEAD
           <h3 style={{ color: "var(--text)", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>{t("apikeys_create_new") || "Create new API Key"}</h3>
           <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "20px" }}>
             <div>
               <label style={{ color: "var(--sub)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("name") || "Name"} / {t("description") || "Description"}</label>
-=======
-          <h3 style={{ color: "white", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>{t("apikeys_create_new") || "Create new API Key"}</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "20px" }}>
-            <div>
-              <label style={{ color: "rgba(148,163,184,0.85)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("name") || "Name"} / {t("description") || "Description"}</label>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <input
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
@@ -132,11 +108,7 @@ export default function ApiKeys({ user }) {
                 style={{
                   width: "100%", padding: "10px 14px",
                   background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-<<<<<<< HEAD
                   borderRadius: "8px", color: "var(--text)", fontSize: "14px",
-=======
-                  borderRadius: "8px", color: "white", fontSize: "14px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   outline: "none", boxSizing: "border-box",
                 }}
                 onFocus={e => e.target.style.borderColor = color}
@@ -144,22 +116,14 @@ export default function ApiKeys({ user }) {
               />
             </div>
             <div>
-<<<<<<< HEAD
               <label style={{ color: "var(--sub)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("permissions") || "Permissions"}</label>
-=======
-              <label style={{ color: "rgba(148,163,184,0.85)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("permissions") || "Permissions"}</label>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <select
                 value={newScope}
                 onChange={e => setNewScope(e.target.value)}
                 style={{
                   width: "100%", padding: "10px 14px",
                   background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-<<<<<<< HEAD
                   borderRadius: "8px", color: "var(--text)", fontSize: "14px",
-=======
-                  borderRadius: "8px", color: "white", fontSize: "14px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   outline: "none", boxSizing: "border-box",
                 }}
               >
@@ -173,21 +137,12 @@ export default function ApiKeys({ user }) {
           </div>
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
             <button onClick={() => setShowCreate(false)} style={{
-<<<<<<< HEAD
               padding: "9px 18px", background: "#1f2937", border: "1px solid var(--sub)",
               borderRadius: "8px", color: "var(--sub)", cursor: "pointer",
             }}>{t("cancel") || "Cancel"}</button>
             <button onClick={createKey} style={{
               padding: "9px 18px", background: color, border: "none",
               borderRadius: "8px", color: "var(--text)", cursor: "pointer", fontWeight: "700",
-=======
-              padding: "9px 18px", background: "#1f2937", border: "1px solid #374151",
-              borderRadius: "8px", color: "rgba(148,163,184,0.85)", cursor: "pointer",
-            }}>{t("cancel") || "Cancel"}</button>
-            <button onClick={createKey} style={{
-              padding: "9px 18px", background: color, border: "none",
-              borderRadius: "8px", color: "#0a0f1a", cursor: "pointer", fontWeight: "700",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             }}>{t("apikeys_create_btn") || "Create Key"}</button>
           </div>
         </div>
@@ -211,13 +166,8 @@ export default function ApiKeys({ user }) {
                   fontSize: "18px",
                 }}>🔑</div>
                 <div>
-<<<<<<< HEAD
                   <div style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{k.name}</div>
                   <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "2px" }}>
-=======
-                  <div style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>{k.name}</div>
-                  <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "12px", marginTop: "2px" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     Criado em {k.created} · Último uso: {k.lastUsed}
                   </div>
                 </div>
@@ -242,13 +192,8 @@ export default function ApiKeys({ user }) {
               <code style={{
                 flex: 1, padding: "8px 14px", background: "var(--surface2)",
                 border: "1px solid rgba(255,255,255,0.12)", borderRadius: "8px",
-<<<<<<< HEAD
                 color: "var(--sub)", fontSize: "12px", fontFamily: "monospace",
                 overflow: "hidden", textOverflow: "ellipsis", WhiteSpace: "nowrap",
-=======
-                color: "rgba(148,163,184,0.85)", fontSize: "12px", fontFamily: "monospace",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               }}>
                 {revealed[k.id] ? k.key : k.key.slice(0, 12) + "•".repeat(20)}
               </code>
@@ -256,22 +201,14 @@ export default function ApiKeys({ user }) {
                 onClick={() => setRevealed(r => ({ ...r, [k.id]: !r[k.id] }))}
                 style={{
                   padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-<<<<<<< HEAD
                   borderRadius: "8px", color: "var(--sub)", cursor: "pointer", fontSize: "12px",
-=======
-                  borderRadius: "8px", color: "rgba(148,163,184,0.85)", cursor: "pointer", fontSize: "12px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 }}
               >{revealed[k.id] ? "Ocultar" : "Revelar"}</button>
               <button
                 onClick={() => copyKey(k.key)}
                 style={{
                   padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-<<<<<<< HEAD
                   borderRadius: "8px", color: "var(--sub)", cursor: "pointer", fontSize: "12px",
-=======
-                  borderRadius: "8px", color: "rgba(148,163,184,0.85)", cursor: "pointer", fontSize: "12px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 }}
               >Copiar</button>
               {k.active && (
@@ -296,13 +233,8 @@ export default function ApiKeys({ user }) {
       }}>
         <span style={{ fontSize: "20px" }}>📖</span>
         <div>
-<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>API Documentation</div>
           <div style={{ color: "var(--sub)", fontSize: "12px" }}>
-=======
-          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>API Documentation</div>
-          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: "12px" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Usa o header <code style={{ color: "#60a5fa" }}>Authorization: Bearer vos_...</code> em todos os pedidos à API REST do VoltarisOS.
           </div>
         </div>

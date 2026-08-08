@@ -12,15 +12,10 @@
   --surface-glass: #1e293b;
   --border:       rgba(255,255,255,0.08);
   --border-strong: rgba(255,255,255,0.16);
-<<<<<<< HEAD
   --text:         #cbd5e1;
   --sub:          #64748b;
   --sidebar-text: #cbd5e1;
   --sidebar-sub:  #94a3b8;
-=======
-  --text:         #f1f5f9;
-  --sub:          #94a3b8;
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   --glow:         #3b82f6;
   --grid-line:    rgba(255,255,255,0.06);
   --tooltip-bg:   #1e293b;
@@ -69,7 +64,6 @@ body {
   border-radius: 14px;
 }
 
-<<<<<<< HEAD
 /* ── Darken overly bright text for better readability ── */
 /* Override inline styles that use too-bright colors */
 [style*="color: #fff"],
@@ -138,8 +132,6 @@ button[style*="color:#818cf8"] {
   filter: none !important;
 }
 
-=======
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 /* ── Mobile responsive ── */
 @media (max-width: 767px) {
   main > * {

@@ -11,11 +11,7 @@ const SUGGESTIONS = [
 
 function parseMarkdown(text) {
   return text
-<<<<<<< HEAD
     .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
-=======
-    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:white">$1</strong>')
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
 }
 
@@ -83,18 +79,13 @@ export default function AICopilot({ user }) {
           position: "fixed", bottom: "24px", right: "24px", zIndex: 9999,
           width: "54px", height: "54px", borderRadius: "50%",
           background: open ? "#1f2937" : `linear-gradient(135deg, ${color}, ${color}cc)`,
-<<<<<<< HEAD
           border: open ? "1px solid var(--sub)" : "none",
-=======
-          border: open ? "1px solid #374151" : "none",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           cursor: "pointer", boxShadow: `0 4px 24px ${color}44`,
           display: "flex", alignItems: "center", justifyContent: "center",
           transition: "all 0.2s",
         }}
       >
         {open ? (
-<<<<<<< HEAD
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" strokeWidth="2.5" strokeLinecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -102,15 +93,6 @@ export default function AICopilot({ user }) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text)" strokeWidth="1.8" strokeLinecap="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             <circle cx="9" cy="10" r="1" fill="var(--text)"/><circle cx="12" cy="10" r="1" fill="var(--text)"/><circle cx="15" cy="10" r="1" fill="var(--text)"/>
-=======
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            <circle cx="9" cy="10" r="1" fill="white"/><circle cx="12" cy="10" r="1" fill="white"/><circle cx="15" cy="10" r="1" fill="white"/>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </svg>
         )}
       </button>
@@ -132,11 +114,7 @@ export default function AICopilot({ user }) {
             @keyframes slideUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
             @keyframes typing { 0%,80%,100%{transform:scale(1)} 40%{transform:scale(1.4)} }
             .copilot-input:focus { outline: none; border-color: ${color}66 !important; }
-<<<<<<< HEAD
             .copilot-input::placeholder { color: var(--sub); }
-=======
-            .copilot-input::placeholder { color: #374151; }
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           `}</style>
 
           {/* Header */}
@@ -153,11 +131,7 @@ export default function AICopilot({ user }) {
                 Online
               </div>
             </div>
-<<<<<<< HEAD
             <div style={{ marginLeft: "auto", fontSize: "10px", color: "var(--sub)", background: "#0d1525", padding: "3px 8px", borderRadius: "6px", border: "1px solid #1a2234" }}>
-=======
-            <div style={{ marginLeft: "auto", fontSize: "10px", color: "#374151", background: "#0d1525", padding: "3px 8px", borderRadius: "6px", border: "1px solid #1a2234" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               GPT-4o
             </div>
           </div>
@@ -173,22 +147,14 @@ export default function AICopilot({ user }) {
                   background: m.role === "user" ? color + "22" : "#111827",
                   border: `1px solid ${m.role === "user" ? color + "44" : "#1a2234"}`,
                   fontSize: "13px", lineHeight: "1.5",
-<<<<<<< HEAD
                   color: m.error ? "#f87171" : "var(--text)",
-=======
-                  color: m.error ? "#f87171" : "#e5e7eb",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 }}>
                   {m.role === "assistant"
                     ? <span dangerouslySetInnerHTML={{ __html: parseMarkdown(m.text) }} />
                     : m.text
                   }
                 </div>
-<<<<<<< HEAD
                 <div style={{ fontSize: "9px", color: "var(--sub)", marginTop: "3px", display: "flex", gap: "6px" }}>
-=======
-                <div style={{ fontSize: "9px", color: "#374151", marginTop: "3px", display: "flex", gap: "6px" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {m.ts}
                   {m.tokens && <span>· {m.tokens} tokens</span>}
                 </div>
@@ -214,17 +180,10 @@ export default function AICopilot({ user }) {
                 <button key={i} onClick={() => send(s)} style={{
                   padding: "5px 10px", borderRadius: "20px", fontSize: "11px",
                   background: "#0d1525", border: "1px solid #1a2234",
-<<<<<<< HEAD
                   color: "var(--sub)", cursor: "pointer",
                 }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = color + "44"; e.currentTarget.style.color = color }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a2234"; e.currentTarget.style.color = "var(--sub)" }}
-=======
-                  color: "#6b7280", cursor: "pointer",
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = color + "44"; e.currentTarget.style.color = color }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a2234"; e.currentTarget.style.color = "#6b7280" }}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 >
                   {s}
                 </button>
@@ -243,22 +202,14 @@ export default function AICopilot({ user }) {
               placeholder="Pergunta ao VoltarisAI..."
               style={{
                 flex: 1, background: "#111827", border: "1px solid #1a2234",
-<<<<<<< HEAD
                 borderRadius: "8px", padding: "9px 12px", color: "var(--text)",
-=======
-                borderRadius: "8px", padding: "9px 12px", color: "white",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 fontSize: "13px",
               }}
             />
             <button onClick={() => send()} disabled={loading || !input.trim()} style={{
               padding: "9px 14px", borderRadius: "8px", border: "none",
               background: input.trim() ? color : "#1f2937",
-<<<<<<< HEAD
               color: input.trim() ? "#000" : "var(--sub)",
-=======
-              color: input.trim() ? "#000" : "#374151",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               cursor: input.trim() ? "pointer" : "default",
               fontWeight: "700", fontSize: "13px", transition: "all 0.15s",
             }}>

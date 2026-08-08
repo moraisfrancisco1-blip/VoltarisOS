@@ -62,11 +62,7 @@ function mkKPIs(groups) {
 const STATUS_COLOR = {
   active:  "#4ade80",
   partial: "#f59e0b",
-<<<<<<< HEAD
   standby: "var(--sub)",
-=======
-  standby: "#6b7280",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   offline: "#f87171",
 }
 
@@ -108,11 +104,7 @@ function KPICard({ label, value, unit, sub, color="#4ade80", icon }) {
 }
 
 function GroupCard({ group, selected, onSelect }) {
-<<<<<<< HEAD
   const c = STATUS_COLOR[group.status] || "var(--sub)"
-=======
-  const c = STATUS_COLOR[group.status] || "#6b7280"
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   const pct = Math.round((group.available_kw / group.capacity_kw) * 100)
   return (
     <div

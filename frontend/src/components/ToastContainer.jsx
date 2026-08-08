@@ -34,17 +34,10 @@ export default function ToastContainer() {
             }}
           >
             <span style={{ fontSize: "16px", color: c.iconColor, fontWeight: "bold", flexShrink: 0 }}>{c.icon}</span>
-<<<<<<< HEAD
             <span style={{ flex: 1, color: "var(--text)", fontSize: "13px", lineHeight: "1.4" }}>{t.msg}</span>
             <button
               onClick={() => removeToast(t.id)}
               style={{ background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "16px", padding: "0 2px" }}
-=======
-            <span style={{ flex: 1, color: "#e5e7eb", fontSize: "13px", lineHeight: "1.4" }}>{t.msg}</span>
-            <button
-              onClick={() => removeToast(t.id)}
-              style={{ background: "none", border: "none", color: "#4b5563", cursor: "pointer", fontSize: "16px", padding: "0 2px" }}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             >×</button>
           </div>
         )

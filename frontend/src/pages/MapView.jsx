@@ -42,11 +42,7 @@ export default function MapView() {
           border: 1px solid rgba(255,255,255,0.12) !important;
           border-radius: 12px !important;
           box-shadow: 0 16px 48px rgba(0,0,0,0.5) !important;
-<<<<<<< HEAD
           color: var(--text, var(--text)) !important;
-=======
-          color: var(--text, #e2e8f0) !important;
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           padding: 0 !important;
         }
         .leaflet-popup-content {
@@ -56,11 +52,7 @@ export default function MapView() {
           background: var(--surface, #1e293b) !important;
         }
         .leaflet-popup-close-button {
-<<<<<<< HEAD
           color: var(--sub, var(--sub)) !important;
-=======
-          color: var(--sub, #94a3b8) !important;
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           font-size: 18px !important;
           top: 8px !important;
           right: 10px !important;
@@ -68,11 +60,7 @@ export default function MapView() {
         .leaflet-control-zoom a {
           background: var(--surface, #1e293b) !important;
           border-color: rgba(255,255,255,0.15) !important;
-<<<<<<< HEAD
           color: var(--text, var(--text)) !important;
-=======
-          color: var(--text, #e2e8f0) !important;
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         }
         .leaflet-control-zoom a:hover {
           background: var(--surface2, #162032) !important;
@@ -144,13 +132,8 @@ export default function MapView() {
           <div style="font-family: system-ui, sans-serif; padding: 14px 16px; min-width: 200px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
               <div>
-<<<<<<< HEAD
                 <div style="font-size:15px; font-weight:700; color:var(--text,var(--text));">${site.name}</div>
                 <div style="font-size:11px; color:var(--sub,var(--sub)); margin-top:1px;">${site.country}</div>
-=======
-                <div style="font-size:15px; font-weight:700; color:var(--text,#e2e8f0);">${site.name}</div>
-                <div style="font-size:11px; color:var(--sub,#94a3b8); margin-top:1px;">${site.country}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
               <span style="
                 font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px;
@@ -159,7 +142,6 @@ export default function MapView() {
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-<<<<<<< HEAD
                 <div style="font-size:10px; color:var(--sub,var(--sub));">Power</div>
                 <div style="font-size:14px; font-weight:700; color:#60a5fa;">${site.power} kW</div>
               </div>
@@ -177,25 +159,6 @@ export default function MapView() {
               </div>
             </div>
             <div style="margin-top:10px; font-size:11px; color:var(--sub,var(--sub));">${site.type} · ${site.capacity}</div>
-=======
-                <div style="font-size:10px; color:var(--sub,#94a3b8);">Power</div>
-                <div style="font-size:14px; font-weight:700; color:#60a5fa;">${site.power} kW</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-                <div style="font-size:10px; color:var(--sub,#94a3b8);">Battery</div>
-                <div style="font-size:14px; font-weight:700; color:${color};">${site.battery}%</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-                <div style="font-size:10px; color:var(--sub,#94a3b8);">Solar</div>
-                <div style="font-size:14px; font-weight:700; color:#fbbf24;">${site.solar} kW</div>
-              </div>
-              <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-                <div style="font-size:10px; color:var(--sub,#94a3b8);">Revenue</div>
-                <div style="font-size:14px; font-weight:700; color:#34d399;">${site.revenue}</div>
-              </div>
-            </div>
-            <div style="margin-top:10px; font-size:11px; color:var(--sub,#94a3b8);">${site.type} · ${site.capacity}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         `);
       });

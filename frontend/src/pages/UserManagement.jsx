@@ -8,11 +8,7 @@ const roleColors = {
   superadmin: { bg: "#3730a3", text: "#a5b4fc" },
   admin: { bg: "#3730a3", text: "#a5b4fc" },
   operator: { bg: "#1e3a5f", text: "#60a5fa" },
-<<<<<<< HEAD
   viewer: { bg: "#1f2937", text: "var(--sub)" },
-=======
-  viewer: { bg: "#1f2937", text: "#9ca3af" },
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   investor: { bg: "#064e3b", text: "#10b981" },
 };
 
@@ -117,11 +113,7 @@ export default function UserManagement() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Gestão de Utilizadores</h1>
-<<<<<<< HEAD
           <p style={{ color: "var(--sub)" }}>Equipa real ligada à base de dados — sem dados de exemplo.</p>
-=======
-          <p style={{ color: "rgba(148,163,184,0.85)" }}>Equipa real ligada à base de dados — sem dados de exemplo.</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <button onClick={() => { setShowInvite(!showInvite); setInviteError(""); }} style={{
           background: accent, color: "#fff", border: "none",
@@ -142,13 +134,8 @@ export default function UserManagement() {
           { label: "Operadores", value: users.filter(u => u.role === "operator").length, color: "#60a5fa" },
         ].map(k => (
           <div key={k.label} style={card}>
-<<<<<<< HEAD
             <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: k.color || "var(--text)" }}>{k.value}</div>
-=======
-            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: k.color || "#e5e7eb" }}>{k.value}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -157,50 +144,30 @@ export default function UserManagement() {
       {showInvite && (
         <div style={{ ...card, marginBottom: 24, border: `1px solid ${accent}` }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Convidar Novo Utilizador</h2>
-<<<<<<< HEAD
           <p style={{ fontSize: 12, color: "var(--sub)", marginBottom: 16 }}>
-=======
-          <p style={{ fontSize: 12, color: "rgba(148,163,184,0.7)", marginBottom: 16 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Por segurança, o role "Admin" não pode ser atribuído aqui — apenas o superadmin original tem esse acesso.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12, marginBottom: 8 }}>
             <div>
-<<<<<<< HEAD
               <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>Nome Completo</label>
-=======
-              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Nome Completo</label>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <input type="text" placeholder="ex: Maria Kovacs" value={inviteForm.name}
                 onChange={e => setInviteForm(p => ({ ...p, name: e.target.value }))}
                 style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
             </div>
             <div>
-<<<<<<< HEAD
               <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>Email</label>
-=======
-              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Email</label>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <input type="email" placeholder="user@empresa.com" value={inviteForm.email}
                 onChange={e => setInviteForm(p => ({ ...p, email: e.target.value }))}
                 style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
             </div>
             <div>
-<<<<<<< HEAD
               <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>Password Inicial</label>
-=======
-              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Password Inicial</label>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <input type="text" placeholder="mín. 8 caracteres" value={inviteForm.password}
                 onChange={e => setInviteForm(p => ({ ...p, password: e.target.value }))}
                 style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
             </div>
             <div>
-<<<<<<< HEAD
               <label style={{ fontSize: 12, color: "var(--sub)", display: "block", marginBottom: 4 }}>Role</label>
-=======
-              <label style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", display: "block", marginBottom: 4 }}>Role</label>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <select value={inviteForm.role} onChange={e => setInviteForm(p => ({ ...p, role: e.target.value }))}
                 style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%" }}>
                 <option value="operator">Operator</option>
@@ -218,11 +185,7 @@ export default function UserManagement() {
               {inviteLoading ? "A enviar..." : inviteSuccess ? "Convidado!" : "Enviar Convite"}
             </button>
             <button onClick={() => setShowInvite(false)} style={{
-<<<<<<< HEAD
               background: "#1f2937", color: "var(--sub)", border: "none", borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontSize: 13,
-=======
-              background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontSize: 13,
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             }}>Cancelar</button>
           </div>
         </div>
@@ -241,19 +204,11 @@ export default function UserManagement() {
         </div>
 
         {loading ? (
-<<<<<<< HEAD
           <div style={{ padding: 24, textAlign: "center", color: "var(--sub)" }}>A carregar...</div>
         ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ color: "var(--sub)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-=======
-          <div style={{ padding: 24, textAlign: "center", color: "rgba(148,163,184,0.7)" }}>A carregar...</div>
-        ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
-            <tr style={{ color: "rgba(148,163,184,0.85)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               {["Utilizador", "Role", "Estado", "Último Login", ""].map(h => (
                 <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
               ))}
@@ -274,11 +229,7 @@ export default function UserManagement() {
                       }}>{initials(u.name, u.email)}</div>
                       <div>
                         <div style={{ fontWeight: 500 }}>{u.name || "—"}</div>
-<<<<<<< HEAD
                         <div style={{ fontSize: 11, color: "var(--sub)" }}>{u.email}</div>
-=======
-                        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{u.email}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       </div>
                     </div>
                   </td>
@@ -291,7 +242,6 @@ export default function UserManagement() {
                     <span style={{
                       fontSize: 12, padding: "3px 10px", borderRadius: 99,
                       background: u.active ? "#064e3b" : "#1f2937",
-<<<<<<< HEAD
                       color: u.active ? "#10b981" : "var(--sub)",
                     }}>{u.active ? "Ativo" : "Inativo"}</span>
                   </td>
@@ -303,19 +253,6 @@ export default function UserManagement() {
                       <div style={{ display: "flex", gap: 6 }}>
                         <button onClick={() => toggleStatus(u.id)} style={{
                           background: "#1f2937", color: "var(--sub)", border: "none",
-=======
-                      color: u.active ? "#10b981" : "#6b7280",
-                    }}>{u.active ? "Ativo" : "Inativo"}</span>
-                  </td>
-                  <td style={{ padding: "12px", color: "rgba(148,163,184,0.85)" }}>{timeAgo(u.last_login)}</td>
-                  <td style={{ padding: "12px" }}>
-                    {isSuperadmin ? (
-                      <span style={{ fontSize: 11, color: "rgba(148,163,184,0.5)" }}>Conta protegida</span>
-                    ) : (
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <button onClick={() => toggleStatus(u.id)} style={{
-                          background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                           borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 11,
                         }}>{u.active ? "Desativar" : "Ativar"}</button>
                         <button onClick={() => removeUser(u.id)} style={{
@@ -329,11 +266,7 @@ export default function UserManagement() {
               );
             })}
             {filtered.length === 0 && !loading && (
-<<<<<<< HEAD
               <tr><td colSpan={5} style={{ padding: 24, textAlign: "center", color: "var(--sub)" }}>Nenhum utilizador encontrado</td></tr>
-=======
-              <tr><td colSpan={5} style={{ padding: 24, textAlign: "center", color: "rgba(148,163,184,0.6)" }}>Nenhum utilizador encontrado</td></tr>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             )}
           </tbody>
         </table>
@@ -356,11 +289,7 @@ export default function UserManagement() {
                 <span style={{ fontSize: 12, padding: "2px 8px", borderRadius: 99, background: rc.bg, color: rc.text, textTransform: "capitalize" }}>
                   {r.label}
                 </span>
-<<<<<<< HEAD
                 <ul style={{ marginTop: 10, paddingLeft: 16, fontSize: 12, color: "var(--sub)", lineHeight: 1.8 }}>
-=======
-                <ul style={{ marginTop: 10, paddingLeft: 16, fontSize: 12, color: "rgba(148,163,184,0.85)", lineHeight: 1.8 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {r.perms.map(p => <li key={p}>{p}</li>)}
                 </ul>
               </div>

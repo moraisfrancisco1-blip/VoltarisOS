@@ -14,17 +14,11 @@ export const THEMES = {
     surfaceGlass: "#1e293b",
     border: "rgba(255,255,255,0.08)",
     borderStrong: "rgba(255,255,255,0.16)",
-<<<<<<< HEAD
     sidebar: "#1e1a14",
     sidebarText: "#f5f0e8",
     sidebarSub: "#c8b89a",
     text: "#f5f0e8",
     sub: "#c8b89a",
-=======
-    sidebar: "#3d3225",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(74,222,128,0.15)",
     gridLine: "rgba(255,255,255,0.06)",
     tooltipBg: "#1e293b",
@@ -39,17 +33,11 @@ export const THEMES = {
     surfaceGlass: "#1a1535",
     border: "rgba(140,120,255,0.18)",
     borderStrong: "rgba(160,140,255,0.30)",
-<<<<<<< HEAD
     sidebar: "#1e1a14",
     sidebarText: "#f5f0e8",
     sidebarSub: "#c8b89a",
     text: "#f5f0e8",
     sub: "#c8b89a",
-=======
-    sidebar: "#3d3225",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(120,80,255,0.2)",
     gridLine: "rgba(120,100,255,0.08)",
     tooltipBg: "#1a1535",
@@ -64,17 +52,11 @@ export const THEMES = {
     surfaceGlass: "#0f2a1c",
     border: "rgba(40,200,80,0.18)",
     borderStrong: "rgba(60,220,100,0.28)",
-<<<<<<< HEAD
     sidebar: "#1e1a14",
     sidebarText: "#f5f0e8",
     sidebarSub: "#c8b89a",
     text: "#f5f0e8",
     sub: "#c8b89a",
-=======
-    sidebar: "#3d3225",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(40,200,80,0.18)",
     gridLine: "rgba(40,200,80,0.07)",
     tooltipBg: "#0f2a1c",
@@ -89,17 +71,11 @@ export const THEMES = {
     surfaceGlass: "#0a1e38",
     border: "rgba(30,130,220,0.20)",
     borderStrong: "rgba(40,150,255,0.30)",
-<<<<<<< HEAD
     sidebar: "#1e1a14",
     sidebarText: "#f5f0e8",
     sidebarSub: "#c8b89a",
     text: "#f5f0e8",
     sub: "#c8b89a",
-=======
-    sidebar: "#3d3225",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(20,120,255,0.18)",
     gridLine: "rgba(20,120,255,0.07)",
     tooltipBg: "#0a1e38",
@@ -114,17 +90,11 @@ export const THEMES = {
     surfaceGlass: "#2e1204",
     border: "rgba(220,80,20,0.20)",
     borderStrong: "rgba(240,110,30,0.30)",
-<<<<<<< HEAD
     sidebar: "#1e1a14",
     sidebarText: "#f5f0e8",
     sidebarSub: "#c8b89a",
     text: "#f5f0e8",
     sub: "#c8b89a",
-=======
-    sidebar: "#3d3225",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(240,100,20,0.2)",
     gridLine: "rgba(220,80,20,0.07)",
     tooltipBg: "#2e1204",
@@ -140,17 +110,11 @@ export const THEMES = {
     surfaceGlass: "#ffffff",
     border: "rgba(0,0,0,0.08)",
     borderStrong: "rgba(0,0,0,0.14)",
-<<<<<<< HEAD
     sidebar: "#1e293b",
     sidebarText: "#e2e8f0",
     sidebarSub: "#94a3b8",
     text: "#0f172a",
     sub: "#475569",
-=======
-    sidebar: "#4a3d2e",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(59,130,246,0.1)",
     gridLine: "rgba(0,0,0,0.05)",
     tooltipBg: "#ffffff",
@@ -165,17 +129,11 @@ export const THEMES = {
     surfaceGlass: "#fffdf8",
     border: "rgba(180,160,120,0.20)",
     borderStrong: "rgba(160,130,80,0.30)",
-<<<<<<< HEAD
     sidebar: "#1e293b",
     sidebarText: "#e2e8f0",
     sidebarSub: "#94a3b8",
     text: "#1c1917",
     sub: "#57534e",
-=======
-    sidebar: "#4a3d2e",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(200,160,60,0.12)",
     gridLine: "rgba(160,130,80,0.08)",
     tooltipBg: "#fffdf8",
@@ -190,17 +148,11 @@ export const THEMES = {
     surfaceGlass: "#ffffff",
     border: "rgba(100,160,220,0.18)",
     borderStrong: "rgba(80,140,210,0.30)",
-<<<<<<< HEAD
     sidebar: "#1e293b",
     sidebarText: "#e2e8f0",
     sidebarSub: "#94a3b8",
     text: "#0c1929",
     sub: "#475569",
-=======
-    sidebar: "#4a3d2e",
-    text: "#f5f0e8",
-    sub: "#d4c4a8",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     glow: "rgba(80,160,240,0.12)",
     gridLine: "rgba(80,140,210,0.07)",
     tooltipBg: "#ffffff",

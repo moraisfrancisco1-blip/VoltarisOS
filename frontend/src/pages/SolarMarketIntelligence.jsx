@@ -83,11 +83,7 @@ const INVESTMENT_WINDOWS = [
   { period: "2032-2035", signal: "BUY",  reason: "V2G + hydrogen storage unlocks new revenue streams", score: 82 },
 ]
 
-<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
-=======
-const label = { fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 // ── ROI Calculator ────────────────────────────────────────────────────────────
 function ROICalculator() {
@@ -129,11 +125,7 @@ function ROICalculator() {
           { lbl: "Self-consume (%)", val: selfConsume, set: setSelf, min: 10, max: 100, step: 5 },
         ].map(f => (
           <div key={f.lbl}>
-<<<<<<< HEAD
             <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{f.lbl}</div>
-=======
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", marginBottom: 4 }}>{f.lbl}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <input type="range" min={f.min} max={f.max} step={f.step} value={f.val}
               onChange={e => f.set(Number(e.target.value))}
               style={{ width: "100%", accentColor: C.green }} />
@@ -141,15 +133,9 @@ function ROICalculator() {
           </div>
         ))}
         <div>
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>Country</div>
           <select value={country} onChange={e => setCountry(e.target.value)}
             style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 10px", color: "var(--text)", fontSize: 12, width: "100%" }}>
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", marginBottom: 4 }}>Country</div>
-          <select value={country} onChange={e => setCountry(e.target.value)}
-            style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 10px", color: "#e2e8f0", fontSize: 12, width: "100%" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             {COUNTRIES.map(c => <option key={c.name}>{c.name}</option>)}
           </select>
         </div>
@@ -195,17 +181,10 @@ export default function SolarMarketIntelligence() {
               background: `${C.amber}22`, color: C.amber, border: `1px solid ${C.amber}44`, letterSpacing: 1 }}>
               SOLAR INTELLIGENCE
             </div>
-<<<<<<< HEAD
             <div style={{ fontSize: 11, color: "var(--sub)" }}>Source: IRENA · IEA WEO 2023 · BloombergNEF</div>
           </div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Solar Market Intelligence 2024–2035</h1>
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>
-=======
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>Source: IRENA · IEA WEO 2023 · BloombergNEF</div>
-          </div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Solar Market Intelligence 2024–2035</h1>
-          <div style={{ color: "rgba(148,163,184,0.7)", fontSize: 13, marginTop: 2 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             LCOE trajectory · EU capacity · price cannibalisation · investment windows · ROI by country
           </div>
         </div>
@@ -271,11 +250,7 @@ export default function SolarMarketIntelligence() {
                     border: `1px solid ${w.signal === "BUY" ? `${C.green}55` : `${C.amber}55`}`,
                     boxShadow: `0 0 10px ${w.signal === "BUY" ? C.green : C.amber}33`,
                   }}>{w.signal}</div>
-<<<<<<< HEAD
                   <div style={{ flex: 1, fontSize: 12, color: "var(--sub)" }}>{w.reason}</div>
-=======
-                  <div style={{ flex: 1, fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{w.reason}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <div style={{ width: 80, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.08)" }}>
                       <div style={{ width: `${w.score}%`, height: "100%", borderRadius: 3,
@@ -297,11 +272,7 @@ export default function SolarMarketIntelligence() {
           <div style={glassCard(C.amber)}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
               <div style={label}>LCOE Trajectory by Technology ($/MWh) — 2010 to 2035</div>
-<<<<<<< HEAD
               <div style={{ fontSize: 11, color: "var(--sub)" }}>Source: IRENA Renewable Power Generation Costs 2023</div>
-=======
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.6)" }}>Source: IRENA Renewable Power Generation Costs 2023</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart data={LCOE_TREND} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
@@ -318,11 +289,7 @@ export default function SolarMarketIntelligence() {
                 <Line type="monotone" dataKey="battery" stroke={C.purple} strokeWidth={2.5} dot={false} name="BESS LCOE" strokeDasharray="5 2" />
                 <Line type="monotone" dataKey="wind_off" stroke={C.blue} strokeWidth={2} dot={false} name="Offshore Wind" />
                 <Line type="monotone" dataKey="ev_parity" stroke={C.green} strokeWidth={2} dot={false} name="EV V2G parity" strokeDasharray="3 3" />
-<<<<<<< HEAD
                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--sub)" }} />
-=======
-                <Legend wrapperStyle={{ fontSize: 11, color: "rgba(148,163,184,0.75)" }} />
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -342,21 +309,13 @@ export default function SolarMarketIntelligence() {
                   <div style={{ fontSize: 12, fontWeight: 700, color: m.color, minWidth: 36 }}>{m.year}</div>
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: m.color, flexShrink: 0,
                     boxShadow: `0 0 6px ${m.color}` }} />
-<<<<<<< HEAD
                   <div style={{ fontSize: 12, color: "var(--sub)" }}>{m.event}</div>
-=======
-                  <div style={{ fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{m.event}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               ))}
             </div>
             <div style={glassCard(C.red)}>
               <div style={{ ...label, marginBottom: 12 }}>Price Cannibalisation Risk 2024–2035</div>
-<<<<<<< HEAD
               <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 12, lineHeight: 1.6 }}>
-=======
-              <div style={{ fontSize: 12, color: "rgba(148,163,184,0.75)", marginBottom: 12, lineHeight: 1.6 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 As solar penetration grows, wholesale prices <strong style={{ color: C.red }}>collapse during daytime hours</strong>.
                 By 2030, peak solar hours in PT/ES may trade near <strong style={{ color: C.amber }}>€3–10/MWh</strong>.
                 BESS arbitrage and V2G become <strong style={{ color: C.green }}>essential revenue diversification</strong>.
@@ -387,11 +346,7 @@ export default function SolarMarketIntelligence() {
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                     {["Country", "LCOE €/MWh", "Irradiance h/yr", "Installed GW", "Curtail Risk", "Growth to 2030", "Grade"].map(h => (
                       <th key={h} style={{ textAlign: "left", padding: "8px 14px", fontSize: 10,
-<<<<<<< HEAD
                         color: "var(--sub)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-=======
-                        color: "rgba(148,163,184,0.7)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     ))}
                   </tr>
                 </thead>
@@ -402,13 +357,8 @@ export default function SolarMarketIntelligence() {
                       <td style={{ padding: "12px 14px", fontWeight: 700, color: c.color, fontSize: 13 }}>{c.name}</td>
                       <td style={{ padding: "12px 14px", fontSize: 13, color: c.lcoe_2024 < 35 ? C.green : "rgba(148,163,184,0.85)",
                         fontWeight: c.lcoe_2024 < 35 ? 700 : 400 }}>€{c.lcoe_2024}</td>
-<<<<<<< HEAD
                       <td style={{ padding: "12px 14px", fontSize: 12, color: "var(--sub)" }}>{c.irr.toLocaleString()}</td>
                       <td style={{ padding: "12px 14px", fontSize: 12, color: "var(--sub)" }}>{c.capacity_gw} GW</td>
-=======
-                      <td style={{ padding: "12px 14px", fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{c.irr.toLocaleString()}</td>
-                      <td style={{ padding: "12px 14px", fontSize: 12, color: "rgba(148,163,184,0.85)" }}>{c.capacity_gw} GW</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       <td style={{ padding: "12px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                           <div style={{ width: 50, height: 5, borderRadius: 2, background: "rgba(255,255,255,0.08)" }}>
@@ -470,11 +420,7 @@ export default function SolarMarketIntelligence() {
         <>
           <div style={glassCard(C.red)}>
             <div style={{ ...label, marginBottom: 6 }}>Price Cannibalisation — The Hidden Risk of Solar at Scale</div>
-<<<<<<< HEAD
             <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 14, lineHeight: 1.65 }}>
-=======
-            <div style={{ fontSize: 12, color: "rgba(148,163,184,0.7)", marginBottom: 14, lineHeight: 1.65 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               As solar penetration increases, wholesale electricity prices during peak solar hours collapse —
               a phenomenon called <strong style={{ color: C.amber }}>price cannibalisation</strong>. This directly erodes
               the revenue of solar assets. By 2030, solar assets in Portugal/Spain without BESS may see
@@ -513,11 +459,7 @@ export default function SolarMarketIntelligence() {
                   border: `1px solid ${s.color}33` }}>
                   <div style={{ fontSize: 20, marginBottom: 6 }}>{s.icon}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: s.color, marginBottom: 6 }}>{s.title}</div>
-<<<<<<< HEAD
                   <div style={{ fontSize: 11, color: "var(--sub)", lineHeight: 1.55 }}>{s.desc}</div>
-=======
-                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.75)", lineHeight: 1.55 }}>{s.desc}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               ))}
             </div>

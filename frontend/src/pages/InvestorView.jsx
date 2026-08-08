@@ -9,22 +9,14 @@ const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
-<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
-=======
-const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 const val = { fontSize: 26, fontWeight: 700, color: "var(--text)" };
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
-<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
-=======
-      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -89,11 +81,7 @@ export default function InvestorView() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Investor View</h1>
-<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Portfolio financials · IRR/NPV · BESS degradation · Revenue waterfall</div>
-=======
-          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Portfolio financials · IRR/NPV · BESS degradation · Revenue waterfall</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <button onClick={() => alert("Export Investor Report — feature coming soon")} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Export Report
@@ -141,11 +129,7 @@ export default function InvestorView() {
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {WATERFALL.map((w, i) => (
               <div key={w.name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-<<<<<<< HEAD
                 <div style={{ width: 110, fontSize: 11, color: "var(--sub)", textAlign: "right" }}>{w.name}</div>
-=======
-                <div style={{ width: 110, fontSize: 11, color: "rgba(148,163,184,0.85)", textAlign: "right" }}>{w.name}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <div style={{ flex: 1, height: 22, position: "relative" }}>
                   <div style={{
                     position: "absolute",
@@ -174,11 +158,7 @@ export default function InvestorView() {
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                 {["Site", "CapEx (€k)", "IRR", "NPV (€k)", "DSCR", "Payback"].map(h => (
-<<<<<<< HEAD
                   <th key={h} style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "var(--sub)", fontWeight: 600 }}>{h}</th>
-=======
-                  <th key={h} style={{ textAlign: "left", padding: "4px 8px", fontSize: 10, color: "rgba(148,163,184,0.85)", fontWeight: 600 }}>{h}</th>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 ))}
               </tr>
             </thead>
@@ -190,11 +170,7 @@ export default function InvestorView() {
                   <td style={{ padding: "7px 8px", fontSize: 12, fontWeight: 700, color: s.irr > 16 ? green : amber }}>{s.irr}%</td>
                   <td style={{ padding: "7px 8px", fontSize: 11, color: green }}>€{s.npv.toLocaleString()}</td>
                   <td style={{ padding: "7px 8px", fontSize: 12, fontWeight: 700, color: s.dscr >= 1.5 ? green : amber }}>{s.dscr}x</td>
-<<<<<<< HEAD
                   <td style={{ padding: "7px 8px", fontSize: 11, color: "var(--sub)" }}>{s.payback}y</td>
-=======
-                  <td style={{ padding: "7px 8px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{s.payback}y</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </tr>
               ))}
             </tbody>
@@ -209,22 +185,13 @@ export default function InvestorView() {
           {SITES_FIN.map(s => (
             <div key={s.name} style={{ background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>{s.name.split(" ").slice(-2).join(" ")}</div>
-<<<<<<< HEAD
               <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>Capacity Remaining</div>
-=======
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>Capacity Remaining</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ height: 6, background: "var(--surface2)", borderRadius: 3, marginBottom: 4 }}>
                 <div style={{ width: `${s.bessRemain}%`, height: "100%", background: s.bessRemain > 70 ? green : s.bessRemain > 50 ? amber : red, borderRadius: 3 }} />
               </div>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.bessRemain > 70 ? green : s.bessRemain > 50 ? amber : red }}>{s.bessRemain}%</div>
-<<<<<<< HEAD
               <div style={{ fontSize: 10, color: "var(--sub)", marginTop: 6 }}>Age: {s.bessAge} yrs</div>
               <div style={{ fontSize: 10, color: "var(--sub)" }}>
-=======
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 6 }}>Age: {s.bessAge} yrs</div>
-              <div style={{ fontSize: 10, color: "rgba(148,163,184,0.85)" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 Replace in ~{Math.round((s.bessRemain - 60) / 3)} yrs
               </div>
               <div style={{ fontSize: 11, color: red, marginTop: 4, fontWeight: 600 }}>

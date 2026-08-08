@@ -87,11 +87,7 @@ function StatusBadge({ status }) {
     online:  { bg: "rgba(16,185,129,0.15)", color: "#10b981", dot: "#10b981", label: "Online" },
     offline: { bg: "rgba(239,68,68,0.12)",  color: "#ef4444", dot: "#ef4444", label: "Offline" },
     error:   { bg: "rgba(245,158,11,0.15)", color: "#f59e0b", dot: "#f59e0b", label: "Error" },
-<<<<<<< HEAD
     unknown: { bg: "rgba(148,163,184,0.1)", color: "var(--sub)", dot: "var(--sub)", label: "Unknown" },
-=======
-    unknown: { bg: "rgba(148,163,184,0.1)", color: "#94a3b8", dot: "#94a3b8", label: "Unknown" },
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   }
   const s = map[status] || map.unknown
   return (
@@ -643,11 +639,7 @@ export default function Integrations() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{ background: "var(--surface2)", borderRadius: 10, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#f59e0b", marginBottom: 8 }}>INSTALL</div>
-<<<<<<< HEAD
             <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", WhiteSpace: "pre-wrap" }}>
-=======
-            <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 {`pip install pymodbus asyncua httpx
 python -m gateway.gateway \\
   --api https://your-backend.up.railway.app \\
@@ -656,11 +648,7 @@ python -m gateway.gateway \\
           </div>
           <div style={{ background: "var(--surface2)", borderRadius: 10, padding: 14 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", marginBottom: 8 }}>DOCKER (RASPBERRY PI)</div>
-<<<<<<< HEAD
             <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", WhiteSpace: "pre-wrap" }}>
-=======
-            <pre style={{ fontSize: 11, color: "var(--text)", margin: 0, fontFamily: "monospace", whiteSpace: "pre-wrap" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 {`docker run voltarisos/gateway \\
   -e VOLTARIS_API_URL=https://... \\
   -e GATEWAY_INTERVAL=30 \\

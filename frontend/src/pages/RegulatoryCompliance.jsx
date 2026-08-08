@@ -8,21 +8,13 @@ const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
-<<<<<<< HEAD
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
-=======
-const label = { fontSize: 11, color: "rgba(148,163,184,0.85)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
 const CustomTooltip = ({ active, payload, label: lb }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 12px" }}>
-<<<<<<< HEAD
       <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{lb}</div>
-=======
-      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{lb}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       {payload.map((p, i) => <div key={i} style={{ fontSize: 12, color: p.color }}>{p.name}: <b>{p.value}</b></div>)}
     </div>
   );
@@ -85,17 +77,10 @@ export default function RegulatoryCompliance() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Regulatory Compliance</h1>
-<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 2 }}>Deadlines · Risk tracking · Certifications · ESG reporting</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => alert("Export Compliance Report — feature coming soon")} style={{ padding: "8px 16px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>
-=======
-          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 2 }}>Deadlines · Risk tracking · Certifications · ESG reporting</div>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => alert("Export Compliance Report — feature coming soon")} style={{ padding: "8px 16px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             Export Report
           </button>
           <button onClick={() => setShowModal(true)}
@@ -113,20 +98,12 @@ export default function RegulatoryCompliance() {
           { label: "Urgent (≤60d)", value: urgent, color: urgent > 0 ? red : green, sub: "need action" },
           { label: "High Risk", value: highRisk, color: highRisk > 0 ? red : green, sub: "open items" },
           { label: "In Progress", value: inprog, color: amber, sub: "active items" },
-<<<<<<< HEAD
           { label: "Pending", value: pending, color: "var(--sub)", sub: "not started" },
-=======
-          { label: "Pending", value: pending, color: "rgba(148,163,184,0.85)", sub: "not started" },
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         ].map(k => (
           <div key={k.label} style={card}>
             <div style={label}>{k.label}</div>
             <div style={{ fontSize: 26, fontWeight: 700, color: k.color }}>{k.value}</div>
-<<<<<<< HEAD
             <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 3 }}>{k.sub}</div>
-=======
-            <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 3 }}>{k.sub}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -150,11 +127,7 @@ export default function RegulatoryCompliance() {
           {/* Progress bar */}
           <div style={{ marginTop: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12 }}>
-<<<<<<< HEAD
               <span style={{ color: "var(--sub)" }}>Overall Progress</span>
-=======
-              <span style={{ color: "rgba(148,163,184,0.85)" }}>Overall Progress</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <span style={{ fontWeight: 700, color: green }}>{score}%</span>
             </div>
             <div style={{ height: 8, background: "var(--surface2)", borderRadius: 4 }}>
@@ -206,26 +179,15 @@ export default function RegulatoryCompliance() {
               }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{d.title}</div>
-<<<<<<< HEAD
                   <div style={{ fontSize: 11, color: "var(--sub)" }}>{d.body}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: isUrgent ? red : "var(--text)" }}>{d.due}</div>
-=======
-                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{d.body}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: isUrgent ? red : "#f1f5f9" }}>{d.due}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <div style={{ fontSize: 10, color: isUrgent ? red : "rgba(148,163,184,0.85)" }}>
                     {d.status === "done" ? "Completed" : `${dl}d left`}
                   </div>
                 </div>
-<<<<<<< HEAD
                 <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--sub)" }}>
-=======
-                <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 8, background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(148,163,184,0.85)" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {d.category}
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: riskColor(d.risk) }}>
@@ -241,11 +203,7 @@ export default function RegulatoryCompliance() {
                       Mark Done
                     </button>
                   )}
-<<<<<<< HEAD
                   <button onClick={() => alert(`Edit "${d.title}" — feature coming soon`)} style={{ padding: "4px 10px", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "var(--sub)", fontSize: 10, cursor: "pointer" }}>
-=======
-                  <button onClick={() => alert(`Edit "${d.title}" — feature coming soon`)} style={{ padding: "4px 10px", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "rgba(148,163,184,0.85)", fontSize: 10, cursor: "pointer" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     Edit
                   </button>
                 </div>
@@ -267,11 +225,7 @@ export default function RegulatoryCompliance() {
                 { l: "Due Date", type: "date" },
               ].map(f => (
                 <div key={f.l}>
-<<<<<<< HEAD
                   <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{f.l}</div>
-=======
-                  <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{f.l}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <input type={f.type} style={{ width: "100%", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 10px", color: "var(--text)", fontSize: 13, boxSizing: "border-box" }} />
                 </div>
               ))}
@@ -279,11 +233,7 @@ export default function RegulatoryCompliance() {
                 {[{ l: "Category", opts: ["Safety","Regulatory","ESG","Grid","Market","Environmental","ISO"] },
                   { l: "Risk", opts: ["low","medium","high"] }].map(f => (
                   <div key={f.l}>
-<<<<<<< HEAD
                     <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>{f.l}</div>
-=======
-                    <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 4 }}>{f.l}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <select style={{ width: "100%", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 10px", color: "var(--text)", fontSize: 13 }}>
                       {f.opts.map(o => <option key={o}>{o}</option>)}
                     </select>
@@ -292,11 +242,7 @@ export default function RegulatoryCompliance() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
-<<<<<<< HEAD
               <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
-=======
-              <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "rgba(148,163,184,0.85)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
             </div>
           </div>

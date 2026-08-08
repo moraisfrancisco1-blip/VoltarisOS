@@ -12,11 +12,7 @@ const LABEL = {
   display: "block",
   fontSize: "12px",
   fontWeight: "600",
-<<<<<<< HEAD
   color: "var(--sub)",
-=======
-  color: "rgba(148,163,184,0.85)",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   textTransform: "uppercase",
   letterSpacing: "0.5px",
   marginBottom: "8px",
@@ -42,11 +38,7 @@ const TENANTS = [
   { id: "t4", name: "Meridian Energy", domain: "meridian.voltaris.io", color: "#a78bfa", plan: "Starter", users: 3, status: "inactive" },
 ]
 
-<<<<<<< HEAD
 export default function whitelabel({ user }) {
-=======
-export default function WhiteLabel({ user }) {
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   const color = user?.color || "#4ade80"
   const [tab, setTab] = useState("tenants")
   const [tenants, setTenants] = useState(TENANTS)
@@ -88,23 +80,14 @@ export default function WhiteLabel({ user }) {
     setTab("brand")
   }
 
-<<<<<<< HEAD
   const statusColor = (s) => s === "active" ? "#4ade80" : s === "pending" ? "#f59e0b" : "var(--sub)"
-=======
-  const statusColor = (s) => s === "active" ? "#4ade80" : s === "pending" ? "#f59e0b" : "#6b7280"
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
-<<<<<<< HEAD
         <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>white-label & Multi-tenant</h1>
         <p style={{ margin: "6px 0 0", color: "var(--sub)", fontSize: "14px" }}>Manage tenant brands, domains, and feature flags</p>
-=======
-        <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>White-label & Multi-tenant</h1>
-        <p style={{ margin: "6px 0 0", color: "rgba(148,163,184,0.85)", fontSize: "14px" }}>Manage tenant brands, domains, and feature flags</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       </div>
 
       {/* Stats row */}
@@ -118,11 +101,7 @@ export default function WhiteLabel({ user }) {
           <div key={i} style={{ ...CARD, marginBottom: 0, textAlign: "center" }}>
             <div style={{ fontSize: "28px", fontWeight: "700", color: i === 0 ? color : i === 1 ? "#4ade80" : i === 2 ? "#60a5fa" : "#f59e0b" }}>{s.value}</div>
             <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text)", margin: "4px 0 2px" }}>{s.label}</div>
-<<<<<<< HEAD
             <div style={{ fontSize: "11px", color: "var(--sub)" }}>{s.sub}</div>
-=======
-            <div style={{ fontSize: "11px", color: "rgba(148,163,184,0.85)" }}>{s.sub}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -140,11 +119,7 @@ export default function WhiteLabel({ user }) {
             background: tab === t.id ? color + "22" : "none",
             border: tab === t.id ? `1px solid ${color}44` : "1px solid transparent",
             borderRadius: "7px",
-<<<<<<< HEAD
             color: tab === t.id ? color : "var(--sub)",
-=======
-            color: tab === t.id ? color : "#6b7280",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             cursor: "pointer",
             fontSize: "13px",
             fontWeight: tab === t.id ? "600" : "400",
@@ -180,7 +155,6 @@ export default function WhiteLabel({ user }) {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "15px", fontWeight: "600", color: "var(--text)" }}>{t.name}</div>
-<<<<<<< HEAD
                   <div style={{ fontSize: "12px", color: "var(--sub)", marginTop: "2px" }}>{t.domain}</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
@@ -190,17 +164,6 @@ export default function WhiteLabel({ user }) {
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: "13px", color: "var(--sub)" }}>{t.users}</div>
                   <div style={{ fontSize: "11px", color: "var(--sub)" }}>Users</div>
-=======
-                  <div style={{ fontSize: "12px", color: "rgba(148,163,184,0.85)", marginTop: "2px" }}>{t.domain}</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "13px", color: "rgba(148,163,184,0.85)" }}>{t.plan}</div>
-                  <div style={{ fontSize: "11px", color: "rgba(148,163,184,0.85)" }}>Plan</div>
-                </div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "13px", color: "rgba(148,163,184,0.85)" }}>{t.users}</div>
-                  <div style={{ fontSize: "11px", color: "rgba(148,163,184,0.85)" }}>Users</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
                 <div>
                   <span style={{
@@ -211,11 +174,7 @@ export default function WhiteLabel({ user }) {
                     {t.status}
                   </span>
                 </div>
-<<<<<<< HEAD
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-=======
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             ))}
           </div>
@@ -284,17 +243,12 @@ export default function WhiteLabel({ user }) {
               <label style={{
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 gap: "10px", border: "2px dashed #1a2234", borderRadius: "10px", padding: "28px",
-<<<<<<< HEAD
                 cursor: "pointer", transition: "border-color 0.15s", color: "var(--sub)",
-=======
-                cursor: "pointer", transition: "border-color 0.15s", color: "rgba(148,163,184,0.85)",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               }}
                 onMouseEnter={e => e.currentTarget.style.borderColor = color + "66"}
                 onMouseLeave={e => e.currentTarget.style.borderColor = "#1a2234"}
               >
                 <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
-<<<<<<< HEAD
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={logoName ? color : "var(--sub)"} strokeWidth="1.5">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
                   <polyline points="21 15 16 10 5 21"/>
@@ -303,16 +257,6 @@ export default function WhiteLabel({ user }) {
                   {logoName || "Click to upload PNG or SVG"}
                 </span>
                 {!logoName && <span style={{ fontSize: "11px", color: "var(--sub)" }}>Recommended: 200×60px</span>}
-=======
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={logoName ? color : "#374151"} strokeWidth="1.5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-                <span style={{ fontSize: "13px", color: logoName ? color : "#6b7280", fontWeight: logoName ? "600" : "400" }}>
-                  {logoName || "Click to upload PNG or SVG"}
-                </span>
-                {!logoName && <span style={{ fontSize: "11px", color: "#374151" }}>Recommended: 200×60px</span>}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </label>
             </div>
           </div>
@@ -348,7 +292,6 @@ export default function WhiteLabel({ user }) {
 
               {/* Mini preview */}
               <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "16px" }}>
-<<<<<<< HEAD
                 <div style={{ fontSize: "11px", color: "var(--sub)", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Preview</div>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                   <div style={{ flex: 1, background: brandForm.primaryColor + "22", border: `1px solid ${brandForm.primaryColor}44`, borderRadius: "8px", padding: "10px", textAlign: "center" }}>
@@ -358,17 +301,6 @@ export default function WhiteLabel({ user }) {
                   <div style={{ flex: 1, background: brandForm.accentColor + "22", border: `1px solid ${brandForm.accentColor}44`, borderRadius: "8px", padding: "10px", textAlign: "center" }}>
                     <div style={{ fontSize: "16px", fontWeight: "700", color: brandForm.accentColor }}>98.1%</div>
                     <div style={{ fontSize: "11px", color: "var(--sub)" }}>Uptime</div>
-=======
-                <div style={{ fontSize: "11px", color: "#374151", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Preview</div>
-                <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
-                  <div style={{ flex: 1, background: brandForm.primaryColor + "22", border: `1px solid ${brandForm.primaryColor}44`, borderRadius: "8px", padding: "10px", textAlign: "center" }}>
-                    <div style={{ fontSize: "16px", fontWeight: "700", color: brandForm.primaryColor }}>142.3</div>
-                    <div style={{ fontSize: "11px", color: "rgba(148,163,184,0.85)" }}>MWh</div>
-                  </div>
-                  <div style={{ flex: 1, background: brandForm.accentColor + "22", border: `1px solid ${brandForm.accentColor}44`, borderRadius: "8px", padding: "10px", textAlign: "center" }}>
-                    <div style={{ fontSize: "16px", fontWeight: "700", color: brandForm.accentColor }}>98.1%</div>
-                    <div style={{ fontSize: "11px", color: "rgba(148,163,184,0.85)" }}>Uptime</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 </div>
                 <div style={{ height: "8px", background: "#1a2234", borderRadius: "4px", overflow: "hidden" }}>
@@ -408,11 +340,7 @@ export default function WhiteLabel({ user }) {
                   <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: statusColor(t.status), flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text)" }}>{t.domain}</div>
-<<<<<<< HEAD
                     <div style={{ fontSize: "12px", color: "var(--sub)", marginTop: "2px" }}>{t.name}</div>
-=======
-                    <div style={{ fontSize: "12px", color: "rgba(148,163,184,0.85)", marginTop: "2px" }}>{t.name}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                   <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                     <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", background: "#4ade8018", color: "#4ade80" }}>SSL Active</span>
@@ -422,21 +350,13 @@ export default function WhiteLabel({ user }) {
               ))}
             </div>
             <div style={{ marginTop: "20px", padding: "16px", background: "var(--surface)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
-<<<<<<< HEAD
               <div style={{ fontSize: "13px", color: "var(--sub)", marginBottom: "12px", fontWeight: "600" }}>Add New Domain</div>
-=======
-              <div style={{ fontSize: "13px", color: "rgba(148,163,184,0.85)", marginBottom: "12px", fontWeight: "600" }}>Add New Domain</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ display: "flex", gap: "10px" }}>
                 <input style={{ ...INPUT, flex: 1 }} placeholder="custom.domain.com"
                   onFocus={e => e.target.style.borderColor = color}
                   onBlur={e => e.target.style.borderColor = "#1a2234"}
                 />
-<<<<<<< HEAD
                 <button onClick={() => alert("Provision SSL — feature coming soon")} style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", WhiteSpace: "nowrap" }}>
-=======
-                <button onClick={() => alert("Provision SSL — feature coming soon")} style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   Provision SSL
                 </button>
               </div>
@@ -449,24 +369,14 @@ export default function WhiteLabel({ user }) {
       {tab === "features" && (
         <div style={CARD}>
           <h3 style={{ margin: "0 0 4px", fontSize: "15px", color: "var(--text)" }}>Feature Flags per Tenant</h3>
-<<<<<<< HEAD
           <p style={{ margin: "0 0 24px", fontSize: "13px", color: "var(--sub)" }}>Control which modules each tenant can access</p>
-=======
-          <p style={{ margin: "0 0 24px", fontSize: "13px", color: "rgba(148,163,184,0.85)" }}>Control which modules each tenant can access</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
               <thead>
                 <tr>
-<<<<<<< HEAD
                   <th style={{ textAlign: "left", padding: "10px 14px", color: "var(--sub)", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>Tenant</th>
                   {["Trading", "Carbon", "Digital Twin", "Maintenance", "AI Copilot", "Forecasting"].map(f => (
                     <th key={f} style={{ textAlign: "center", padding: "10px 14px", color: "var(--sub)", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>{f}</th>
-=======
-                  <th style={{ textAlign: "left", padding: "10px 14px", color: "rgba(148,163,184,0.85)", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>Tenant</th>
-                  {["Trading", "Carbon", "Digital Twin", "Maintenance", "AI Copilot", "Forecasting"].map(f => (
-                    <th key={f} style={{ textAlign: "center", padding: "10px 14px", color: "rgba(148,163,184,0.85)", fontWeight: "600", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>{f}</th>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   ))}
                 </tr>
               </thead>
@@ -487,20 +397,12 @@ export default function WhiteLabel({ user }) {
                             display: "inline-flex", alignItems: "center", justifyContent: "center",
                             width: "32px", height: "18px", borderRadius: "9px",
                             background: on ? color + "33" : "#1a2234",
-<<<<<<< HEAD
                             border: `1px solid ${on ? color + "55" : "var(--sub)"}`,
-=======
-                            border: `1px solid ${on ? color + "55" : "#374151"}`,
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                             transition: "all 0.2s", cursor: "pointer",
                           }}>
                             <div style={{
                               width: "12px", height: "12px", borderRadius: "50%",
-<<<<<<< HEAD
                               background: on ? color : "var(--sub)",
-=======
-                              background: on ? color : "#374151",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                               transition: "all 0.2s",
                               transform: on ? "translateX(7px)" : "translateX(-7px)",
                             }} />

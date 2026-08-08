@@ -41,11 +41,7 @@ const BarChart = ({ data, key1, key2, label1, label2, color1, color2, height = 1
       </div>
       <div style={{ display: "flex", gap: 2 }}>
         {data.map((d, i) => (
-<<<<<<< HEAD
           <div key={i} style={{ flex: 1, textAlign: "center", fontSize: 9, color: "var(--sub)" }}>{d.month}</div>
-=======
-          <div key={i} style={{ flex: 1, textAlign: "center", fontSize: 9, color: "rgba(148,163,184,0.85)" }}>{d.month}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         ))}
       </div>
     </div>
@@ -87,11 +83,7 @@ export default function ReportsAnalytics() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Reports & Analytics</h1>
-<<<<<<< HEAD
           <p style={{ color: "var(--sub)" }}>Performance analysis, energy charts, and export</p>
-=======
-          <p style={{ color: "rgba(148,163,184,0.85)" }}>Performance analysis, energy charts, and export</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={() => downloadCSV(mockData.monthly, "voltaris_monthly_energy.csv")} style={{
@@ -114,15 +106,9 @@ export default function ReportsAnalytics() {
           { label: "Fleet Uptime", value: `${avgUptime}%`, sub: "avg across sites", color: accent },
         ].map(k => (
           <div key={k.label} style={card}>
-<<<<<<< HEAD
             <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: k.color }}>{k.value}</div>
             <div style={{ color: "var(--sub)", fontSize: 12 }}>{k.sub}</div>
-=======
-            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12, marginBottom: 6 }}>{k.label}</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: k.color }}>{k.value}</div>
-            <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 12 }}>{k.sub}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           </div>
         ))}
       </div>
@@ -132,11 +118,7 @@ export default function ReportsAnalytics() {
         {["overview", "by-site", "reports"].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             background: tab === t ? accent : "transparent",
-<<<<<<< HEAD
             color: tab === t ? "#fff" : "var(--sub)",
-=======
-            color: tab === t ? "#fff" : "#6b7280",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             border: "none", borderRadius: 8, padding: "8px 18px", cursor: "pointer", fontSize: 13, fontWeight: 500,
           }}>{t.replace("-", " ").replace(/\b\w/g, c => c.toUpperCase())}</button>
         ))}
@@ -168,11 +150,7 @@ export default function ReportsAnalytics() {
             <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>Monthly Breakdown</h3>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
-<<<<<<< HEAD
                 <tr style={{ color: "var(--sub)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-=======
-                <tr style={{ color: "rgba(148,163,184,0.85)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {["Month", "Solar (kWh)", "Grid Exchange (kWh)", "Revenue (€)", "Savings (€)"].map(h => (
                     <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
                   ))}
@@ -201,11 +179,7 @@ export default function ReportsAnalytics() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 600 }}>{site.name}</h3>
                 <button onClick={() => downloadCSV([site], `voltaris_${site.name.toLowerCase()}.csv`)}
-<<<<<<< HEAD
                   style={{ background: "#1f2937", color: "var(--sub)", border: "none", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12 }}>
-=======
-                  style={{ background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 12 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   Export
                 </button>
               </div>
@@ -218,11 +192,7 @@ export default function ReportsAnalytics() {
                   { label: "Peak Power", val: `${site.peakPower} kW` },
                 ].map(m => (
                   <div key={m.label} style={{ background: "var(--surface2)", padding: 14, borderRadius: 8 }}>
-<<<<<<< HEAD
                     <div style={{ fontSize: 11, color: "var(--sub)" }}>{m.label}</div>
-=======
-                    <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{m.label}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>{m.val}</div>
                   </div>
                 ))}
@@ -237,11 +207,7 @@ export default function ReportsAnalytics() {
           <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Generated Reports</h2>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
-<<<<<<< HEAD
               <tr style={{ color: "var(--sub)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-=======
-              <tr style={{ color: "rgba(148,163,184,0.85)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 {["Report Name", "Date", "Size", "Type", ""].map(h => (
                   <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
                 ))}
@@ -251,13 +217,8 @@ export default function ReportsAnalytics() {
               {reports.map((r, i) => (
                 <tr key={i} style={{ borderBottom: "1px solid #0d1117" }}>
                   <td style={{ padding: "10px 12px" }}>{r.name}</td>
-<<<<<<< HEAD
                   <td style={{ padding: "10px 12px", color: "var(--sub)" }}>{r.date}</td>
                   <td style={{ padding: "10px 12px", color: "var(--sub)" }}>{r.size}</td>
-=======
-                  <td style={{ padding: "10px 12px", color: "rgba(148,163,184,0.85)" }}>{r.date}</td>
-                  <td style={{ padding: "10px 12px", color: "rgba(148,163,184,0.85)" }}>{r.size}</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <td style={{ padding: "10px 12px" }}>
                     <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "#1f2937" }}>{r.type}</span>
                   </td>

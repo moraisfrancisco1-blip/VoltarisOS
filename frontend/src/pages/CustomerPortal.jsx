@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 
-<<<<<<< HEAD
 // white-label customer portal — shows end-customer view
-=======
-// White-label customer portal — shows end-customer view
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 // Industrial clients see their consumption, savings, carbon offset
 
 const CUSTOMERS = [
@@ -39,11 +35,7 @@ export default function CustomerPortal() {
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0])
   const [view, setView] = useState("portal") // "portal" | "preview" | "embed"
   const [customerData, setCustomerData] = useState(() => generateCustomerData(1))
-<<<<<<< HEAD
   const [whitelabelConfig, setwhitelabelConfig] = useState({
-=======
-  const [whitelabelConfig, setWhitelabelConfig] = useState({
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     companyName: "Voltaris Energy",
     primaryColor: "#6366f1",
     logo: "⚡",
@@ -76,11 +68,7 @@ export default function CustomerPortal() {
       <div style={{ marginBottom: "20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>
           <h1 style={{ fontSize: "22px", fontWeight: "700", color: "var(--text)", margin: 0 }}>Customer Portal</h1>
-<<<<<<< HEAD
           <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", background: `${color}18`, color, fontWeight: "700", letterSpacing: "1px" }}>white-label</span>
-=======
-          <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", background: `${color}18`, color, fontWeight: "700", letterSpacing: "1px" }}>WHITE-LABEL</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", background: "#f59e0b18", color: "#f59e0b", fontWeight: "700", letterSpacing: "1px" }}>IFRAME READY</span>
         </div>
         <p style={{ margin: 0, fontSize: "13px", color: "var(--sub)" }}>
@@ -119,11 +107,7 @@ export default function CustomerPortal() {
             ))}
           </div>
 
-<<<<<<< HEAD
           {/* whitelabel config */}
-=======
-          {/* Whitelabel config */}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <div style={{ padding: "20px", borderRadius: "12px", border: "1px solid var(--border)", background: "var(--surface2)" }}>
               <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text)", marginBottom: "16px" }}>Brand Configuration</div>
@@ -137,29 +121,17 @@ export default function CustomerPortal() {
                   {field.type === "color" ? (
                     <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                       <input type="color" value={whitelabelConfig[field.key]}
-<<<<<<< HEAD
                         onChange={e => setwhitelabelConfig(c => ({ ...c, [field.key]: e.target.value }))}
                         style={{ width: "36px", height: "36px", borderRadius: "6px", border: "1px solid var(--border)", cursor: "pointer", padding: "2px" }}
                       />
                       <input value={whitelabelConfig[field.key]}
                         onChange={e => setwhitelabelConfig(c => ({ ...c, [field.key]: e.target.value }))}
-=======
-                        onChange={e => setWhitelabelConfig(c => ({ ...c, [field.key]: e.target.value }))}
-                        style={{ width: "36px", height: "36px", borderRadius: "6px", border: "1px solid var(--border)", cursor: "pointer", padding: "2px" }}
-                      />
-                      <input value={whitelabelConfig[field.key]}
-                        onChange={e => setWhitelabelConfig(c => ({ ...c, [field.key]: e.target.value }))}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                         style={{ flex: 1, padding: "8px 12px", borderRadius: "7px", border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontSize: "12px", outline: "none" }}
                       />
                     </div>
                   ) : (
                     <input value={whitelabelConfig[field.key]}
-<<<<<<< HEAD
                       onChange={e => setwhitelabelConfig(c => ({ ...c, [field.key]: e.target.value }))}
-=======
-                      onChange={e => setWhitelabelConfig(c => ({ ...c, [field.key]: e.target.value }))}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       style={{ width: "100%", padding: "8px 12px", borderRadius: "7px", border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", fontSize: "12px", outline: "none", boxSizing: "border-box" }}
                     />
                   )}
@@ -170,11 +142,7 @@ export default function CustomerPortal() {
                 {[["showCarbon", "Carbon Offset"], ["showSavings", "Cost Savings"], ["showForecasting", "Demand Forecast"]].map(([key, label]) => (
                   <label key={key} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", cursor: "pointer" }}>
                     <input type="checkbox" checked={whitelabelConfig[key]}
-<<<<<<< HEAD
                       onChange={e => setwhitelabelConfig(c => ({ ...c, [key]: e.target.checked }))}
-=======
-                      onChange={e => setWhitelabelConfig(c => ({ ...c, [key]: e.target.checked }))}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       style={{ accentColor: color }}
                     />
                     <span style={{ fontSize: "12px", color: "var(--text)" }}>{label}</span>
@@ -311,11 +279,7 @@ export default function CustomerPortal() {
             <pre style={{
               background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "8px",
               padding: "14px", fontSize: "12px", color: "#10b981", fontFamily: "monospace",
-<<<<<<< HEAD
               overflowX: "auto", WhiteSpace: "pre-wrap", margin: 0
-=======
-              overflowX: "auto", whiteSpace: "pre-wrap", margin: 0
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             }}>
               {embedCode}
             </pre>

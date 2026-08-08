@@ -80,11 +80,7 @@ export default function TradingDashboard() {
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "#fff", letterSpacing: -0.8,
             textShadow: `0 0 30px ${C.accent}40` }}>Energy Trading</h1>
-<<<<<<< HEAD
           <div style={{ color: "var(--sub)", fontSize: 13, marginTop: 3 }}>Multi-market · DAM · Intraday · Ancillary Services</div>
-=======
-          <div style={{ color: "rgba(148,163,184,0.85)", fontSize: 13, marginTop: 3 }}>Multi-market · DAM · Intraday · Ancillary Services</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {MARKETS.map(m => (
@@ -118,11 +114,7 @@ export default function TradingDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.blue}08, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>
             Day-Ahead vs Intraday · {selectedMarket}
           </div>
@@ -158,11 +150,7 @@ export default function TradingDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.accent}08, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             letterSpacing: 1, marginBottom: 12, fontWeight: 700, position: "relative" }}>Order Book Depth</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 1, position: "relative" }}>
             {/* Asks */}
@@ -178,11 +166,7 @@ export default function TradingDashboard() {
                 </div>
                 <span style={{ width: 44, fontSize: 11, color: C.red, textAlign: "right",
                   fontWeight: 700, textShadow: `0 0 6px ${C.red}60` }}>€{a.price.toFixed(1)}</span>
-<<<<<<< HEAD
                 <span style={{ width: 32, fontSize: 10, color: "var(--sub)" }}>{a.qty.toFixed(1)}</span>
-=======
-                <span style={{ width: 32, fontSize: 10, color: "rgba(148,163,184,0.75)" }}>{a.qty.toFixed(1)}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             ))}
             {/* Mid price */}
@@ -192,11 +176,7 @@ export default function TradingDashboard() {
               background: "var(--surface2)", borderRadius: 6 }}>
               <span style={{ fontSize: 14, fontWeight: 900, color: "#fff",
                 textShadow: `0 0 12px ${priceColor}60` }}>€{lastPrice}/MWh</span>
-<<<<<<< HEAD
               <span style={{ fontSize: 10, color: "var(--sub)", marginLeft: 8 }}>
-=======
-              <span style={{ fontSize: 10, color: "rgba(148,163,184,0.75)", marginLeft: 8 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 Spread €{(orderBook.asks[0]?.price - orderBook.bids[0]?.price).toFixed(1)}
               </span>
             </div>
@@ -213,11 +193,7 @@ export default function TradingDashboard() {
                 </div>
                 <span style={{ width: 44, fontSize: 11, color: C.green, textAlign: "right",
                   fontWeight: 700, textShadow: `0 0 6px ${C.green}60` }}>€{b.price.toFixed(1)}</span>
-<<<<<<< HEAD
                 <span style={{ width: 32, fontSize: 10, color: "var(--sub)" }}>{b.qty.toFixed(1)}</span>
-=======
-                <span style={{ width: 32, fontSize: 10, color: "rgba(148,163,184,0.75)" }}>{b.qty.toFixed(1)}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
             ))}
           </div>
@@ -232,11 +208,7 @@ export default function TradingDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.green}08, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>30-Day P&L (Daily + Cumulative)</div>
           <ResponsiveContainer width="100%" height={190} style={{ position: "relative" }}>
             <ComposedChart data={pnl} margin={{ top: 8, right: 10, bottom: 0, left: -10 }}>
@@ -268,11 +240,7 @@ export default function TradingDashboard() {
           <div style={{ position: "absolute", inset: 0,
             background: `radial-gradient(ellipse at 50% 0%, ${C.amber}06, transparent 70%)`,
             pointerEvents: "none" }} />
-<<<<<<< HEAD
           <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-          <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             letterSpacing: 1, marginBottom: 12, fontWeight: 700, position: "relative" }}>Open Positions by Market</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, position: "relative" }}>
             {positions.map(p => (
@@ -282,11 +250,7 @@ export default function TradingDashboard() {
                 borderBottom: "1px solid rgba(255,255,255,0.08)"
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-<<<<<<< HEAD
                   <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>{p.market}</span>
-=======
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#e2e8f0" }}>{p.market}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   <span style={{ fontSize: 12, fontWeight: 900, color: p.pnl >= 0 ? C.green : C.red,
                     textShadow: `0 0 8px ${p.pnl >= 0 ? C.green : C.red}60` }}>
                     {p.pnl >= 0 ? "+" : ""}€{p.pnl.toFixed(0)}
@@ -296,11 +260,7 @@ export default function TradingDashboard() {
                   {[
                     { label: `Long ${p.long.toFixed(1)} MW`, color: C.green },
                     { label: `Short ${p.short.toFixed(1)} MW`, color: C.red },
-<<<<<<< HEAD
                     { label: `Net ${p.net.toFixed(1)} MW`, color: "var(--sub)" },
-=======
-                    { label: `Net ${p.net.toFixed(1)} MW`, color: "rgba(148,163,184,0.85)" },
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     { label: `${p.exposure.toFixed(0)} MWh`, color: C.amber },
                   ].map(tag => (
                     <span key={tag.label} style={{ fontSize: 10, color: tag.color, fontWeight: 600,
@@ -318,22 +278,14 @@ export default function TradingDashboard() {
         <div style={{ position: "absolute", inset: 0,
           background: `radial-gradient(ellipse at 50% 0%, ${C.accent}06, transparent 70%)`,
           pointerEvents: "none" }} />
-<<<<<<< HEAD
         <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Recent Trades</div>
         <table style={{ width: "100%", borderCollapse: "collapse", position: "relative" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
               {["ID", "Time", "Market", "Side", "Qty (MW)", "Price (€/MWh)", "P&L"].map(h => (
                 <th key={h} style={{ textAlign: "left", padding: "5px 10px", fontSize: 10,
-<<<<<<< HEAD
                   color: "var(--sub)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
-=======
-                  color: "rgba(148,163,184,0.75)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.6 }}>{h}</th>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               ))}
             </tr>
           </thead>
@@ -344,26 +296,16 @@ export default function TradingDashboard() {
                 background: i % 2 === 0 ? "transparent" : "var(--surface2)",
               }}>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: C.accent, fontWeight: 700 }}>{t.id}</td>
-<<<<<<< HEAD
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--sub)" }}>{t.time}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>{t.market}</td>
-=======
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{t.time}</td>
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "#e2e8f0" }}>{t.market}</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <td style={{ padding: "8px 10px" }}>
                   <span style={{ fontSize: 11, fontWeight: 900, color: t.side === "BUY" ? C.green : C.red,
                     background: `${t.side === "BUY" ? C.green : C.red}15`,
                     padding: "2px 8px", borderRadius: 6,
                     boxShadow: `0 0 6px ${t.side === "BUY" ? C.green : C.red}30` }}>{t.side}</span>
                 </td>
-<<<<<<< HEAD
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>{t.qty.toFixed(1)}</td>
                 <td style={{ padding: "8px 10px", fontSize: 11, color: "var(--text)" }}>€{t.price.toFixed(1)}</td>
-=======
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "#e2e8f0" }}>{t.qty.toFixed(1)}</td>
-                <td style={{ padding: "8px 10px", fontSize: 11, color: "#e2e8f0" }}>€{t.price.toFixed(1)}</td>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 900,
                   color: t.pnl >= 0 ? C.green : C.red,
                   textShadow: `0 0 8px ${t.pnl >= 0 ? C.green : C.red}50` }}>
@@ -380,11 +322,7 @@ export default function TradingDashboard() {
         <div style={{ position: "absolute", inset: 0,
           background: `radial-gradient(ellipse at 50% 0%, ${C.green}06, transparent 70%)`,
           pointerEvents: "none" }} />
-<<<<<<< HEAD
         <div style={{ fontSize: 11, color: "var(--sub)", textTransform: "uppercase",
-=======
-        <div style={{ fontSize: 11, color: "rgba(148,163,184,0.7)", textTransform: "uppercase",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           letterSpacing: 1, marginBottom: 14, fontWeight: 700, position: "relative" }}>Quick Order</div>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap", position: "relative" }}>
           {[
@@ -394,30 +332,18 @@ export default function TradingDashboard() {
             { label: "Limit Price (€/MWh)", type: "number", placeholder: "0.0" },
           ].map(f => (
             <div key={f.label} style={{ flex: 1, minWidth: 140 }}>
-<<<<<<< HEAD
               <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 5, fontWeight: 600 }}>{f.label}</div>
               {f.type === "select" ? (
                 <select style={{ width: "100%", background: "var(--surface2)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
                   padding: "9px 12px", color: "var(--text)", fontSize: 13 }}>
-=======
-              <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginBottom: 5, fontWeight: 600 }}>{f.label}</div>
-              {f.type === "select" ? (
-                <select style={{ width: "100%", background: "var(--surface2)",
-                  border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
-                  padding: "9px 12px", color: "#e2e8f0", fontSize: 13 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   {f.options.map(o => <option key={o}>{o}</option>)}
                 </select>
               ) : (
                 <input type={f.type} placeholder={f.placeholder} style={{
                   width: "100%", background: "var(--surface2)",
                   border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10,
-<<<<<<< HEAD
                   padding: "9px 12px", color: "var(--text)", fontSize: 13, boxSizing: "border-box"
-=======
-                  padding: "9px 12px", color: "#e2e8f0", fontSize: 13, boxSizing: "border-box"
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 }} />
               )}
             </div>

@@ -8,11 +8,7 @@ const BG    = "var(--surface)";
 const SURF  = "var(--surface)";
 const SURF2 = "var(--surface2)";
 const BORD  = "#1a2234";
-<<<<<<< HEAD
 const SUB   = "var(--sub)";
-=======
-const SUB   = "#6b7280";
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 const DANG  = "#ef4444";
 
 // ─── Shared components ────────────────────────────────────────────────────────
@@ -30,11 +26,7 @@ const Input = ({ label, value, onChange, type = "text", placeholder, unit, readO
         placeholder={placeholder} readOnly={readOnly}
         style={{
           background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8,
-<<<<<<< HEAD
           padding: "9px 12px", color: readOnly ? SUB : "var(--text)", fontSize: 13,
-=======
-          padding: "9px 12px", color: readOnly ? SUB : "#e5e7eb", fontSize: 13,
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           width: "100%", boxSizing: "border-box",
           borderRight: unit ? "none" : undefined, borderTopRightRadius: unit ? 0 : 8, borderBottomRightRadius: unit ? 0 : 8,
         }}
@@ -42,11 +34,7 @@ const Input = ({ label, value, onChange, type = "text", placeholder, unit, readO
       {unit && (
         <div style={{
           background: "#1f2937", border: `1px solid ${BORD}`, borderLeft: "none",
-<<<<<<< HEAD
           borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, WhiteSpace: "nowrap",
-=======
-          borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, whiteSpace: "nowrap",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         }}>{unit}</div>
       )}
     </div>
@@ -69,11 +57,7 @@ const NumInput = ({ label, value, onChange, min, max, step = 1, unit }) => (
       {unit && (
         <div style={{
           background: "#1f2937", border: `1px solid ${BORD}`, borderLeft: "none",
-<<<<<<< HEAD
           borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, WhiteSpace: "nowrap",
-=======
-          borderRadius: "0 8px 8px 0", padding: "9px 12px", fontSize: 12, color: SUB, whiteSpace: "nowrap",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         }}>{unit}</div>
       )}
     </div>
@@ -84,17 +68,10 @@ const Toggle = ({ value, onChange, label, desc, accent }) => (
   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: `1px solid ${BORD}` }}>
     <div>
       <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
-<<<<<<< HEAD
       {desc && <div style={{ fontSize: 11, color: "var(--sub)", marginTop: 2 }}>{desc}</div>}
     </div>
     <div onClick={() => onChange(!value)} style={{
       width: 40, height: 22, borderRadius: 11, background: value ? accent : "var(--sub)",
-=======
-      {desc && <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>{desc}</div>}
-    </div>
-    <div onClick={() => onChange(!value)} style={{
-      width: 40, height: 22, borderRadius: 11, background: value ? accent : "#374151",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0, marginLeft: 16,
     }}>
       <div style={{ position: "absolute", top: 2, left: value ? 20 : 2, width: 18, height: 18, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
@@ -122,11 +99,7 @@ const Slider = ({ label, value, onChange, min, max, step = 1, unit, accent }) =>
     </div>
     <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))}
       style={{ width: "100%", accentColor: accent, cursor: "pointer" }} />
-<<<<<<< HEAD
     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--sub)", marginTop: 2 }}>
-=======
-    <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "rgba(148,163,184,0.85)", marginTop: 2 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       <span>{min}{unit}</span><span>{max}{unit}</span>
     </div>
   </div>
@@ -146,11 +119,7 @@ const InfoRow = ({ label, value }) => (
 const Btn = ({ children, onClick, variant = "primary", accent, style: s }) => {
   const styles = {
     primary:   { background: accent, color: "#000", border: "none" },
-<<<<<<< HEAD
     secondary: { background: "#1f2937", color: "var(--sub)", border: "none" },
-=======
-    secondary: { background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none" },
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
     danger:    { background: "#450a0a", color: DANG, border: `1px solid #7f1d1d` },
     outline:   { background: "transparent", color: accent, border: `1px solid ${accent}` },
   };
@@ -169,11 +138,7 @@ function DashWidgetRow({ wkey, label, accent }) {
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${BORD}` }}>
       <span style={{ fontSize: 12 }}>{label}</span>
       <div onClick={() => setDashWidget(wkey, !val)} style={{
-<<<<<<< HEAD
         width: 34, height: 18, borderRadius: 9, background: val ? accent : "var(--sub)",
-=======
-        width: 34, height: 18, borderRadius: 9, background: val ? accent : "#374151",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
         cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0,
       }}>
         <div style={{ position: "absolute", top: 2, left: val ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
@@ -285,11 +250,7 @@ Customer:
 VoltarisOS Enterprise Plan includes:
   - Unlimited sites and BESS units
   - Full AI trading suite
-<<<<<<< HEAD
   - white-label (full customization)
-=======
-  - White-label (full customization)
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   - Dedicated priority support
   - Custom integrations
   - SLA guarantee (99.9% uptime)
@@ -402,11 +363,7 @@ export default function Settings() {
   const [revealed, setRevealed] = useState({});
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [sessionTimeout, setSessionTimeout] = useState(60);
-<<<<<<< HEAD
   const [ipwhitelist, setIpwhitelist] = useState("91.122.45.0/24\n195.83.0.1");
-=======
-  const [ipWhitelist, setIpWhitelist] = useState("91.122.45.0/24\n195.83.0.1");
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -432,17 +389,10 @@ export default function Settings() {
       features: ["Up to 5 sites", "15 BESS units", "AI trading (beta)", "Priority support", "Advanced analytics", "API access", "Custom alerts"],
       limits: { sites: 5, bess: 15, users: 10, api: "50k/mo" } },
     { id: "pro", name: "Pro", monthly: 1499, yearly: 13490, color: "#a78bfa", badge: null,
-<<<<<<< HEAD
       features: ["Up to 10 sites", "25 BESS units", "AI trading engine", "Priority support", "Advanced analytics", "API access", "Custom alerts", "white-label (basic)"],
       limits: { sites: 10, bess: 25, users: 15, api: "100k/mo" } },
     { id: "enterprise", name: "Enterprise", monthly: 3999, yearly: 35990, color: accent, badge: "FULL SUITE",
       features: ["Unlimited sites", "Unlimited BESS", "Full AI suite", "Dedicated support", "Custom integrations", "white-label (full)", "SLA guarantee", "On-premise option", "SSO/SAML", "Audit logs"],
-=======
-      features: ["Up to 10 sites", "25 BESS units", "AI trading engine", "Priority support", "Advanced analytics", "API access", "Custom alerts", "White-label (basic)"],
-      limits: { sites: 10, bess: 25, users: 15, api: "100k/mo" } },
-    { id: "enterprise", name: "Enterprise", monthly: 3999, yearly: 35990, color: accent, badge: "FULL SUITE",
-      features: ["Unlimited sites", "Unlimited BESS", "Full AI suite", "Dedicated support", "Custom integrations", "White-label (full)", "SLA guarantee", "On-premise option", "SSO/SAML", "Audit logs"],
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
       limits: { sites: "∞", bess: "∞", users: "∞", api: "Unlimited" } },
   ];
 
@@ -578,15 +528,9 @@ export default function Settings() {
               ].map(m => <InfoRow key={m.label} label={m.label} value={m.val} />)}
             </div>
             <div style={card}>
-<<<<<<< HEAD
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>white-label Branding</h2>
               <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Logo, colors, and OEM configuration are managed in the white-label section.</p>
               <Btn variant="outline" accent={accent} onClick={() => alert("Open white-label Settings — feature coming soon")}>Open white-label Settings</Btn>
-=======
-              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>White-label Branding</h2>
-              <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Logo, colors, and OEM configuration are managed in the White-label section.</p>
-              <Btn variant="outline" accent={accent} onClick={() => alert("Open White-label Settings — feature coming soon")}>Open White-label Settings</Btn>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </div>
           </div>
         </div>
@@ -733,11 +677,7 @@ export default function Settings() {
                   }}>
                     <span style={{ fontSize: 26 }}>{lang.flag}</span>
                     <div style={{ flex: 1 }}>
-<<<<<<< HEAD
                       <div style={{ fontWeight: 600, fontSize: 14, color: active ? accent : "var(--text)" }}>{lang.label}</div>
-=======
-                      <div style={{ fontWeight: 600, fontSize: 14, color: active ? accent : "#e5e7eb" }}>{lang.label}</div>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       <div style={{ fontSize: 11, color: SUB }}>{lang.code.toUpperCase()}</div>
                     </div>
                     {active && <div style={{ width: 20, height: 20, borderRadius: "50%", background: accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#000", fontWeight: 900 }}>✓</div>}
@@ -965,17 +905,10 @@ export default function Settings() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={card}>
-<<<<<<< HEAD
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>IP whitelist</h2>
               <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Restrict API access to specific IP ranges (CIDR notation).</p>
               <textarea
                 value={ipwhitelist} onChange={e => setIpwhitelist(e.target.value)}
-=======
-              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>IP Whitelist</h2>
-              <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Restrict API access to specific IP ranges (CIDR notation).</p>
-              <textarea
-                value={ipWhitelist} onChange={e => setIpWhitelist(e.target.value)}
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 rows={4} placeholder="192.168.1.0/24&#10;10.0.0.1"
                 style={{
                   background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8,
@@ -995,21 +928,13 @@ export default function Settings() {
               ].map((p, i) => (
                 <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", padding: "6px 0", fontSize: 12 }}>
                   <span style={{ color: p.ok ? accent : SUB }}>{p.ok ? "✓" : "○"}</span>
-<<<<<<< HEAD
                   <span style={{ color: p.ok ? "var(--text)" : SUB }}>{p.label}</span>
-=======
-                  <span style={{ color: p.ok ? "#e5e7eb" : SUB }}>{p.label}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
               ))}
             </div>
             <div style={{ ...card, background: "#0a1a0a", border: `1px solid #14532d` }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: accent }}>Security Audit</h2>
-<<<<<<< HEAD
               <p style={{ fontSize: 12, color: "var(--sub)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
-=======
-              <p style={{ fontSize: 12, color: "rgba(148,163,184,0.85)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               <div style={{ display: "flex", gap: 10 }}>
                 <Btn variant="outline" accent={accent} onClick={() => alert("Security scan initiated — results in ~2 minutes")}>Run Scan</Btn>
                 <Btn variant="secondary" accent={accent} onClick={() => alert("View Audit Log — feature coming soon")}>View Audit Log</Btn>
@@ -1029,11 +954,7 @@ export default function Settings() {
               <div>
                 <div style={{ fontSize: 11, color: accent, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>CURRENT PLAN</div>
                 <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 6 }}>Enterprise</h2>
-<<<<<<< HEAD
                 <p style={{ fontSize: 13, color: SUB }}>Unlimited sites · AI trading · white-label · Priority support</p>
-=======
-                <p style={{ fontSize: 13, color: SUB }}>Unlimited sites · AI trading · White-label · Priority support</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontSize: 28, fontWeight: 800, color: accent }}>€3,999</div>
@@ -1154,11 +1075,7 @@ export default function Settings() {
                     <div style={{ fontSize: 11, color: SUB }}>{item.size}</div>
                   </div>
                 </div>
-<<<<<<< HEAD
                 <button onClick={() => alert(`Export ${item.label} — feature coming soon`)} style={{ background: "#1f2937", color: "var(--sub)", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
-=======
-                <button onClick={() => alert(`Export ${item.label} — feature coming soon`)} style={{ background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none", borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12 }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   Export
                 </button>
               </div>
@@ -1221,19 +1138,11 @@ export default function Settings() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14 }}>{k.label}</div>
-<<<<<<< HEAD
                       <div style={{ fontSize: 11, color: "var(--sub)" }}>{k.scope}</div>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
                       <button onClick={() => setRevealed(r => ({ ...r, [k.key]: !r[k.key] }))} style={{
                         background: "#1f2937", color: "var(--sub)", border: "none",
-=======
-                      <div style={{ fontSize: 11, color: "rgba(148,163,184,0.85)" }}>{k.scope}</div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => setRevealed(r => ({ ...r, [k.key]: !r[k.key] }))} style={{
-                        background: "#1f2937", color: "rgba(148,163,184,0.85)", border: "none",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                         borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12,
                       }}>{revealed[k.key] ? "Hide" : "Reveal"}</button>
                       <button onClick={() => alert(`Rotate API key ${k.label} — feature coming soon`)} style={{
@@ -1245,11 +1154,7 @@ export default function Settings() {
                   <div style={{
                     fontFamily: "monospace", fontSize: 13,
                     background: SURF, borderRadius: 6, padding: "8px 12px",
-<<<<<<< HEAD
                     color: revealed[k.key] ? "var(--text)" : "var(--sub)",
-=======
-                    color: revealed[k.key] ? "#e5e7eb" : "#4b5563",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   }}>
                     {revealed[k.key] ? k.value : "•".repeat(36)}
                   </div>
@@ -1282,11 +1187,7 @@ export default function Settings() {
                     <code style={{ fontSize: 11, color: accent }}>{wh.event}</code>
                     <span style={{ fontSize: 10, color: wh.active ? "#10b981" : SUB }}>{wh.active ? "Active" : "Inactive"}</span>
                   </div>
-<<<<<<< HEAD
                   <div style={{ fontSize: 11, fontFamily: "monospace", color: wh.url ? SUB : "var(--sub)" }}>
-=======
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: wh.url ? SUB : "#4b5563" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                     {wh.url || "No URL configured"}
                   </div>
                 </div>
@@ -1338,22 +1239,14 @@ export default function Settings() {
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>Cardholder Name</label>
                   <input value={cardName} onChange={e => setCardName(e.target.value)} placeholder="Francisco Morais"
-<<<<<<< HEAD
                     style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
-=======
-                    style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box" }} />
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>Card Number</label>
                   <input value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim().slice(0, 19))}
                     placeholder="4242 4242 4242 4242"
-<<<<<<< HEAD
                     style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace", letterSpacing: 2 }} />
-=======
-                    style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace", letterSpacing: 2 }} />
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
@@ -1364,20 +1257,12 @@ export default function Settings() {
                       if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
                       setCardExpiry(v);
                     }} placeholder="MM/YY"
-<<<<<<< HEAD
                       style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace" }} />
-=======
-                      style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace" }} />
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                   <div>
                     <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>CVC</label>
                     <input value={cardCVC} onChange={e => setCardCVC(e.target.value.replace(/\D/g, "").slice(0, 3))} placeholder="123"
-<<<<<<< HEAD
                       style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace" }} />
-=======
-                      style={{ background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8, padding: "9px 12px", color: "#e5e7eb", fontSize: 13, width: "100%", boxSizing: "border-box", fontFamily: "monospace" }} />
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                   </div>
                 </div>
 
@@ -1386,11 +1271,7 @@ export default function Settings() {
                   <div style={{ width: 36, height: 24, background: "#eb001b", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: "#fff" }}>MC</div>
                   <div style={{ width: 36, height: 24, background: "#006fcf", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 800, color: "#fff" }}>AMEX</div>
                 </div>
-<<<<<<< HEAD
                 <p style={{ fontSize: 10, color: "var(--sub)", marginBottom: 20 }}>🔒 Secured with 256-bit SSL encryption. We never store your full card number.</p>
-=======
-                <p style={{ fontSize: 10, color: "#4b5563", marginBottom: 20 }}>🔒 Secured with 256-bit SSL encryption. We never store your full card number.</p>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
 
                 <div style={{ display: "flex", gap: 10 }}>
                   <Btn variant="secondary" accent={accent} onClick={() => { setPaymentModal(null); setCardNumber(""); setCardExpiry(""); setCardCVC(""); setCardName(""); }} style={{ flex: 1 }}>Cancel</Btn>
@@ -1491,13 +1372,8 @@ export default function Settings() {
                           )}
                           <div style={{ fontSize: 16, fontWeight: 800, color: plan.color, marginBottom: 4 }}>{plan.name}</div>
                           <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 2 }}>
-<<<<<<< HEAD
                             <span style={{ fontSize: 22, fontWeight: 900, color: "var(--text)" }}>€{perMonth.toLocaleString()}</span>
                             <span style={{ fontSize: 10, color: "var(--sub)" }}>/mo</span>
-=======
-                            <span style={{ fontSize: 22, fontWeight: 900, color: "#f1f5f9" }}>€{perMonth.toLocaleString()}</span>
-                            <span style={{ fontSize: 10, color: "#94a3b8" }}>/mo</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                           </div>
                           {billingCycle === "yearly" && (
                             <div style={{ fontSize: 11, color: SUB }}>€{price.toLocaleString()} billed annually</div>
@@ -1506,11 +1382,7 @@ export default function Settings() {
                         {/* Features */}
                         <div style={{ padding: "12px 14px" }}>
                           {plan.features.map(f => (
-<<<<<<< HEAD
                             <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", fontSize: 11, color: "var(--text)" }}>
-=======
-                            <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, padding: "3px 0", fontSize: 11, color: "#e2e8f0" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                               <span style={{ color: plan.color, fontSize: 11, fontWeight: 700 }}>✓</span> {f}
                             </div>
                           ))}
@@ -1518,11 +1390,7 @@ export default function Settings() {
                           <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORD}`, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                             {Object.entries(plan.limits).map(([key, val]) => (
                               <div key={key} style={{ fontSize: 9, color: SUB }}>
-<<<<<<< HEAD
                                 <span style={{ textTransform: "uppercase" }}>{key}</span>: <span style={{ color: "var(--text)", fontWeight: 600 }}>{val}</span>
-=======
-                                <span style={{ textTransform: "uppercase" }}>{key}</span>: <span style={{ color: "#e2e8f0", fontWeight: 600 }}>{val}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                               </div>
                             ))}
                           </div>
@@ -1568,21 +1436,13 @@ export default function Settings() {
                     <div onClick={() => setTermsAccepted(!termsAccepted)} style={{
                       width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
                       background: termsAccepted ? accent : "transparent",
-<<<<<<< HEAD
                       border: `2px solid ${termsAccepted ? accent : "var(--sub)"}`,
-=======
-                      border: `2px solid ${termsAccepted ? accent : "#4b5563"}`,
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
                       transition: "all 0.15s",
                     }}>
                       {termsAccepted && <span style={{ color: "#000", fontSize: 14, fontWeight: 900 }}>✓</span>}
                     </div>
-<<<<<<< HEAD
                     <div style={{ fontSize: 12, lineHeight: 1.6, color: "var(--sub)" }}>
-=======
-                    <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(148,163,184,0.85)" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       I agree to the <span style={{ color: accent, cursor: "pointer", textDecoration: "underline" }}>Terms of Service</span>,{" "}
                       <span style={{ color: accent, cursor: "pointer", textDecoration: "underline" }}>Privacy Policy</span>, and{" "}
                       <span style={{ color: accent, cursor: "pointer", textDecoration: "underline" }}>Service Level Agreement (SLA)</span>. I understand that:
@@ -1600,13 +1460,8 @@ export default function Settings() {
                     <Btn variant="secondary" accent={accent} onClick={() => { setPlanModal(false); setTermsAccepted(false); setBillingCycle("monthly"); }} style={{ flex: 1 }}>Cancel</Btn>
                     <button disabled={!termsAccepted || selectedPlan === "enterprise"} onClick={() => setPlanChanged(true)} style={{
                       flex: 2, padding: "12px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: termsAccepted && selectedPlan !== "enterprise" ? "pointer" : "not-allowed",
-<<<<<<< HEAD
                       background: termsAccepted && selectedPlan !== "enterprise" ? `linear-gradient(135deg, ${accent}, #4f46e5)` : "var(--sub)",
                       color: termsAccepted && selectedPlan !== "enterprise" ? "#fff" : "var(--sub)",
-=======
-                      background: termsAccepted && selectedPlan !== "enterprise" ? `linear-gradient(135deg, ${accent}, #4f46e5)` : "#374151",
-                      color: termsAccepted && selectedPlan !== "enterprise" ? "#fff" : "#6b7280",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       border: "none", transition: "all 0.2s",
                       boxShadow: termsAccepted && selectedPlan !== "enterprise" ? `0 4px 20px ${accent}40` : "none",
                     }}>

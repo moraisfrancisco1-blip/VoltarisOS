@@ -20,11 +20,7 @@ const ALL_PAGES = [
   { id: "investor", label: "Investor View", group: "Operations", icon: "💰" },
   { id: "users", label: "User Management", group: "Admin", icon: "👥" },
   { id: "settings", label: "Settings", group: "Admin", icon: "⚙" },
-<<<<<<< HEAD
   { id: "whitelabel", label: "white-label", group: "Admin", icon: "🎨" },
-=======
-  { id: "whitelabel", label: "White-label", group: "Admin", icon: "🎨" },
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
   { id: "audit", label: "Audit Log", group: "Admin", icon: "📋" },
   { id: "apikeys", label: "API Keys", group: "Admin", icon: "🔑" },
   { id: "export", label: "Export Center", group: "Admin", icon: "⬇" },
@@ -131,11 +127,7 @@ export default function CommandPalette({ setPage, onLogout }) {
           display: "flex", alignItems: "center", gap: "12px",
           padding: "16px 20px", borderBottom: "1px solid #1a2234",
         }}>
-<<<<<<< HEAD
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--sub)" strokeWidth="2" strokeLinecap="round">
-=======
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4b5563" strokeWidth="2" strokeLinecap="round">
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
@@ -146,21 +138,12 @@ export default function CommandPalette({ setPage, onLogout }) {
             placeholder="Pesquisar páginas e ações..."
             style={{
               flex: 1, background: "none", border: "none", outline: "none",
-<<<<<<< HEAD
               color: "var(--text)", fontSize: "16px", fontFamily: "inherit",
             }}
           />
           <kbd style={{
             padding: "2px 7px", background: "#1f2937", border: "1px solid var(--sub)",
             borderRadius: "5px", fontSize: "11px", color: "var(--sub)", fontFamily: "inherit",
-=======
-              color: "white", fontSize: "16px", fontFamily: "inherit",
-            }}
-          />
-          <kbd style={{
-            padding: "2px 7px", background: "#1f2937", border: "1px solid #374151",
-            borderRadius: "5px", fontSize: "11px", color: "#6b7280", fontFamily: "inherit",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
           }}>ESC</kbd>
         </div>
 
@@ -171,11 +154,7 @@ export default function CommandPalette({ setPage, onLogout }) {
               <div style={{
                 padding: "8px 20px 4px",
                 fontSize: "10px", fontWeight: "700",
-<<<<<<< HEAD
                 color: "var(--sub)", textTransform: "uppercase", letterSpacing: "1px",
-=======
-                color: "#374151", textTransform: "uppercase", letterSpacing: "1px",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               }}>{group}</div>
               {items.map(item => {
                 const isActive = globalIdx++ === idx
@@ -189,11 +168,7 @@ export default function CommandPalette({ setPage, onLogout }) {
                     style={{
                       width: "100%", display: "flex", alignItems: "center", gap: "12px",
                       padding: "10px 20px", background: isActive ? "#1e2d45" : "none",
-<<<<<<< HEAD
                       border: "none", color: isActive ? "var(--text)" : "var(--sub)",
-=======
-                      border: "none", color: isActive ? "white" : "#9ca3af",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       cursor: "pointer", fontSize: "14px", textAlign: "left",
                       transition: "background 0.1s",
                     }}
@@ -203,11 +178,7 @@ export default function CommandPalette({ setPage, onLogout }) {
                     {isActive && (
                       <kbd style={{
                         padding: "2px 7px", background: "#0f1a2e", border: "1px solid #1e2d45",
-<<<<<<< HEAD
                         borderRadius: "4px", fontSize: "11px", color: "var(--sub)",
-=======
-                        borderRadius: "4px", fontSize: "11px", color: "#6b7280",
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
                       }}>↵</kbd>
                     )}
                   </button>
@@ -216,11 +187,7 @@ export default function CommandPalette({ setPage, onLogout }) {
             </div>
           ))}
           {filtered.length === 0 && (
-<<<<<<< HEAD
             <div style={{ padding: "32px", textAlign: "center", color: "var(--sub)" }}>
-=======
-            <div style={{ padding: "32px", textAlign: "center", color: "#4b5563" }}>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
               Nenhum resultado para "{query}"
             </div>
           )}
@@ -234,17 +201,10 @@ export default function CommandPalette({ setPage, onLogout }) {
           {[["↑↓", "navegar"], ["↵", "selecionar"], ["ESC", "fechar"]].map(([k, v]) => (
             <span key={k} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <kbd style={{
-<<<<<<< HEAD
                 padding: "2px 6px", background: "#1f2937", border: "1px solid var(--sub)",
                 borderRadius: "4px", fontSize: "11px", color: "var(--sub)",
               }}>{k}</kbd>
               <span style={{ fontSize: "12px", color: "var(--sub)" }}>{v}</span>
-=======
-                padding: "2px 6px", background: "#1f2937", border: "1px solid #374151",
-                borderRadius: "4px", fontSize: "11px", color: "#9ca3af",
-              }}>{k}</kbd>
-              <span style={{ fontSize: "12px", color: "#4b5563" }}>{v}</span>
->>>>>>> c5bb0cb20e7e6cd505ffff3dd17ecd3b896b1fa6
             </span>
           ))}
         </div>
