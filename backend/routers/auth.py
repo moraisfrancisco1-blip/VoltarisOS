@@ -55,7 +55,11 @@ class InviteUserRequest(BaseModel):
     role: str = "operator"
     color: str = "#4ade80"
 
-# BETA_CODE must come from environment — no hardcoded fallback
+# ─── Invite Codes Configuration ─────────────────────────────────────────────────
+# Each invite code maps to a plan tier and allowed roles.
+# The environment variable BETA_CODE remains the default single-code fallback.
+# For multi-tier invites, add entries to this dictionary or set them via env vars.
+# Format: INVITE_CODE_TIER_<CODE> = plan_tier (e.g., INVITE_CODE_TIER_KIKO2026=investor)
 BETA_CODE = os.environ.get("BETA_CODE", "")
 if not BETA_CODE:
     import warnings
@@ -64,6 +68,57 @@ if not BETA_CODE:
         "Set BETA_CODE in your .env file.",
         stacklevel=2,
     )
+
+def _build_invite_codes() -> dict:
+    """Build invite code → tier mapping from environment and defaults.
+    
+    Each entry: { code_upper: { "tier": str, "label": str, "roles": list[str] } }
+    Roles control which account types the user can select during registration.
+    """
+    codes = {}
+    
+    # Default single beta code (from BETA_CODE env var)
+    if BETA_CODE:
+        codes[BETA_CODE.upper()] = {
+            "tier": "beta",
+            "label": "Beta Access",
+            "roles": ["operator", "viewer", "investor"],
+        }
+    
+    # Multi-tier invite codes from environment
+    # Pattern: INVITE_<CODE> = tier:label:role1,role2
+    for key, value in os.environ.items():
+        if key.startswith("INVITE_") and not key.startswith("INVITE_CODE_TIER_"):
+            code = key.replace("INVITE_", "").upper()
+            parts = value.split(":")
+            tier = parts[0] if len(parts) > 0 else "beta"
+            label = parts[1] if len(parts) > 1 else tier.capitalize()
+            roles = parts[2].split(",") if len(parts) > 2 else ["operator"]
+            codes[code] = {"tier": tier, "label": label, "roles": roles}
+    
+    # Tier-specific codes via INVITE_CODE_TIER_ prefix
+    for key, value in os.environ.items():
+        if key.startswith("INVITE_CODE_TIER_"):
+            code = key.replace("INVITE_CODE_TIER_", "").upper()
+            if code not in codes:
+                # Map tier to default roles
+                tier_roles = {
+                    "starter": ["operator", "viewer"],
+                    "pro": ["operator", "viewer", "investor"],
+                    "enterprise": ["operator", "viewer", "investor"],
+                    "investor": ["investor"],
+                    "operator": ["operator"],
+                    "viewer": ["viewer"],
+                }
+                codes[code] = {
+                    "tier": value.lower(),
+                    "label": value.capitalize(),
+                    "roles": tier_roles.get(value.lower(), ["operator"]),
+                }
+    
+    return codes
+
+INVITE_CODES = _build_invite_codes()
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 def create_token(data: dict) -> str:
@@ -119,14 +174,70 @@ def seed_admin(db: Session):
         db.commit()
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
+@router.get("/auth/validate-invite-code")
+def validate_invite_code(code: str = "", db: Session = Depends(get_db)):
+    """Validate an invite/beta code and return the associated plan tier + allowed roles.
+    
+    This endpoint is called by the frontend during registration to:
+    1. Verify the code is valid before the user submits the form
+    2. Determine which plan tier this code grants
+    3. Restrict the account type dropdown to only roles allowed for this code
+    
+    Returns 200 with tier info if valid, 400 if invalid.
+    """
+    if not code:
+        raise HTTPException(400, "Código de convite é obrigatório")
+    
+    code_upper = code.strip().upper()
+    
+    # Check against INVITE_CODES dictionary (multi-tier)
+    if code_upper in INVITE_CODES:
+        invite = INVITE_CODES[code_upper]
+        return {
+            "valid": True,
+            "code": code_upper,
+            "tier": invite["tier"],
+            "label": invite["label"],
+            "roles": invite["roles"],
+        }
+    
+    # Fallback: check against single BETA_CODE
+    if BETA_CODE and code_upper == BETA_CODE.upper():
+        return {
+            "valid": True,
+            "code": code_upper,
+            "tier": "beta",
+            "label": "Beta Access",
+            "roles": list(ALLOWED_REGISTER_ROLES),
+        }
+    
+    raise HTTPException(400, "Código de convite inválido")
+
+
 @router.post("/auth/register")
 @limiter.limit("5/minute")
 def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
-    # Beta gate — require code unless admin (case-insensitive on both sides —
-    # BETA_CODE in Railway may have mixed case, e.g. "Kiko2026")
-    code_ok = (req.beta_code.upper() == BETA_CODE.upper())
-    if not code_ok:
-        raise HTTPException(400, f"Código beta inválido. Pede o código ao Francisco.")
+    # Validate invite code using the multi-tier system
+    code_upper = req.beta_code.strip().upper() if req.beta_code else ""
+    
+    if not code_upper:
+        raise HTTPException(400, "Código de convite é obrigatório. Pede o código ao administrador.")
+    
+    # Determine tier and allowed roles from invite code
+    plan_tier = "beta"
+    allowed_roles_for_code = list(ALLOWED_REGISTER_ROLES)
+    invite_label = "Beta Access"
+    
+    if code_upper in INVITE_CODES:
+        invite = INVITE_CODES[code_upper]
+        plan_tier = invite["tier"]
+        allowed_roles_for_code = invite["roles"]
+        invite_label = invite["label"]
+    elif BETA_CODE and code_upper == BETA_CODE.upper():
+        plan_tier = "beta"
+        invite_label = "Beta Access"
+    else:
+        raise HTTPException(400, "Código de convite inválido. Pede o código ao administrador.")
 
     if not req.terms_accepted:
         raise HTTPException(400, "É necessário aceitar os Termos de Uso para criar conta.")
@@ -134,9 +245,10 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     if db.query(models.User).filter(models.User.email == req.email).first():
         raise HTTPException(400, "Email já registado")
 
-    role = req.role if req.role in ALLOWED_REGISTER_ROLES else "operator"
+    # Validate role against what this invite code allows
+    role = req.role if req.role in allowed_roles_for_code else allowed_roles_for_code[0]
 
-    tenant = get_or_create_tenant(db, req.company, plan="beta")
+    tenant = get_or_create_tenant(db, req.company, plan=plan_tier)
     user = models.User(
         tenant_id=tenant.id,
         email=req.email,

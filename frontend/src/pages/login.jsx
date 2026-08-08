@@ -148,6 +148,9 @@ export default function Login({ onLogin }) {
   const [mounted, setMounted] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
+  const [inviteValidating, setInviteValidating] = useState(false)
+  const [inviteResult, setInviteResult] = useState(null) // { valid, tier, label, roles }
+  const [inviteError, setInviteError] = useState("")
 
   useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
 
@@ -187,6 +190,39 @@ export default function Login({ onLogin }) {
   }
 
   const handleKey = (e) => { if (e.key === "Enter") handleSubmit() }
+
+  // ── Validate invite code asynchronously ──────────────────────────────────
+  const validateInviteCode = async (code) => {
+    if (!code || code.length < 3) {
+      setInviteResult(null)
+      setInviteError("")
+      return
+    }
+    setInviteValidating(true)
+    setInviteError("")
+    setInviteResult(null)
+    try {
+      const res = await axios.get(`/api/auth/validate-invite-code`, { params: { code } })
+      setInviteResult(res.data)
+      // Auto-select first allowed role
+      if (res.data.roles && res.data.roles.length > 0) {
+        setForm(f => ({ ...f, role: res.data.roles[0] }))
+      }
+    } catch (e) {
+      setInviteError(e.response?.data?.detail || "Código inválido")
+      setInviteResult(null)
+    } finally {
+      setInviteValidating(false)
+    }
+  }
+
+  const handleBetaCodeChange = (value) => {
+    const upper = value.toUpperCase()
+    setForm({ ...form, beta_code: upper })
+    // Debounce validation — only call API after user stops typing
+    if (window._betaTimer) clearTimeout(window._betaTimer)
+    window._betaTimer = setTimeout(() => validateInviteCode(upper), 500)
+  }
 
   return (
     <div style={{
@@ -287,18 +323,66 @@ export default function Login({ onLogin }) {
                 />
               </div>
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "#4ade80", fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
-                  🔑 Código Beta
+                <label style={{ color: inviteResult ? "#10b981" : "#4ade80", fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+                  🔑 {inviteResult ? "Código Validado" : "Código Beta"}
                 </label>
-                <input
-                  placeholder="Código de acesso"
-                  value={form.beta_code}
-                  onChange={e => setForm({ ...form, beta_code: e.target.value.toUpperCase() })}
-                  onFocus={() => setFocused("beta_code")}
-                  onBlur={() => setFocused(null)}
-                  style={{ ...inputStyle(focused === "beta_code"), fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase" }}
-                />
-                <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>Acesso apenas por convite.</div>
+                <div style={{ position: "relative" }}>
+                  <input
+                    placeholder="Código de acesso"
+                    value={form.beta_code}
+                    onChange={e => handleBetaCodeChange(e.target.value)}
+                    onFocus={() => setFocused("beta_code")}
+                    onBlur={() => setFocused(null)}
+                    style={{
+                      ...inputStyle(focused === "beta_code"),
+                      fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase",
+                      borderColor: inviteResult ? "#10b981" : inviteError ? "#ef4444" : undefined,
+                    }}
+                  />
+                  {inviteValidating && (
+                    <div style={{
+                      position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
+                      width: "16px", height: "16px",
+                      border: "2px solid rgba(255,255,255,0.15)",
+                      borderTopColor: "#f59e0b",
+                      borderRadius: "50%",
+                      animation: "spin 0.6s linear infinite",
+                    }} />
+                  )}
+                </div>
+                {/* Validation feedback */}
+                {inviteResult && (
+                  <div style={{
+                    marginTop: "8px", padding: "10px 14px",
+                    background: "#0d2818", border: "1px solid #14532d",
+                    borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px",
+                  }}>
+                    <span style={{ fontSize: "18px" }}>✅</span>
+                    <div>
+                      <div style={{ color: "#10b981", fontSize: "12px", fontWeight: "700" }}>
+                        Plano {inviteResult.label} ativado
+                      </div>
+                      <div style={{ color: "#6ee7b7", fontSize: "11px", marginTop: "2px" }}>
+                        Tier: {inviteResult.tier} · {inviteResult.roles?.length || 0} {inviteResult.roles?.length === 1 ? "tipo disponível" : "tipos disponíveis"}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {inviteError && (
+                  <div style={{
+                    marginTop: "8px", padding: "10px 14px",
+                    background: "#2d0a0a", border: "1px solid #7f1d1d",
+                    borderRadius: "8px", display: "flex", alignItems: "center", gap: "8px",
+                  }}>
+                    <span style={{ fontSize: "14px" }}>❌</span>
+                    <span style={{ color: "#f87171", fontSize: "12px" }}>{inviteError}</span>
+                  </div>
+                )}
+                {!inviteResult && !inviteError && !inviteValidating && (
+                  <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>
+                    Insere o código recebido para validar o teu plano.
+                  </div>
+                )}
               </div>
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
@@ -309,12 +393,32 @@ export default function Login({ onLogin }) {
                   onChange={e => setForm({ ...form, role: e.target.value })}
                   onFocus={() => setFocused("role")}
                   onBlur={() => setFocused(null)}
-                  style={{ ...inputStyle(focused === "role"), cursor: "pointer" }}
+                  disabled={inviteResult && inviteResult.roles?.length === 1}
+                  style={{
+                    ...inputStyle(focused === "role"),
+                    cursor: inviteResult && inviteResult.roles?.length === 1 ? "default" : "pointer",
+                    opacity: inviteResult && inviteResult.roles?.length === 1 ? 0.7 : 1,
+                  }}
                 >
-                  {SELF_REGISTER_ROLES.map(r => (
-                    <option key={r.value} value={r.value}>{t(r.labelKey) || r.value}</option>
-                  ))}
+                  {(inviteResult?.roles || SELF_REGISTER_ROLES.map(r => r.value)).map(roleValue => {
+                    const roleDef = SELF_REGISTER_ROLES.find(r => r.value === roleValue)
+                    return (
+                      <option key={roleValue} value={roleValue}>
+                        {roleDef ? (t(roleDef.labelKey) || roleDef.value) : roleValue}
+                      </option>
+                    )
+                  })}
                 </select>
+                {inviteResult && inviteResult.roles?.length === 1 && (
+                  <div style={{ fontSize: "10px", color: "#10b98180", marginTop: "4px" }}>
+                    🔒 Fixo para este código de convite
+                  </div>
+                )}
+                {!inviteResult && !inviteError && (
+                  <div style={{ fontSize: "10px", color: "var(--sub)", marginTop: "4px" }}>
+                    Valida o código beta para ver as opções disponíveis.
+                  </div>
+                )}
               </div>
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", textTransform: "uppercase" }}>
