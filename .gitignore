@@ -2,6 +2,7 @@ node_modules
 .env
 # Keep .env.example as a template (safe to commit — no real secrets)
 !.env.example
+*.db
 energy.db
 task.md
 __pycache__/

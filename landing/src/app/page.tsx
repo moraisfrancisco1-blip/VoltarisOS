@@ -1,11 +1,9 @@
 import { Navbar } from "@/components/navbar";
 import { Hero } from "@/components/hero";
-import { VideoShowcase } from "@/components/video-showcase";
 import { BentoFeatures } from "@/components/bento-features";
-import { ScreenshotsGallery } from "@/components/screenshots-gallery";
+import { Architecture } from "@/components/architecture";
 import { SocialProof } from "@/components/social-proof";
-import { Pricing } from "@/components/pricing";
-import { FAQ } from "@/components/faq";
+import { LeadCapture } from "@/components/lead-capture";
 import { Footer } from "@/components/footer";
 
 export default function Home() {
@@ -13,12 +11,10 @@ export default function Home() {
     <main className="relative min-h-screen">
       <Navbar />
       <Hero />
-      <VideoShowcase />
       <BentoFeatures />
-      <ScreenshotsGallery />
+      <Architecture />
       <SocialProof />
-      <Pricing />
-      <FAQ />
+      <LeadCapture />
       <Footer />
     </main>
   );

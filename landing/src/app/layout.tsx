@@ -15,31 +15,34 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "VoltarisOS - Intelligent Energy VPP Platform",
+  title: "VoltarisOS — Gestão Inteligente de Energia Descentralizada",
   description:
-    "Next-generation Virtual Power Plant platform for energy optimization, trading, and grid management. AI-powered forecasting and real-time control.",
+    "Plataforma VPP de última geração que unifica painéis solares, baterias e carregadores EV com otimização em tempo real, previsão por IA e controlo total.",
   keywords: [
     "VPP",
     "Virtual Power Plant",
-    "Energy Trading",
-    "Grid Management",
-    "AI Forecasting",
-    "Battery Optimization",
+    "gestão de energia",
+    "painéis solares",
+    "baterias",
+    "carregadores EV",
+    "otimização energética",
+    "IA",
+    "previsão energética",
   ],
   authors: [{ name: "VoltarisOS" }],
   openGraph: {
-    title: "VoltarisOS - Intelligent Energy VPP Platform",
+    title: "VoltarisOS — Gestão Inteligente de Energia Descentralizada",
     description:
-      "Next-generation Virtual Power Plant platform for energy optimization, trading, and grid management.",
+      "Plataforma VPP que unifica solar, baterias e EV com otimização em tempo real e IA.",
     type: "website",
-    locale: "en_US",
+    locale: "pt_PT",
     siteName: "VoltarisOS",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VoltarisOS - Intelligent Energy VPP Platform",
+    title: "VoltarisOS — Gestão Inteligente de Energia Descentralizada",
     description:
-      "Next-generation Virtual Power Plant platform for energy optimization, trading, and grid management.",
+      "Plataforma VPP que unifica solar, baterias e EV com otimização em tempo real e IA.",
   },
 };
 
@@ -49,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="pt" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

@@ -3,14 +3,12 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Zap } from "lucide-react";
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "Product", href: "#product" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Funcionalidades", href: "#funcionalidades" },
+  { label: "Arquitetura", href: "#arquitetura" },
+  { label: "Benefícios", href: "#beneficios" },
 ];
 
 export function Navbar() {
@@ -24,6 +22,15 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const target = document.querySelector(href);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <>
@@ -40,77 +47,61 @@ export function Navbar() {
       >
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
           {/* Logo */}
-          <motion.a
+          <a
             href="#"
-            className="relative flex items-center group"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            onClick={(e) => scrollToSection(e, "#hero")}
+            className="flex items-center gap-3 group cursor-pointer"
           >
-            {/* V dourado atrás do logo */}
-            <div className="absolute -inset-12 flex items-center justify-center pointer-events-none">
-              <span className="text-[200px] font-black text-yellow-500/20 blur-[4px] select-none leading-none" style={{ fontFamily: 'serif' }}>V</span>
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-600 shadow-lg shadow-primary-500/30">
+              <Zap className="h-5 w-5 text-white" />
             </div>
-            <Image
-              src="/logo_full.png"
-              alt="VoltarisOS"
-              width={192}
-              height={192}
-              className="rounded-2xl relative z-10"
-            />
-          </motion.a>
+            <span className="text-xl font-bold font-display text-white">
+              Voltaris<span className="text-primary-400">OS</span>
+            </span>
+          </a>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
-              <motion.a
+              <a
                 key={link.label}
                 href={link.href}
-                className="relative px-4 py-2 text-sm font-medium text-surface-300 hover:text-white transition-colors group"
-                whileHover={{ y: -1 }}
-                whileTap={{ y: 0 }}
+                onClick={(e) => scrollToSection(e, link.href)}
+                className="relative px-4 py-2 text-sm font-medium text-surface-300 hover:text-white transition-colors group cursor-pointer"
               >
                 {link.label}
                 <span className="absolute inset-x-4 bottom-0 h-px bg-gradient-to-r from-transparent via-primary-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </motion.a>
+              </a>
             ))}
           </div>
 
-          {/* CTA Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            <motion.a
-              href="#pricing"
-              className="px-4 py-2 text-sm font-medium text-surface-300 hover:text-white transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Sign In
-            </motion.a>
-            <motion.a
-              href="#pricing"
-              className="relative group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
-              <div className="relative flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary-500 to-accent-600 rounded-full shadow-lg shadow-primary-500/25">
-                Get Started
-                <Zap className="h-3.5 w-3.5" />
-              </div>
-            </motion.a>
+          {/* CTA Button */}
+          <div className="hidden md:flex items-center">
+              <a
+                href="https://www.voltarisos.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full blur-md opacity-50 group-hover:opacity-75 transition-opacity" />
+                <div className="relative flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary-500 to-accent-600 rounded-full shadow-lg shadow-primary-500/25">
+                  Aceder ao Dashboard
+                  <Zap className="h-3.5 w-3.5" />
+                </div>
+              </a>
           </div>
 
           {/* Mobile Menu Button */}
-          <motion.button
-            className="md:hidden relative z-50 p-2"
+          <button
+            className="md:hidden relative z-50 p-2 text-surface-300 hover:text-white transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            whileTap={{ scale: 0.9 }}
           >
             {isMobileMenuOpen ? (
               <X className="h-6 w-6" />
             ) : (
               <Menu className="h-6 w-6" />
             )}
-          </motion.button>
+          </button>
         </nav>
       </motion.header>
 
@@ -130,24 +121,25 @@ export function Navbar() {
                 <motion.a
                   key={link.label}
                   href={link.href}
+                  onClick={(e) => scrollToSection(e, link.href)}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   className="text-2xl font-semibold text-surface-200 hover:text-white transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.label}
                 </motion.a>
               ))}
               <motion.a
-                href="#pricing"
+                href="https://www.voltarisos.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
                 className="mt-4 flex items-center gap-2 px-8 py-3 text-lg font-semibold text-white bg-gradient-to-r from-primary-500 to-accent-600 rounded-full shadow-lg shadow-primary-500/25"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
-                Get Started
+                Aceder ao Dashboard
                 <Zap className="h-4 w-4" />
               </motion.a>
             </div>
