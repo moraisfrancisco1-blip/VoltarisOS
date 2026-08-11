@@ -283,6 +283,7 @@ export default function Login({ onLogin }) {
   const [inviteValidating, setInviteValidating] = useState(false)
   const [inviteResult, setInviteResult] = useState(null) // { valid, tier, label, roles, max_sites, modules }
   const [inviteError, setInviteError] = useState("")
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
 
@@ -377,9 +378,6 @@ export default function Login({ onLogin }) {
   }
 
   // ─── Register mode — split screen ────────────────────────────────────────
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
-
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       {/* ═══════════════════ LEFT PANEL — Dark Brand ═══════════════════ */}
