@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Login from "./pages/Login"
+import Login from "./pages/login"
 import PaymentSuccess from "./pages/PaymentSuccess"
 import PaymentCancel from "./pages/PaymentCancel"
 import Sidebar from "./components/Sidebar"

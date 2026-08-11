@@ -146,10 +146,10 @@ export default function DigitalTwin({ user }) {
           {Object.entries(SITES).map(([k, v]) => (
             <button key={k} onClick={() => setSite(k)} style={{
               padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600",
-              border: "none", cursor: "pointer",
+              border: `1px solid ${site === k ? color + "44" : "#1a2234"}`,
+              cursor: "pointer",
               background: site === k ? color + "22" : "var(--surface)",
               color: site === k ? color : "var(--sub)",
-              border: `1px solid ${site === k ? color + "44" : "#1a2234"}`,
             }}>{v.name}</button>
           ))}
         </div>

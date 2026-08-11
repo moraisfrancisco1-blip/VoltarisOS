@@ -60,10 +60,10 @@ export default function AutonomousTrading({ user }) {
         </div>
         <button onClick={toggle} style={{
           padding: "10px 24px", borderRadius: "10px", fontSize: "14px", fontWeight: "700",
-          border: "none", cursor: "pointer",
+          border: `1px solid ${isRunning ? "#7f1d1d" : "#14532d"}`,
+          cursor: "pointer",
           background: isRunning ? "#450a0a" : "#0a2a1a",
           color: isRunning ? "#f87171" : "#4ade80",
-          border: `1px solid ${isRunning ? "#7f1d1d" : "#14532d"}`,
         }}>
           {isRunning ? "⏸ Pausar Agente" : "▶ Ativar Agente"}
         </button>
@@ -131,9 +131,10 @@ export default function AutonomousTrading({ user }) {
             </div>
           ))}
           <button onClick={() => axios.post("/api/trading-agent/config", config)} style={{
-            width: "100%", padding: "9px", borderRadius: "8px", border: "none",
-            background: color + "22", color, fontWeight: "700", fontSize: "13px",
-            cursor: "pointer", border: `1px solid ${color}44`,
+              width: "100%", padding: "9px", borderRadius: "8px",
+              border: `1px solid ${color}44`,
+              background: color + "22", color, fontWeight: "700", fontSize: "13px",
+              cursor: "pointer",
           }}>{t("save") || "Save Configuration"}</button>
         </div>
       </div>
