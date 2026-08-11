@@ -15,3 +15,5 @@ python-dotenv
 psycopg2-binary
 bcrypt
 slowapi
+stripe
+pyotp
