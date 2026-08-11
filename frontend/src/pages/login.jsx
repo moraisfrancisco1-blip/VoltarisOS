@@ -2,25 +2,50 @@ import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
 import { LANGUAGES } from "../i18n/translations"
-import { SELF_REGISTER_ROLES } from "../config/roleAccess"
+import { PLAN_NAMES, PLAN_PRICES, PLAN_DESCRIPTIONS, PLAN_MAX_SITES, PLAN_TIER_ORDER } from "../config/planFeatureGates"
 import axios from "axios"
 import logoFull from "../logo_full.png"
 
-function FloatingParticle({ style }) {
-  return <div style={{ position: "absolute", borderRadius: "50%", pointerEvents: "none", ...style }} />
+// ─── Preset brand color swatches ──────────────────────────────────────────
+const BRAND_SWATCHES = [
+  "#4ade80", // Green
+  "#22d3ee", // Cyan
+  "#818cf8", // Indigo
+  "#f59e0b", // Amber
+  "#f97316", // Orange
+  "#ef4444", // Red
+  "#a855f7", // Purple
+  "#f472b6", // Pink
+  "#34d399", // Emerald
+  "#14b8a6", // Teal
+]
+
+// ─── Simple lock icon SVG ─────────────────────────────────────────────────
+function LockIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+  )
 }
 
-// ─── Terms of Use modal ────────────────────────────────────────────────────
-// Condensed from legal/LICENSE.md — full ownership + no-reverse-engineering
-// clause. Beta testers must tick "read & accept" before an account is created;
-// backend also rejects registration without terms_accepted=true and stamps
-// terms_accepted_at on the user record server-side.
+function ShieldIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="m9 12 2 2 4-4"/>
+    </svg>
+  )
+}
+
+// ─── Terms of Use modal ───────────────────────────────────────────────────
 function TermsModal({ onClose }) {
   return (
     <div
       onClick={onClose}
       style={{
-        position: "fixed", inset: 0, zIndex: 1000,
+        position: "fixed", inset: 0, zIndex: 2000,
         background: "rgba(5,10,20,0.75)", backdropFilter: "blur(4px)",
         display: "flex", alignItems: "center", justifyContent: "center", padding: "24px",
       }}
@@ -50,7 +75,7 @@ function TermsModal({ onClose }) {
           style={{
             marginTop: "18px", width: "100%", padding: "11px",
             background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-            border: "none", borderRadius: "10px", color: "var(--text)",
+            border: "none", borderRadius: "10px", color: "#0a0f1a",
             fontWeight: "700", fontSize: "13px", cursor: "pointer",
           }}
         >Fechar</button>
@@ -59,7 +84,7 @@ function TermsModal({ onClose }) {
   )
 }
 
-
+// ─── Language Switcher (positioned absolutely on right panel) ─────────────
 function LangSwitcher() {
   const { lang } = useTranslation()
   const setLanguage = useAppStore(s => s.setLanguage)
@@ -80,15 +105,15 @@ function LangSwitcher() {
         onClick={() => setOpen(!open)}
         style={{
           display: "flex", alignItems: "center", gap: "6px",
-          background: "rgba(255,255,255,0.05)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: "8px", padding: "6px 10px",
-          cursor: "pointer", color: "rgba(255,255,255,0.7)",
+          background: "rgba(0,0,0,0.04)",
+          border: "1px solid rgba(0,0,0,0.08)",
+          borderRadius: "8px", padding: "6px 12px",
+          cursor: "pointer", color: "rgba(0,0,0,0.55)",
           fontSize: "13px", fontWeight: "600",
           transition: "all 0.15s",
         }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(245,158,11,0.1)"}
-        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+        onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.07)"}
+        onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,0.04)"}
       >
         <span style={{ fontSize: "16px" }}>{current.flag}</span>
         <span>{current.code.toUpperCase()}</span>
@@ -101,9 +126,9 @@ function LangSwitcher() {
       {open && (
         <div style={{
           position: "absolute", top: "calc(100% + 6px)", right: 0,
-          background: "#0f1a2e", border: "1px solid rgba(255,255,255,0.1)",
+          background: "#fff", border: "1px solid rgba(0,0,0,0.1)",
           borderRadius: "10px", overflow: "hidden",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
           zIndex: 100, minWidth: "150px",
         }}>
           {Object.values(LANGUAGES).map(l => (
@@ -113,19 +138,19 @@ function LangSwitcher() {
               style={{
                 display: "flex", alignItems: "center", gap: "10px",
                 width: "100%", padding: "10px 14px",
-                background: l.code === lang ? "rgba(245,158,11,0.1)" : "transparent",
+                background: l.code === lang ? "rgba(245,158,11,0.08)" : "transparent",
                 border: "none", cursor: "pointer",
-                color: l.code === lang ? "#f59e0b" : "rgba(255,255,255,0.7)",
+                color: l.code === lang ? "#d97706" : "rgba(0,0,0,0.65)",
                 fontSize: "13px", fontWeight: l.code === lang ? "700" : "400",
                 textAlign: "left", transition: "background 0.15s",
               }}
-              onMouseEnter={e => { if (l.code !== lang) e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
+              onMouseEnter={e => { if (l.code !== lang) e.currentTarget.style.background = "rgba(0,0,0,0.04)" }}
               onMouseLeave={e => { if (l.code !== lang) e.currentTarget.style.background = "transparent" }}
             >
               <span style={{ fontSize: "18px" }}>{l.flag}</span>
               <span>{l.label}</span>
               {l.code === lang && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="3" style={{ marginLeft: "auto" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="3" style={{ marginLeft: "auto" }}>
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               )}
@@ -137,19 +162,126 @@ function LangSwitcher() {
   )
 }
 
+// ─── Login mode wrapper (split is only for register) ──────────────────────
+function LoginForm({ form, setForm, focused, setFocused, showPass, setShowPass, error, loading, handleSubmit, handleKey, mode, setMode, setError, t }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "radial-gradient(ellipse 120% 80% at 50% -10%, #0d2040 0%, #050a14 50%, #0a0f1a 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      position: "relative", overflow: "hidden",
+    }}>
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.03,
+        backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+      }} />
+
+      <div style={{
+        width: "420px", maxWidth: "90vw",
+        background: "var(--surface)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        borderRadius: "24px",
+        boxShadow: "0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(74,222,128,0.04)",
+        backdropFilter: "blur(20px)",
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? "translateY(0)" : "translateY(20px)",
+        transition: "opacity 0.5s ease, transform 0.5s ease",
+      }}>
+        <div style={{ height: "3px", background: "linear-gradient(90deg, transparent, #f59e0b, #f97316, transparent)" }} />
+
+        <div style={{ padding: "32px 34px 24px", display: "flex", flexDirection: "column", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ marginBottom: "16px" }}>
+            <img src={logoFull} alt="VoltarisOS" style={{ height: "48px", objectFit: "contain" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "2px" }}>
+            <div style={{ color: "rgba(255,255,255,0.85)", fontSize: "18px", fontWeight: "700", letterSpacing: "-0.3px" }}>
+              {t("auth_welcome_back")}
+            </div>
+            <LangSwitcher />
+          </div>
+          <div style={{ color: "var(--sub)", fontSize: "12.5px" }}>{t("auth_subtitle_login")}</div>
+        </div>
+
+        <div style={{ padding: "24px 34px 28px" }}>
+          <div style={{ marginBottom: "18px" }}>
+            <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_email")}</label>
+            <input type="email" placeholder="admin@voltaris.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
+              style={{ ...inputDarkStyle(focused === "email"), paddingLeft: "14px" }} />
+          </div>
+
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_password")}</label>
+            <div style={{ position: "relative" }}>
+              <input type={showPass ? "text" : "password"} placeholder="••••••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
+                style={{ ...inputDarkStyle(focused === "password"), paddingRight: "44px" }} />
+              <button type="button" onClick={() => setShowPass(!showPass)} tabIndex={-1}
+                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: showPass ? "#f59e0b" : "var(--sub)", display: "flex", alignItems: "center", padding: "4px", borderRadius: "6px" }}>
+                {showPass ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div style={{ padding: "10px 14px", marginBottom: "16px", background: "#2d0a0a", border: "1px solid #7f1d1d", borderRadius: "8px", color: "#f87171", fontSize: "13px" }}>{error}</div>
+          )}
+
+          <button onClick={handleSubmit} disabled={loading}
+            style={{
+              width: "100%", padding: "13px",
+              background: loading ? "#1f2937" : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+              border: "none", borderRadius: "12px", color: loading ? "var(--sub)" : "#0a0f1a",
+              fontWeight: "800", fontSize: "14px", cursor: loading ? "not-allowed" : "pointer",
+              marginBottom: "18px", boxShadow: loading ? "none" : "0 4px 24px rgba(245,158,11,0.3)",
+              transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              letterSpacing: "0.3px",
+            }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = "0 6px 32px rgba(245,158,11,0.5)" }}
+            onMouseLeave={e => { if (!loading) e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.3)" }}
+          >
+            {loading ? <><span style={{ width: "15px", height: "15px", border: "2px solid var(--sub)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />{t("auth_authenticating")}</> : t("auth_enter")}
+          </button>
+
+          <div style={{ textAlign: "center" }}>
+            <span style={{ color: "var(--sub)", fontSize: "12.5px" }}>{t("auth_no_account")} </span>
+            <button onClick={() => { setMode("register"); setError("") }} style={{ background: "none", border: "none", color: "#f59e0b", cursor: "pointer", fontSize: "12.5px", fontWeight: "600", textDecoration: "underline" }}>{t("auth_register_link")}</button>
+          </div>
+        </div>
+
+        <div style={{ padding: "12px 34px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+          <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#f59e0b", boxShadow: "0 0 6px #f59e0b", animation: "pulse 2s ease-in-out infinite" }} />
+          <span style={{ color: "var(--sub)", fontSize: "11px" }}>VoltarisOS v2.0 · {t("auth_system_label")}</span>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 6px #f59e0b } 50% { opacity: 0.5; box-shadow: 0 0 12px #f59e0b } }
+      `}</style>
+    </div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────
 export default function Login({ onLogin }) {
   const { t } = useTranslation()
   const [mode, setMode] = useState("login")
-  const [form, setForm] = useState({ email: "", password: "", company: "", color: "#4ade80", beta_code: "", role: "operator" })
+  const [form, setForm] = useState({ email: "", password: "", company: "", color: "#f59e0b", beta_code: "", role: "TENANT_MEMBER", plan: "" })
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(null)
-  const [mounted, setMounted] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
   const [inviteValidating, setInviteValidating] = useState(false)
-  const [inviteResult, setInviteResult] = useState(null) // { valid, tier, label, roles }
+  const [inviteResult, setInviteResult] = useState(null) // { valid, tier, label, roles, max_sites, modules }
   const [inviteError, setInviteError] = useState("")
 
   useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
@@ -163,10 +295,19 @@ export default function Login({ onLogin }) {
         localStorage.setItem("token", res.data.token)
         localStorage.setItem("company", res.data.company)
         localStorage.setItem("color", res.data.color)
+        if (res.data.allowed_modules) {
+          localStorage.setItem("allowed_modules", JSON.stringify(res.data.allowed_modules))
+        }
         onLogin(res.data)
       } else {
         if (!termsAccepted) {
           setError("Tens de aceitar os Termos de Uso para criar conta.")
+          setLoading(false)
+          return
+        }
+        // If no valid beta code, plan is mandatory
+        if (!inviteResult && !form.plan) {
+          setError("Seleciona um plano de subscrição para continuar.")
           setLoading(false)
           return
         }
@@ -178,6 +319,7 @@ export default function Login({ onLogin }) {
           beta_code: form.beta_code,
           terms_accepted: termsAccepted,
           role: form.role,
+          plan: inviteResult ? "" : form.plan,
         })
         setMode("login")
         setError(t("auth_account_created"))
@@ -204,7 +346,6 @@ export default function Login({ onLogin }) {
     try {
       const res = await axios.get(`/api/auth/validate-invite-code`, { params: { code } })
       setInviteResult(res.data)
-      // Auto-select first allowed role
       if (res.data.roles && res.data.roles.length > 0) {
         setForm(f => ({ ...f, role: res.data.roles[0] }))
       }
@@ -219,371 +360,405 @@ export default function Login({ onLogin }) {
   const handleBetaCodeChange = (value) => {
     const upper = value.toUpperCase()
     setForm({ ...form, beta_code: upper })
-    // Debounce validation — only call API after user stops typing
     if (window._betaTimer) clearTimeout(window._betaTimer)
     window._betaTimer = setTimeout(() => validateInviteCode(upper), 500)
   }
 
+  // Login mode — unchanged dark card layout
+  if (mode === "login") {
+    return (
+      <LoginForm
+        form={form} setForm={setForm} focused={focused} setFocused={setFocused}
+        showPass={showPass} setShowPass={setShowPass} error={error} loading={loading}
+        handleSubmit={handleSubmit} handleKey={handleKey} mode={mode} setMode={setMode}
+        setError={setError} t={t}
+      />
+    )
+  }
+
+  // ─── Register mode — split screen ────────────────────────────────────────
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
+
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "radial-gradient(ellipse 120% 80% at 50% -10%, #0d2040 0%, #050a14 50%, #0a0f1a 100%)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      position: "relative", overflow: "hidden",
-    }}>
-      {/* Ambient glow orbs */}
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      {/* ═══════════════════ LEFT PANEL — Dark Brand ═══════════════════ */}
       <div style={{
-        position: "absolute", width: "600px", height: "600px",
-        borderRadius: "50%", top: "-200px", left: "-100px",
-        background: "radial-gradient(circle, #4ade8008 0%, transparent 70%)",
-        pointerEvents: "none",
-      }} />
-      <div style={{
-        position: "absolute", width: "500px", height: "500px",
-        borderRadius: "50%", bottom: "-150px", right: "-80px",
-        background: "radial-gradient(circle, #22d3ee06 0%, transparent 70%)",
-        pointerEvents: "none",
-      }} />
-
-      {/* Grid lines */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.03,
-        backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-        backgroundSize: "60px 60px",
-      }} />
-
-      {/* Floating particles */}
-      {[
-        { top: "15%", left: "8%", width: "4px", height: "4px", background: "#4ade8040", animation: "float1 6s ease-in-out infinite" },
-        { top: "70%", left: "5%", width: "6px", height: "6px", background: "#22d3ee30", animation: "float2 8s ease-in-out infinite" },
-        { top: "25%", right: "10%", width: "3px", height: "3px", background: "#818cf840", animation: "float1 7s ease-in-out infinite 1s" },
-        { bottom: "20%", right: "8%", width: "5px", height: "5px", background: "#4ade8030", animation: "float2 5s ease-in-out infinite 2s" },
-        { top: "45%", left: "15%", width: "2px", height: "2px", background: "#f59e0b50", animation: "float1 9s ease-in-out infinite 0.5s" },
-      ].map((p, i) => <FloatingParticle key={i} style={p} />)}
-
-      {/* Card */}
-      <div style={{
-        width: "440px", maxWidth: "90vw",
-        background: "var(--surface)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        borderRadius: "24px",
-        boxShadow: "0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(74,222,128,0.04), inset 0 1px 0 rgba(255,255,255,0.05)",
-        backdropFilter: "blur(20px)",
-        overflow: "hidden",
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? "translateY(0)" : "translateY(20px)",
-        transition: "opacity 0.5s ease, transform 0.5s ease",
+        width: "50%", minHeight: "100vh",
+        background: "radial-gradient(ellipse 100% 80% at 30% 50%, #0d2040 0%, #050a14 60%, #0a0f1a 100%)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        position: "relative", overflow: "hidden",
+        padding: "60px 40px",
       }}>
-
-        {/* Top gradient line */}
+        {/* Grid overlay */}
         <div style={{
-          height: "3px",
-          background: "linear-gradient(90deg, transparent, #f59e0b, #f97316, transparent)",
+          position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.03,
+          backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
         }} />
 
-        {/* Logo section */}
+        {/* Glow orb */}
         <div style={{
-          padding: "32px 36px 28px",
+          position: "absolute", width: "500px", height: "500px", borderRadius: "50%",
+          top: "20%", left: "-10%",
+          background: "radial-gradient(circle, #f59e0b0a 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        <div style={{
+          position: "relative", zIndex: 2,
           display: "flex", flexDirection: "column", alignItems: "center",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "translateY(0)" : "translateY(20px)",
+          transition: "opacity 0.6s ease 0.2s, transform 0.6s ease 0.2s",
         }}>
-          <div style={{ marginBottom: "20px" }}>
-            <img src={logoFull} alt="VoltarisOS" style={{ height: "56px", objectFit: "contain" }} />
-          </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "4px" }}>
-            <div style={{
-              color: "rgba(255,255,255,0.85)", fontSize: "20px",
-              fontWeight: "700", letterSpacing: "-0.3px",
-            }}>
-              {mode === "login" ? t("auth_welcome_back") : t("auth_create_account")}
+          {/* Logo */}
+          <img src={logoFull} alt="VoltarisOS" style={{
+            height: "72px", objectFit: "contain", marginBottom: "32px",
+            filter: "drop-shadow(0 0 20px rgba(245,158,11,0.15))",
+          }} />
+
+          {/* Value proposition */}
+          <h1 style={{
+            fontSize: "28px", fontWeight: "800", letterSpacing: "-0.5px",
+            color: "#fff", textAlign: "center", margin: "0 0 12px",
+            lineHeight: 1.25, maxWidth: "420px",
+          }}>
+            A Plataforma Inteligente para Ativos de Energia
+          </h1>
+          <p style={{
+            fontSize: "15px", color: "rgba(255,255,255,0.5)", textAlign: "center",
+            margin: "0 0 40px", maxWidth: "380px", lineHeight: 1.5,
+          }}>
+            Monitorização em tempo real, otimização por IA e trading autónomo para centrais elétricas virtuais.
+          </p>
+
+          {/* Security badge */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            padding: "12px 20px",
+            background: "rgba(16,185,129,0.08)",
+            border: "1px solid rgba(16,185,129,0.15)",
+            borderRadius: "12px",
+          }}>
+            <span style={{ color: "#10b981", display: "flex" }}><ShieldIcon /></span>
+            <div>
+              <div style={{ color: "#10b981", fontSize: "13px", fontWeight: "700", letterSpacing: "0.2px" }}>Segurança de Nível Empresarial</div>
+              <div style={{ color: "rgba(16,185,129,0.5)", fontSize: "11px", marginTop: "1px" }}>Encriptação AES-256 · RBAC · 2FA</div>
             </div>
-            <LangSwitcher />
-          </div>
-          <div style={{ color: "var(--sub)", fontSize: "13px" }}>
-            {mode === "login" ? t("auth_subtitle_login") : t("auth_setup_ws")}
           </div>
         </div>
 
-        {/* Form */}
-        <div style={{ padding: "28px 36px 32px" }}>
+        {/* Subtle bottom gradient bar */}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: "3px",
+          background: "linear-gradient(90deg, transparent 5%, #f59e0b 50%, transparent 95%)",
+          zIndex: 3,
+        }} />
+      </div>
 
-          {mode === "register" && (
-            <>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
-                  {t("auth_company_name")}
-                </label>
-                <input
-                  placeholder="Ex: GreenVolt Energy"
-                  value={form.company}
-                  onChange={e => setForm({ ...form, company: e.target.value })}
-                  onFocus={() => setFocused("company")}
-                  onBlur={() => setFocused(null)}
-                  style={inputStyle(focused === "company")}
-                />
-              </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: inviteResult ? "#10b981" : "#4ade80", fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
-                  🔑 {inviteResult ? "Código Validado" : "Código Beta"}
-                </label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    placeholder="Código de acesso"
-                    value={form.beta_code}
-                    onChange={e => handleBetaCodeChange(e.target.value)}
-                    onFocus={() => setFocused("beta_code")}
-                    onBlur={() => setFocused(null)}
-                    style={{
-                      ...inputStyle(focused === "beta_code"),
-                      fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase",
-                      borderColor: inviteResult ? "#10b981" : inviteError ? "#ef4444" : undefined,
-                    }}
-                  />
-                  {inviteValidating && (
-                    <div style={{
-                      position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
-                      width: "16px", height: "16px",
-                      border: "2px solid rgba(255,255,255,0.15)",
-                      borderTopColor: "#f59e0b",
-                      borderRadius: "50%",
-                      animation: "spin 0.6s linear infinite",
-                    }} />
-                  )}
-                </div>
-                {/* Validation feedback */}
-                {inviteResult && (
-                  <div style={{
-                    marginTop: "8px", padding: "10px 14px",
-                    background: "#0d2818", border: "1px solid #14532d",
-                    borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px",
-                  }}>
-                    <span style={{ fontSize: "18px" }}>✅</span>
-                    <div>
-                      <div style={{ color: "#10b981", fontSize: "12px", fontWeight: "700" }}>
-                        Plano {inviteResult.label} ativado
-                      </div>
-                      <div style={{ color: "#6ee7b7", fontSize: "11px", marginTop: "2px" }}>
-                        Tier: {inviteResult.tier} · {inviteResult.roles?.length || 0} {inviteResult.roles?.length === 1 ? "tipo disponível" : "tipos disponíveis"}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {inviteError && (
-                  <div style={{
-                    marginTop: "8px", padding: "10px 14px",
-                    background: "#2d0a0a", border: "1px solid #7f1d1d",
-                    borderRadius: "8px", display: "flex", alignItems: "center", gap: "8px",
-                  }}>
-                    <span style={{ fontSize: "14px" }}>❌</span>
-                    <span style={{ color: "#f87171", fontSize: "12px" }}>{inviteError}</span>
-                  </div>
-                )}
-                {!inviteResult && !inviteError && !inviteValidating && (
-                  <div style={{ fontSize: "11px", color: "#4ade8080", marginTop: "5px" }}>
-                    Insere o código recebido para validar o teu plano.
-                  </div>
-                )}
-              </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
-                  {t("auth_account_type") || "Tipo de Conta"}
-                </label>
-                <select
-                  value={form.role}
-                  onChange={e => setForm({ ...form, role: e.target.value })}
-                  onFocus={() => setFocused("role")}
-                  onBlur={() => setFocused(null)}
-                  disabled={inviteResult && inviteResult.roles?.length === 1}
-                  style={{
-                    ...inputStyle(focused === "role"),
-                    cursor: inviteResult && inviteResult.roles?.length === 1 ? "default" : "pointer",
-                    opacity: inviteResult && inviteResult.roles?.length === 1 ? 0.7 : 1,
-                  }}
-                >
-                  {(inviteResult?.roles || SELF_REGISTER_ROLES.map(r => r.value)).map(roleValue => {
-                    const roleDef = SELF_REGISTER_ROLES.find(r => r.value === roleValue)
-                    return (
-                      <option key={roleValue} value={roleValue}>
-                        {roleDef ? (t(roleDef.labelKey) || roleDef.value) : roleValue}
-                      </option>
-                    )
-                  })}
-                </select>
-                {inviteResult && inviteResult.roles?.length === 1 && (
-                  <div style={{ fontSize: "10px", color: "#10b98180", marginTop: "4px" }}>
-                    🔒 Fixo para este código de convite
-                  </div>
-                )}
-                {!inviteResult && !inviteError && (
-                  <div style={{ fontSize: "10px", color: "var(--sub)", marginTop: "4px" }}>
-                    Valida o código beta para ver as opções disponíveis.
-                  </div>
-                )}
-              </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", textTransform: "uppercase" }}>
-                  {t("auth_brand_color")}
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <input
-                    type="color"
-                    value={form.color}
-                    onChange={e => setForm({ ...form, color: e.target.value })}
-                    style={{ width: "48px", height: "40px", cursor: "pointer", border: "none", background: "none", borderRadius: "8px" }}
-                  />
-                  <div style={{
-                    padding: "8px 14px", background: `${form.color}15`,
-                    border: `1px solid ${form.color}40`, borderRadius: "8px",
-                    color: form.color, fontSize: "13px", fontFamily: "monospace",
-                  }}>{form.color}</div>
-                </div>
-              </div>
-            </>
-          )}
+      {/* ═══════════════════ RIGHT PANEL — White Form ═══════════════════ */}
+      <div style={{
+        width: "50%", minHeight: "100vh",
+        background: "#f8fafc",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        position: "relative",
+        padding: "48px 40px",
+        overflowY: "auto",
+      }}>
+        {/* Lang switcher positioned top-right */}
+        <div style={{ position: "absolute", top: "24px", right: "28px", zIndex: 10 }}>
+          <LangSwitcher />
+        </div>
 
-          {/* Email */}
-          <div style={{ marginBottom: "16px" }}>
-            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
-              {t("auth_email")}
-            </label>
-            <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={focused === "email" ? "#f59e0b" : "var(--sub)"} strokeWidth="1.8">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              </div>
-              <input
-                type="email"
-                placeholder="admin@voltaris.com"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                onFocus={() => setFocused("email")}
-                onBlur={() => setFocused(null)}
-                onKeyDown={handleKey}
-                style={{ ...inputStyle(focused === "email"), paddingLeft: "42px" }}
-              />
-            </div>
+        <div style={{
+          width: "100%", maxWidth: "440px",
+          opacity: mounted ? 1 : 0,
+          transform: mounted ? "translateY(0)" : "translateY(16px)",
+          transition: "opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s",
+        }}>
+          {/* Title */}
+          <div style={{ marginBottom: "36px" }}>
+            <h2 style={{
+              fontSize: "26px", fontWeight: "800", letterSpacing: "-0.5px",
+              color: "#0f172a", margin: "0 0 6px",
+            }}>
+              Configura o teu workspace
+            </h2>
+            <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
+              Preenche os dados para começar a usar o VoltarisOS.
+            </p>
           </div>
 
-          {/* Password */}
+          {/* ── Access Code (FIRST) ────────────────────────────────────────── */}
           <div style={{ marginBottom: "24px" }}>
-            <label style={{ color: "var(--sub)", fontSize: "12px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.3px", textTransform: "uppercase" }}>
+            <label style={{
+              fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px",
+              letterSpacing: "0.5px", textTransform: "uppercase",
+              color: inviteResult ? "#10b981" : inviteError ? "#ef4444" : "#334155",
+            }}>
+              <LockIcon /> Código de Acesso
+            </label>
+            <div style={{ position: "relative" }}>
+              <input
+                placeholder="Introduz o teu código de convite"
+                value={form.beta_code}
+                onChange={e => handleBetaCodeChange(e.target.value)}
+                onFocus={() => setFocused("beta_code")}
+                onBlur={() => setFocused(null)}
+                style={{
+                  ...lightInputStyle(focused === "beta_code"),
+                  fontFamily: "monospace", letterSpacing: "2px", textTransform: "uppercase",
+                  borderColor: inviteResult ? "#10b981" : inviteError ? "#ef4444" : focused === "beta_code" ? "#f59e0b" : "#e2e8f0",
+                }}
+              />
+              {inviteValidating && (
+                <div style={{
+                  position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)",
+                  width: "16px", height: "16px",
+                  border: "2px solid rgba(0,0,0,0.1)", borderTopColor: "#f59e0b",
+                  borderRadius: "50%", animation: "spin 0.6s linear infinite",
+                }} />
+              )}
+              {inviteResult && !inviteValidating && (
+                <div style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#10b981", fontSize: "16px" }}>✓</div>
+              )}
+            </div>
+            {/* Validation feedback */}
+            {inviteResult && (
+              <div style={{
+                marginTop: "10px", padding: "10px 14px",
+                background: "#ecfdf5", border: "1px solid #a7f3d0",
+                borderRadius: "8px", display: "flex", alignItems: "center", gap: "10px",
+              }}>
+                <span style={{ fontSize: "16px" }}>🎯</span>
+                <div>
+                  <div style={{ color: "#059669", fontSize: "12px", fontWeight: "700" }}>Plano {inviteResult.label}</div>
+                  <div style={{ color: "#10b981", fontSize: "11px", marginTop: "2px" }}>Tier: {inviteResult.tier} · {inviteResult.roles?.length || 0} {inviteResult.roles?.length === 1 ? "tipo disponível" : "tipos disponíveis"}</div>
+                </div>
+              </div>
+            )}
+            {inviteError && (
+              <div style={{
+                marginTop: "10px", padding: "10px 14px",
+                background: "#fef2f2", border: "1px solid #fecaca",
+                borderRadius: "8px", display: "flex", alignItems: "center", gap: "8px",
+              }}>
+                <span style={{ fontSize: "14px" }}>⚠️</span>
+                <span style={{ color: "#dc2626", fontSize: "12px" }}>{inviteError}</span>
+              </div>
+            )}
+            {!inviteResult && !inviteError && !inviteValidating && (
+              <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "6px" }}>
+                Insere o código recebido para validar o teu plano.
+              </div>
+            )}
+          </div>
+
+          {/* ── Plan Selection (commercial — user-friendly) ─────────────────── */}
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{
+              fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px",
+              letterSpacing: "0.5px", textTransform: "uppercase", color: "#334155",
+            }}>
+              Plano Pretendido
+            </label>
+            {inviteResult ? (
+              <div style={{
+                ...lightInputStyle(false),
+                display: "flex", alignItems: "center", gap: "8px",
+                background: "#ecfdf5", borderColor: "#a7f3d0",
+              }}>
+                <span style={{ fontSize: "14px" }}>🎯</span>
+                <span style={{ color: "#059669", fontSize: "14px", fontWeight: "600" }}>
+                  Plano {inviteResult.label} — atribuído automaticamente
+                </span>
+              </div>
+            ) : (
+              <div>
+                <select
+                  value={form.plan}
+                  onChange={e => setForm({ ...form, plan: e.target.value })}
+                  onFocus={() => setFocused("plan")}
+                  onBlur={() => setFocused(null)}
+                  style={{ ...lightInputStyle(focused === "plan"), cursor: "pointer" }}
+                >
+                  <option value="">Seleciona um plano...</option>
+                  <option value="home">Home — €69/mês (1 instalação)</option>
+                  <option value="smart">Smart — €149/mês (até 2 instalações + IA)</option>
+                  <option value="starter">Starter — €279/mês (até 5 instalações)</option>
+                  <option value="pro">Pro — €1.099/mês (até 20 instalações + IA Avançada)</option>
+                  <option value="enterprise">Enterprise — €3.999/mês (Instalações Ilimitadas)</option>
+                </select>
+                <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "6px" }}>
+                  Escolhe o plano que melhor se adapta às tuas necessidades.
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Company ─────────────────────────────────────────────────────── */}
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{
+              fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px",
+              letterSpacing: "0.5px", textTransform: "uppercase", color: "#334155",
+            }}>
+              {t("auth_company_name")}
+            </label>
+            <input
+              placeholder="Ex: GreenVolt Energy"
+              value={form.company}
+              onChange={e => setForm({ ...form, company: e.target.value })}
+              onFocus={() => setFocused("company")}
+              onBlur={() => setFocused(null)}
+              style={lightInputStyle(focused === "company")}
+            />
+          </div>
+
+          {/* ── Email ───────────────────────────────────────────────────────── */}
+          <div style={{ marginBottom: "24px" }}>
+            <label style={{
+              fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px",
+              letterSpacing: "0.5px", textTransform: "uppercase", color: "#334155",
+            }}>
+              {t("auth_email")}
+            </label>
+            <input
+              type="email"
+              placeholder="admin@voltaris.com"
+              value={form.email}
+              onChange={e => setForm({ ...form, email: e.target.value })}
+              onFocus={() => setFocused("email")}
+              onBlur={() => setFocused(null)}
+              onKeyDown={handleKey}
+              style={lightInputStyle(focused === "email")}
+            />
+          </div>
+
+          {/* ── Password ────────────────────────────────────────────────────── */}
+          <div style={{ marginBottom: "28px" }}>
+            <label style={{
+              fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px",
+              letterSpacing: "0.5px", textTransform: "uppercase", color: "#334155",
+            }}>
               {t("auth_password")}
             </label>
             <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={focused === "password" ? "#f59e0b" : "var(--sub)"} strokeWidth="1.8">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </div>
               <input
                 type={showPass ? "text" : "password"}
-                placeholder="••••••••••••"
+                placeholder="Mínimo 8 caracteres"
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
                 onFocus={() => setFocused("password")}
                 onBlur={() => setFocused(null)}
                 onKeyDown={handleKey}
-                style={{ ...inputStyle(focused === "password"), paddingLeft: "42px", paddingRight: "48px" }}
+                style={{ ...lightInputStyle(focused === "password"), paddingRight: "44px" }}
               />
-              <button
-                type="button"
-                onClick={() => setShowPass(!showPass)}
-                tabIndex={-1}
-                style={{
-                  position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)",
-                  background: "none", border: "none", cursor: "pointer",
-                  color: showPass ? "#f59e0b" : "var(--sub)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  padding: "4px", borderRadius: "6px", transition: "color 0.15s",
-                }}
-                title={showPass ? t("auth_hide_pass") : t("auth_show_pass")}
-              >
+              <button type="button" onClick={() => setShowPass(!showPass)} tabIndex={-1}
+                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: showPass ? "#f59e0b" : "#94a3b8", display: "flex", alignItems: "center", padding: "4px", borderRadius: "6px" }}>
                 {showPass ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                    <line x1="1" y1="1" x2="23" y2="23"/>
-                  </svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                  </svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 )}
               </button>
             </div>
           </div>
 
-          {/* Error */}
+          {/* ── Brand Color Swatches ────────────────────────────────────────── */}
+          <div style={{ marginBottom: "28px" }}>
+            <label style={{
+              fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "12px",
+              letterSpacing: "0.5px", textTransform: "uppercase", color: "#334155",
+            }}>
+              {t("auth_brand_color")}
+            </label>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {BRAND_SWATCHES.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setForm({ ...form, color: c })}
+                  title={c}
+                  style={{
+                    width: "36px", height: "36px", borderRadius: "10px",
+                    background: c,
+                    border: form.color === c ? "3px solid #1e293b" : "3px solid transparent",
+                    boxShadow: form.color === c ? `0 0 0 3px ${c}40` : "0 1px 3px rgba(0,0,0,0.1)",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    transform: form.color === c ? "scale(1.15)" : "scale(1)",
+                  }}
+                  onMouseEnter={e => { if (form.color !== c) e.currentTarget.style.transform = "scale(1.1)" }}
+                  onMouseLeave={e => { if (form.color !== c) e.currentTarget.style.transform = "scale(1)" }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* ── Error ────────────────────────────────────────────────────────── */}
           {error && (
             <div style={{
-              padding: "10px 14px", marginBottom: "16px",
-              background: error.includes("created") || error.includes("criada") ? "#0d2818" : "#2d0a0a",
-              border: `1px solid ${error.includes("created") || error.includes("criada") ? "#14532d" : "#7f1d1d"}`,
-              borderRadius: "8px",
-              color: error.includes("created") || error.includes("criada") ? "#4ade80" : "#f87171",
-              fontSize: "13px",
+              padding: "12px 16px", marginBottom: "20px",
+              background: error.includes("criada") || error.includes("created") ? "#ecfdf5" : "#fef2f2",
+              border: `1px solid ${error.includes("criada") || error.includes("created") ? "#a7f3d0" : "#fecaca"}`,
+              borderRadius: "10px",
+              color: error.includes("criada") || error.includes("created") ? "#059669" : "#dc2626",
+              fontSize: "13px", fontWeight: "500",
             }}>{error}</div>
           )}
 
-          {/* Terms acceptance (register only) */}
-          {mode === "register" && (
-            <label style={{
-              display: "flex", alignItems: "flex-start", gap: "10px",
-              marginBottom: "18px", cursor: "pointer", fontSize: "12.5px",
-              color: "rgba(255,255,255,0.65)", lineHeight: 1.5,
-            }}>
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={e => setTermsAccepted(e.target.checked)}
-                style={{ marginTop: "2px", accentColor: "#f59e0b", width: "15px", height: "15px", flexShrink: 0, cursor: "pointer" }}
-              />
-              <span>
-                Li e aceito os{" "}
-                <button
-                  type="button"
-                  onClick={(e) => { e.preventDefault(); setShowTerms(true) }}
-                  style={{ background: "none", border: "none", padding: 0, color: "#f59e0b", textDecoration: "underline", cursor: "pointer", fontSize: "inherit" }}
-                >Termos de Uso</button>
-                {" "}e reconheço que é proibida a engenharia reversa ou cópia do Software.
-              </span>
-            </label>
-          )}
+          {/* ── Terms checkbox ───────────────────────────────────────────────── */}
+          <label style={{
+            display: "flex", alignItems: "flex-start", gap: "10px",
+            marginBottom: "22px", cursor: "pointer", fontSize: "12.5px",
+            color: "#64748b", lineHeight: 1.5,
+          }}>
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={e => setTermsAccepted(e.target.checked)}
+              style={{ marginTop: "2px", accentColor: "#f59e0b", width: "16px", height: "16px", flexShrink: 0, cursor: "pointer" }}
+            />
+            <span>
+              Li e aceito os{" "}
+              <button type="button" onClick={(e) => { e.preventDefault(); setShowTerms(true) }}
+                style={{ background: "none", border: "none", padding: 0, color: "#d97706", textDecoration: "underline", cursor: "pointer", fontSize: "inherit", fontWeight: "600" }}
+              >Termos de Uso</button>
+              {" "}e reconheço que é proibida a engenharia reversa ou cópia do Software.
+            </span>
+          </label>
 
           {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
 
-          {/* Submit */}
+          {/* ── Submit Button ────────────────────────────────────────────────── */}
           <button
             onClick={handleSubmit}
-            disabled={loading || (mode === "register" && !termsAccepted)}
+            disabled={loading || !termsAccepted}
             style={{
-              width: "100%", padding: "14px",
-              background: (loading || (mode === "register" && !termsAccepted))
-                ? "#1f2937"
+              width: "100%", padding: "15px",
+              background: (loading || !termsAccepted)
+                ? "#cbd5e1"
                 : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
               border: "none", borderRadius: "12px",
-              color: (loading || (mode === "register" && !termsAccepted)) ? "var(--sub)" : "#0a0f1a",
+              color: (loading || !termsAccepted) ? "#94a3b8" : "#fff",
               fontWeight: "800", fontSize: "15px",
-              cursor: (loading || (mode === "register" && !termsAccepted)) ? "not-allowed" : "pointer",
-              marginBottom: "20px",
-              boxShadow: loading ? "none" : "0 4px 24px rgba(245,158,11,0.3)",
+              cursor: (loading || !termsAccepted) ? "not-allowed" : "pointer",
+              marginBottom: "24px",
+              boxShadow: (loading || !termsAccepted) ? "none" : "0 4px 24px rgba(245,158,11,0.35)",
               transition: "all 0.2s",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
               letterSpacing: "0.3px",
             }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = "0 6px 32px rgba(245,158,11,0.5)" }}
-            onMouseLeave={e => { if (!loading) e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.3)" }}
+            onMouseEnter={e => { if (!loading && termsAccepted) e.currentTarget.style.boxShadow = "0 6px 36px rgba(245,158,11,0.5)" }}
+            onMouseLeave={e => { if (!loading && termsAccepted) e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.35)" }}
           >
             {loading ? (
               <>
                 <span style={{
                   width: "16px", height: "16px",
-                  border: "2px solid var(--sub)",
-                  borderTopColor: "#f59e0b",
+                  border: "2px solid rgba(255,255,255,0.3)",
+                  borderTopColor: "#fff",
                   borderRadius: "50%",
                   animation: "spin 0.6s linear infinite",
                   display: "inline-block",
@@ -591,64 +766,52 @@ export default function Login({ onLogin }) {
                 {t("auth_authenticating")}
               </>
             ) : (
-              mode === "login" ? t("auth_enter") : t("auth_register")
+              t("auth_register")
             )}
           </button>
 
-          {/* Mode switch */}
+          {/* ── Bottom link ──────────────────────────────────────────────────── */}
           <div style={{ textAlign: "center" }}>
-            <span style={{ color: "var(--sub)", fontSize: "13px" }}>
-              {mode === "login" ? t("auth_no_account") + " " : t("auth_have_account") + " "}
+            <span style={{ color: "#94a3b8", fontSize: "13px" }}>
+              {t("auth_have_account") + " "}
             </span>
             <button
-              onClick={() => { setMode(mode === "login" ? "register" : "login"); setError("") }}
+              onClick={() => { setMode("login"); setError("") }}
               style={{
-                background: "none", border: "none", color: "#f59e0b",
-                cursor: "pointer", fontSize: "13px", fontWeight: "600",
-                textDecoration: "underline",
+                background: "none", border: "none", color: "#d97706",
+                cursor: "pointer", fontSize: "13px", fontWeight: "700",
+                textDecoration: "none",
               }}
+              onMouseEnter={e => e.currentTarget.style.textDecoration = "underline"}
+              onMouseLeave={e => e.currentTarget.style.textDecoration = "none"}
             >
-              {mode === "login" ? t("auth_register_link") : t("auth_login_link")}
+              {t("auth_login_link")}
             </button>
           </div>
-        </div>
 
-        {/* Footer */}
-        <div style={{
-          padding: "14px 36px 20px",
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
-        }}>
+          {/* ── Subtle version ───────────────────────────────────────────────── */}
           <div style={{
-            width: "6px", height: "6px", borderRadius: "50%",
-            background: "#f59e0b",
-            boxShadow: "0 0 6px #f59e0b",
-            animation: "pulse 2s ease-in-out infinite",
-          }} />
-          <span style={{ color: "var(--sub)", fontSize: "11px" }}>VoltarisOS v2.0 · {t("auth_system_label")}</span>
+            marginTop: "36px", textAlign: "center",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+          }}>
+            <div style={{
+              width: "5px", height: "5px", borderRadius: "50%",
+              background: "#f59e0b", opacity: 0.5,
+            }} />
+            <span style={{ color: "#cbd5e1", fontSize: "11px" }}>VoltarisOS v2.0 · {t("auth_system_label")}</span>
+          </div>
         </div>
       </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
-        @keyframes float1 {
-          0%, 100% { transform: translateY(0px) }
-          50% { transform: translateY(-12px) }
-        }
-        @keyframes float2 {
-          0%, 100% { transform: translateY(0px) }
-          50% { transform: translateY(10px) }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; box-shadow: 0 0 6px #f59e0b }
-          50% { opacity: 0.5; box-shadow: 0 0 12px #f59e0b }
-        }
       `}</style>
     </div>
   )
 }
 
-function inputStyle(active) {
+// ─── Input styles ─────────────────────────────────────────────────────────
+function inputDarkStyle(active) {
   return {
     width: "100%",
     padding: "12px 14px",
@@ -662,5 +825,24 @@ function inputStyle(active) {
     transition: "all 0.2s",
     fontFamily: "inherit",
     boxShadow: active ? "0 0 0 3px rgba(245,158,11,0.08)" : "none",
+  }
+}
+
+function lightInputStyle(active) {
+  return {
+    width: "100%",
+    padding: "14px 16px",
+    background: active ? "#fff" : "#fff",
+    border: `1.5px solid ${active ? "#f59e0b" : "#e2e8f0"}`,
+    borderRadius: "12px",
+    color: "#0f172a",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+    transition: "all 0.2s",
+    fontFamily: "inherit",
+    fontWeight: "500",
+    boxShadow: active ? "0 0 0 3px rgba(245,158,11,0.1)" : "none",
+    "::placeholder": { color: "#94a3b8", fontWeight: "400" },
   }
 }
