@@ -279,7 +279,8 @@ export default function App() {
           !user ? (
             <Login onLogin={(u) => {
               localStorage.setItem("role", u.role || "admin")
-              setUser({ ...u, role: u.role || "admin" })
+              localStorage.setItem("plan", u.plan || "beta")
+              setUser({ ...u, role: u.role || "admin", plan: u.plan || "beta" })
             }} />
           ) : (
             <AppShell user={user} onLogout={handleLogout} />

@@ -15,6 +15,7 @@ import os
 import sys
 from backend.audit import log_user_login
 from backend.twofa import verify_totp_code
+from backend.permissions import is_role_allowed_for_plan, PlanTier, PLAN_ROLE_CEILING, get_tenant_plan, TIER_ORDER
 
 router = APIRouter()
 
@@ -322,6 +323,8 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "role": user.role,
         "email": user.email,
         "2fa_enabled": user.totp_enabled,
+        "plan": tenant.plan if tenant else "beta",
+        "tenant_id": user.tenant_id,
     }
 
 

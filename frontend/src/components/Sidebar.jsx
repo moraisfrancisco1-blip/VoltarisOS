@@ -4,6 +4,22 @@ import { useAppStore } from "../store/appStore"
 import { canAccessPage, isAdminRole } from "../config/roleAccess"
 import logoFull from "../logo_full.png"
 
+// ─── Plan feature gates (mirrors backend/permissions.py) ──────────────────
+const PLAN_FEATURE_GATES = {
+  dashboard: 0, sites: 0, carbon: 0, carbon_credit: 0, alerts: 0, reports: 0, settings: 0, scorecard: 0,
+  battery: 1, ev: 1, grid: 1, vpp: 1, resilience: 1, trading: 1, forecasting: 1, anomaly: 1, maintenance: 1, arbitrage: 1, degradation_lab: 1, solar_intel: 1,
+  autonomous: 2, marketplace: 2, dispatch_copilot: 2, revenue_opt: 2, compliance: 2, investor: 2,
+  users: 2, integrations: 2, whitelabel: 2, audit: 2, apikeys: 2, export: 2,
+}
+const PLAN_TIER_ORDER = { starter: 0, pro: 1, enterprise: 2, beta: 2 }
+
+function canAccessPlanFeature(plan, featureId) {
+  if (!plan) return true  // no plan info — allow all (graceful fallback)
+  const userTier = PLAN_TIER_ORDER[plan] ?? 0
+  const requiredTier = PLAN_FEATURE_GATES[featureId] ?? 2
+  return userTier >= requiredTier
+}
+
 // V dourado component for collapsed state
 function GoldenV({ size = 34 }) {
   return (
@@ -110,14 +126,19 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
     }
   ]
 
-  // Filter nav groups by role: admin group is admin/superadmin only; other
-  // groups/items are filtered against ROLE_PAGE_ACCESS. Empty groups are dropped.
+  // Filter nav groups by role AND plan: admin group is admin/superadmin only;
+  // other groups/items are filtered against ROLE_PAGE_ACCESS and PLAN_FEATURE_GATES.
+  // Empty groups are dropped. Admins skip plan checks.
   const role = user?.role || "operator"
+  const plan = user?.plan || "beta"
+  const isAdmin = isAdminRole(role)
   const VISIBLE_NAV_GROUPS = NAV_GROUPS
-    .filter(group => group.labelKey !== "nav_admin" || isAdminRole(role))
+    .filter(group => group.labelKey !== "nav_admin" || isAdmin)
     .map(group => ({
       ...group,
-      items: group.items.filter(item => canAccessPage(role, item.id)),
+      items: group.items.filter(item => 
+        canAccessPage(role, item.id) && (isAdmin || canAccessPlanFeature(plan, item.id))
+      ),
     }))
     .filter(group => group.items.length > 0)
 
