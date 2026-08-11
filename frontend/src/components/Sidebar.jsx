@@ -1,24 +1,165 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore } from "../store/appStore"
-import { canAccessPage, isAdminRole } from "../config/roleAccess"
+import { canAccessPage, isSuperAdmin, isAdminRole, SUPER_ADMIN_ONLY_PAGES } from "../config/roleAccess"
+import { canAccessPlanFeature, getPaywallInfo, PLAN_NAMES } from "../config/planFeatureGates"
 import logoFull from "../logo_full.png"
 
-// ─── Plan feature gates (mirrors backend/permissions.py) ──────────────────
-const PLAN_FEATURE_GATES = {
-  dashboard: 0, sites: 0, carbon: 0, carbon_credit: 0, alerts: 0, reports: 0, settings: 0, scorecard: 0,
-  battery: 1, ev: 1, grid: 1, vpp: 1, resilience: 1, trading: 1, forecasting: 1, anomaly: 1, maintenance: 1, arbitrage: 1, degradation_lab: 1, solar_intel: 1,
-  autonomous: 2, marketplace: 2, dispatch_copilot: 2, revenue_opt: 2, compliance: 2, investor: 2,
-  users: 2, integrations: 2, whitelabel: 2, audit: 2, apikeys: 2, export: 2,
-}
-const PLAN_TIER_ORDER = { starter: 0, pro: 1, enterprise: 2, beta: 2 }
+// ─── Paywall Modal ─────────────────────────────────────────────────────────
+function PaywallModal({ pageId, userPlan, onClose }) {
+  const { t } = useTranslation()
+  const info = getPaywallInfo(pageId)
+  const currentPlanName = PLAN_NAMES[userPlan] || userPlan || "Desconhecido"
 
-function canAccessPlanFeature(plan, featureId) {
-  if (!plan) return true  // no plan info — allow all (graceful fallback)
-  const userTier = PLAN_TIER_ORDER[plan] ?? 0
-  const requiredTier = PLAN_FEATURE_GATES[featureId] ?? 2
-  return userTier >= requiredTier
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(5,10,20,0.8)", backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "24px",
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: "460px", maxWidth: "92vw",
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          border: "1px solid rgba(245,158,11,0.25)",
+          borderRadius: "20px", padding: "32px 28px 24px",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.1)",
+        }}
+      >
+        {/* Icon */}
+        <div style={{
+          width: "56px", height: "56px", borderRadius: "16px",
+          background: "linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(249,115,22,0.2) 100%)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          marginBottom: "18px",
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <circle cx="12" cy="16" r="1" fill="#f59e0b"/>
+          </svg>
+        </div>
+
+        {/* Title */}
+        <h3 style={{
+          color: "#fff", fontSize: "20px", fontWeight: "700",
+          margin: "0 0 8px", letterSpacing: "-0.3px",
+        }}>
+          Funcionalidade Premium 🔒
+        </h3>
+        <p style={{
+          color: "rgba(255,255,255,0.6)", fontSize: "13.5px",
+          margin: "0 0 24px", lineHeight: 1.6,
+        }}>
+          Esta funcionalidade requer o plano{" "}
+          <strong style={{ color: "#f59e0b" }}>{info.requiredPlanName}</strong>{" "}
+          ou superior. O teu plano atual é{" "}
+          <strong style={{ color: "#f97316" }}>{currentPlanName}</strong>.
+        </p>
+
+        {/* Plan comparison */}
+        <div style={{
+          background: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "14px", padding: "16px 18px",
+          marginBottom: "24px",
+        }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            marginBottom: "12px",
+          }}>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", fontWeight: "600" }}>
+              Plano Necessário
+            </span>
+            <span style={{
+              color: "#f59e0b", fontSize: "18px", fontWeight: "800",
+              letterSpacing: "-0.3px",
+            }}>
+              {info.requiredPlanPrice}
+            </span>
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", fontWeight: "600" }}>
+              Plano Atual
+            </span>
+            <span style={{
+              color: "rgba(255,255,255,0.7)", fontSize: "14px", fontWeight: "600",
+            }}>
+              {currentPlanName}
+            </span>
+          </div>
+          <div style={{
+            marginTop: "14px", paddingTop: "14px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            color: "rgba(255,255,255,0.55)", fontSize: "12.5px",
+            lineHeight: 1.5,
+          }}>
+            {info.requiredPlanDescription}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={onClose}
+            style={{
+              flex: 1, padding: "12px",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "12px", color: "rgba(255,255,255,0.7)",
+              fontWeight: "600", fontSize: "13px", cursor: "pointer",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+          >
+            Fechar
+          </button>
+          <button
+            onClick={() => {
+              // Redirect to subscription upgrade page
+              window.open("/payment/upgrade", "_blank")
+              onClose()
+            }}
+            style={{
+              flex: 1.8, padding: "12px",
+              background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+              border: "none", borderRadius: "12px",
+              color: "#0a0f1a", fontWeight: "800", fontSize: "13px",
+              cursor: "pointer", transition: "box-shadow 0.15s",
+              boxShadow: "0 4px 20px rgba(245,158,11,0.3)",
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 6px 28px rgba(245,158,11,0.5)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"}
+          >
+            Fazer Upgrade para {info.requiredPlanName}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
+
+
+// ─── Lock icon component ────────────────────────────────────────────────────
+function LockBadge() {
+  return (
+    <span style={{
+      marginLeft: "auto", fontSize: "12px", opacity: 0.5,
+      display: "flex", alignItems: "center", flexShrink: 0,
+    }} title="Funcionalidade bloqueada — requer upgrade de plano">
+      🔒
+    </span>
+  )
+}
+
 
 // V dourado component for collapsed state
 function GoldenV({ size = 34 }) {
@@ -58,8 +199,16 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
   const accentStore = useAppStore(s => s.accentColor)
   const color = user?.color || accentStore || "#4ade80"
 
+  // Paywall modal state
+  const [paywallPage, setPaywallPage] = useState(null)
+
   // On mobile: sidebar is always full width (240px) when open, hidden when closed
   const w = isMobile ? 240 : (collapsed ? 64 : 240)
+
+  const role = user?.role || "TENANT_MEMBER"
+  const plan = user?.plan || "beta"
+  const admin = isAdminRole(role)
+  const superAdmin = isSuperAdmin(role)
 
   const NAV_GROUPS = [
     {
@@ -123,22 +272,38 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
         { id: "apikeys",   labelKey: "nav_apikeys",   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg> },
         { id: "export",    labelKey: "nav_export",    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
       ]
-    }
+    },
+    // ─── SUPER_ADMIN Exclusive Group ─────────────────────────────────────────
+    {
+      labelKey: "nav_devops",
+      items: [
+        { id: "super_admin_tenants", labelKey: "nav_super_tenants", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> },
+        { id: "super_admin_system_health", labelKey: "nav_system_health", icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> },
+      ]
+    },
   ]
 
-  // Filter nav groups by role AND plan: admin group is admin/superadmin only;
-  // other groups/items are filtered against ROLE_PAGE_ACCESS and PLAN_FEATURE_GATES.
-  // Empty groups are dropped. Admins skip plan checks.
-  const role = user?.role || "operator"
-  const plan = user?.plan || "beta"
-  const isAdmin = isAdminRole(role)
+  // ─── Filter logic ─────────────────────────────────────────────────────────
+  // ALL items are shown (no hiding based on plan).
+  // - Role check: admin group is visible only to TENANT_ADMIN/SUPER_ADMIN
+  // - SUPER_ADMIN group is visible ONLY to SUPER_ADMIN
+  // - Plan check: items that user's plan DOES NOT have → show with lock icon
   const VISIBLE_NAV_GROUPS = NAV_GROUPS
-    .filter(group => group.labelKey !== "nav_admin" || isAdmin)
+    .filter(group => {
+      // "nav_admin" group — show for admin roles only
+      if (group.labelKey === "nav_admin" && !admin) return false
+      // "nav_devops" group — SUPER_ADMIN only
+      if (group.labelKey === "nav_devops" && !superAdmin) return false
+      return true
+    })
     .map(group => ({
       ...group,
-      items: group.items.filter(item => 
-        canAccessPage(role, item.id) && (isAdmin || canAccessPlanFeature(plan, item.id))
-      ),
+      items: group.items.filter(item => {
+        // Role check: can the user access this page at all?
+        if (!canAccessPage(role, item.id)) return false
+        // Show locked items too (with 🔒) — don't filter by plan
+        return true
+      }),
     }))
     .filter(group => group.items.length > 0)
 
@@ -178,142 +343,197 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
   }
 
   return (
-    <aside style={sidebarStyle}>
-      {/* Header */}
-      <div style={{
-        padding: "0 12px",
-        height: "68px",
-        borderBottom: "1px solid var(--border)",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        flexShrink: 0,
-      }}>
-        <VoltarisLogo collapsed={showCollapsed} />
-        {!isMobile && (
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? "Expand" : "Collapse"}
-            style={{
-              marginLeft: collapsed ? "auto" : 0, background: "none", border: "none",
-              color: "var(--sidebar-sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--sidebar-text)"}
-            onMouseLeave={e => e.currentTarget.style.color = "var(--sidebar-sub)"}
-          >
-            {collapsed
-              ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-              : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-            }
-          </button>
-        )}
-        {isMobile && (
-          <button
-            onClick={() => setMobileOpen(false)}
-            style={{
-              background: "none", border: "none", color: "var(--sidebar-sub)",
-              cursor: "pointer", padding: "4px", borderRadius: "6px",
-              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        )}
-      </div>
-
-      {/* Company + role strip */}
-      {!showCollapsed && (
+    <>
+      <aside style={sidebarStyle}>
+        {/* Header */}
         <div style={{
-          margin: "10px 12px 2px", padding: "8px 12px",
-          background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
-          flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 12px",
+          height: "68px",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          flexShrink: 0,
         }}>
-          <div style={{ color: "var(--sidebar-sub)", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {user?.company || "Voltaris"}
-          </div>
-          <div style={{
-            fontSize: "9px", padding: "2px 7px", borderRadius: "20px",
-            background: "#f59e0b18", color: "#f59e0b",
-            textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700", flexShrink: 0, marginLeft: "8px",
-          }}>
-            {user?.role || "admin"}
-          </div>
+          <VoltarisLogo collapsed={showCollapsed} />
+          {!isMobile && (
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              title={collapsed ? "Expand" : "Collapse"}
+              style={{
+                marginLeft: collapsed ? "auto" : 0, background: "none", border: "none",
+                color: "var(--sidebar-sub)", cursor: "pointer", padding: "4px", borderRadius: "6px",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "color 0.15s",
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--sidebar-text)"}
+              onMouseLeave={e => e.currentTarget.style.color = "var(--sidebar-sub)"}
+            >
+              {collapsed
+                ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+              }
+            </button>
+          )}
+          {isMobile && (
+            <button
+              onClick={() => setMobileOpen(false)}
+              style={{
+                background: "none", border: "none", color: "var(--sidebar-sub)",
+                cursor: "pointer", padding: "4px", borderRadius: "6px",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          )}
         </div>
-      )}
 
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: "8px 0", overflowY: "auto", overflowX: "hidden" }}>
-        {VISIBLE_NAV_GROUPS.map((group, gi) => (
-          <div key={gi} style={{ marginBottom: "4px" }}>
-            {!showCollapsed && (
+        {/* Company + role + plan strip */}
+        {!showCollapsed && (
+          <div style={{
+            margin: "10px 12px 2px", padding: "8px 12px",
+            background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
+            flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <div style={{ color: "var(--sidebar-sub)", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {user?.company || "Voltaris"}
+            </div>
+            <div style={{ display: "flex", gap: "4px", flexShrink: 0, marginLeft: "6px" }}>
+              {/* Plan badge */}
               <div style={{
-                padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
-                color: "var(--sidebar-sub)", opacity: 0.6, textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
+                fontSize: "8px", padding: "2px 6px", borderRadius: "20px",
+                background: "rgba(245,158,11,0.12)", color: "#f59e0b",
+                textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700",
               }}>
-                {t(group.labelKey)}
+                {PLAN_NAMES[plan] || plan}
               </div>
-            )}
-            {showCollapsed && gi > 0 && (
-              <div style={{ margin: "4px 12px", height: "1px", background: "var(--border)" }} />
-            )}
-            {group.items.map(item => {
-              const active = page === item.id
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setPage(item.id)}
-                  title={showCollapsed ? t(item.labelKey) : ""}
-                  style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                    padding: showCollapsed ? "10px 0" : "9px 12px",
-                    justifyContent: showCollapsed ? "center" : "flex-start",
-                    background: active ? `${color}14` : "none", border: "none",
-                    borderLeft: active ? `2px solid ${color}` : "2px solid transparent",
-                    color: active ? color : "var(--sidebar-sub)",
-                    cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
-                    textAlign: "left", transition: "all 0.12s",
-                  }}
-                  onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "var(--sidebar-text)" } }}
-                  onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "var(--sidebar-sub)" } }}
-                >
-                  <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
-                  {!showCollapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
-                  {active && !showCollapsed && (
-                    <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: color, flexShrink: 0 }} />
-                  )}
-                </button>
-              )
-            })}
+              {/* Role badge */}
+              <div style={{
+                fontSize: "8px", padding: "2px 6px", borderRadius: "20px",
+                background: superAdmin ? "rgba(239,68,68,0.15)" : admin ? "rgba(16,185,129,0.12)" : "rgba(139,92,246,0.12)",
+                color: superAdmin ? "#ef4444" : admin ? "#10b981" : "#8b5cf6",
+                textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700",
+              }}>
+                {role === "SUPER_ADMIN" ? "DEV" : role === "TENANT_ADMIN" ? "ADMIN" : role}
+              </div>
+            </div>
           </div>
-        ))}
-      </nav>
+        )}
 
-      {/* Logout */}
-      <div style={{ padding: "10px 10px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
-        <button
-          onClick={onLogout}
-          title={showCollapsed ? t("logout") : ""}
-          style={{
-            width: "100%", padding: "9px 12px",
-            background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)",
-            borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "13px",
-            display: "flex", alignItems: "center", gap: "8px",
-            justifyContent: showCollapsed ? "center" : "flex-start", transition: "background 0.15s",
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.12)"}
-          onMouseLeave={e => e.currentTarget.style.background = "rgba(248,113,113,0.06)"}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          {!showCollapsed && <span>{t("logout")}</span>}
-        </button>
-      </div>
-    </aside>
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: "8px 0", overflowY: "auto", overflowX: "hidden" }}>
+          {VISIBLE_NAV_GROUPS.map((group, gi) => {
+            // Special styling for SUPER_ADMIN group header
+            const isDevGroup = group.labelKey === "nav_devops"
+            return (
+            <div key={gi} style={{ marginBottom: "4px" }}>
+              {!showCollapsed && (
+                <div style={{
+                  padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
+                  color: isDevGroup ? "#ef4444" : "var(--sidebar-sub)",
+                  opacity: isDevGroup ? 1 : 0.6,
+                  textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
+                }}>
+                  {isDevGroup ? "🔧 DEV" : t(group.labelKey)}
+                </div>
+              )}
+              {showCollapsed && gi > 0 && (
+                <div style={{
+                  margin: "4px 12px", height: "1px",
+                  background: isDevGroup ? "rgba(239,68,68,0.3)" : "var(--border)",
+                }} />
+              )}
+              {group.items.map(item => {
+                const active = page === item.id
+                const hasAccess = superAdmin || canAccessPlanFeature(plan, item.id)
+                const isDevItem = group.labelKey === "nav_devops"
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      if (!hasAccess) {
+                        // Open Paywall modal for locked items
+                        setPaywallPage(item.id)
+                        return
+                      }
+                      setPage(item.id)
+                    }}
+                    title={showCollapsed ? t(item.labelKey) : ""}
+                    style={{
+                      width: "100%", display: "flex", alignItems: "center", gap: "10px",
+                      padding: showCollapsed ? "10px 0" : "9px 12px",
+                      justifyContent: showCollapsed ? "center" : "flex-start",
+                      background: active ? `${isDevItem ? "#ef4444" : color}14` : "none",
+                      border: "none",
+                      borderLeft: active ? `2px solid ${isDevItem ? "#ef4444" : color}` : "2px solid transparent",
+                      color: active ? (isDevItem ? "#ef4444" : color) : (isDevItem ? "rgba(239,68,68,0.6)" : "var(--sidebar-sub)"),
+                      cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
+                      textAlign: "left", transition: "all 0.12s",
+                      opacity: hasAccess ? 1 : 0.55,
+                    }}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        e.currentTarget.style.background = isDevItem ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.06)"
+                        e.currentTarget.style.color = isDevItem ? "#ef4444" : "var(--sidebar-text)"
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        e.currentTarget.style.background = "none"
+                        e.currentTarget.style.color = isDevItem ? "rgba(239,68,68,0.6)" : "var(--sidebar-sub)"
+                      }
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
+                    {!showCollapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
+                    {!showCollapsed && !hasAccess && <LockBadge />}
+                    {active && !showCollapsed && (
+                      <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: isDevItem ? "#ef4444" : color, flexShrink: 0 }} />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            )
+          })}
+        </nav>
+
+        {/* Logout */}
+        <div style={{ padding: "10px 10px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>
+          <button
+            onClick={onLogout}
+            title={showCollapsed ? t("logout") : ""}
+            style={{
+              width: "100%", padding: "9px 12px",
+              background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.2)",
+              borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "13px",
+              display: "flex", alignItems: "center", gap: "8px",
+              justifyContent: showCollapsed ? "center" : "flex-start", transition: "background 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(248,113,113,0.12)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(248,113,113,0.06)"}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            {!showCollapsed && <span>{t("logout")}</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Paywall Modal */}
+      {paywallPage && (
+        <PaywallModal
+          pageId={paywallPage}
+          userPlan={plan}
+          onClose={() => setPaywallPage(null)}
+        />
+      )}
+    </>
   )
 }

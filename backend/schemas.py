@@ -2,12 +2,100 @@
 schemas.py — Pydantic schemas for validation.
 
 Centralized validation schemas for API endpoints.
-Used for batch ingest, VPP bids, and trading operations.
+Used for batch ingest, VPP bids, trading operations, and auth DTOs.
 """
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Set
 from datetime import datetime
 from enum import Enum
+
+
+# ─── Auth & RBAC Enums ────────────────────────────────────────────────────────
+
+class SystemRole(str, Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    TENANT_ADMIN = "TENANT_ADMIN"
+    TENANT_MEMBER = "TENANT_MEMBER"
+
+
+class SubscriptionPlan(str, Enum):
+    BETA = "beta"
+    HOME = "home"
+    SMART = "smart"
+    STARTER = "starter"
+    PRO = "pro"
+    ENTERPRISE = "enterprise"
+
+
+# ─── Auth Schemas ─────────────────────────────────────────────────────────────
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+    totp_code: str | None = None
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+    company: str
+    color: str = "#4ade80"
+    beta_code: str = ""
+    terms_accepted: bool = False
+    plan: str = ""  # selected plan during onboarding — required if no promotional beta code
+    role: str = "TENANT_MEMBER"
+
+
+class InviteUserRequest(BaseModel):
+    email: str
+    password: str
+    name: str
+    role: str = "TENANT_MEMBER"
+    color: str = "#4ade80"
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class UserOut(BaseModel):
+    id: int
+    tenant_id: int
+    email: str
+    name: str | None
+    role: str
+    color: str | None
+    active: bool
+    last_login: datetime | None
+    created_at: datetime | None
+    terms_accepted_at: datetime | None
+    totp_enabled: bool = False
+
+    class Config:
+        from_attributes = True
+
+
+class LoginResponse(BaseModel):
+    token: str
+    company: str | None
+    color: str | None
+    role: str
+    email: str
+    plan: str
+    tenant_id: int
+    allowed_modules: Set[str] = set()
+    twofa_enabled: bool = False
+
+
+class InviteValidateResponse(BaseModel):
+    valid: bool
+    code: str
+    tier: str
+    label: str
+    roles: List[str]
+    max_sites: int = 1
+    modules: List[str] = []
 
 
 # ─── Device Reading Schemas ──────────────────────────────────────────────────

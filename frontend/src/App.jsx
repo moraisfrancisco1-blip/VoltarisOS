@@ -49,7 +49,8 @@ import ShortcutsOverlay from "./components/ShortcutsOverlay"
 import SimBanner from "./components/SimBanner"
 import OnboardingWizard from "./components/OnboardingWizard"
 import { useAppStore, THEMES } from "./store/appStore"
-import { canAccessPage } from "./config/roleAccess"
+import { canAccessPage, isSuperAdmin } from "./config/roleAccess"
+import { canAccessPlanFeature } from "./config/planFeatureGates"
 import "./index.css"
 
 const PAGES = {
@@ -144,7 +145,22 @@ function AppShell({ user, onLogout }) {
   }, [addToast])
 
   const handleSetPage = (p) => {
+    // SUPER_ADMIN bypasses all checks
+    if (isSuperAdmin(user?.role)) {
+      setPage(p)
+      if (isMobile) setMobileOpen(false)
+      return
+    }
+    // Check role-based access
     if (!canAccessPage(user?.role, p)) return
+    // Check plan-based access (if locked, Sidebar handles the Paywall modal)
+    if (!canAccessPlanFeature(user?.plan, p)) {
+      // The Sidebar will intercept this via setPage — just set it anyway
+      // The Sidebar's onClick for locked items overrides this
+      setPage(p)
+      if (isMobile) setMobileOpen(false)
+      return
+    }
     setPage(p)
     if (isMobile) setMobileOpen(false)
   }
@@ -261,8 +277,11 @@ export default function App() {
     const token = localStorage.getItem("token")
     const company = localStorage.getItem("company")
     const color = localStorage.getItem("color")
-    const role = localStorage.getItem("role") || "admin"
-    return token ? { token, company, color, role } : null
+    const role = localStorage.getItem("role") || "TENANT_MEMBER"
+    const plan = localStorage.getItem("plan") || "beta"
+    const allowedModulesStr = localStorage.getItem("allowed_modules")
+    const allowed_modules = allowedModulesStr ? JSON.parse(allowedModulesStr) : []
+    return token ? { token, company, color, role, plan, allowed_modules } : null
   })
 
   const handleLogout = () => { localStorage.clear(); setUser(null) }
@@ -278,9 +297,17 @@ export default function App() {
         <Route path="/*" element={
           !user ? (
             <Login onLogin={(u) => {
-              localStorage.setItem("role", u.role || "admin")
+              localStorage.setItem("role", u.role || "TENANT_MEMBER")
               localStorage.setItem("plan", u.plan || "beta")
-              setUser({ ...u, role: u.role || "admin", plan: u.plan || "beta" })
+              if (u.allowed_modules) {
+                localStorage.setItem("allowed_modules", JSON.stringify(u.allowed_modules))
+              }
+              setUser({
+                ...u,
+                role: u.role || "TENANT_MEMBER",
+                plan: u.plan || "beta",
+                allowed_modules: u.allowed_modules || [],
+              })
             }} />
           ) : (
             <AppShell user={user} onLogout={handleLogout} />

@@ -79,24 +79,64 @@ async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer
 
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:
-    """FastAPI dependency — require superadmin/admin role."""
-    if user.get("role") not in ("superadmin", "admin"):
+    """FastAPI dependency — require TENANT_ADMIN or SUPER_ADMIN role."""
+    if user.get("role") not in ("SUPER_ADMIN", "TENANT_ADMIN"):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito a administradores")
+    return user
+
+
+async def require_super_admin(user: dict = Depends(get_current_user)) -> dict:
+    """FastAPI dependency — require SUPER_ADMIN role exclusively.
+    Used for infrastructure routes, global tenant management, and system health.
+    No other role (including TENANT_ADMIN) can pass this check."""
+    if user.get("role") != "SUPER_ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito ao Super Admin da plataforma")
     return user
 
 
 def require_role(*allowed_roles: str):
     """Factory for a FastAPI dependency restricting an endpoint to specific roles.
-    superadmin/admin always pass regardless of the list (they retain full access).
-    Usage: Depends(require_role("operator", "admin"))"""
+    SUPER_ADMIN always pass regardless of the list (they retain full access).
+    Usage: Depends(require_role("TENANT_MEMBER", "TENANT_ADMIN"))"""
     async def _dep(user: dict = Depends(get_current_user)) -> dict:
         role = user.get("role")
-        if role in ("superadmin", "admin"):
+        if role == "SUPER_ADMIN":
             return user
         if role not in allowed_roles:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso não permitido para este tipo de conta")
         return user
     return _dep
+
+
+async def check_module_access(module_name: str, user: dict = Depends(get_current_user)) -> dict:
+    """FastAPI dependency — validate that the user's active plan includes the requested module.
+    
+    Usage:
+        @router.post("/trading/execute")
+        async def execute_trade(..., _: dict = Depends(lambda: check_module_access("markets_trading"))):
+            ...
+    
+    SUPER_ADMIN bypasses all module checks.
+    Module access is determined by the ALLOWED_MODULES per plan (see permissions.py).
+    """
+    from backend.permissions import can_access_module, get_tenant_plan
+    from backend.database import SessionLocal
+    
+    role = user.get("role", "")
+    if role == "SUPER_ADMIN":
+        return user
+    
+    db = SessionLocal()
+    try:
+        plan = get_tenant_plan(user, db)
+        if not can_access_module(plan, module_name):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"O módulo '{module_name}' não está disponível no teu plano ({plan}). Faz upgrade para desbloquear.",
+            )
+        return user
+    finally:
+        db.close()
 
 
 # ─── Service-to-service auth (gateway/rules engine, not a logged-in user) ────

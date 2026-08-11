@@ -11,8 +11,8 @@ class Tenant(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, nullable=False)       # url-safe id
-    plan = Column(String, default="starter")                  # starter|pro|enterprise
-    max_sites = Column(Integer, default=10)
+    plan = Column(String, default="beta")                     # beta|home|smart|starter|pro|enterprise
+    max_sites = Column(Integer, default=1)
     max_devices = Column(Integer, default=50)
     logo_url = Column(String, nullable=True)
     primary_color = Column(String, default="#f59e0b")
@@ -27,7 +27,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     name = Column(String, nullable=True)
-    role = Column(String, default="operator")   # superadmin|admin|operator|viewer|installer
+    role = Column(String, default="TENANT_MEMBER")   # SUPER_ADMIN|TENANT_ADMIN|TENANT_MEMBER
     color = Column(String, default="#4ade80")
     active = Column(Boolean, default=True)
     last_login = Column(DateTime, nullable=True)
