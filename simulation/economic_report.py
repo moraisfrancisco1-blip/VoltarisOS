@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
 
+from optimization.assets import BatteryAsset, EVAsset, HeatPumpAsset, IndustrialLoadAsset, SolarAsset
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
 from simulation.scenarios.mixed_vpp_24h import build_mixed_vpp
 
@@ -18,11 +19,28 @@ class ScenarioMetrics:
     savings_vs_baseline_eur: float = 0.0
 
 
+_ASSET_TYPES = {
+    SolarAsset: "solar",
+    BatteryAsset: "battery",
+    EVAsset: "ev",
+    IndustrialLoadAsset: "industrial_load",
+    HeatPumpAsset: "heat_pump",
+}
+
+
+def _asset_type(asset) -> str | None:
+    for cls, asset_type in _ASSET_TYPES.items():
+        if isinstance(asset, cls):
+            return asset_type
+    return None
+
+
 def _run(name: str, enabled_types: set[str] | None) -> ScenarioMetrics:
     portfolio = build_mixed_vpp()
     if enabled_types is not None:
         for asset in portfolio.assets:
-            asset.enabled = asset.asset_type in enabled_types or asset.asset_type == "solar"
+            asset_type = _asset_type(asset)
+            asset.enabled = asset_type in enabled_types
     result = MultiAssetOptimizer().optimize(portfolio)
     if result.status != "optimal":
         raise RuntimeError(f"Scenario {name} is not optimal: {result.status}")
