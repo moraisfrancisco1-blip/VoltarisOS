@@ -14,6 +14,8 @@ class MultiAssetOptimizationResult:
     total_import_kwh: float
     total_export_kwh: float
     asset_dispatch: Dict[str, List[float]] = field(default_factory=dict)
+    site_dispatch: Dict[str, List[float]] = field(default_factory=dict)
+    vpp_dispatch: List[float] = field(default_factory=list)
     solver_time_ms: float = 0.0
 
 
@@ -150,9 +152,18 @@ class MultiAssetOptimizer:
             v = battery_vars[a.asset_id]
             dispatch[a.asset_id] = [round((value(v["discharge"][t]) or 0.0) - (value(v["charge"][t]) or 0.0), 3) for t in range(n)]
         for a in evs:
-            dispatch[a.asset_id] = [round(-(value(ev_vars[a.asset_id]["charge"][t]) or 0.0), 3) for t in range(n)]
+            v = ev_vars[a.asset_id]
+            dispatch[a.asset_id] = [round(-(value(v["charge"][t]) or 0.0), 3) for t in range(n)]
         for a in flex_loads:
             dispatch[a.asset_id] = [round(value(flex_vars[a.asset_id][t]) or 0.0, 3) for t in range(n)]
+
+        site_dispatch: Dict[str, List[float]] = {}
+        for asset in batteries + evs + flex_loads:
+            site_key = str(asset.site_id) if asset.site_id is not None else "unassigned"
+            values = dispatch.get(asset.asset_id, [0.0] * n)
+            site_dispatch.setdefault(site_key, [0.0] * n)
+            site_dispatch[site_key] = [round(x + y, 3) for x, y in zip(site_dispatch[site_key], values)]
+        vpp_dispatch = [round(sum(values[t] for values in site_dispatch.values()), 3) for t in range(n)]
 
         return MultiAssetOptimizationResult(
             "optimal", schedule,
@@ -160,6 +171,8 @@ class MultiAssetOptimizer:
             round(sum(r["grid_import_kw"] for r in schedule), 3),
             round(sum(r["grid_export_kw"] for r in schedule), 3),
             dispatch,
+            site_dispatch,
+            vpp_dispatch,
             round((time.time() - started) * 1000, 1),
         )
 
