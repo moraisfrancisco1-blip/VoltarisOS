@@ -14,12 +14,32 @@ from optimization.assets import (
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
 
 
+def _baseline_ev_profile(asset: EVAsset, horizon: int = 24) -> list[float]:
+    """Unmanaged reference charging: max power immediately on arrival until target energy is met."""
+    required_kwh = max(0.0, (asset.target_soc - asset.initial_soc) * asset.capacity_kwh)
+    profile = [0.0] * horizon
+    for hour in range(max(0, asset.arrival_hour), min(asset.departure_hour, horizon)):
+        if required_kwh <= 1e-9:
+            break
+        power = min(asset.max_charge_kw, required_kwh / asset.charge_efficiency)
+        profile[hour] = power
+        required_kwh -= power * asset.charge_efficiency
+    return profile
+
+
 def build_mixed_vpp() -> VPPPortfolio:
     prices = [45, 42, 40, 38, 40, 48, 65, 90, 120, 110, 95, 80,
               70, 68, 72, 85, 105, 145, 170, 155, 120, 90, 65, 50]
     solar = [0, 0, 0, 0, 0, 10, 40, 120, 220, 300, 360, 400,
              420, 390, 330, 250, 150, 60, 10, 0, 0, 0, 0, 0]
     base_load = [300] * 24
+
+    factory_baseline = 450.0
+    for hour in range(6, 22):
+        base_load[hour] += factory_baseline
+
+    heat_pump_baseline = 8.0
+    base_load = [load + heat_pump_baseline for load in base_load]
 
     portfolio = VPPPortfolio(
         base_load_kw=base_load,
@@ -40,6 +60,7 @@ def build_mixed_vpp() -> VPPPortfolio:
                                       start_hour=6, end_hour=22,
                                       curtailment_cost_eur_kwh=0.08))
     portfolio.add(HeatPumpAsset("hp-1", "Heat Pump", site_id=103,
+                                baseline_power_kw=heat_pump_baseline,
                                 nominal_power_kw=80, min_power_kw=0,
                                 initial_thermal_kwh=50, min_thermal_kwh=20,
                                 max_thermal_kwh=120, thermal_gain_per_kwh=1.0,
