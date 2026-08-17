@@ -37,7 +37,7 @@ class MultiAssetOptimizer:
         flex_loads = [a for a in portfolio.assets if isinstance(a, FlexibleLoadAsset) and a.enabled]
 
         try:
-            from pulp import LpMinimize, LpProblem, LpStatus, LpVariable, PULP_CBC_CMD, lpSum, value
+            from pulp import LpMinimize, LpProblem, LpStatus, LpVariable, COIN_CMD, lpSum, value
         except ImportError:
             return MultiAssetOptimizationResult("error", [], 0.0, 0.0, 0.0,
                                                 solver_time_ms=(time.time() - started) * 1000)
@@ -113,7 +113,7 @@ class MultiAssetOptimizer:
             if a.energy_required_kwh > 0:
                 prob += sum(flex_vars[a.asset_id]) >= a.energy_required_kwh
 
-        prob.solve(PULP_CBC_CMD(msg=False))
+        prob.solve(COIN_CMD(msg=False))
         status = LpStatus.get(prob.status, "unknown").lower()
         if status != "optimal":
             return MultiAssetOptimizationResult(status, [], 0.0, 0.0, 0.0,
