@@ -102,6 +102,10 @@ def optimize_multi_asset(request: MultiAssetOptimizeRequest):
         "total_import_kwh": result.total_import_kwh,
         "total_export_kwh": result.total_export_kwh,
         "solver_time_ms": result.solver_time_ms,
-        "asset_dispatch": result.asset_dispatch,
+        "dispatch": {
+            "assets": result.asset_dispatch,
+            "sites": result.site_dispatch,
+            "vpp": result.vpp_dispatch,
+        },
         "schedule": result.schedule,
     }
