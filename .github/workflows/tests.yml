@@ -26,5 +26,5 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
-      - name: Run multi-asset optimizer tests
-        run: python -m pytest -q optimization/test_multi_asset_optimizer.py
+      - name: Run VPP optimizer and integration tests
+        run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py
