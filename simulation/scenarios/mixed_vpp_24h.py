@@ -39,12 +39,15 @@ def build_mixed_vpp() -> VPPPortfolio:
                                       max_power_kw=450, energy_required_kwh=7200,
                                       start_hour=6, end_hour=22,
                                       curtailment_cost_eur_kwh=0.08))
+    # Baseline heat pump: 8 kW continuously. With 8 kWh/h thermal gain
+    # and 8 kWh/h loss, the baseline preserves the initial 50 kWh state.
+    # VPP flexibility is therefore purely temporal and energy-neutral.
     portfolio.add(HeatPumpAsset("hp-1", "Heat Pump", site_id=103,
                                 baseline_power_kw=8.0,
                                 nominal_power_kw=80, min_power_kw=0,
                                 initial_thermal_kwh=50, min_thermal_kwh=20,
                                 max_thermal_kwh=120, thermal_gain_per_kwh=1.0,
-                                thermal_loss_kwh=8, target_thermal_kwh=70,
+                                thermal_loss_kwh=8, target_thermal_kwh=50,
                                 start_hour=0, end_hour=24))
     return portfolio
 
