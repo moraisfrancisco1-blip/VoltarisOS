@@ -112,5 +112,9 @@ def test_persisted_vpp_maps_and_optimizes(tmp_path, monkeypatch):
     assert result.status == "optimal"
     assert f"device-{battery.id}" in result.asset_dispatch
     assert f"device-{ev.id}" in result.asset_dispatch
+    assert "101" in result.site_dispatch
+    assert len(result.site_dispatch["101"]) == 24
+    assert len(result.vpp_dispatch) == 24
+    assert result.vpp_dispatch == result.site_dispatch["101"]
 
     db.close()
