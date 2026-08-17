@@ -7,7 +7,7 @@ def test_mixed_vpp_24h_is_optimizable_and_aggregates_dispatch():
 
     assert result.status == "optimal"
     assert len(result.vpp_dispatch) == 24
-    assert set(result.asset_dispatch) == {"battery-1", "ev-1", "factory-1"}
+    assert set(result.asset_dispatch) == {"battery-1", "ev-1", "factory-1", "hp-1"}
     assert {"101", "102", "103"}.issubset(result.site_dispatch)
     assert len(result.site_dispatch["101"]) == 24
     assert len(result.site_dispatch["102"]) == 24
