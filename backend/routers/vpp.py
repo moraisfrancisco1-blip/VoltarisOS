@@ -4,10 +4,11 @@ GET  /api/vpp                    — listar grupos
 POST /api/vpp                    — criar grupo
 POST /api/vpp/{id}/sites         — adicionar site ao grupo
 GET  /api/vpp/{id}/aggregate     — potência agregada em tempo real
-POST /api/vpp/{id}/bid           — submeter bid ao mercado
-GET  /api/vpp/{id}/bids          — histórico de bids
-GET  /api/vpp/{id}/dispatch      — calcular dispatch por site
-POST /api/vpp/{id}/optimize      — otimizar o VPP com o motor multi-asset
+POST /api/vpp/{id}/bid            — submeter bid ao mercado
+GET  /api/vpp/{id}/bids           — histórico de bids
+GET  /api/vpp/{id}/dispatch       — calcular dispatch por site
+POST /api/vpp/{id}/optimize       — otimizar o VPP com o motor multi-asset
+POST /api/vpp/{id}/dispatch/dry-run — transformar dispatch em setpoints sem controlo físico
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -19,6 +20,7 @@ from backend import models
 from backend.audit import log_audit_event
 from optimization.asset_mapper import build_portfolio_from_vpp
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
+from control.dispatch_executor import DispatchExecutor
 
 router = APIRouter(prefix="/api/vpp", tags=["vpp"])
 
@@ -214,13 +216,7 @@ def _recommend(strategy: str, power_kw: float, price: float, min_bid: float) -> 
     return {"action": "hold", "reason": "Conditions not optimal for bidding"}
 
 
-@router.post("/{vpp_id}/optimize")
-async def optimize_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session = Depends(get_db)):
-    """Run the multi-asset optimizer against the persisted VPP portfolio.
-
-    The endpoint maps VPPGroup -> site memberships -> devices -> optimizer assets.
-    It does not send any physical setpoints to equipment.
-    """
+def _optimize_persisted_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session):
     vpp = db.query(models.VPPGroup).filter(models.VPPGroup.id == vpp_id).first()
     if not vpp:
         raise HTTPException(404, "VPP group not found")
@@ -266,6 +262,13 @@ async def optimize_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session = Depends
         portfolio.max_export_kw = body.max_export_kw
 
     result = MultiAssetOptimizer().optimize(portfolio)
+    return vpp, price_source, mapping, result
+
+
+@router.post("/{vpp_id}/optimize")
+async def optimize_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session = Depends(get_db)):
+    """Run the multi-asset optimizer against the persisted VPP portfolio."""
+    vpp, price_source, mapping, result = await _optimize_persisted_vpp(vpp_id, body, db)
     return {
         "vpp_id": vpp_id,
         "status": result.status,
@@ -276,8 +279,49 @@ async def optimize_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session = Depends
         "total_export_kwh": result.total_export_kwh,
         "solver_time_ms": result.solver_time_ms,
         "asset_dispatch": result.asset_dispatch,
+        "site_dispatch": result.site_dispatch,
+        "vpp_dispatch": result.vpp_dispatch,
         "schedule": result.schedule,
         "physical_control": "not_connected",
+    }
+
+
+@router.post("/{vpp_id}/dispatch/dry-run")
+async def dispatch_dry_run(vpp_id: int, body: VPPOptimizeBody, db: Session = Depends(get_db)):
+    """Optimize a persisted VPP and translate its asset dispatch into safe setpoints.
+
+    This endpoint is deliberately simulation-only. It never writes to physical devices.
+    """
+    vpp, price_source, mapping, result = await _optimize_persisted_vpp(vpp_id, body, db)
+    if result.status != "optimal":
+        raise HTTPException(422, f"Optimizer status is {result.status}; no setpoints generated")
+
+    members = db.query(models.VPPSiteMembership).filter(
+        models.VPPSiteMembership.vpp_id == vpp.id
+    ).all()
+    site_ids = [m.site_id for m in members]
+    devices = (
+        db.query(models.Device)
+        .filter(models.Device.site_id.in_(site_ids), models.Device.enabled.is_(True))
+        .all()
+        if site_ids else []
+    )
+
+    executor = DispatchExecutor(mode="dry_run")
+    setpoints = executor.build_setpoints(devices, result.asset_dispatch)
+    plan = executor.execute(setpoints)
+
+    return {
+        "vpp_id": vpp_id,
+        "status": result.status,
+        "price_source": price_source,
+        "mapping": mapping,
+        "dispatch": {
+            "vpp": result.vpp_dispatch,
+            "sites": result.site_dispatch,
+            "assets": result.asset_dispatch,
+        },
+        "execution": plan,
     }
 
 
@@ -385,8 +429,7 @@ def performance(vpp_id: int, days: int = 30, db: Session = Depends(get_db)):
         "accepted": len(accepted),
         "acceptance_rate_pct": round(len(accepted) / max(total_bids, 1) * 100, 1),
         "total_pnl_eur": round(total_pnl, 2),
-        "total_energy_mwh": round(total_kwh / 1000, 2),
-        "avg_price_eur_mwh": round(
-            sum(b.price_eur_mwh or 0 for b in accepted) / max(len(accepted), 1), 2
-        ),
+        "total_kwh": round(total_kwh, 1),
+        "avg_pnl_per_bid_eur": round(total_pnl / max(len(accepted), 1), 2),
+        "period_days": days,
     }
