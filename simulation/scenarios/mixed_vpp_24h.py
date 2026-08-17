@@ -36,7 +36,7 @@ def build_mixed_vpp() -> VPPPortfolio:
                           target_soc=0.80, arrival_hour=7, departure_hour=19))
     portfolio.add(IndustrialLoadAsset("factory-1", "Factory", site_id=102,
                                       baseline_kw=450, min_power_kw=300,
-                                      max_power_kw=450, energy_required_kwh=7200,
+                                      max_power_kw=450, energy_required_kwh=0,
                                       start_hour=6, end_hour=22,
                                       curtailment_cost_eur_kwh=0.08))
     # Baseline heat pump: 8 kW continuously. With 8 kWh/h thermal gain
