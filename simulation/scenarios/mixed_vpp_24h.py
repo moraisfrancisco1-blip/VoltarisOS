@@ -41,6 +41,12 @@ def build_mixed_vpp() -> VPPPortfolio:
     heat_pump_baseline = 8.0
     base_load = [load + heat_pump_baseline for load in base_load]
 
+    ev = EVAsset("ev-1", "Fleet EV", site_id=101,
+                 capacity_kwh=80, max_charge_kw=22, initial_soc=0.35,
+                 target_soc=0.80, arrival_hour=7, departure_hour=19)
+    ev_baseline = _baseline_ev_profile(ev)
+    base_load = [load + ev_baseline[t] for t, load in enumerate(base_load)]
+
     portfolio = VPPPortfolio(
         base_load_kw=base_load,
         prices_eur_mwh=prices,
@@ -51,9 +57,7 @@ def build_mixed_vpp() -> VPPPortfolio:
     portfolio.add(BatteryAsset("battery-1", "Battery Site 1", site_id=101,
                                capacity_kwh=800, max_charge_kw=300, max_discharge_kw=300,
                                initial_soc=0.55))
-    portfolio.add(EVAsset("ev-1", "Fleet EV", site_id=101,
-                          capacity_kwh=80, max_charge_kw=22, initial_soc=0.35,
-                          target_soc=0.80, arrival_hour=7, departure_hour=19))
+    portfolio.add(ev)
     portfolio.add(IndustrialLoadAsset("factory-1", "Factory", site_id=102,
                                       baseline_kw=450, min_power_kw=300,
                                       max_power_kw=450, energy_required_kwh=7200,
