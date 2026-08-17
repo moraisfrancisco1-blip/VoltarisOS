@@ -1,18 +1,20 @@
+import pytest
+
 from control.dispatch_executor import DispatchExecutor
 
 
-def test_dispatch_executor_is_dry_run_and_clamps_battery():
-    class Device:
-        id = 7
-        site_id = 101
-        device_type = "battery"
-        config = {"max_charge_kw": 100, "max_discharge_kw": 80}
+class Device:
+    def __init__(self, device_id, site_id, device_type, config):
+        self.id = device_id
+        self.site_id = site_id
+        self.device_type = device_type
+        self.config = config
 
+
+def test_dispatch_executor_is_dry_run_and_clamps_battery():
+    device = Device(7, 101, "battery", {"max_charge_kw": 100, "max_discharge_kw": 80})
     executor = DispatchExecutor()
-    setpoints = executor.build_setpoints(
-        [Device()],
-        {"device-7": [120, -150, 20]},
-    )
+    setpoints = executor.build_setpoints([device], {"device-7": [120, -150, 20]})
 
     assert [sp.power_kw for sp in setpoints] == [80.0, -100.0, 20.0]
     assert [sp.action for sp in setpoints] == ["discharge", "charge", "discharge"]
@@ -23,9 +25,13 @@ def test_dispatch_executor_is_dry_run_and_clamps_battery():
 
 
 def test_physical_execution_is_rejected():
-    try:
+    with pytest.raises(ValueError, match="dry_run"):
         DispatchExecutor(mode="live")
-    except ValueError as exc:
-        assert "dry_run" in str(exc)
-    else:
-        raise AssertionError("Physical execution must remain disabled")
+
+
+def test_ev_can_only_charge():
+    device = Device(8, 101, "ev", {"max_charge_kw": 50})
+    setpoints = DispatchExecutor().build_setpoints([device], {"device-8": [20, -30]})
+
+    assert [sp.power_kw for sp in setpoints] == [0.0, -30.0]
+    assert [sp.action for sp in setpoints] == ["hold", "charge"]
