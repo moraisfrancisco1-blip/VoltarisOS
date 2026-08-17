@@ -10,7 +10,7 @@ pydantic
 scipy
 httpx
 python-multipart
- aiofiles
+aiofiles
 python-jose[cryptography]
 openai
 python-dotenv
