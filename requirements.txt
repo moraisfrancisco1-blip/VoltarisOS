@@ -3,7 +3,7 @@ uvicorn[standard]
 numpy
 pandas
 pyomo
-pulp
+pulp[cbc]
 pytest
 sqlalchemy
 pydantic
