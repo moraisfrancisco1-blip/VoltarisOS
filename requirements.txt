@@ -3,12 +3,14 @@ uvicorn[standard]
 numpy
 pandas
 pyomo
+pulp
+pytest
 sqlalchemy
 pydantic
 scipy
 httpx
 python-multipart
-aiofiles
+ aiofiles
 python-jose[cryptography]
 openai
 python-dotenv
