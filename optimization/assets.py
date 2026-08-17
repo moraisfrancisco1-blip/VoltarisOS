@@ -65,19 +65,19 @@ class IndustrialLoadAsset(FlexibleLoadAsset):
 
 
 @dataclass
-class HeatPumpAsset(EnergyAsset):
-    """Thermally flexible electric load represented by a simple energy-equivalent state."""
+class HeatPumpAsset(FlexibleLoadAsset):
+    """Thermally flexible electric load represented by an energy-equivalent state."""
     nominal_power_kw: float = 20.0
-    min_power_kw: float = 0.0
     initial_thermal_kwh: float = 50.0
     min_thermal_kwh: float = 0.0
     max_thermal_kwh: float = 100.0
     thermal_gain_per_kwh: float = 1.0
     thermal_loss_kwh: float = 0.0
     target_thermal_kwh: Optional[float] = None
-    start_hour: int = 0
-    end_hour: int = 24
     operating_cost_eur_kwh: float = 0.0
+
+    def __post_init__(self):
+        self.max_power_kw = self.nominal_power_kw
 
 
 @dataclass
