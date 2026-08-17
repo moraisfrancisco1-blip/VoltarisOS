@@ -149,11 +149,16 @@ class MultiAssetOptimizer:
                 prob += v["soc"][t] == previous + actual_charge * a.charge_efficiency
             departure = min(max(a.departure_hour - 1, 0), n - 1)
             prob += v["soc"][departure] >= a.target_soc * a.capacity_kwh
+            # EV flexibility is energy-neutral: VPP may shift charging, not create extra charging.
+            prob += lpSum(v["delta"]) == 0
 
         for a in flex_loads:
             if a.energy_required_kwh > 0:
                 actual_load = [(a.baseline_kw + flex_vars[a.asset_id][t]) if isinstance(a, IndustrialLoadAsset) else flex_vars[a.asset_id][t] for t in range(n)]
                 prob += sum(actual_load) >= a.energy_required_kwh
+            if isinstance(a, IndustrialLoadAsset):
+                # Industrial flexibility is energy-neutral over the operating window.
+                prob += lpSum(flex_vars[a.asset_id]) == 0
 
         for a in heat_pumps:
             v = heat_pump_vars[a.asset_id]
@@ -164,6 +169,8 @@ class MultiAssetOptimizer:
             if a.target_thermal_kwh is not None:
                 target_hour = min(max(a.end_hour - 1, 0), n - 1)
                 prob += v["thermal"][target_hour] >= a.target_thermal_kwh
+            # Thermal flexibility is energy-neutral: shift the heat-pump profile around its baseline.
+            prob += lpSum(v["delta"]) == 0
 
         prob.solve(COIN_CMD(msg=False))
         status = LpStatus.get(prob.status, "unknown").lower()
