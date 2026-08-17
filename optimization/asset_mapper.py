@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
 from sqlalchemy.orm import Session
@@ -99,7 +99,6 @@ def build_portfolio_from_vpp(
         site = sites.get(membership.site_id, {})
         site_devices = devices_by_site.get(membership.site_id, [])
 
-        # Site-level PV asset. Prefer explicit device config, then sites.json.
         solar_capacity = float(site.get("solar_kw") or 0.0)
         for device in site_devices:
             kind = DEVICE_TYPE_ALIASES.get((device.device_type or "").lower())
@@ -169,9 +168,6 @@ def build_portfolio_from_vpp(
                 ))
 
     if not portfolio.base_load_kw:
-        # Until a proper load forecast is supplied, use current load telemetry as a
-        # flat baseline. This is explicitly marked in metadata so it is not confused
-        # with a forecast model.
         current_load = 0.0
         for device in devices:
             kind = DEVICE_TYPE_ALIASES.get((device.device_type or "").lower())
@@ -193,5 +189,5 @@ def build_portfolio_from_vpp(
         "device_count": len(devices),
         "asset_count": len(portfolio.assets),
         "warnings": warnings,
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
     }
