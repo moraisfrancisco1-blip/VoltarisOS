@@ -216,7 +216,7 @@ def _recommend(strategy: str, power_kw: float, price: float, min_bid: float) -> 
     return {"action": "hold", "reason": "Conditions not optimal for bidding"}
 
 
-def _optimize_persisted_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session):
+async def _optimize_persisted_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session):
     vpp = db.query(models.VPPGroup).filter(models.VPPGroup.id == vpp_id).first()
     if not vpp:
         raise HTTPException(404, "VPP group not found")
