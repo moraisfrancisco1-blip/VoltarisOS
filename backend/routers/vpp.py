@@ -7,6 +7,7 @@ GET  /api/vpp/{id}/aggregate     — potência agregada em tempo real
 POST /api/vpp/{id}/bid           — submeter bid ao mercado
 GET  /api/vpp/{id}/bids          — histórico de bids
 GET  /api/vpp/{id}/dispatch      — calcular dispatch por site
+POST /api/vpp/{id}/optimize      — otimizar o VPP com o motor multi-asset
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -16,6 +17,8 @@ from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
 from backend.audit import log_audit_event
+from optimization.asset_mapper import build_portfolio_from_vpp
+from optimization.multi_asset_optimizer import MultiAssetOptimizer
 
 router = APIRouter(prefix="/api/vpp", tags=["vpp"])
 
@@ -67,6 +70,14 @@ class BidOut(BaseModel):
     submitted_at: datetime
     class Config:
         from_attributes = True
+
+class VPPOptimizeBody(BaseModel):
+    horizon_hours: int = 24
+    country_code: str = "NL"
+    prices_eur_mwh: Optional[List[float]] = None
+    base_load_kw: Optional[List[float]] = None
+    max_import_kw: Optional[float] = None
+    max_export_kw: Optional[float] = None
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -137,12 +148,10 @@ def aggregate(vpp_id: int, db: Session = Depends(get_db)):
         models.VPPSiteMembership.vpp_id == vpp_id
     ).all()
 
-    # Get latest reading per device for sites in group
     site_ids = [m.site_id for m in members]
     devices = db.query(models.Device).filter(models.Device.site_id.in_(site_ids)).all() if site_ids else []
 
     total_power_kw = 0.0
-    total_capacity_kw = 0.0
     site_data = []
 
     for m in members:
@@ -158,9 +167,6 @@ def aggregate(vpp_id: int, db: Session = Depends(get_db)):
             if reading and reading.power_kw:
                 site_power += reading.power_kw
 
-        # No simulation — return 0 if no real data available
-        # This ensures decisions are based on actual telemetry, not fake data
-
         total_power_kw += site_power * m.weight
         site_data.append({
             "site_id": m.site_id,
@@ -169,10 +175,8 @@ def aggregate(vpp_id: int, db: Session = Depends(get_db)):
             "contribution_kw": site_power * m.weight,
         })
 
-    # Market signals — use real price feed when available, otherwise indicate unavailable
-    # In production, this would fetch from ENTSO-E, EEX, or market API
-    spot_price = None  # Real price feed not yet integrated
-    fcr_price = None   # Real FCR price not yet integrated
+    spot_price = None
+    fcr_price = None
     is_peak = datetime.utcnow().hour in range(7, 22)
 
     return {
@@ -208,6 +212,73 @@ def _recommend(strategy: str, power_kw: float, price: float, min_bid: float) -> 
     if strategy == "afrr":
         return {"action": "bid_afrr", "reason": "Submit aFRR capacity offer"}
     return {"action": "hold", "reason": "Conditions not optimal for bidding"}
+
+
+@router.post("/{vpp_id}/optimize")
+async def optimize_vpp(vpp_id: int, body: VPPOptimizeBody, db: Session = Depends(get_db)):
+    """Run the multi-asset optimizer against the persisted VPP portfolio.
+
+    The endpoint maps VPPGroup -> site memberships -> devices -> optimizer assets.
+    It does not send any physical setpoints to equipment.
+    """
+    vpp = db.query(models.VPPGroup).filter(models.VPPGroup.id == vpp_id).first()
+    if not vpp:
+        raise HTTPException(404, "VPP group not found")
+    if not vpp.active:
+        raise HTTPException(409, "VPP group is inactive")
+    if body.horizon_hours < 1 or body.horizon_hours > 168:
+        raise HTTPException(400, "horizon_hours must be between 1 and 168")
+
+    horizon = body.horizon_hours
+    prices = list(body.prices_eur_mwh or [])
+    price_source = "request"
+
+    if not prices:
+        from backend.market.entsoe import get_entsoe_client
+        client = get_entsoe_client()
+        if not client:
+            raise HTTPException(503, "No price series supplied and ENTSO-E is not configured")
+        now = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+        response = await client.get_day_ahead_prices(
+            country_code=body.country_code,
+            start=now,
+            end=now + timedelta(hours=horizon),
+        )
+        if not response.success or not response.data:
+            raise HTTPException(502, f"ENTSO-E price feed failed: {response.error or 'no data'}")
+        prices = [point.price_eur_mwh for point in response.data]
+        price_source = "ENTSO-E day-ahead"
+
+    if len(prices) < horizon:
+        raise HTTPException(400, f"Need at least {horizon} hourly prices, received {len(prices)}")
+    prices = prices[:horizon]
+
+    portfolio, mapping = build_portfolio_from_vpp(
+        db=db,
+        vpp=vpp,
+        prices_eur_mwh=prices,
+        base_load_kw=body.base_load_kw,
+        horizon=horizon,
+    )
+    if body.max_import_kw is not None:
+        portfolio.max_import_kw = body.max_import_kw
+    if body.max_export_kw is not None:
+        portfolio.max_export_kw = body.max_export_kw
+
+    result = MultiAssetOptimizer().optimize(portfolio)
+    return {
+        "vpp_id": vpp_id,
+        "status": result.status,
+        "price_source": price_source,
+        "mapping": mapping,
+        "total_cost_eur": result.total_cost_eur,
+        "total_import_kwh": result.total_import_kwh,
+        "total_export_kwh": result.total_export_kwh,
+        "solver_time_ms": result.solver_time_ms,
+        "asset_dispatch": result.asset_dispatch,
+        "schedule": result.schedule,
+        "physical_control": "not_connected",
+    }
 
 
 @router.get("/{vpp_id}/dispatch")
@@ -247,27 +318,16 @@ def submit_bid(
     tenant_id: int = Query(default=1),
     db: Session = Depends(get_db),
 ):
-    """Submit a bid to the energy market.
-    
-    Bids are validated and logged to audit trail.
-    In production, this would submit to actual market (MIBEL, EPEX, etc.)
-    For now, bids are stored with 'pending' status for manual/automated processing.
-    """
+    """Submit a bid to the energy market."""
     g = db.query(models.VPPGroup).filter(models.VPPGroup.id == vpp_id).first()
     if not g:
         raise HTTPException(404, "VPP group not found")
-    
-    # Validate minimum bid quantity
     if body.quantity_kw < g.min_bid_kw:
         raise HTTPException(400, f"Bid quantity ({body.quantity_kw} kW) below minimum ({g.min_bid_kw} kW)")
-    
-    # Validate direction
     valid_directions = ["sell", "buy", "fcr_up", "fcr_down", "afrr_up", "afrr_down"]
     if body.direction not in valid_directions:
         raise HTTPException(400, f"Invalid direction. Must be one of: {valid_directions}")
 
-    # Create bid with 'pending' status (no simulation)
-    # In production, this would submit to market API and update status based on response
     bid = models.VPPBid(
         tenant_id=tenant_id,
         vpp_id=vpp_id,
@@ -276,14 +336,12 @@ def submit_bid(
         price_eur_mwh=body.price_eur_mwh,
         direction=body.direction,
         delivery_period=body.delivery_period or (datetime.utcnow() + timedelta(hours=1)).strftime("%Y-%m-%dT%H:00"),
-        status="pending",  # Pending until market confirmation
-        pnl_eur=None,  # PnL calculated after market settlement
+        status="pending",
+        pnl_eur=None,
     )
     db.add(bid)
     db.commit()
     db.refresh(bid)
-    
-    # Log to audit trail (critical for NIS2 compliance)
     log_audit_event(
         db=db,
         action="vpp.bid.submitted",
@@ -301,7 +359,6 @@ def submit_bid(
             "delivery_period": bid.delivery_period,
         },
     )
-    
     return bid
 
 
