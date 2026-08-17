@@ -58,7 +58,7 @@ class FlexibleLoadAsset(EnergyAsset):
 
 @dataclass
 class IndustrialLoadAsset(FlexibleLoadAsset):
-    """Industrial process load with explicit baseline and recovery constraints."""
+    """Industrial process load with an explicit non-flexible baseline."""
     baseline_kw: float = 100.0
     recovery_kwh: float = 0.0
     max_recovery_kw: float = 0.0
@@ -66,7 +66,8 @@ class IndustrialLoadAsset(FlexibleLoadAsset):
 
 @dataclass
 class HeatPumpAsset(FlexibleLoadAsset):
-    """Thermally flexible electric load represented by an energy-equivalent state."""
+    """Thermally flexible electric load with an explicit baseline power."""
+    baseline_power_kw: float = 8.0
     nominal_power_kw: float = 20.0
     initial_thermal_kwh: float = 50.0
     min_thermal_kwh: float = 0.0
