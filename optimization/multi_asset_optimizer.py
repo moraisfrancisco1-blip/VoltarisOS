@@ -100,7 +100,12 @@ class MultiAssetOptimizer:
             generation = sum(self._series(a.forecast_kw,n)[t] for a in solar_assets)
             battery_net = sum(battery_vars[a.asset_id]["charge"][t]-battery_vars[a.asset_id]["discharge"][t] for a in batteries)
             ev_load = sum(ev_vars[a.asset_id]["baseline"][t]+ev_vars[a.asset_id]["delta"][t] for a in evs)
-            flex_load = sum((a.baseline_kw+flex_vars[a.asset_id][t]) if isinstance(a,IndustrialLoadAsset) else flex_vars[a.asset_id][t] for a in flex_loads)
+            flex_load = sum(
+                (a.baseline_kw + flex_vars[a.asset_id][t])
+                if isinstance(a, IndustrialLoadAsset) and a.start_hour <= t < min(a.end_hour, n)
+                else (flex_vars[a.asset_id][t] if not isinstance(a, IndustrialLoadAsset) else 0.0)
+                for a in flex_loads
+            )
             hp_load = sum(a.baseline_power_kw+hp_vars[a.asset_id]["delta"][t] for a in heat_pumps)
             prob += grid_import[t]-grid_export[t] == base_load[t]+flex_load+ev_load+hp_load+battery_net-generation
 
@@ -126,7 +131,7 @@ class MultiAssetOptimizer:
 
         for a in flex_loads:
             if a.energy_required_kwh>0:
-                actual=[(a.baseline_kw+flex_vars[a.asset_id][t]) if isinstance(a,IndustrialLoadAsset) else flex_vars[a.asset_id][t] for t in range(n)]
+                actual=[(a.baseline_kw+flex_vars[a.asset_id][t]) if isinstance(a,IndustrialLoadAsset) and a.start_hour <= t < min(a.end_hour,n) else (flex_vars[a.asset_id][t] if not isinstance(a,IndustrialLoadAsset) else 0.0) for t in range(n)]
                 prob += sum(actual) >= a.energy_required_kwh
             if isinstance(a,IndustrialLoadAsset): prob += lpSum(flex_vars[a.asset_id]) == 0
 
@@ -154,7 +159,13 @@ class MultiAssetOptimizer:
             for a in evs:
                 v=ev_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; actual=v["baseline"][t]+d; row[f"ev_{a.asset_id}"]={"charge_kw":round(actual,3),"flex_kw":round(d,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
             for a in flex_loads:
-                actual=(a.baseline_kw+value(flex_vars[a.asset_id][t])) if isinstance(a,IndustrialLoadAsset) else value(flex_vars[a.asset_id][t]); row[f"load_{a.asset_id}_kw"]=round(actual or 0.0,3)
+                if isinstance(a, IndustrialLoadAsset) and a.start_hour <= t < min(a.end_hour, n):
+                    actual=a.baseline_kw+value(flex_vars[a.asset_id][t])
+                elif isinstance(a, IndustrialLoadAsset):
+                    actual=0.0
+                else:
+                    actual=value(flex_vars[a.asset_id][t])
+                row[f"load_{a.asset_id}_kw"]=round(actual or 0.0,3)
             for a in heat_pumps:
                 v=hp_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; row[f"heat_pump_{a.asset_id}"]={"power_kw":round(a.baseline_power_kw+d,3),"flex_kw":round(d,3),"thermal_kwh":round(value(v["thermal"][t]) or 0.0,3)}
             schedule.append(row)
