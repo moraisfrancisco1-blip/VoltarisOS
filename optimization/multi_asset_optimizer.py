@@ -3,7 +3,14 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List
 import time
 
-from optimization.assets import BatteryAsset, EVAsset, FlexibleLoadAsset, SolarAsset, VPPPortfolio
+from optimization.assets import (
+    BatteryAsset,
+    EVAsset,
+    FlexibleLoadAsset,
+    HeatPumpAsset,
+    SolarAsset,
+    VPPPortfolio,
+)
 
 
 @dataclass
@@ -36,7 +43,8 @@ class MultiAssetOptimizer:
         solar_assets = [a for a in portfolio.assets if isinstance(a, SolarAsset) and a.enabled]
         batteries = [a for a in portfolio.assets if isinstance(a, BatteryAsset) and a.enabled]
         evs = [a for a in portfolio.assets if isinstance(a, EVAsset) and a.enabled]
-        flex_loads = [a for a in portfolio.assets if isinstance(a, FlexibleLoadAsset) and a.enabled]
+        flex_loads = [a for a in portfolio.assets if isinstance(a, FlexibleLoadAsset) and a.enabled and not isinstance(a, HeatPumpAsset)]
+        heat_pumps = [a for a in portfolio.assets if isinstance(a, HeatPumpAsset) and a.enabled]
 
         try:
             from pulp import LpMinimize, LpProblem, LpStatus, LpVariable, COIN_CMD, lpSum, value
@@ -70,6 +78,15 @@ class MultiAssetOptimizer:
                 a.max_power_kw if a.start_hour <= t < min(a.end_hour, n) else 0.0)
                 for t in range(n)]
 
+        heat_pump_vars: Dict[str, Dict[str, List[Any]]] = {}
+        for a in heat_pumps:
+            power = [LpVariable(f"{a.asset_id}_power_{t}",
+                a.min_power_kw if a.start_hour <= t < min(a.end_hour, n) else 0.0,
+                a.nominal_power_kw if a.start_hour <= t < min(a.end_hour, n) else 0.0)
+                for t in range(n)]
+            thermal = [LpVariable(f"{a.asset_id}_thermal_{t}", a.min_thermal_kwh, a.max_thermal_kwh) for t in range(n)]
+            heat_pump_vars[a.asset_id] = {"power": power, "thermal": thermal}
+
         objective = []
         for t in range(n):
             price = prices[t] / 1000.0
@@ -82,6 +99,10 @@ class MultiAssetOptimizer:
             if a.curtailment_cost_eur_kwh:
                 for t in range(n):
                     objective.append((a.max_power_kw - flex_vars[a.asset_id][t]) * a.curtailment_cost_eur_kwh)
+        for a in heat_pumps:
+            if a.operating_cost_eur_kwh:
+                for t in range(n):
+                    objective.append(heat_pump_vars[a.asset_id]["power"][t] * a.operating_cost_eur_kwh)
         prob += lpSum(objective)
 
         for t in range(n):
@@ -91,7 +112,8 @@ class MultiAssetOptimizer:
             battery_net = sum(battery_vars[a.asset_id]["charge"][t] - battery_vars[a.asset_id]["discharge"][t] for a in batteries)
             ev_charge = sum(ev_vars[a.asset_id]["charge"][t] for a in evs)
             flex_load = sum(flex_vars[a.asset_id][t] for a in flex_loads)
-            prob += grid_import[t] - grid_export[t] == base_load[t] + flex_load + ev_charge + battery_net - generation
+            heat_pump_load = sum(heat_pump_vars[a.asset_id]["power"][t] for a in heat_pumps)
+            prob += grid_import[t] - grid_export[t] == base_load[t] + flex_load + ev_charge + heat_pump_load + battery_net - generation
 
         for a in batteries:
             v = battery_vars[a.asset_id]
@@ -114,6 +136,15 @@ class MultiAssetOptimizer:
         for a in flex_loads:
             if a.energy_required_kwh > 0:
                 prob += sum(flex_vars[a.asset_id]) >= a.energy_required_kwh
+
+        for a in heat_pumps:
+            v = heat_pump_vars[a.asset_id]
+            for t in range(n):
+                previous = a.initial_thermal_kwh if t == 0 else v["thermal"][t - 1]
+                prob += v["thermal"][t] == previous + v["power"][t] * a.thermal_gain_per_kwh - a.thermal_loss_kwh
+            if a.target_thermal_kwh is not None:
+                target_hour = min(max(a.end_hour - 1, 0), n - 1)
+                prob += v["thermal"][target_hour] >= a.target_thermal_kwh
 
         prob.solve(COIN_CMD(msg=False))
         status = LpStatus.get(prob.status, "unknown").lower()
@@ -145,9 +176,15 @@ class MultiAssetOptimizer:
                 }
             for a in flex_loads:
                 row[f"load_{a.asset_id}_kw"] = round(value(flex_vars[a.asset_id][t]) or 0.0, 3)
+            for a in heat_pumps:
+                v = heat_pump_vars[a.asset_id]
+                row[f"heat_pump_{a.asset_id}"] = {
+                    "power_kw": round(value(v["power"][t]) or 0.0, 3),
+                    "thermal_kwh": round(value(v["thermal"][t]) or 0.0, 3),
+                }
             schedule.append(row)
 
-        dispatch = {}
+        dispatch: Dict[str, List[float]] = {}
         for a in batteries:
             v = battery_vars[a.asset_id]
             dispatch[a.asset_id] = [round((value(v["discharge"][t]) or 0.0) - (value(v["charge"][t]) or 0.0), 3) for t in range(n)]
@@ -156,9 +193,12 @@ class MultiAssetOptimizer:
             dispatch[a.asset_id] = [round(-(value(v["charge"][t]) or 0.0), 3) for t in range(n)]
         for a in flex_loads:
             dispatch[a.asset_id] = [round(value(flex_vars[a.asset_id][t]) or 0.0, 3) for t in range(n)]
+        for a in heat_pumps:
+            v = heat_pump_vars[a.asset_id]
+            dispatch[a.asset_id] = [round(-(value(v["power"][t]) or 0.0), 3) for t in range(n)]
 
         site_dispatch: Dict[str, List[float]] = {}
-        for asset in batteries + evs + flex_loads:
+        for asset in batteries + evs + flex_loads + heat_pumps:
             site_key = str(asset.site_id) if asset.site_id is not None else "unassigned"
             values = dispatch.get(asset.asset_id, [0.0] * n)
             site_dispatch.setdefault(site_key, [0.0] * n)
