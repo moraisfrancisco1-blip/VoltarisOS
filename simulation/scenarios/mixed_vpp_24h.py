@@ -40,7 +40,7 @@ def build_mixed_vpp() -> VPPPortfolio:
                                       start_hour=6, end_hour=22,
                                       curtailment_cost_eur_kwh=0.08))
     portfolio.add(HeatPumpAsset("hp-1", "Heat Pump", site_id=103,
-                                nominal_power_kw=80, min_power_kw=20,
+                                nominal_power_kw=80, min_power_kw=0,
                                 initial_thermal_kwh=50, min_thermal_kwh=20,
                                 max_thermal_kwh=120, thermal_gain_per_kwh=1.0,
                                 thermal_loss_kwh=8, target_thermal_kwh=70,
