@@ -15,7 +15,8 @@ def build_mixed_vpp() -> VPPPortfolio:
     base_load = [300] * 24
 
     portfolio = VPPPortfolio(base_load_kw=base_load, prices_eur_mwh=prices,
-                             max_import_kw=1000, max_export_kw=1000)
+                             max_import_kw=1000, max_export_kw=1000,
+                             peak_demand_cost_eur_per_kw=1.0)
     portfolio.add(SolarAsset("solar-1", "PV Site 1", site_id=101, forecast_kw=solar))
     portfolio.add(BatteryAsset("battery-1", "Battery Site 1", site_id=101,
                                capacity_kwh=800, max_charge_kw=300, max_discharge_kw=300,
@@ -29,9 +30,6 @@ def build_mixed_vpp() -> VPPPortfolio:
         energy_required_kwh=7200, recovery_kwh=2400, max_recovery_kw=150,
         start_hour=6, end_hour=22, curtailment_cost_eur_kwh=0.08,
     ))
-    # Baseline heat pump: 8 kW continuously. With 8 kWh/h thermal gain
-    # and 8 kWh/h loss, the baseline preserves the initial 50 kWh state.
-    # VPP flexibility is therefore purely temporal and energy-neutral.
     portfolio.add(HeatPumpAsset("hp-1", "Heat Pump", site_id=103,
                                 baseline_power_kw=8.0, nominal_power_kw=80,
                                 min_power_kw=0, initial_thermal_kwh=50,
