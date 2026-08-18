@@ -55,7 +55,7 @@ async def test_persisted_vpp_optimizes_industrial_and_heat_pump(tmp_path, monkey
     assert mapping["device_count"] == 2
     assert mapping["asset_count"] == 3
     assert result.status == "optimal"
-    assert "device-1" in result.asset_dispatch or "device-2" in result.asset_dispatch
+    assert {"device-1", "device-2"}.issubset(result.asset_dispatch)
     assert len(result.vpp_dispatch) == 24
 
 
