@@ -32,6 +32,9 @@ jobs:
       - name: Run VPP optimizer, control and simulation tests
         run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py simulation/test_flexible_assets.py simulation/scenarios/test_mixed_vpp_24h.py
 
+      - name: Prepare artifacts directory
+        run: mkdir -p artifacts
+
       - name: Run isolated industrial flexibility experiment
         run: python -m simulation.scenarios.industrial_flex_isolation > artifacts/industrial_flex_isolation.txt
 
