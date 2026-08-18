@@ -12,6 +12,9 @@ from simulation.scenarios.mixed_vpp_24h import build_mixed_vpp
 class ScenarioMetrics:
     name: str
     total_cost_eur: float
+    energy_market_cost_eur: float
+    peak_demand_cost_eur: float
+    non_energy_flex_cost_eur: float
     total_import_kwh: float
     total_export_kwh: float
     peak_import_kw: float
@@ -85,6 +88,12 @@ def _run(name: str, enabled_types: set[str] | None) -> ScenarioMetrics:
     solar_generation = sum(row["solar_kw"] for row in result.schedule)
     solar_self_consumption = max(0.0, solar_generation - result.total_export_kwh)
     peak_import = max((row["grid_import_kw"] for row in result.schedule), default=0.0)
+    energy_market_cost = sum(
+        (row["grid_import_kw"] - row["grid_export_kw"]) * row["price_eur_mwh"] / 1000.0
+        for row in result.schedule
+    )
+    peak_demand_cost = peak_import * portfolio.peak_demand_cost_eur_per_kw
+    non_energy_flex_cost = result.total_cost_eur - energy_market_cost - peak_demand_cost
 
     shifted = 0.0
     battery_throughput = 0.0
@@ -96,6 +105,9 @@ def _run(name: str, enabled_types: set[str] | None) -> ScenarioMetrics:
     return ScenarioMetrics(
         name=name,
         total_cost_eur=result.total_cost_eur,
+        energy_market_cost_eur=round(energy_market_cost, 4),
+        peak_demand_cost_eur=round(peak_demand_cost, 4),
+        non_energy_flex_cost_eur=round(non_energy_flex_cost, 4),
         total_import_kwh=result.total_import_kwh,
         total_export_kwh=result.total_export_kwh,
         peak_import_kw=peak_import,
@@ -129,7 +141,11 @@ def build_report() -> dict:
         "horizon_hours": 24,
         "simulation_only": True,
         "baseline_scenario": scenarios[0].name,
+        "peak_demand_tariff_eur_per_kw": build_mixed_vpp().peak_demand_cost_eur_per_kw,
         "notes": {
+            "energy_market_cost": "Import cost minus export revenue using the hourly simulated market price.",
+            "peak_demand_cost": "Optimized peak grid import multiplied by the configured peak-demand tariff.",
+            "non_energy_flex_cost": "Residual optimizer cost, including battery degradation and flexible-load operating/curtailment costs.",
             "incremental_savings": "Sequential value versus the immediately preceding scenario; interaction effects remain in the Full VPP result.",
             "flexible_energy_shifted": "Sum of absolute asset dispatch values and therefore a throughput/shift indicator, not net energy consumption.",
             "battery_throughput": "Sum of absolute battery dispatch values over the horizon. Battery degradation cost is included in optimizer objective.",
