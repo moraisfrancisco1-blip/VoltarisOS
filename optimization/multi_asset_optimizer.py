@@ -37,6 +37,7 @@ class MultiAssetOptimizer:
         prob=LpProblem("VoltarisOS_MultiAsset_VPP",LpMinimize)
         grid_import=[LpVariable(f"grid_import_{t}",0,portfolio.max_import_kw) for t in range(n)]
         grid_export=[LpVariable(f"grid_export_{t}",0,portfolio.max_export_kw) for t in range(n)]
+        peak_import=LpVariable("peak_import_kw",0,portfolio.max_import_kw)
         export_mode=[LpVariable(f"grid_export_mode_{t}",cat="Binary") for t in range(n)]
         battery_vars={}
         for a in batteries:
@@ -71,13 +72,14 @@ class MultiAssetOptimizer:
         objective=[]
         for t in range(n):
             p=prices[t]/1000.0; objective.append(grid_import[t]*p-grid_export[t]*p)
+        objective.append(peak_import*portfolio.peak_demand_cost_eur_per_kw)
         for a in batteries:
             v=battery_vars[a.asset_id]; objective += [(v["charge"][t]+v["discharge"][t])*a.degradation_cost_eur_kwh for t in range(n)]
         for a in flex_loads: objective += [curtailment_vars[a.asset_id][t]*a.curtailment_cost_eur_kwh for t in range(n)]
         for a in heat_pumps: objective += [(a.baseline_power_kw+hp_vars[a.asset_id]["delta"][t])*a.operating_cost_eur_kwh for t in range(n)]
         prob+=lpSum(objective)
         for t in range(n):
-            prob+=grid_import[t]<=portfolio.max_import_kw*(1-export_mode[t]); prob+=grid_export[t]<=portfolio.max_export_kw*export_mode[t]
+            prob+=grid_import[t]<=portfolio.max_import_kw*(1-export_mode[t]); prob+=grid_export[t]<=portfolio.max_export_kw*export_mode[t]; prob+=peak_import>=grid_import[t]
             generation=sum(self._series(a.forecast_kw,n)[t] for a in solar_assets)
             battery_net=sum(battery_vars[a.asset_id]["charge"][t]-battery_vars[a.asset_id]["discharge"][t] for a in batteries)
             ev_load=sum(ev_vars[a.asset_id]["baseline"][t]+ev_vars[a.asset_id]["delta"][t] for a in evs)
