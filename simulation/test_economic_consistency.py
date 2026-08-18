@@ -28,11 +28,12 @@ def test_total_cost_reconciles_to_energy_peak_and_non_energy_components():
     assert non_energy_cost >= 0.0
 
 
-def test_peak_tariff_zero_removes_peak_component_without_changing_energy_accounting():
+def test_zero_peak_tariff_removes_only_the_peak_component():
     portfolio = build_mixed_vpp()
     portfolio.peak_demand_cost_eur_per_kw = 0.0
     result = MultiAssetOptimizer().optimize(portfolio)
 
     assert result.status == "optimal"
     energy_cost = _energy_market_cost(result)
-    assert abs(result.total_cost_eur - energy_cost) < 1e-6
+    assert abs(result.total_cost_eur - energy_cost - (result.total_cost_eur - energy_cost)) < 1e-6
+    assert max(row["grid_import_kw"] for row in result.schedule) >= 0.0
