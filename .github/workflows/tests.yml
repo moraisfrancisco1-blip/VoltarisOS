@@ -41,8 +41,8 @@ jobs:
       - name: Generate economic report
         run: python -m simulation.economic_report
 
-      - name: Generate peak cost sensitivity
-        run: python -m simulation.peak_cost_sensitivity
+      - name: Generate peak cost reoptimization
+        run: python -m simulation.peak_cost_reoptimization
 
       - name: Upload economic report
         uses: actions/upload-artifact@v4
@@ -58,9 +58,9 @@ jobs:
           path: artifacts/industrial_flex_isolation.txt
           if-no-files-found: error
 
-      - name: Upload peak cost sensitivity
+      - name: Upload peak cost reoptimization
         uses: actions/upload-artifact@v4
         with:
-          name: peak-cost-sensitivity
-          path: artifacts/peak_cost_sensitivity.json
+          name: peak-cost-reoptimization
+          path: artifacts/peak_cost_reoptimization.json
           if-no-files-found: error
