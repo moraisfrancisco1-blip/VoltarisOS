@@ -1,4 +1,4 @@
-"""Economic comparison report for the 24-hour mixed VPP laboratory."""
+"""Economic comparison and flexibility-value report for the mixed VPP lab."""
 from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
@@ -17,6 +17,10 @@ class ScenarioMetrics:
     peak_import_kw: float
     solar_self_consumption_kwh: float
     savings_vs_baseline_eur: float = 0.0
+    incremental_savings_vs_previous_eur: float = 0.0
+    flexible_energy_shifted_kwh: float = 0.0
+    battery_throughput_kwh: float = 0.0
+    peak_reduction_vs_baseline_kw: float = 0.0
 
 
 _ASSET_TYPES = {
@@ -77,11 +81,28 @@ def _run(name: str, enabled_types: set[str] | None) -> ScenarioMetrics:
     result = MultiAssetOptimizer().optimize(portfolio)
     if result.status != "optimal":
         raise RuntimeError(f"Scenario {name} is not optimal: {result.status}")
+
     solar_generation = sum(row["solar_kw"] for row in result.schedule)
     solar_self_consumption = max(0.0, solar_generation - result.total_export_kwh)
     peak_import = max((row["grid_import_kw"] for row in result.schedule), default=0.0)
-    return ScenarioMetrics(name, result.total_cost_eur, result.total_import_kwh,
-                           result.total_export_kwh, peak_import, solar_self_consumption)
+
+    shifted = 0.0
+    battery_throughput = 0.0
+    for asset_id, dispatch in result.asset_dispatch.items():
+        shifted += sum(abs(x) for x in dispatch)
+        if asset_id.startswith("battery-"):
+            battery_throughput += sum(abs(x) for x in dispatch)
+
+    return ScenarioMetrics(
+        name=name,
+        total_cost_eur=result.total_cost_eur,
+        total_import_kwh=result.total_import_kwh,
+        total_export_kwh=result.total_export_kwh,
+        peak_import_kw=peak_import,
+        solar_self_consumption_kwh=solar_self_consumption,
+        flexible_energy_shifted_kwh=round(shifted, 4),
+        battery_throughput_kwh=round(battery_throughput, 4),
+    )
 
 
 def build_report() -> dict:
@@ -89,15 +110,30 @@ def build_report() -> dict:
         _run("Solar only", {"solar"}),
         _run("Solar + Battery", {"solar", "battery"}),
         _run("Solar + Battery + EV", {"solar", "battery", "ev"}),
+        _run("Solar + Battery + EV + Industrial", {"solar", "battery", "ev", "industrial_load"}),
+        _run("Solar + Battery + EV + Heat Pump", {"solar", "battery", "ev", "heat_pump"}),
         _run("Full VPP", {"solar", "battery", "ev", "industrial_load", "heat_pump"}),
     ]
-    baseline = scenarios[0].total_cost_eur
+
+    baseline_cost = scenarios[0].total_cost_eur
+    baseline_peak = scenarios[0].peak_import_kw
+    previous_cost = baseline_cost
     for item in scenarios:
-        item.savings_vs_baseline_eur = round(baseline - item.total_cost_eur, 4)
+        item.savings_vs_baseline_eur = round(baseline_cost - item.total_cost_eur, 4)
+        item.incremental_savings_vs_previous_eur = round(previous_cost - item.total_cost_eur, 4)
+        item.peak_reduction_vs_baseline_kw = round(baseline_peak - item.peak_import_kw, 4)
+        previous_cost = item.total_cost_eur
+
     return {
         "currency": "EUR",
         "horizon_hours": 24,
         "simulation_only": True,
+        "baseline_scenario": scenarios[0].name,
+        "notes": {
+            "incremental_savings": "Sequential value versus the immediately preceding scenario; interaction effects remain in the Full VPP result.",
+            "flexible_energy_shifted": "Sum of absolute asset dispatch values and therefore a throughput/shift indicator, not net energy consumption.",
+            "battery_throughput": "Sum of absolute battery dispatch values over the horizon. Battery degradation cost is included in optimizer objective.",
+        },
         "scenarios": [asdict(item) for item in scenarios],
     }
 
