@@ -58,7 +58,7 @@ class FlexibleLoadAsset(EnergyAsset):
 
 @dataclass
 class IndustrialLoadAsset(FlexibleLoadAsset):
-    """Industrial process load with an explicit non-flexible baseline."""
+    """Industrial process load with explicit curtailment and recovery capability."""
     baseline_kw: float = 100.0
     recovery_kwh: float = 0.0
     max_recovery_kw: float = 0.0
