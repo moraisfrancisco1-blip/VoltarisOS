@@ -1,0 +1,66 @@
+name: VoltarisOS Tests
+
+on:
+  push:
+    branches:
+      - master
+      - "codex/**"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Compile VPP router
+        run: python -m py_compile backend/routers/vpp.py
+
+      - name: Run VPP optimizer, control and simulation tests
+        run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py simulation/test_flexible_assets.py simulation/test_economic_consistency.py simulation/scenarios/test_mixed_vpp_24h.py
+
+      - name: Prepare artifacts directory
+        run: mkdir -p artifacts
+
+      - name: Run isolated industrial flexibility experiment
+        run: python -m simulation.scenarios.industrial_flex_isolation > artifacts/industrial_flex_isolation.txt
+
+      - name: Generate economic report
+        run: python -m simulation.economic_report
+
+      - name: Generate peak cost reoptimization
+        run: python -m simulation.peak_cost_reoptimization
+
+      - name: Upload economic report
+        uses: actions/upload-artifact@v4
+        with:
+          name: economic-report
+          path: artifacts/economic_report.json
+          if-no-files-found: error
+
+      - name: Upload industrial flexibility experiment
+        uses: actions/upload-artifact@v4
+        with:
+          name: industrial-flex-isolation
+          path: artifacts/industrial_flex_isolation.txt
+          if-no-files-found: error
+
+      - name: Upload peak cost reoptimization
+        uses: actions/upload-artifact@v4
+        with:
+          name: peak-cost-reoptimization
+          path: artifacts/peak_cost_reoptimization.json
+          if-no-files-found: error
