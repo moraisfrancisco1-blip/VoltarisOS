@@ -32,4 +32,5 @@ def test_mixed_vpp_physical_load_energy_totals_are_explicit():
 
     assert abs(factory_energy - 7200.0) < 1e-6
     assert abs(heat_pump_energy - 192.0) < 1e-6
-    assert abs(ev_energy - ((0.80 - 0.35) * 80 / 0.95)) < 1e-6
+    # Schedule values are intentionally rounded to 3 decimals by the optimizer.
+    assert abs(ev_energy - ((0.80 - 0.35) * 80 / 0.95)) < 1e-3
