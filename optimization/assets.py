@@ -88,6 +88,7 @@ class VPPPortfolio:
     prices_eur_mwh: List[float] = field(default_factory=list)
     max_import_kw: float = 1000.0
     max_export_kw: float = 1000.0
+    peak_demand_cost_eur_per_kw: float = 0.0
 
     def add(self, asset: EnergyAsset) -> None:
         self.assets.append(asset)
