@@ -30,7 +30,7 @@ jobs:
         run: python -m py_compile backend/routers/vpp.py
 
       - name: Run VPP optimizer, control and simulation tests
-        run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py simulation/test_flexible_assets.py simulation/scenarios/test_mixed_vpp_24h.py
+        run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py simulation/test_flexible_assets.py simulation/test_economic_consistency.py simulation/scenarios/test_mixed_vpp_24h.py
 
       - name: Prepare artifacts directory
         run: mkdir -p artifacts
