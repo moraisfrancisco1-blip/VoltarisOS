@@ -32,6 +32,9 @@ jobs:
       - name: Run VPP optimizer, control and simulation tests
         run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py simulation/test_flexible_assets.py simulation/scenarios/test_mixed_vpp_24h.py
 
+      - name: Run isolated industrial flexibility experiment
+        run: python -m simulation.scenarios.industrial_flex_isolation > artifacts/industrial_flex_isolation.txt
+
       - name: Generate economic report
         run: python -m simulation.economic_report
 
@@ -40,4 +43,11 @@ jobs:
         with:
           name: economic-report
           path: artifacts/economic_report.json
+          if-no-files-found: error
+
+      - name: Upload industrial flexibility experiment
+        uses: actions/upload-artifact@v4
+        with:
+          name: industrial-flex-isolation
+          path: artifacts/industrial_flex_isolation.txt
           if-no-files-found: error
