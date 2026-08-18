@@ -58,7 +58,7 @@ class MultiAssetOptimizer:
                 lo,hi=a.min_power_kw-baseline,a.max_recovery_kw
             else:
                 lo,hi=a.min_power_kw-baseline,a.max_power_kw-baseline
-            flex_vars[a.asset_id]=[LpVariable(f"{a.asset_id}_flex_{t",lo if a.start_hour<=t<min(a.end_hour,n) else 0.0,hi if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
+            flex_vars[a.asset_id]=[LpVariable(f"{a.asset_id}_flex_{t}",lo if a.start_hour<=t<min(a.end_hour,n) else 0.0,hi if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
             curtailment_vars[a.asset_id]=[LpVariable(f"{a.asset_id}_curtail_{t}",0) for t in range(n)]
             for t in range(n): prob += curtailment_vars[a.asset_id][t]>=-flex_vars[a.asset_id][t]
             if isinstance(a,IndustrialLoadAsset) and a.recovery_kwh>0 and a.max_recovery_kw>0:
@@ -102,8 +102,7 @@ class MultiAssetOptimizer:
                 actual=[(a.baseline_kw+flex_vars[a.asset_id][t]) if isinstance(a,IndustrialLoadAsset) and a.start_hour<=t<min(a.end_hour,n) else (flex_vars[a.asset_id][t] if not isinstance(a,IndustrialLoadAsset) else 0.0) for t in range(n)]; prob+=sum(actual)>=a.energy_required_kwh
             if isinstance(a,IndustrialLoadAsset):
                 if a.recovery_kwh>0 and a.max_recovery_kw>0:
-                    recovery=recovery_vars[a.asset_id]
-                    prob+=lpSum(recovery)==lpSum(-flex_vars[a.asset_id][t] for t in range(n)); prob+=lpSum(recovery)<=a.recovery_kwh
+                    recovery=recovery_vars[a.asset_id]; prob+=lpSum(recovery)==lpSum(-flex_vars[a.asset_id][t] for t in range(n)); prob+=lpSum(recovery)<=a.recovery_kwh
                 else: prob+=lpSum(flex_vars[a.asset_id])==0
         for a in heat_pumps:
             v=hp_vars[a.asset_id]
