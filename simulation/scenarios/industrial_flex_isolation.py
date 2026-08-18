@@ -14,7 +14,8 @@ def build_portfolio(industrial_flexible: bool) -> VPPPortfolio:
     factory = IndustrialLoadAsset(
         "factory-1", "Factory", site_id=102,
         baseline_kw=450, min_power_kw=300, max_power_kw=450,
-        energy_required_kwh=0, start_hour=6, end_hour=22,
+        energy_required_kwh=7200, start_hour=6, end_hour=22,
+        recovery_kwh=2400, max_recovery_kw=150,
         curtailment_cost_eur_kwh=0.08,
     )
     factory.enabled = industrial_flexible
@@ -30,13 +31,16 @@ def run() -> dict:
     optimizer = MultiAssetOptimizer()
     rigid = optimizer.optimize(build_portfolio(False))
     flexible = optimizer.optimize(build_portfolio(True))
+    dispatch = flexible.asset_dispatch.get("factory-1", [])
     return {
         "rigid_cost_eur": rigid.total_cost_eur,
         "flexible_cost_eur": flexible.total_cost_eur,
         "industrial_value_eur": rigid.total_cost_eur - flexible.total_cost_eur,
         "rigid_import_kwh": rigid.total_import_kwh,
         "flexible_import_kwh": flexible.total_import_kwh,
-        "flexible_dispatch": flexible.asset_dispatch.get("factory-1", []),
+        "flexible_dispatch": dispatch,
+        "dispatch_energy_delta_kwh": sum(dispatch),
+        "factory_energy_kwh": sum(450 + x for x in dispatch[6:22]),
     }
 
 
