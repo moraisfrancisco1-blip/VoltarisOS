@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import List
 
 
@@ -14,8 +15,10 @@ class ForecastBundle:
     solar_kw: List[float]
     timestamps: List[str] = field(default_factory=list)
     source: str = "unknown"
+    generated_at: str | None = None
+    max_age_minutes: int | None = None
 
-    def validate(self, horizon_hours: int) -> None:
+    def validate(self, horizon_hours: int, *, now: datetime | None = None) -> None:
         if horizon_hours <= 0:
             raise ValueError("horizon_hours must be positive")
         for name, values in (
@@ -25,8 +28,24 @@ class ForecastBundle:
         ):
             if len(values) < horizon_hours:
                 raise ValueError(f"{name} requires at least {horizon_hours} values")
-        if self.timestamps and len(self.timestamps) < horizon_hours:
-            raise ValueError(f"timestamps requires at least {horizon_hours} values")
+        if self.timestamps:
+            if len(self.timestamps) < horizon_hours:
+                raise ValueError(f"timestamps requires at least {horizon_hours} values")
+            parsed = [self._parse_timestamp(value) for value in self.timestamps[:horizon_hours]]
+            if any(b <= a for a, b in zip(parsed, parsed[1:])):
+                raise ValueError("timestamps must be strictly increasing")
+            if any((b - a).total_seconds() != 3600 for a, b in zip(parsed, parsed[1:])):
+                raise ValueError("timestamps must use an hourly cadence")
+        if self.generated_at is not None and self.max_age_minutes is not None:
+            if self.max_age_minutes < 0:
+                raise ValueError("max_age_minutes must be non-negative")
+            generated = self._parse_timestamp(self.generated_at)
+            current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+            age_seconds = (current - generated).total_seconds()
+            if age_seconds < 0:
+                raise ValueError("generated_at cannot be in the future")
+            if age_seconds > self.max_age_minutes * 60:
+                raise ValueError("forecast bundle is stale")
 
     def window(self, start: int, horizon_hours: int) -> "ForecastBundle":
         self.validate(start + horizon_hours)
@@ -37,4 +56,13 @@ class ForecastBundle:
             solar_kw=self.solar_kw[start:end],
             timestamps=self.timestamps[start:end] if self.timestamps else [],
             source=self.source,
+            generated_at=self.generated_at,
+            max_age_minutes=self.max_age_minutes,
         )
+
+    @staticmethod
+    def _parse_timestamp(value: str) -> datetime:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            raise ValueError("timestamps must be timezone-aware")
+        return parsed.astimezone(timezone.utc)
