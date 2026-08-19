@@ -121,3 +121,24 @@ def all_sites_forecast(hours: int = 24):
                 "error": str(e),
             })
     return {"sites": results}
+
+
+@router.get("/backtest/load/{tenant_id}")
+def load_forecast_backtest(tenant_id: int):
+    """Evaluate P10/P50/P90 load forecasting against persisted tenant telemetry."""
+    from backend.database import SessionLocal
+    from backend import models
+    from forecasting.device_backtest import backtest_tenant_load
+
+    db = SessionLocal()
+    try:
+        result = backtest_tenant_load(db, models, tenant_id)
+        if result["status"] == "insufficient_data":
+            raise HTTPException(status_code=422, detail=result)
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Backtest error: {exc}")
+    finally:
+        db.close()
