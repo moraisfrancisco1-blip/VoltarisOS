@@ -15,9 +15,16 @@ class ProviderHealth:
     age_minutes: float | None = None
 
 
+def _utc_now(now: datetime | None) -> datetime:
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None:
+        return current.replace(tzinfo=timezone.utc)
+    return current.astimezone(timezone.utc)
+
+
 def assess_bundle_health(bundle: ForecastBundle, *, now: datetime | None = None) -> list[ProviderHealth]:
     """Return individual fail-closed health assessments for every provider."""
-    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    current = _utc_now(now)
     if bundle.providers:
         results = []
         for provider in bundle.providers:
@@ -37,7 +44,10 @@ def assess_bundle_health(bundle: ForecastBundle, *, now: datetime | None = None)
     if not bundle.generated_at:
         return [ProviderHealth(bundle.source, False, "missing generated_at")]
     try:
-        age_minutes = (current - bundle._parse_timestamp(bundle.generated_at)).total_seconds() / 60
+        generated_at = bundle._parse_timestamp(bundle.generated_at)
+        if generated_at.tzinfo is None:
+            generated_at = generated_at.replace(tzinfo=timezone.utc)
+        age_minutes = (current - generated_at.astimezone(timezone.utc)).total_seconds() / 60
         if age_minutes < 0:
             return [ProviderHealth(bundle.source, False, "generated_at is in the future", age_minutes)]
         if bundle.max_age_minutes is None:
