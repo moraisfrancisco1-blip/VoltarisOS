@@ -7,6 +7,29 @@ from typing import List
 
 
 @dataclass(frozen=True)
+class ProviderMetadata:
+    """Freshness and provenance for one forecast provider."""
+
+    name: str
+    generated_at: str
+    max_age_minutes: int
+
+    def age_minutes(self, *, now: datetime | None = None) -> float:
+        generated = ForecastBundle._parse_timestamp(self.generated_at)
+        current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+        return (current - generated).total_seconds() / 60
+
+    def validate(self, *, now: datetime | None = None) -> None:
+        if self.max_age_minutes < 0:
+            raise ValueError("max_age_minutes must be non-negative")
+        age = self.age_minutes(now=now)
+        if age < 0:
+            raise ValueError(f"{self.name} generated_at is in the future")
+        if age > self.max_age_minutes:
+            raise ValueError(f"{self.name} forecast is stale")
+
+
+@dataclass(frozen=True)
 class ForecastBundle:
     """Time-aligned forecast inputs for one optimization horizon."""
 
@@ -17,6 +40,7 @@ class ForecastBundle:
     source: str = "unknown"
     generated_at: str | None = None
     max_age_minutes: int | None = None
+    providers: tuple[ProviderMetadata, ...] = ()
 
     def validate(self, horizon_hours: int, *, now: datetime | None = None) -> None:
         if horizon_hours <= 0:
@@ -46,6 +70,8 @@ class ForecastBundle:
                 raise ValueError("generated_at cannot be in the future")
             if age_seconds > self.max_age_minutes * 60:
                 raise ValueError("forecast bundle is stale")
+        for provider in self.providers:
+            provider.validate(now=now)
 
     def window(self, start: int, horizon_hours: int) -> "ForecastBundle":
         self.validate(start + horizon_hours)
@@ -58,6 +84,7 @@ class ForecastBundle:
             source=self.source,
             generated_at=self.generated_at,
             max_age_minutes=self.max_age_minutes,
+            providers=self.providers,
         )
 
     @staticmethod
