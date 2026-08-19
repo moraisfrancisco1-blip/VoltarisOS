@@ -149,6 +149,24 @@ class VPPBid(Base):
     submitted_at = Column(DateTime, default=utcnow_naive)
 
 
+class ForecastRecord(Base):
+    """Persisted canonical forecast snapshot consumed by optimization."""
+    __tablename__ = "forecast_records"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    horizon_hours = Column(Integer, nullable=False)
+    timestamps = Column(JSON, nullable=False)
+    prices_eur_mwh = Column(JSON, nullable=False)
+    load_kw = Column(JSON, nullable=False)
+    solar_kw = Column(JSON, nullable=False)
+    providers = Column(JSON, nullable=False)
+    generated_at = Column(DateTime, nullable=False, index=True)
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
+    status = Column(String, default="valid", nullable=False)
+
+    __table_args__ = (Index("ix_forecast_records_tenant_generated", "tenant_id", "generated_at"),)
+
+
 class VPPOptimizationRun(Base):
     __tablename__ = "vpp_optimization_runs"
     id = Column(Integer, primary_key=True, index=True)
@@ -178,44 +196,3 @@ class VPPDispatchRecord(Base):
     dispatch_kw = Column(Float, nullable=False, default=0.0)
     asset_dispatch = Column(JSON, nullable=True)
     site_dispatch = Column(JSON, nullable=True)
-    schedule = Column(JSON, nullable=True)
-    solver_status = Column(String, nullable=False)
-    committed = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
-
-
-class ReportJob(Base):
-    __tablename__ = "report_jobs"
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
-    report_type = Column(String, nullable=False)
-    period = Column(String, nullable=True)
-    site_ids = Column(JSON, nullable=True)
-    status = Column(String, default="pending")
-    file_path = Column(String, nullable=True)
-    error = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=utcnow_naive)
-    completed_at = Column(DateTime, nullable=True)
-    requested_by = Column(String, nullable=True)
-
-
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
-    user_email = Column(String, nullable=True)
-    action = Column(String, nullable=False, index=True)
-    target_resource = Column(String, nullable=True)
-    target_id = Column(Integer, nullable=True)
-    ip_address = Column(String, nullable=True)
-    user_agent = Column(String, nullable=True)
-    details = Column(JSON, nullable=True)
-    timestamp = Column(DateTime, default=utcnow_naive, nullable=False, index=True)
-    __table_args__ = (
-        Index("ix_audit_logs_tenant_timestamp", "tenant_id", "timestamp"),
-        Index("ix_audit_logs_user_timestamp", "user_id", "timestamp"),
-    )
-
-    def __repr__(self):
-        return f"<AuditLog(id={self.id}, action='{self.action}', user_id={self.user_id}, timestamp={self.timestamp})>"
