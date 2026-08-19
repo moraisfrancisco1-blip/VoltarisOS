@@ -97,6 +97,8 @@ class VPPPortfolio:
         self.assets.append(asset)
 
     def horizon(self) -> int:
+        for provider in self.provider_metadata:
+            provider.validate()
         lengths = [len(self.base_load_kw), len(self.prices_eur_mwh)]
         for asset in self.assets:
             if isinstance(asset, SolarAsset):
