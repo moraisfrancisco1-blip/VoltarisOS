@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple
 from sqlalchemy.orm import Session
 
 from backend import models
+from forecasting.contracts import ProviderMetadata
 from forecasting.load_forecast import forecast_load_with_metadata
 from forecasting.solar_forecast import forecast_solar_production
 from optimization.assets import (
@@ -67,7 +68,7 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
         peak_demand_cost_eur_per_kw=float(peak_demand_cost_eur_per_kw),
     )
     warnings: List[str] = []
-    provider_metadata: List[dict] = []
+    provider_metadata: List[ProviderMetadata] = [ProviderMetadata("price-input", datetime.now(timezone.utc).isoformat(), 120)]
 
     for membership in memberships:
         site = sites.get(membership.site_id, {})
@@ -82,6 +83,7 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
             try:
                 forecast = forecast_solar_production(float(site["lat"]), float(site["lng"]), solar_capacity, hours=horizon)
                 portfolio.add(SolarAsset(f"site-{membership.site_id}-solar", f"{site.get('name', 'Site')} Solar", membership.site_id, forecast_kw=[float(x["estimated_kwh"]) for x in forecast[:horizon]]))
+                provider_metadata.append(ProviderMetadata("Open-Meteo solar", datetime.now(timezone.utc).isoformat(), 60))
             except Exception as exc:
                 warnings.append(f"Solar forecast failed for site {membership.site_id}: {exc}")
 
@@ -129,11 +131,15 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
         try:
             forecast, metadata = forecast_load_with_metadata(readings, start=start, hours=horizon)
             portfolio.base_load_kw = forecast
-            provider_metadata.append({"name": metadata.name, "generated_at": metadata.generated_at, "max_age_minutes": metadata.max_age_minutes})
+            provider_metadata.append(metadata)
         except ValueError:
-            current_load = sum(max(0.0, float(r.power_kw)) for r in ([_latest_reading(db, d.id) for d in load_devices]) if r and r.power_kw is not None)
+            latest = [_latest_reading(db, d.id) for d in load_devices]
+            current_load = sum(max(0.0, float(r.power_kw)) for r in latest if r and r.power_kw is not None)
             portfolio.base_load_kw = [current_load] * horizon
+            provider_metadata.append(ProviderMetadata("device-telemetry-load-fallback", datetime.now(timezone.utc).isoformat(), 15))
             warnings.append("Base load fallback uses latest telemetry as a flat baseline")
+
+    portfolio.provider_metadata = tuple(provider_metadata)
     if len(portfolio.prices_eur_mwh) < horizon:
         portfolio.prices_eur_mwh.extend([0.0] * (horizon - len(portfolio.prices_eur_mwh)))
-    return portfolio, {"vpp_id": vpp.id, "site_ids": site_ids, "device_count": len(devices), "asset_count": len(portfolio.assets), "warnings": warnings, "provider_metadata": provider_metadata, "generated_at": datetime.now(timezone.utc).isoformat()}
+    return portfolio, {"vpp_id": vpp.id, "site_ids": site_ids, "device_count": len(devices), "asset_count": len(portfolio.assets), "warnings": warnings, "provider_metadata": [{"name": m.name, "generated_at": m.generated_at, "max_age_minutes": m.max_age_minutes} for m in provider_metadata], "generated_at": datetime.now(timezone.utc).isoformat()}
