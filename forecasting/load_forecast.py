@@ -2,16 +2,15 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from statistics import median
 from typing import Iterable
 
+from forecasting.contracts import ProviderMetadata
+
 
 def forecast_load_from_readings(
-    readings: Iterable[object],
-    start: datetime,
-    hours: int = 24,
-    history_days: int = 28,
+    readings: Iterable[object], start: datetime, hours: int = 24, history_days: int = 28,
     fallback_kw: float | None = None,
 ) -> list[float]:
     """Forecast hourly load from historical telemetry using robust medians."""
@@ -19,11 +18,9 @@ def forecast_load_from_readings(
         raise ValueError("hours must be positive")
     if history_days <= 0:
         raise ValueError("history_days must be positive")
-
     cutoff = start - timedelta(days=history_days)
     buckets: dict[tuple[int, int], list[float]] = defaultdict(list)
     all_values: list[float] = []
-
     for reading in readings:
         timestamp = getattr(reading, "timestamp", None)
         power_kw = getattr(reading, "power_kw", None)
@@ -35,33 +32,31 @@ def forecast_load_from_readings(
             continue
         buckets[(timestamp.weekday(), timestamp.hour)].append(value)
         all_values.append(value)
-
     global_median = median(all_values) if all_values else None
     if global_median is None:
         if fallback_kw is None:
             raise ValueError("No usable historical load telemetry and no fallback_kw provided")
         global_median = max(0.0, float(fallback_kw))
-
-    result: list[float] = []
+    result = []
     for offset in range(hours):
         target = start + timedelta(hours=offset)
         values = buckets.get((target.weekday(), target.hour), [])
-        value = median(values) if values else global_median
-        result.append(round(float(value), 3))
+        result.append(round(float(median(values) if values else global_median), 3))
     return result
 
 
-def forecast_site_loads_from_readings(
-    readings_by_site: dict[int, Iterable[object]],
-    start: datetime,
-    hours: int = 24,
-    history_days: int = 28,
-) -> list[float]:
-    """Aggregate independent site forecasts into a VPP load forecast."""
-    forecasts = [
-        forecast_load_from_readings(readings, start, hours=hours, history_days=history_days)
-        for readings in readings_by_site.values()
-    ]
+def forecast_load_with_metadata(readings: Iterable[object], start: datetime, hours: int = 24,
+                                history_days: int = 28, fallback_kw: float | None = None):
+    values = forecast_load_from_readings(readings, start, hours, history_days, fallback_kw)
+    generated_at = datetime.now(timezone.utc)
+    metadata = ProviderMetadata("device-telemetry-load", generated_at.isoformat(), 15)
+    return values, metadata
+
+
+def forecast_site_loads_from_readings(readings_by_site: dict[int, Iterable[object]], start: datetime,
+                                      hours: int = 24, history_days: int = 28) -> list[float]:
+    forecasts = [forecast_load_from_readings(readings, start, hours=hours, history_days=history_days)
+                 for readings in readings_by_site.values()]
     if not forecasts:
         return [0.0] * hours
     return [round(sum(series[t] for series in forecasts), 3) for t in range(hours)]
