@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple
 from sqlalchemy.orm import Session
 
 from backend import models
+from forecasting.load_forecast import forecast_load_with_metadata
 from forecasting.solar_forecast import forecast_solar_production
 from optimization.assets import (
     BatteryAsset, EVAsset, FlexibleLoadAsset, HeatPumpAsset,
@@ -51,11 +52,7 @@ def _cfg_number(config: dict, *keys: str, default: float = 0.0) -> float:
 def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: List[float],
                              base_load_kw: List[float] | None = None, horizon: int = 24,
                              peak_demand_cost_eur_per_kw: float = 0.0) -> Tuple[VPPPortfolio, dict]:
-    """Build a domain portfolio from persisted VPP membership and device configuration.
-
-    Peak-demand pricing is an explicit runtime input. VPPGroup does not currently persist
-    tariff configuration, so the mapper must not invent a model attribute for it.
-    """
+    """Build a domain portfolio from persisted VPP membership and device configuration."""
     memberships = db.query(models.VPPSiteMembership).filter(models.VPPSiteMembership.vpp_id == vpp.id).all()
     site_ids = [m.site_id for m in memberships]
     devices = (db.query(models.Device).filter(models.Device.site_id.in_(site_ids), models.Device.enabled.is_(True)).all() if site_ids else [])
@@ -65,13 +62,12 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
         devices_by_site.setdefault(device.site_id, []).append(device)
 
     portfolio = VPPPortfolio(
-        prices_eur_mwh=list(prices_eur_mwh[:horizon]),
-        base_load_kw=list((base_load_kw or [])[:horizon]),
-        max_import_kw=float(vpp.target_kw or 10000.0),
-        max_export_kw=float(vpp.target_kw or 10000.0),
+        prices_eur_mwh=list(prices_eur_mwh[:horizon]), base_load_kw=list((base_load_kw or [])[:horizon]),
+        max_import_kw=float(vpp.target_kw or 10000.0), max_export_kw=float(vpp.target_kw or 10000.0),
         peak_demand_cost_eur_per_kw=float(peak_demand_cost_eur_per_kw),
     )
     warnings: List[str] = []
+    provider_metadata: List[dict] = []
 
     for membership in memberships:
         site = sites.get(membership.site_id, {})
@@ -125,16 +121,19 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
                     energy_required_kwh=_cfg_number(config, "energy_required_kwh", default=0.0), start_hour=int(_cfg_number(config, "start_hour", default=0)), end_hour=int(_cfg_number(config, "end_hour", default=horizon)), curtailment_cost_eur_kwh=_cfg_number(config, "curtailment_cost_eur_kwh", default=0.0)))
 
     if not portfolio.base_load_kw:
-        current_load = 0.0
-        for device in devices:
-            if DEVICE_TYPE_ALIASES.get((device.device_type or "").lower()) in {"solar", "battery", "ev", "flexible_load", "industrial_load", "heat_pump"}:
-                continue
-            reading = _latest_reading(db, device.id)
-            if reading and reading.power_kw is not None:
-                current_load += max(0.0, float(reading.power_kw))
-        portfolio.base_load_kw = [current_load] * horizon
-        if current_load:
-            warnings.append("Base load uses latest telemetry as a flat baseline; replace with load forecasting for production dispatch")
+        load_devices = [d for d in devices if DEVICE_TYPE_ALIASES.get((d.device_type or "").lower()) is None]
+        readings = []
+        for device in load_devices:
+            readings.extend(db.query(models.DeviceReading).filter(models.DeviceReading.device_id == device.id).all())
+        start = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0).replace(tzinfo=None)
+        try:
+            forecast, metadata = forecast_load_with_metadata(readings, start=start, hours=horizon)
+            portfolio.base_load_kw = forecast
+            provider_metadata.append({"name": metadata.name, "generated_at": metadata.generated_at, "max_age_minutes": metadata.max_age_minutes})
+        except ValueError:
+            current_load = sum(max(0.0, float(r.power_kw)) for r in ([_latest_reading(db, d.id) for d in load_devices]) if r and r.power_kw is not None)
+            portfolio.base_load_kw = [current_load] * horizon
+            warnings.append("Base load fallback uses latest telemetry as a flat baseline")
     if len(portfolio.prices_eur_mwh) < horizon:
         portfolio.prices_eur_mwh.extend([0.0] * (horizon - len(portfolio.prices_eur_mwh)))
-    return portfolio, {"vpp_id": vpp.id, "site_ids": site_ids, "device_count": len(devices), "asset_count": len(portfolio.assets), "warnings": warnings, "generated_at": datetime.now(timezone.utc).isoformat()}
+    return portfolio, {"vpp_id": vpp.id, "site_ids": site_ids, "device_count": len(devices), "asset_count": len(portfolio.assets), "warnings": warnings, "provider_metadata": provider_metadata, "generated_at": datetime.now(timezone.utc).isoformat()}
