@@ -2,6 +2,8 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from forecasting.contracts import ProviderMetadata
+
 
 @dataclass
 class EnergyAsset:
@@ -89,6 +91,7 @@ class VPPPortfolio:
     max_import_kw: float = 1000.0
     max_export_kw: float = 1000.0
     peak_demand_cost_eur_per_kw: float = 0.0
+    provider_metadata: tuple[ProviderMetadata, ...] = field(default_factory=tuple)
 
     def add(self, asset: EnergyAsset) -> None:
         self.assets.append(asset)
