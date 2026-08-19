@@ -8,8 +8,6 @@ def utcnow_naive():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-# ─── Core ─────────────────────────────────────────────────────────────────────
-
 class Tenant(Base):
     __tablename__ = "tenants"
     id = Column(Integer, primary_key=True, index=True)
@@ -41,8 +39,6 @@ class User(Base):
     totp_enabled = Column(Boolean, default=False)
     totp_backup_codes = Column(JSON, nullable=True)
 
-
-# ─── Devices / Readings ────────────────────────────────────────────────────────
 
 class BatteryState(Base):
     __tablename__ = "battery_state"
@@ -84,8 +80,6 @@ class DeviceReading(Base):
     raw = Column(JSON, nullable=True)
 
 
-# ─── Alerts ───────────────────────────────────────────────────────────────────
-
 class AlertRule(Base):
     __tablename__ = "alert_rules"
     id = Column(Integer, primary_key=True, index=True)
@@ -103,7 +97,7 @@ class AlertRule(Base):
 class Alert(Base):
     __tablename__ = "alerts"
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=False, index=True)
     rule_id = Column(Integer, nullable=True)
     device_id = Column(Integer, nullable=True)
     device_name = Column(String, nullable=True)
@@ -117,8 +111,6 @@ class Alert(Base):
     acknowledged_at = Column(DateTime, nullable=True)
     fired_at = Column(DateTime, default=utcnow_naive, index=True)
 
-
-# ─── VPP ──────────────────────────────────────────────────────────────────────
 
 class VPPGroup(Base):
     __tablename__ = "vpp_groups"
@@ -157,7 +149,40 @@ class VPPBid(Base):
     submitted_at = Column(DateTime, default=utcnow_naive)
 
 
-# ─── Reports ──────────────────────────────────────────────────────────────────
+class VPPOptimizationRun(Base):
+    __tablename__ = "vpp_optimization_runs"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, nullable=False, index=True)
+    vpp_id = Column(Integer, ForeignKey("vpp_groups.id"), nullable=False, index=True)
+    status = Column(String, nullable=False, default="pending")
+    horizon_hours = Column(Integer, nullable=False)
+    price_source = Column(String, nullable=True)
+    forecast_source = Column(String, nullable=True)
+    forecast_generated_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime, default=utcnow_naive, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    solver_time_ms = Column(Float, nullable=True)
+    total_cost_eur = Column(Float, nullable=True)
+    total_import_kwh = Column(Float, nullable=True)
+    total_export_kwh = Column(Float, nullable=True)
+    error = Column(Text, nullable=True)
+
+
+class VPPDispatchRecord(Base):
+    __tablename__ = "vpp_dispatch_records"
+    id = Column(Integer, primary_key=True, index=True)
+    optimization_run_id = Column(Integer, ForeignKey("vpp_optimization_runs.id"), nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=False, index=True)
+    vpp_id = Column(Integer, ForeignKey("vpp_groups.id"), nullable=False, index=True)
+    interval_start = Column(DateTime, nullable=False, index=True)
+    dispatch_kw = Column(Float, nullable=False, default=0.0)
+    asset_dispatch = Column(JSON, nullable=True)
+    site_dispatch = Column(JSON, nullable=True)
+    schedule = Column(JSON, nullable=True)
+    solver_status = Column(String, nullable=False)
+    committed = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
+
 
 class ReportJob(Base):
     __tablename__ = "report_jobs"
@@ -174,12 +199,8 @@ class ReportJob(Base):
     requested_by = Column(String, nullable=True)
 
 
-# ─── Audit Logs ──────────────────────────────────────────────────────────────
-
 class AuditLog(Base):
-    """Immutable audit trail for critical actions."""
     __tablename__ = "audit_logs"
-
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
@@ -191,7 +212,6 @@ class AuditLog(Base):
     user_agent = Column(String, nullable=True)
     details = Column(JSON, nullable=True)
     timestamp = Column(DateTime, default=utcnow_naive, nullable=False, index=True)
-
     __table_args__ = (
         Index("ix_audit_logs_tenant_timestamp", "tenant_id", "timestamp"),
         Index("ix_audit_logs_user_timestamp", "user_id", "timestamp"),
