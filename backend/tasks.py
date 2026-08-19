@@ -20,7 +20,7 @@ def run_forecasting(self):
     from forecasting.contracts import ForecastBundle
     from forecasting.load_forecast import forecast_load_with_metadata
     from forecasting.persistence import record_from_bundle
-    from forecasting.price_forecast import forecast_market_prices
+    from forecasting.price_forecast import forecast_market_prices_with_metadata
     from forecasting.solar_forecast import forecast_solar_production
 
     db = SessionLocal()
@@ -36,7 +36,7 @@ def run_forecasting(self):
                     results.append({"tenant_id": tenant.id, "status": "skipped", "reason": "insufficient_data", "readings_count": len(readings)})
                     continue
                 load, load_provider = forecast_load_with_metadata(readings, start, hours=24, history_days=28)
-                prices = __import__("asyncio").run(forecast_market_prices(country_code=getattr(tenant, "country_code", "PT") or "PT", hours=24, allow_fallback=False))
+                prices, price_provider = __import__("asyncio").run(forecast_market_prices_with_metadata(country_code=getattr(tenant, "country_code", "PT") or "PT", hours=24, allow_fallback=False))
                 lat = getattr(tenant, "latitude", None)
                 lon = getattr(tenant, "longitude", None)
                 solar_kw = float(getattr(tenant, "solar_capacity_kw", 0.0) or 0.0)
@@ -46,7 +46,6 @@ def run_forecasting(self):
                 solar = [float(item["estimated_kwh"]) for item in solar_response["forecast"][:24]]
                 from forecasting.contracts import ProviderMetadata
                 solar_provider = ProviderMetadata("Open-Meteo", solar_response["generated_at"], solar_response["max_age_minutes"])
-                price_provider = ProviderMetadata("ENTSO-E", start.isoformat(), 120)
                 bundle = ForecastBundle(prices_eur_mwh=prices, load_kw=load, solar_kw=solar, timestamps=[(start + timedelta(hours=i)).isoformat() for i in range(24)], providers=(price_provider, load_provider, solar_provider))
                 bundle.validate(24, now=start)
                 record = record_from_bundle(models, tenant.id, bundle, now=start)
