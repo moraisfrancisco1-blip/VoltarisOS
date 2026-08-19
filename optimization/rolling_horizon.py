@@ -1,8 +1,9 @@
 """Rolling-horizon orchestration around the portfolio optimizer.
 
 Forecast generation stays outside the MILP. The orchestrator receives an
-already aligned ForecastBundle, builds one portfolio per optimization window,
-and only commits the first dispatch interval of each solve.
+already aligned ForecastBundle, validates provider health, builds one
+portfolio per optimization window, and only commits the first dispatch
+interval of each solve.
 """
 from __future__ import annotations
 
@@ -10,6 +11,7 @@ from dataclasses import dataclass
 from typing import Callable, List
 
 from forecasting.contracts import ForecastBundle
+from forecasting.health import require_healthy_bundle
 from optimization.assets import VPPPortfolio
 from optimization.multi_asset_optimizer import MultiAssetOptimizationResult, MultiAssetOptimizer
 
@@ -38,6 +40,10 @@ class RollingHorizonOptimizer:
     ) -> RollingHorizonResult:
         if horizon_hours <= 0 or step_hours <= 0:
             raise ValueError("horizon_hours and step_hours must be positive")
+
+        # Fail closed before any portfolio is constructed or solver work starts.
+        # Legacy optimization paths that do not use ForecastBundle are unaffected.
+        require_healthy_bundle(forecast)
         forecast.validate(horizon_hours)
 
         intervals: List[dict] = []
