@@ -183,7 +183,6 @@ def get_telemetry_coverage(
 
     row = (
         db.query(
-            models.DeviceReading.tenant_id,
             func.count(models.DeviceReading.id).label("readings_count"),
             func.min(models.DeviceReading.timestamp).label("first_reading"),
             func.max(models.DeviceReading.timestamp).label("last_reading"),
@@ -201,7 +200,7 @@ def get_telemetry_coverage(
         )
 
     return TelemetryCoverageOut(
-        tenant_id=row.tenant_id,
+        tenant_id=effective_tenant,
         readings_count=row.readings_count,
         first_reading=row.first_reading,
         last_reading=row.last_reading,
