@@ -196,3 +196,46 @@ class VPPDispatchRecord(Base):
     dispatch_kw = Column(Float, nullable=False, default=0.0)
     asset_dispatch = Column(JSON, nullable=True)
     site_dispatch = Column(JSON, nullable=True)
+
+
+# ─── Reports ─────────────────────────────────────────────────────────────────
+
+class ReportJob(Base):
+    __tablename__ = "report_jobs"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, nullable=False, index=True)
+    report_type = Column(String, nullable=False)
+    period = Column(String, nullable=True)
+    site_ids = Column(JSON, nullable=True)
+    status = Column(String, default="pending")
+    file_path = Column(String, nullable=True)
+    error = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utcnow_naive)
+    completed_at = Column(DateTime, nullable=True)
+    requested_by = Column(String, nullable=True)
+
+
+# ─── Audit Logs ──────────────────────────────────────────────────────────────
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    user_email = Column(String, nullable=True)
+    
+    action = Column(String, nullable=False, index=True)
+    target_resource = Column(String, nullable=True)
+    target_id = Column(Integer, nullable=True)
+    
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    details = Column(JSON, nullable=True)
+    
+    timestamp = Column(DateTime, default=utcnow_naive, nullable=False, index=True)
+    
+    __table_args__ = (
+        Index("ix_audit_logs_tenant_timestamp", "tenant_id", "timestamp"),
+        Index("ix_audit_logs_user_timestamp", "user_id", "timestamp"),
+    )
