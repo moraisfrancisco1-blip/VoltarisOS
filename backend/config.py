@@ -41,19 +41,10 @@ class Settings:
         ).split(",") if o.strip()
     ]
     
-    # Stripe — NO fallbacks; keys must come from environment
-    STRIPE_SECRET_KEY: str = _require_env(
-        "STRIPE_SECRET_KEY",
-        "Get from: https://dashboard.stripe.com/apikeys"
-    )
-    STRIPE_PUBLISHABLE_KEY: str = _require_env(
-        "STRIPE_PUBLISHABLE_KEY",
-        "Get from: https://dashboard.stripe.com/apikeys"
-    )
-    STRIPE_WEBHOOK_SECRET: str = _require_env(
-        "STRIPE_WEBHOOK_SECRET",
-        "Get from: https://dashboard.stripe.com/webhooks"
-    )
+    # Stripe — optional; billing endpoints will return 503 if keys are missing
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
+    STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     
     # Redis (optional — for sessions/cache; falls back to in-memory if not set)
     REDIS_URL: str = os.getenv("REDIS_URL", "")  # e.g., redis://localhost:6379/0
