@@ -5,6 +5,8 @@ security.py — shared auth used by every router.
 - get_current_user: FastAPI dependency that validates the JWT and 401s if missing/invalid
 """
 import hashlib
+import hmac
+import json
 import os
 import sys
 
@@ -110,22 +112,22 @@ def require_role(*allowed_roles: str):
 
 async def check_module_access(module_name: str, user: dict = Depends(get_current_user)) -> dict:
     """FastAPI dependency — validate that the user's active plan includes the requested module.
-    
+
     Usage:
         @router.post("/trading/execute")
         async def execute_trade(..., _: dict = Depends(lambda: check_module_access("markets_trading"))):
             ...
-    
+
     SUPER_ADMIN bypasses all module checks.
     Module access is determined by the ALLOWED_MODULES per plan (see permissions.py).
     """
     from backend.permissions import can_access_module, get_tenant_plan
     from backend.database import SessionLocal
-    
+
     role = user.get("role", "")
     if role == "SUPER_ADMIN":
         return user
-    
+
     db = SessionLocal()
     try:
         plan = get_tenant_plan(user, db)
@@ -160,3 +162,65 @@ async def require_gateway_key(creds: HTTPAuthorizationCredentials = Depends(_gat
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Gateway auth not configured")
     if creds is None or creds.credentials != GATEWAY_API_KEY:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chave de serviço inválida")
+
+
+# ─── Tenant-scoped gateway keys (service-to-service telemetry ingestion) ──────
+# GATEWAY_API_KEYS binds a gateway bearer token to exactly ONE tenant it may
+# write to. Format (JSON):  {"<key1>": 1, "<key2>": 2}
+#
+# This is separate from the global GATEWAY_API_KEY above (which remains for the
+# alert rules engine, where the tenant is carried explicitly in the request body).
+# Ingestion derives the tenant from the authenticated credential, never from
+# client-supplied data, so a gateway key can never reach another tenant.
+def _load_gateway_keys() -> dict:
+    """Parse GATEWAY_API_KEYS into {token: tenant_id}. Read lazily so key
+    rotation/revocation propagates without a code deploy (on env reload)."""
+    raw = os.environ.get("GATEWAY_API_KEYS", "")
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except Exception:
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+    mapping = {}
+    for key, tenant_id in parsed.items():
+        try:
+            mapping[str(key)] = int(tenant_id)
+        except (TypeError, ValueError):
+            continue
+    return mapping
+
+
+def _gateway_tenant_for_token(token: str):
+    """Return the tenant_id bound to a gateway token, or None. Constant-time
+    comparison avoids leaking which key matched via timing side channels."""
+    for key, tenant_id in _load_gateway_keys().items():
+        if hmac.compare_digest(key, token):
+            return tenant_id
+    return None
+
+
+async def require_ingest_identity(creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
+    """Identity for telemetry ingestion: either a logged-in user (JWT) or a
+    tenant-scoped gateway key. Always returns a dict carrying `tenant_id` so
+    the ingestion path can enforce tenant isolation against the device record.
+    """
+    if creds is None or not creds.credentials:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autenticação necessária")
+
+    token = creds.credentials
+
+    # 1) Normal logged-in user (JWT)
+    try:
+        return decode_token(token)
+    except HTTPException:
+        pass
+
+    # 2) Tenant-scoped gateway key (no JWT required for the edge gateway)
+    tenant_id = _gateway_tenant_for_token(token)
+    if tenant_id is not None:
+        return {"sub": "gateway", "role": "GATEWAY", "tenant_id": tenant_id}
+
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chave de serviço inválida")
