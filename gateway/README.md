@@ -23,10 +23,12 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-# Against local backend
+# Against local backend (no auth needed in local dev)
 python -m gateway.gateway --api http://localhost:8000 --interval 30
 
-# Against Railway/cloud backend
+# Against Railway/cloud backend — authenticate with this gateway's
+# tenant-scoped key (one entry in the backend's GATEWAY_API_KEYS mapping)
+GATEWAY_API_KEY="<tenant-scoped-key>" \
 python -m gateway.gateway --api https://your-app.up.railway.app --interval 60
 ```
 

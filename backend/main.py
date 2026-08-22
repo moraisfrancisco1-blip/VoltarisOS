@@ -54,6 +54,7 @@ from backend.routers.trading_agent import router as trading_agent_router
 from backend.routers.carbon import router as carbon_router
 from backend.routers.maintenance import router as maintenance_router
 from backend.routers.devices import router as devices_router
+from backend.routers.devices import ingest_router as devices_ingest_router
 from backend.routers.vpp import router as vpp_router
 from backend.routers.reports import router as reports_router
 from backend.routers.alerts_ws import router as alerts_ws_router
@@ -181,6 +182,10 @@ app.include_router(trading_agent_router, dependencies=_auth_dep)
 app.include_router(carbon_router, dependencies=_auth_dep)
 app.include_router(maintenance_router, dependencies=_auth_dep)
 app.include_router(devices_router, dependencies=_auth_dep)
+# Ingestion accepts either a user JWT or a tenant-scoped gateway key — its own
+# dependency (require_ingest_identity) enforces auth per-route, so it is NOT
+# wrapped by the global get_current_user dependency.
+app.include_router(devices_ingest_router)
 app.include_router(prices.router, prefix="/api", dependencies=_auth_dep)
 app.include_router(sites.router, prefix="/api", dependencies=_auth_dep)
 app.include_router(auth.router, prefix="/api")  # login/register must stay public; /users routes self-protect

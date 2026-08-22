@@ -14,8 +14,14 @@ from backend.schemas import (
     DeviceReadingBatchItem,
 )
 from backend.audit import log_audit_event
+from backend.security import get_current_user, require_ingest_identity
 
 router = APIRouter(prefix="/api/devices", tags=["devices"])
+
+# Ingestion routes live on a separate router that is NOT wrapped by the global
+# get_current_user dependency in main.py. They accept either a logged-in user
+# JWT or a tenant-scoped gateway key (see require_ingest_identity in security.py).
+ingest_router = APIRouter(prefix="/api/devices", tags=["ingestion"])
 
 
 # ── Dependency ──────────────────────────────────────────────────────────────
@@ -76,14 +82,38 @@ class ReadingOut(BaseModel):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+def _get_owned_device(db: Session, device_id: int, user: dict) -> models.Device:
+    """Return a device visible to `user`, or 404. SUPER_ADMIN sees all devices;
+    everyone else is restricted to their own tenant (no cross-tenant existence leak)."""
+    q = db.query(models.Device).filter(models.Device.id == device_id)
+    if user.get("role") != "SUPER_ADMIN":
+        q = q.filter(models.Device.tenant_id == user.get("tenant_id"))
+    dev = q.first()
+    if not dev:
+        raise HTTPException(404, "Device not found")
+    return dev
+
+
 @router.get("", response_model=List[DeviceOut])
-def list_devices(db: Session = Depends(get_db)):
-    return db.query(models.Device).all()
+def list_devices(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    q = db.query(models.Device)
+    if user.get("role") != "SUPER_ADMIN":
+        q = q.filter(models.Device.tenant_id == user.get("tenant_id"))
+    return q.all()
 
 
 @router.post("", response_model=DeviceOut, status_code=201)
-def create_device(body: DeviceCreate, db: Session = Depends(get_db)):
+def create_device(
+    body: DeviceCreate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
     dev = models.Device(**body.dict())
+    # Tenant isolation: a device is always created under the authenticated
+    # user's tenant. `tenant_id` is not part of DeviceCreate, so a client
+    # cannot supply its own — any extra `tenant_id` in the payload is ignored
+    # by Pydantic and never reaches the model.
+    dev.tenant_id = user.get("tenant_id")
     db.add(dev)
     db.commit()
     db.refresh(dev)
@@ -91,18 +121,21 @@ def create_device(body: DeviceCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{device_id}", response_model=DeviceOut)
-def get_device(device_id: int, db: Session = Depends(get_db)):
-    dev = db.query(models.Device).filter(models.Device.id == device_id).first()
-    if not dev:
-        raise HTTPException(404, "Device not found")
-    return dev
+def get_device(device_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    return _get_owned_device(db, device_id, user)
 
 
 @router.put("/{device_id}", response_model=DeviceOut)
-def update_device(device_id: int, body: DeviceUpdate, db: Session = Depends(get_db)):
-    dev = db.query(models.Device).filter(models.Device.id == device_id).first()
-    if not dev:
-        raise HTTPException(404, "Device not found")
+def update_device(
+    device_id: int,
+    body: DeviceUpdate,
+    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    dev = _get_owned_device(db, device_id, user)
+    # DeviceUpdate only exposes name/config/enabled — tenant_id (and any other
+    # unblessed field) is stripped by Pydantic, so a device can never be
+    # reassigned to another tenant through this endpoint.
     for field, val in body.dict(exclude_none=True).items():
         setattr(dev, field, val)
     db.commit()
@@ -111,10 +144,8 @@ def update_device(device_id: int, body: DeviceUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{device_id}", status_code=204)
-def delete_device(device_id: int, db: Session = Depends(get_db)):
-    dev = db.query(models.Device).filter(models.Device.id == device_id).first()
-    if not dev:
-        raise HTTPException(404, "Device not found")
+def delete_device(device_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    dev = _get_owned_device(db, device_id, user)
     db.delete(dev)
     db.commit()
 
@@ -145,15 +176,35 @@ def get_readings(device_id: int, limit: int = 50, db: Session = Depends(get_db))
     )
 
 
-@router.post("/{device_id}/ingest", status_code=201)
-def ingest_reading(device_id: int, reading: dict, db: Session = Depends(get_db)):
-    """Used by the Edge Gateway to push a normalised reading."""
+@ingest_router.post("/{device_id}/ingest", status_code=201)
+def ingest_reading(
+    device_id: int,
+    reading: dict,
+    db: Session = Depends(get_db),
+    identity: dict = Depends(require_ingest_identity),
+):
+    """Used by the Edge Gateway to push a normalised reading.
+
+    Tenant isolation: the tenant is derived from the authenticated identity
+    (a JWT user or a tenant-scoped gateway key). Any `tenant_id` supplied in
+    the reading payload is ignored — the reading is always assigned to the
+    device's own tenant, and the device must belong to the authenticated tenant.
+    """
     dev = db.query(models.Device).filter(models.Device.id == device_id).first()
     if not dev:
         raise HTTPException(404, "Device not found")
 
+    identity_tenant = identity.get("tenant_id")
+    role = identity.get("role", "")
+
+    # SUPER_ADMIN bypasses tenant scoping; everyone else must match the device.
+    if role != "SUPER_ADMIN":
+        if identity_tenant is None or dev.tenant_id != identity_tenant:
+            raise HTTPException(403, "Device does not belong to the authenticated tenant")
+
     r = models.DeviceReading(
         device_id=device_id,
+        tenant_id=dev.tenant_id,  # derived from device, never from payload
         power_kw=reading.get("power_kw"),
         energy_kwh=reading.get("energy_kwh"),
         soc_pct=reading.get("soc_pct"),
@@ -194,11 +245,12 @@ def _validate_reading(reading: DeviceReadingBatchItem, device_ids: set) -> tuple
     return True, ""
 
 
-@router.post("/ingest/batch", response_model=DeviceReadingBatchResponse, status_code=202)
+@ingest_router.post("/ingest/batch", response_model=DeviceReadingBatchResponse, status_code=202)
 def ingest_batch(
     request: Request,
     batch: DeviceReadingBatchRequest,
     db: Session = Depends(get_db),
+    identity: dict = Depends(require_ingest_identity),
 ):
     """
     Batch ingest endpoint for high-throughput telemetry.
@@ -212,6 +264,9 @@ def ingest_batch(
     - Gateway is pushing buffered readings
     - High-frequency telemetry (sub-second intervals)
     """
+    identity_tenant = identity.get("tenant_id")
+    role = identity.get("role", "")
+
     device_ids = {r.device_id for r in batch.readings}
     
     # Get all devices in one query
@@ -225,6 +280,11 @@ def ingest_batch(
     for i, reading in enumerate(batch.readings):
         valid, error_msg = _validate_reading(reading, set(devices.keys()))
         
+        if valid and role != "SUPER_ADMIN":
+            dev = devices.get(reading.device_id)
+            if dev is not None and identity_tenant is not None and dev.tenant_id != identity_tenant:
+                valid, error_msg = False, f"Device {reading.device_id} does not belong to the authenticated tenant"
+
         if not valid:
             rejected += 1
             errors.append({"index": i, "device_id": reading.device_id, "error": error_msg})
