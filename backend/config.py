@@ -41,19 +41,10 @@ class Settings:
         ).split(",") if o.strip()
     ]
     
-    # Stripe — NO fallbacks; keys must come from environment
-    STRIPE_SECRET_KEY: str = _require_env(
-        "STRIPE_SECRET_KEY",
-        "Get from: https://dashboard.stripe.com/apikeys"
-    )
-    STRIPE_PUBLISHABLE_KEY: str = _require_env(
-        "STRIPE_PUBLISHABLE_KEY",
-        "Get from: https://dashboard.stripe.com/apikeys"
-    )
-    STRIPE_WEBHOOK_SECRET: str = _require_env(
-        "STRIPE_WEBHOOK_SECRET",
-        "Get from: https://dashboard.stripe.com/webhooks"
-    )
+    # Stripe — optional; billing endpoints will return 503 if keys are missing
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "")
+    STRIPE_PUBLISHABLE_KEY: str = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "")
     
     # Redis (optional — for sessions/cache; falls back to in-memory if not set)
     REDIS_URL: str = os.getenv("REDIS_URL", "")  # e.g., redis://localhost:6379/0
@@ -85,26 +76,26 @@ class Settings:
     STRIPE_PLANS = {
         "home": {
             "name": "Home",
-            "price_monthly": 6900,  # €69
-            "price_yearly": 6624,   # €66.24 (20% off)
+            "price_monthly": 6900,
+            "price_yearly": 6624,
             "description": "1 site · até 50 kWh"
         },
         "starter": {
             "name": "Starter",
-            "price_monthly": 27900,  # €279
-            "price_yearly": 26784,   # €267.84 (20% off)
+            "price_monthly": 27900,
+            "price_yearly": 26784,
             "description": "5 sites · até 500 kWh"
         },
         "pro": {
             "name": "Pro",
-            "price_monthly": 109900,  # €1,099
-            "price_yearly": 105504,   # €1,055.04 (20% off)
+            "price_monthly": 109900,
+            "price_yearly": 105504,
             "description": "20 sites · AI avançada"
         },
         "enterprise": {
             "name": "Enterprise",
-            "price_monthly": 399900,  # €3,999
-            "price_yearly": 383904,   # €3,839.04 (20% off)
+            "price_monthly": 399900,
+            "price_yearly": 383904,
             "description": "Ilimitado · white-label"
         }
     }
