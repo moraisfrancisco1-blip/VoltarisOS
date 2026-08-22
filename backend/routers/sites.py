@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, List
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 import json
 import os
 from datetime import datetime
@@ -148,3 +149,59 @@ def delete_site(site_id: int, user: dict = Depends(get_current_user)):
     sites = [s for s in sites if s["id"] != site_id]
     save_sites(sites)
     return {"message": "Site removido"}
+
+
+# ── Telemetry Coverage ────────────────────────────────────────────────────────
+
+class TelemetryCoverageOut(BaseModel):
+    tenant_id: int
+    readings_count: int
+    first_reading: Optional[datetime]
+    last_reading: Optional[datetime]
+
+
+@router.get("/sites/telemetry-coverage", response_model=TelemetryCoverageOut)
+def get_telemetry_coverage(
+    tenant_id: Optional[int] = None,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return telemetry coverage summary for the authenticated tenant.
+
+    Uses real DeviceReading data from PostgreSQL.
+    Normal users only see their own tenant.
+    SUPER_ADMIN may pass ?tenant_id=<id> to inspect another tenant.
+    """
+    role = user.get("role", "")
+    effective_tenant = user.get("tenant_id")
+
+    if role == "SUPER_ADMIN" and tenant_id is not None:
+        effective_tenant = tenant_id
+
+    if effective_tenant is None:
+        raise HTTPException(400, "tenant_id could not be resolved")
+
+    row = (
+        db.query(
+            func.count(models.DeviceReading.id).label("readings_count"),
+            func.min(models.DeviceReading.timestamp).label("first_reading"),
+            func.max(models.DeviceReading.timestamp).label("last_reading"),
+        )
+        .filter(models.DeviceReading.tenant_id == effective_tenant)
+        .one_or_none()
+    )
+
+    if row is None or row.readings_count == 0:
+        return TelemetryCoverageOut(
+            tenant_id=effective_tenant,
+            readings_count=0,
+            first_reading=None,
+            last_reading=None,
+        )
+
+    return TelemetryCoverageOut(
+        tenant_id=effective_tenant,
+        readings_count=row.readings_count,
+        first_reading=row.first_reading,
+        last_reading=row.last_reading,
+    )

@@ -10,7 +10,8 @@ Usage:
 
 Environment variables (override CLI flags):
   VOLTARIS_API_URL      — backend URL
-  VOLTARIS_API_KEY      — Bearer token (if auth enabled)
+  GATEWAY_API_KEY       — Bearer token for this gateway/site (a key from the
+                          backend's GATEWAY_API_KEYS mapping, scoped to one tenant)
   GATEWAY_INTERVAL      — polling interval in seconds (default 30)
 """
 import asyncio
@@ -159,7 +160,7 @@ async def run(api_url: str, api_key: str, interval: int) -> None:
 def main():
     parser = argparse.ArgumentParser(description="VoltarisOS Edge Gateway")
     parser.add_argument("--api", default=os.getenv("VOLTARIS_API_URL", "http://localhost:8000"))
-    parser.add_argument("--key", default=os.getenv("VOLTARIS_API_KEY", ""))
+    parser.add_argument("--key", default=os.getenv("GATEWAY_API_KEY", ""))
     parser.add_argument("--interval", type=int, default=int(os.getenv("GATEWAY_INTERVAL", "30")))
     args = parser.parse_args()
     asyncio.run(run(args.api, args.key, args.interval))
