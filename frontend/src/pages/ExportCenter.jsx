@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
 import { useTranslation } from "../i18n/useTranslation"
+import DemoNotice from "../components/DemoNotice"
 
 const FORMATS = ["PDF", "CSV", "Excel", "JSON"]
 
@@ -54,6 +55,7 @@ export default function ExportCenter({ user }) {
 
   return (
     <div style={{ padding: "32px", maxWidth: "1000px" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Export Center</h1>

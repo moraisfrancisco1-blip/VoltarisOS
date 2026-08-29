@@ -21,6 +21,7 @@ Usage:
 from sqlalchemy import Column, Integer, Float, DateTime, String, JSON, Index
 from datetime import datetime
 from backend.database import Base
+from backend.models import utcnow_naive
 
 
 class DeviceReadingTS(Base):
@@ -41,7 +42,7 @@ class DeviceReadingTS(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, nullable=True, index=True)
     device_id = Column(Integer, nullable=False, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=utcnow_naive, nullable=False, index=True)
     
     # Metrics
     power_kw = Column(Float, nullable=True)
@@ -96,7 +97,7 @@ class BatteryStateTS(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, nullable=True, index=True)
     device_id = Column(Integer, nullable=True, index=True)  # Battery device ID
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=utcnow_naive, nullable=False, index=True)
     
     # Battery metrics
     soc = Column(Float, nullable=False)  # State of charge (0-1)
@@ -146,7 +147,7 @@ class EnergyPriceTS(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     market = Column(String, nullable=False, index=True)  # MIBEL, EPEX, N2EX, OMIE
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    timestamp = Column(DateTime, default=utcnow_naive, nullable=False, index=True)
     
     # Price data
     price_eur_mwh = Column(Float, nullable=False)

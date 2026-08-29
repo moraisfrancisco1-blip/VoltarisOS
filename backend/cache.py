@@ -184,6 +184,15 @@ class CacheManager:
     def get(self, key: str) -> Optional[Any]:
         """Get a value from cache."""
         return self._cache.get(key)
+
+    @property
+    def is_connected(self) -> bool:
+        """Whether the active cache backend is a live Redis connection.
+
+        False when Redis is not configured or unreachable (in-memory fallback),
+        so health/readiness never report Redis as healthy when it is not.
+        """
+        return bool(getattr(self._cache, "is_connected", False))
     
     def set(self, key: str, value: Any, ttl: int = 300) -> bool:
         """Set a value in cache with TTL (seconds)."""

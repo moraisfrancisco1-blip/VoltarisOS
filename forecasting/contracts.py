@@ -25,7 +25,7 @@ class ProviderMetadata:
         age = self.age_minutes(now=now)
         if age < 0:
             raise ValueError(f"{self.name} generated_at is in the future")
-        if age > self.max_age_minutes:
+        if age >= self.max_age_minutes:
             raise ValueError(f"{self.name} forecast is stale")
 
 
@@ -68,7 +68,7 @@ class ForecastBundle:
             age_seconds = (current - generated).total_seconds()
             if age_seconds < 0:
                 raise ValueError("generated_at cannot be in the future")
-            if age_seconds > self.max_age_minutes * 60:
+            if age_seconds >= self.max_age_minutes * 60:
                 raise ValueError("forecast bundle is stale")
         for provider in self.providers:
             provider.validate(now=now)

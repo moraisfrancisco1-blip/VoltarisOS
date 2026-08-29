@@ -3,9 +3,18 @@ from fastapi.testclient import TestClient
 
 from backend.main import app
 from backend.security import get_current_user
+import pytest
 
 
-app.dependency_overrides[get_current_user] = lambda: {"id": 1, "tenant_id": 1}
+@pytest.fixture(autouse=True)
+def _auth_override():
+    # Keep get_current_user overridden for every test and clear it on teardown.
+    # A module-level clear() here would wipe the override before tests run (401).
+    app.dependency_overrides[get_current_user] = lambda: {"id": 1, "tenant_id": 1}
+    yield
+    app.dependency_overrides.clear()
+
+
 client = TestClient(app)
 
 
@@ -82,6 +91,3 @@ def test_multi_asset_api_rejects_short_price_series():
 
     # The optimizer validates the horizon/series contract instead of silently padding it.
     assert response.status_code in (400, 422)
-
-
-app.dependency_overrides.clear()

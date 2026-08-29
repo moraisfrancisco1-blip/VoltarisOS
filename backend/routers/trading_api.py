@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
+from backend.models import utcnow_naive
 from backend.audit import log_audit_event
 from backend.database import SessionLocal
 
@@ -49,7 +50,7 @@ def arbitrage_signals(payload: SignalsRequest):
     """
     prices = payload.prices
     if not prices:
-        return {"signals": [], "generated_at": datetime.utcnow().isoformat()}
+        return {"signals": [], "generated_at": utcnow_naive().isoformat()}
 
     vals = [p.price for p in prices]
     avg = sum(vals) / len(vals)
@@ -106,7 +107,7 @@ def arbitrage_signals(payload: SignalsRequest):
 
     return {
         "signals": [s.model_dump() for s in signals],
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": utcnow_naive().isoformat(),
         "summary": {
             "avg_price": round(avg, 2),
             "low_threshold": round(low_threshold, 2),

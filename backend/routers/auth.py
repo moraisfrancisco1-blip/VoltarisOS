@@ -150,7 +150,7 @@ AVAILABLE_PLANS = [
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 def create_token(data: dict) -> str:
     payload = data.copy()
-    payload["exp"] = datetime.utcnow() + timedelta(hours=72)
+    payload["exp"] = models.utcnow_naive() + timedelta(hours=72)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_or_create_tenant(db: Session, name: str, plan: str = "beta") -> models.Tenant:
@@ -328,7 +328,7 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
         role=role,
         color=req.color,
         active=True,
-        terms_accepted_at=datetime.utcnow(),
+        terms_accepted_at=models.utcnow_naive(),
     )
     db.add(user)
     db.commit()
@@ -351,7 +351,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         user.password_hash = hash_pw(req.password)
 
     # Update last_login
-    user.last_login = datetime.utcnow()
+    user.last_login = models.utcnow_naive()
     db.commit()
 
     # Check if 2FA is enabled
@@ -584,5 +584,5 @@ def system_health(_sa: dict = Depends(require_super_admin)):
     return {
         "status": "healthy",
         "version": "2.0.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": models.utcnow_naive().isoformat(),
     }

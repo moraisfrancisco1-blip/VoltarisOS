@@ -8,7 +8,7 @@ from celery.schedules import crontab
 logger = logging.getLogger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 celery_app = Celery("voltaris", broker=REDIS_URL, backend=REDIS_URL, include=["backend.tasks", "backend.tasks_forecast_backtest"])
-celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json", timezone="Europe/Lisbon", enable_utc=True, task_track_started=True, task_time_limit=300, task_soft_time_limit=240, result_expires=3600, worker_prefetch_multiplier=1, worker_max_tasks_per_child=100, task_acks_late=True, task_reject_on_worker_lost=True, beat_schedule={"run-forecasting-every-15min": {"task": "backend.tasks.run_forecasting", "schedule": crontab(minute="*/15")}, "run-milp-optimization-every-5min": {"task": "backend.tasks.run_milp_optimization", "schedule": crontab(minute="*/5")}, "aggregate-device-data-every-5min": {"task": "backend.tasks.aggregate_device_data", "schedule": crontab(minute="*/5")}, "generate-daily-report": {"task": "backend.tasks.generate_daily_report", "schedule": crontab(hour=0, minute=0)}, "cleanup-old-audit-logs": {"task": "backend.tasks.cleanup_old_audit_logs", "schedule": crontab(hour=3, minute=0, day_of_week=0)}})
+celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json", timezone="Europe/Lisbon", enable_utc=True, task_track_started=True, task_time_limit=300, task_soft_time_limit=240, result_expires=3600, worker_prefetch_multiplier=1, worker_max_tasks_per_child=100, task_acks_late=True, task_reject_on_worker_lost=True, beat_schedule={"run-forecasting-every-15min": {"task": "backend.tasks.run_forecasting", "schedule": crontab(minute="*/15")}, "run-milp-optimization-every-5min": {"task": "backend.tasks.run_milp_optimization", "schedule": crontab(minute="*/5")}, "aggregate-device-data-every-5min": {"task": "backend.tasks.aggregate_device_data", "schedule": crontab(minute="*/5")}, "generate-daily-report": {"task": "backend.tasks.generate_daily_report", "schedule": crontab(hour=0, minute=0)}, "cleanup-old-audit-logs": {"task": "backend.tasks.cleanup_old_audit_logs", "schedule": crontab(hour=3, minute=0, day_of_week=0)}, "detect-offline-devices": {"task": "backend.tasks.detect_offline_devices", "schedule": crontab(minute="*/5")}})
 
 
 @celery_app.task(name="backend.tasks.run_forecasting", bind=True, max_retries=3, default_retry_delay=60)
@@ -139,6 +139,56 @@ def cleanup_old_audit_logs():
 @celery_app.task(name="backend.tasks.process_vpp_bid")
 def process_vpp_bid(bid_id: int, tenant_id: int):
     return {"status": "not_implemented", "bid_id": bid_id, "tenant_id": tenant_id}
+
+
+@celery_app.task(name="backend.tasks.detect_offline_devices")
+def detect_offline_devices():
+    """Mark monitored devices offline when they stop reporting and raise a single
+    communication alert per device. Idempotent: devices already offline are skipped
+    and no duplicate communication alert is created while the device stays offline.
+    Devices that never reported (last_seen is null) are left untouched."""
+    from datetime import timedelta
+    from backend.database import SessionLocal
+    from backend import models
+    from backend.config import settings
+    db = SessionLocal()
+    try:
+        threshold_min = settings.DEVICE_OFFLINE_AFTER_MINUTES
+        cutoff = models.utcnow_naive() - timedelta(minutes=threshold_min)
+        candidates = db.query(models.Device).filter(
+            models.Device.enabled.is_(True),
+            models.Device.last_seen.isnot(None),
+            models.Device.last_seen < cutoff,
+        ).all()
+        flipped = 0
+        created = 0
+        for dev in candidates:
+            if dev.status == "offline":
+                continue  # already offline — avoid status churn / duplicate alert
+            dev.status = "offline"
+            flipped += 1
+            existing = db.query(models.Alert).filter(
+                models.Alert.tenant_id == dev.tenant_id,
+                models.Alert.device_id == dev.id,
+                models.Alert.metric == "communication",
+                models.Alert.acknowledged.is_(False),
+            ).first()
+            if existing:
+                continue
+            db.add(models.Alert(
+                tenant_id=dev.tenant_id,
+                device_id=dev.id,
+                device_name=dev.name,
+                severity="warning",
+                title="Perda de comunicação — dispositivo offline",
+                message=f"{dev.name} não reportou leituras nos últimos {threshold_min} min",
+                metric="communication",
+            ))
+            created += 1
+        db.commit()
+        return {"checked": len(candidates), "flipped_offline": flipped, "communication_alerts_created": created}
+    finally:
+        db.close()
 
 
 @celery_app.task(name="backend.tasks.backtest_tenant_load")

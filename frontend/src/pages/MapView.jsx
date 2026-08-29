@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import DemoNotice from "../components/DemoNotice";
 
 const accent = "#6366f1";
 
@@ -185,6 +186,7 @@ export default function MapView() {
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
+      <DemoNotice />
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4, color: "var(--text)" }}>Site Map</h1>
       <p style={{ color: "var(--sub)", marginBottom: 24 }}>Geographic overview of all VPP assets</p>
 

@@ -4,10 +4,11 @@ schemas.py — Pydantic schemas for validation.
 Centralized validation schemas for API endpoints.
 Used for batch ingest, VPP bids, trading operations, and auth DTOs.
 """
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List, Dict, Any, Set
 from datetime import datetime
 from enum import Enum
+from backend.models import utcnow_naive
 
 
 # ─── Auth & RBAC Enums ────────────────────────────────────────────────────────
@@ -72,8 +73,7 @@ class UserOut(BaseModel):
     terms_accepted_at: datetime | None
     totp_enabled: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LoginResponse(BaseModel):
@@ -110,6 +110,12 @@ class DeviceReadingBase(BaseModel):
     current_a: Optional[float] = Field(None, ge=-10000, le=10000, description="Current in A")
     frequency_hz: Optional[float] = Field(None, ge=0, le=100, description="Frequency in Hz")
     raw: Optional[Dict[str, Any]] = Field(None, description="Raw data from device")
+    energy_mode: Optional[str] = Field(
+        None,
+        description="Energy semantic. 'interval_delta' (default) = energy_kwh is the energy in the interval. "
+                    "'cumulative_total' is NOT yet supported and is rejected — the gateway must convert a "
+                    "cumulative meter to interval delta before sending.",
+    )
 
 
 class DeviceReadingCreate(DeviceReadingBase):
@@ -119,21 +125,28 @@ class DeviceReadingCreate(DeviceReadingBase):
 
 
 class DeviceReadingBatchItem(DeviceReadingBase):
-    """Schema for a single item in batch ingest."""
-    device_id: int = Field(..., gt=0, description="Device ID")
+    """Schema for a single item in batch ingest.
+
+    The target device can be resolved by internal `device_id` (numeric) OR by the
+    physical `external_id` (tenant-scoped). When both are present, `device_id`
+    wins. `external_id` is resolved strictly within the authenticated tenant.
+    """
+    device_id: Optional[int] = Field(None, gt=0, description="Internal device ID (or use external_id)")
+    external_id: Optional[str] = Field(None, description="Physical external identifier (serial) scoped to tenant")
     timestamp: Optional[datetime] = Field(None, description="Reading timestamp (defaults to now)")
 
 
 class DeviceReadingBatchRequest(BaseModel):
     """Schema for batch ingest request."""
     readings: List[DeviceReadingBatchItem] = Field(
-        ..., 
-        min_items=1, 
-        max_items=10000,  # Limit batch size
+        ...,
+        min_length=1,
+        max_length=10000,  # Limit batch size
         description="List of readings to ingest (max 10000)"
     )
-    
-    @validator('readings')
+
+    @field_validator("readings")
+    @classmethod
     def validate_readings_not_empty(cls, v):
         if not v:
             raise ValueError("At least one reading is required")
@@ -143,9 +156,10 @@ class DeviceReadingBatchRequest(BaseModel):
 class DeviceReadingBatchResponse(BaseModel):
     """Schema for batch ingest response."""
     accepted: int = Field(..., description="Number of readings accepted")
+    duplicated: int = Field(0, description="Number of duplicate readings (same device_id + timestamp)")
     rejected: int = Field(..., description="Number of readings rejected")
     errors: List[Dict[str, Any]] = Field(default_factory=list, description="Validation errors")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=utcnow_naive)
 
 
 # ─── VPP Bid Schemas ─────────────────────────────────────────────────────────
@@ -167,15 +181,17 @@ class VPPBidCreate(BaseModel):
     direction: BidDirection = Field(..., description="Bid direction")
     delivery_period: Optional[str] = Field(None, description="Delivery period (ISO datetime or 'H+1')")
     
-    @validator('quantity_kw')
+    @field_validator("quantity_kw")
+    @classmethod
     def validate_quantity(cls, v):
         if v <= 0:
             raise ValueError("Quantity must be positive")
         if v > 100000:  # 100 MW max
             raise ValueError("Quantity exceeds maximum allowed (100 MW)")
         return v
-    
-    @validator('price_eur_mwh')
+
+    @field_validator("price_eur_mwh")
+    @classmethod
     def validate_price(cls, v):
         if v is not None and v > 10000:  # 10000 EUR/MWh max (sanity check)
             raise ValueError("Price exceeds reasonable maximum")
@@ -194,8 +210,7 @@ class VPPBidOut(BaseModel):
     pnl_eur: Optional[float]
     submitted_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ─── Trading Schemas ─────────────────────────────────────────────────────────
@@ -209,7 +224,7 @@ class PricePoint(BaseModel):
 
 class SignalsRequest(BaseModel):
     """Schema for arbitrage signals request."""
-    prices: List[PricePoint] = Field(..., min_items=1, description="List of price points")
+    prices: List[PricePoint] = Field(..., min_length=1, description="List of price points")
     bess_kwh: float = Field(500, gt=0, le=10000, description="Battery capacity in kWh")
     efficiency: float = Field(0.92, gt=0, le=1, description="Round-trip efficiency")
 

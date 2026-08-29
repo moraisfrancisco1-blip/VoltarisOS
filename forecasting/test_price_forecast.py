@@ -1,5 +1,7 @@
 import pytest
 
+from datetime import datetime, timezone
+
 from forecasting.price_forecast import forecast_market_prices
 
 
@@ -13,6 +15,8 @@ async def test_market_price_forecast_uses_entsoe(monkeypatch):
         success = True
         error = None
         data = [Point(42 + i) for i in range(24)]
+        generated_at = datetime(2026, 8, 19, 6, 0, tzinfo=timezone.utc)
+        max_age_minutes = 120
 
     class Client:
         async def get_day_ahead_prices(self, country_code="PT"):

@@ -20,20 +20,23 @@ def make_bundle(generated_at="2026-08-19T06:45:00+00:00", max_age_minutes=30):
 
 def test_fresh_provider_is_healthy():
     health = assess_bundle_health(make_bundle(), now=datetime(2026, 8, 19, 7, 0, tzinfo=timezone.utc))
-    assert health.healthy is True
-    assert health.reason == "fresh"
+    assert len(health) == 1
+    assert health[0].healthy is True
+    assert health[0].reason == "fresh"
 
 
 def test_stale_provider_is_unhealthy():
     health = assess_bundle_health(make_bundle(), now=datetime(2026, 8, 19, 8, 0, tzinfo=timezone.utc))
-    assert health.healthy is False
-    assert health.reason == "forecast is stale"
+    assert len(health) == 1
+    assert health[0].healthy is False
+    assert health[0].reason == "forecast is stale"
 
 
 def test_missing_freshness_metadata_fails_closed():
     health = assess_bundle_health(make_bundle(max_age_minutes=None), now=datetime(2026, 8, 19, 7, 0, tzinfo=timezone.utc))
-    assert health.healthy is False
-    assert health.reason == "missing max_age_minutes"
+    assert len(health) == 1
+    assert health[0].healthy is False
+    assert health[0].reason == "missing max_age_minutes"
 
 
 def test_require_healthy_bundle_rejects_stale_forecast():

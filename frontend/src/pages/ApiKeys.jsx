@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
 import { useTranslation } from "../i18n/useTranslation"
+import DemoNotice from "../components/DemoNotice"
 
 function generateKey() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -46,6 +47,7 @@ export default function ApiKeys({ user }) {
 
   return (
     <div style={{ padding: "32px", maxWidth: "900px" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px" }}>
         <div>

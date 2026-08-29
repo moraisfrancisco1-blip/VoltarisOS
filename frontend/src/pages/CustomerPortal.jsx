@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
+import DemoNotice from "../components/DemoNotice"
 
 // white-label customer portal — shows end-customer view
 // Industrial clients see their consumption, savings, carbon offset
@@ -64,6 +65,7 @@ export default function CustomerPortal() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>

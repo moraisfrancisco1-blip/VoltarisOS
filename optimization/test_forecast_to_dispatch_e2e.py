@@ -1,6 +1,8 @@
 """End-to-end validation of forecasts flowing into rolling VPP dispatch."""
 from __future__ import annotations
 
+from datetime import datetime, timezone, timedelta
+
 from forecasting.contracts import ForecastBundle
 from optimization.assets import BatteryAsset, SolarAsset, VPPPortfolio
 from optimization.forecasted_dispatch import optimize_forecast_bundle
@@ -11,7 +13,8 @@ def test_forecast_bundle_runs_multiple_realistic_dispatch_windows():
     prices = [40.0] * 8 + [140.0] * 8 + [50.0] * 10
     load = [120.0] * horizon
     solar = [0.0] * 6 + [40.0] * 10 + [0.0] * 10
-    timestamps = [f"2026-08-19T{hour:02d}:00:00" for hour in range(horizon)]
+    base = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    timestamps = [(base + timedelta(hours=h)).isoformat() for h in range(horizon)]
 
     forecast = ForecastBundle(
         prices_eur_mwh=prices,
@@ -19,6 +22,8 @@ def test_forecast_bundle_runs_multiple_realistic_dispatch_windows():
         solar_kw=solar,
         timestamps=timestamps,
         source="integration-test",
+        generated_at=base.isoformat(),
+        max_age_minutes=120,
     )
     battery = BatteryAsset(
         asset_id="battery-1",

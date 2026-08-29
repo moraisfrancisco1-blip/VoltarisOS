@@ -1,3 +1,4 @@
+import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 
@@ -80,6 +81,7 @@ export default function CarbonCredit() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>

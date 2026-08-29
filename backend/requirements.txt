@@ -23,4 +23,5 @@ sentry-sdk[fastapi]
 celery
 redis
 pyotp
-pulp
+pulp[cbc]
+pytest

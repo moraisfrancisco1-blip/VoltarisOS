@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 # ─── Sentry Initialization (must be first) ──────────────────────────────────
 from backend.config import settings
+from backend.models import utcnow_naive
 if settings.SENTRY_ENABLED and settings.SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -45,7 +46,6 @@ from backend import models
 from backend.routers.trading_api import router as trading_router
 from backend.routers import prices
 from backend.routers.optimization_api import router as optimization_router
-from simulation.building_simulation import run_simulation
 from backend.routers import sites
 from backend.routers import auth
 from backend.routers.forecast import router as forecast_router
@@ -61,10 +61,15 @@ from backend.routers.alerts_ws import router as alerts_ws_router
 from backend.routers.payments import router as payments_router
 from backend.routers.twofa import router as twofa_router
 from backend.routers.websocket import router as websocket_router
+from backend.routers.operations import router as operations_router
 from backend.security import get_current_user, limiter
+from backend.startup import validate_startup_config
 from fastapi import Depends, Request
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+
+# Block unsafe production starts (SQLite, Celery without Redis) before touching the DB.
+validate_startup_config()
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -84,7 +89,18 @@ def _migrate_add_missing_columns():
 
 _migrate_add_missing_columns()
 
-app = FastAPI()
+# Apply pending ad-hoc migrations deterministically (idempotent) after create_all.
+from backend.migrations.runner import run_migrations
+run_migrations()
+
+# Interactive OpenAPI docs are disabled by default in production (configurable
+# with ENABLE_DOCS=true). Development keeps them enabled.
+_docs_enabled = os.getenv("ENABLE_DOCS", "").lower() == "true" or os.getenv("ENVIRONMENT", "development") != "production"
+app = FastAPI(
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
+)
 
 # Rate limiting — protects /api/auth/login and /api/auth/register from brute-force/spam
 app.state.limiter = limiter
@@ -195,6 +211,7 @@ app.include_router(alerts_ws_router)  # websocket does its own token check on co
 app.include_router(payments_router)  # Stripe payments - public endpoints
 app.include_router(twofa_router, prefix="/api", dependencies=_auth_dep)  # 2FA endpoints require auth
 app.include_router(websocket_router)  # WebSockets handle auth internally via token query param
+app.include_router(operations_router)  # /api/admin/production-readiness — admin-only (require_super_admin inside)
 
 
 @app.get("/ai_decision")
@@ -230,7 +247,7 @@ def health_detailed():
     
     health_status = {
         "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utcnow_naive().isoformat(),
         "components": {}
     }
     
@@ -249,25 +266,29 @@ def health_detailed():
         }
         health_status["status"] = "degraded"
     
-    # Check Redis
+    # Check Redis — honest: not configured / unavailable is never reported as healthy.
     try:
         from backend.cache import cache
-        if hasattr(cache, '_cache') and hasattr(cache._cache, 'is_connected'):
-            if cache._cache.is_connected:
-                health_status["components"]["redis"] = {
-                    "status": "healthy",
-                    "type": "redis",
-                }
-            else:
-                health_status["components"]["redis"] = {
-                    "status": "unavailable",
-                    "type": "in-memory-fallback",
-                }
-        else:
+        redis_url = os.getenv("REDIS_URL", "")
+        run_celery = os.getenv("RUN_CELERY", "0") == "1"
+        if not redis_url:
+            health_status["components"]["redis"] = {
+                "status": "not_configured",
+                "required": run_celery,
+            }
+            if run_celery:
+                health_status["status"] = "degraded"
+        elif cache.is_connected:
             health_status["components"]["redis"] = {
                 "status": "healthy",
-                "type": "in-memory",
+                "type": "redis",
             }
+        else:
+            health_status["components"]["redis"] = {
+                "status": "unavailable",
+                "type": "in-memory-fallback",
+            }
+            health_status["status"] = "degraded"
     except Exception as e:
         health_status["components"]["redis"] = {
             "status": "unhealthy",
@@ -324,7 +345,7 @@ def readiness_check():
     # All critical checks passed
     return {
         "status": "ready",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utcnow_naive().isoformat(),
     }
 
 
@@ -344,15 +365,3 @@ else:
     @app.get("/")
     def home():
         return {"message": "VoltarisOS backend running (no frontend build found)"}
-
-
-@app.get("/simulation")
-def simulation(_user: dict = Depends(get_current_user)):
-    result = run_simulation()
-    return {
-        "solar": result["solar"],
-        "load": result["load"],
-        "grid": result["grid"],
-        "battery": result["battery_soc"],
-        "timeseries": result["timeseries"],
-    }

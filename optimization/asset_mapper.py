@@ -1,8 +1,6 @@
 """Map persisted VPP/device records into optimizer-native energy assets."""
 from __future__ import annotations
 
-import json
-import os
 from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
@@ -27,12 +25,18 @@ DEVICE_TYPE_ALIASES = {
 }
 
 
-def _site_records() -> Dict[int, dict]:
-    path = "sites.json"
-    if not os.path.exists(path):
-        return {}
-    with open(path, "r", encoding="utf-8") as handle:
-        return {int(item["id"]): item for item in json.load(handle)}
+def _site_records(db: Session) -> Dict[int, dict]:
+    """Map site_id -> site dict from the persisted Site table (fields the mapper consumes)."""
+    return {
+        site.id: {
+            "solar_kw": site.solar_kw or 0.0,
+            "lat": site.lat,
+            "lng": site.lng,
+            "name": site.name,
+            "battery_kwh": site.battery_kwh or 0.0,
+        }
+        for site in db.query(models.Site).all()
+    }
 
 
 def _latest_reading(db: Session, device_id: int):
@@ -57,7 +61,7 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
     memberships = db.query(models.VPPSiteMembership).filter(models.VPPSiteMembership.vpp_id == vpp.id).all()
     site_ids = [m.site_id for m in memberships]
     devices = (db.query(models.Device).filter(models.Device.site_id.in_(site_ids), models.Device.enabled.is_(True)).all() if site_ids else [])
-    sites = _site_records()
+    sites = _site_records(db)
     devices_by_site: Dict[int, List[models.Device]] = {}
     for device in devices:
         devices_by_site.setdefault(device.site_id, []).append(device)

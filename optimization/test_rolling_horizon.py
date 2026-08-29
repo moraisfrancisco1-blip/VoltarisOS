@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from datetime import datetime, timezone, timedelta
 
 from forecasting.contracts import ForecastBundle
 from optimization.assets import VPPPortfolio
@@ -23,12 +24,16 @@ def test_forecast_bundle_rejects_misaligned_horizon():
 
 
 def test_rolling_horizon_solves_each_window_and_commits_first_interval():
+    base = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    timestamps = [(base + timedelta(hours=h)).isoformat() for h in range(6)]
     forecast = ForecastBundle(
         prices_eur_mwh=[40, 50, 60, 70, 80, 90],
         load_kw=[100] * 6,
         solar_kw=[0] * 6,
-        timestamps=[f"2026-08-18T{hour:02d}:00:00" for hour in range(6)],
+        timestamps=timestamps,
         source="test",
+        generated_at=base.isoformat(),
+        max_age_minutes=120,
     )
 
     result = RollingHorizonOptimizer().optimize(
@@ -42,11 +47,7 @@ def test_rolling_horizon_solves_each_window_and_commits_first_interval():
     assert result.solves == 3
     assert len(result.intervals) == 3
     assert [item["forecast_index"] for item in result.intervals] == [0, 1, 2]
-    assert [item["timestamp"] for item in result.intervals] == [
-        "2026-08-18T00:00:00",
-        "2026-08-18T01:00:00",
-        "2026-08-18T02:00:00",
-    ]
+    assert [item["timestamp"] for item in result.intervals] == timestamps[:3]
 
 
 def test_rolling_horizon_requires_positive_step():

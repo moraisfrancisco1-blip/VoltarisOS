@@ -15,6 +15,7 @@ import {
   ReferenceLine, Cell, Legend, ScatterChart, Scatter, ZAxis
 } from "recharts"
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme"
+import DemoNotice from "../components/DemoNotice"
 
 // ── Real data (IRENA 2023, IEA WEO 2023, BloombergNEF LCOE tracker) ─────────
 
@@ -171,6 +172,7 @@ export default function SolarMarketIntelligence() {
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
+      <DemoNotice />
       <svg width={0} height={0} style={{ position: "absolute" }}><defs><ChartDefs /></defs></svg>
 
       {/* Header */}

@@ -49,13 +49,8 @@ export default function AICopilot({ user }) {
       const r = await axios.post("/api/copilot", {
         message: msg,
         context: {
+          data_status: "simulated",
           sites: "Rotterdam, Rebordelo",
-          battery_soc: "Rotterdam 78%, Rebordelo 45%",
-          solar_production: "Rotterdam 156 kW, Rebordelo 12 kW",
-          grid_price: (55 + Math.random() * 75).toFixed(1),
-          daily_revenue: (280 + Math.random() * 170).toFixed(0),
-          total_capacity: "800 kWh (4.8 MWh total with solar)",
-          pnl: (1800 + Math.random() * 100).toFixed(2),
         }
       })
       setMessages(m => [...m, {
@@ -116,6 +111,11 @@ export default function AICopilot({ user }) {
             .copilot-input:focus { outline: none; border-color: ${color}66 !important; }
             .copilot-input::placeholder { color: var(--sub); }
           `}</style>
+
+          {/* Demo notice */}
+          <div style={{ padding: "6px 12px", background: "#3a2c05", borderBottom: "1px solid #1a2234", fontSize: "10px", lineHeight: "1.4", color: "#fbbf24", flexShrink: 0 }}>
+            🧪 Demo — alguns dados de contexto (preço, receita, P&amp;L) são simulados.
+          </div>
 
           {/* Header */}
           <div style={{ padding: "14px 16px", borderBottom: "1px solid #1a2234", display: "flex", alignItems: "center", gap: "10px", background: "#0a1020", flexShrink: 0 }}>

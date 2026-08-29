@@ -1,3 +1,4 @@
+import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
@@ -99,6 +100,7 @@ export default function PredictiveMaintenance({ setPage }) {
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
+      <DemoNotice />
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>

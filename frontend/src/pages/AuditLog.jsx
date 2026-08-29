@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
+import DemoNotice from "../components/DemoNotice"
 
 const ACTION_COLORS = {
   "Login": "#4ade80",
@@ -34,6 +35,7 @@ export default function AuditLog({ user }) {
 
   return (
     <div style={{ padding: "32px", maxWidth: "1100px" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>

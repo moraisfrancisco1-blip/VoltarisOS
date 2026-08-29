@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { useAppStore } from "../store/appStore"
+import DemoNotice from "../components/DemoNotice"
 
 const API = import.meta.env.VITE_API_URL || ""
 
@@ -165,6 +166,7 @@ export default function GridResilienceScore() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>

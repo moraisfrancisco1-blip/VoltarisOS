@@ -13,7 +13,7 @@ def test_forecast_bundle_replaces_portfolio_time_series():
         prices_eur_mwh=[10, 20, 30],
         load_kw=[100, 110, 120],
         solar_kw=[5, 6, 7],
-        timestamps=["00:00", "01:00", "02:00"],
+        timestamps=["2026-08-19T00:00:00+00:00", "2026-08-19T01:00:00+00:00", "2026-08-19T02:00:00+00:00"],
     )
     portfolio = VPPPortfolio(
         assets=[BatteryAsset(asset_id="b1", name="Battery")],

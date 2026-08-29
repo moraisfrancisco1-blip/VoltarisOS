@@ -8,6 +8,7 @@
  * No competitor has this at asset-level detail
  * ─────────────────────────────────────────────────────────────────
  */
+import DemoNotice from "../components/DemoNotice";
 import { useState, useMemo } from "react"
 import {
   ComposedChart, AreaChart, Area, LineChart, Line, BarChart, Bar,
@@ -122,6 +123,7 @@ export default function SolarDegradationLab() {
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
+      <DemoNotice />
       <svg width={0} height={0} style={{ position: "absolute" }}><defs><ChartDefs /></defs></svg>
 
       {/* Header */}

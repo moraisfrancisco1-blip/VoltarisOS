@@ -14,6 +14,7 @@ import {
   ReferenceLine, Cell
 } from "recharts"
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme"
+import DemoNotice from "../components/DemoNotice"
 
 const API = import.meta.env.VITE_API_URL || ""
 
@@ -134,6 +135,7 @@ export default function EnergyArbitrage() {
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
+      <DemoNotice />
       <svg width={0} height={0} style={{ position: "absolute" }}><defs><ChartDefs /></defs></svg>
 
       {/* Header */}

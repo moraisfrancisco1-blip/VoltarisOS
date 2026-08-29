@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from datetime import datetime, timedelta
+from backend.models import utcnow_naive
 import httpx
 import os
 from xml.etree import ElementTree as ET
@@ -34,7 +35,7 @@ def parse_prices(xml_text: str) -> list:
 @router.get("/prices/day-ahead")
 async def get_day_ahead_prices(zone: str = "NL"):
     area = NL_ZONE if zone == "NL" else PT_ZONE
-    now = datetime.utcnow()
+    now = utcnow_naive()
     start = now.strftime("%Y%m%d0000")
     end = (now + timedelta(days=1)).strftime("%Y%m%d0000")
 

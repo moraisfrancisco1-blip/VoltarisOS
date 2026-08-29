@@ -1,7 +1,6 @@
 """End-to-end tests for persisted VPP -> mapper -> optimizer."""
 from __future__ import annotations
 
-import json
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -17,11 +16,7 @@ async def test_persisted_vpp_optimizes_industrial_and_heat_pump(tmp_path, monkey
     Session = sessionmaker(bind=engine)
     db = Session()
 
-    sites_file = tmp_path / "sites.json"
-    sites_file.write_text(json.dumps([
-        {"id": 201, "name": "Industrial Site", "lat": 51.916, "lng": 4.398, "solar_kw": 250}
-    ]))
-    monkeypatch.chdir(tmp_path)
+    db.add(models.Site(id=201, tenant_id=1, name="Industrial Site", solar_kw=0.0))
 
     vpp = models.VPPGroup(
         tenant_id=1, name="Integration VPP", market="MIBEL", strategy="peak_shaving",
@@ -36,7 +31,7 @@ async def test_persisted_vpp_optimizes_industrial_and_heat_pump(tmp_path, monkey
                               "max_recovery_kw": 150, "start_hour": 0, "end_hour": 24}, enabled=True),
         models.Device(site_id=201, name="Heat Pump", device_type="heat_pump", protocol="simulated",
                       config={"baseline_power_kw": 8, "nominal_power_kw": 20, "initial_thermal_kwh": 50,
-                              "min_thermal_kwh": 0, "max_thermal_kwh": 100}, enabled=True),
+                              "min_thermal_kwh": 0, "max_thermal_kwh": 100, "thermal_loss_kwh": 8}, enabled=True),
     ])
     db.commit()
 
@@ -48,15 +43,18 @@ async def test_persisted_vpp_optimizes_industrial_and_heat_pump(tmp_path, monkey
         max_import_kw=1000,
     )
 
-    vpp_out, price_source, mapping, result = await _optimize_persisted_vpp(vpp.id, body, db)
+    vpp_out, price_source, mapping, result, run = await _optimize_persisted_vpp(vpp.id, body, db)
 
     assert vpp_out.id == vpp.id
     assert price_source == "request"
     assert mapping["device_count"] == 2
-    assert mapping["asset_count"] == 3
+    assert mapping["asset_count"] == 2
     assert result.status == "optimal"
     assert {"device-1", "device-2"}.issubset(result.asset_dispatch)
     assert len(result.vpp_dispatch) == 24
+    assert run.id is not None
+    assert run.vpp_id == vpp.id
+    assert run.status == "optimal"
 
 
 @pytest.mark.asyncio

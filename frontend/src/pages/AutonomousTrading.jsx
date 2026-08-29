@@ -1,3 +1,4 @@
+import DemoNotice from "../components/DemoNotice";
 import { useEffect, useState, useRef } from "react"
 import axios from "axios"
 import { useTranslation } from "../i18n/useTranslation"
@@ -43,6 +44,7 @@ export default function AutonomousTrading({ user }) {
 
   return (
     <div style={{ padding: "28px", maxWidth: "1400px" }}>
+      <DemoNotice />
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }`}</style>
 
       {/* Header */}
@@ -55,7 +57,7 @@ export default function AutonomousTrading({ user }) {
           </div>
           <div>
             <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Autonomous Trading Agent</h1>
-            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>AI executa ordens automaticamente · Override manual disponível</p>
+            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Demonstração — este agente não executa ordens reais (dados simulados)</p>
           </div>
         </div>
         <button onClick={toggle} style={{
@@ -87,6 +89,13 @@ export default function AutonomousTrading({ user }) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {status?.simulated && (
+        <div style={{ padding: "10px 14px", borderRadius: 10, marginBottom: 20, background: "#3a2c05", border: "1px solid #f59e0b55", color: "#fcd34d", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+          <span>🧪</span>
+          <span>Dados simulados — este agente não executa trades reais.</span>
         </div>
       )}
 

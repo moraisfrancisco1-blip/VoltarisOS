@@ -1,8 +1,6 @@
 """Unit and integration tests for the multi-asset VPP optimizer."""
 from __future__ import annotations
 
-import json
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -54,9 +52,7 @@ def test_persisted_vpp_maps_and_optimizes(tmp_path, monkeypatch):
     models.Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     db = Session()
-    sites_file = tmp_path / "sites.json"
-    sites_file.write_text(json.dumps([{"id": 101, "name": "Test Site", "lat": 51.916, "lng": 4.398, "solar_kw": 250, "battery_kwh": 500}]))
-    monkeypatch.chdir(tmp_path)
+    db.add(models.Site(id=101, tenant_id=1, name="Test Site", lat=51.916, lng=4.398, solar_kw=250, battery_kwh=500))
     vpp = models.VPPGroup(tenant_id=1, name="Integration VPP", market="MIBEL", strategy="arbitrage",
                           target_kw=1000, min_bid_kw=100, active=True)
     db.add(vpp)

@@ -92,7 +92,10 @@ def _seed_readings(db_session, tenant_id, count, start_time):
     for i in range(count):
         r = models.DeviceReading(
             tenant_id=tenant_id,
-            device_id=1,
+            # device_id is a global PK; a device belongs to exactly one tenant, so
+            # each tenant seeds its own device (idempotency enforces unique
+            # (device_id, timestamp) pairs).
+            device_id=tenant_id,
             timestamp=start_time + timedelta(hours=i),
             power_kw=1.0 + i * 0.1,
         )

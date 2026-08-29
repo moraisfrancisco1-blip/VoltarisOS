@@ -21,6 +21,7 @@ from typing import Dict, Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
 from sqlalchemy.orm import joinedload
 from backend.security import decode_token
+from backend.models import utcnow_naive
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +171,7 @@ async def websocket_dashboard(
                 # Build update message
                 update = {
                     "type": "dashboard_update",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": utcnow_naive().isoformat(),
                     "data": {
                         "total_power_kw": round(total_power, 2),
                         "avg_soc_pct": round(avg_soc * 100, 1),
@@ -234,7 +235,7 @@ async def websocket_alerts(
                 for alert in new_alerts:
                     message = {
                         "type": "new_alert",
-                        "timestamp": alert.fired_at.isoformat() if alert.fired_at else datetime.utcnow().isoformat(),
+                        "timestamp": alert.fired_at.isoformat() if alert.fired_at else utcnow_naive().isoformat(),
                         "data": {
                             "id": alert.id,
                             "severity": alert.severity,
@@ -294,7 +295,7 @@ async def websocket_optimization(
             if result and result != last_decision:
                 message = {
                     "type": "optimization_update",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": utcnow_naive().isoformat(),
                     "data": result
                 }
                 await websocket.send_json(message)
@@ -316,7 +317,7 @@ async def broadcast_alert(tenant_id: int, alert_data: dict):
     """Broadcast a new alert to all connected dashboard clients."""
     message = {
         "type": "new_alert",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utcnow_naive().isoformat(),
         "data": alert_data,
     }
     await manager.broadcast("alerts", message)
@@ -326,7 +327,7 @@ async def broadcast_optimization(tenant_id: int, optimization_data: dict):
     """Broadcast optimization update to connected clients."""
     message = {
         "type": "optimization_update",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": utcnow_naive().isoformat(),
         "data": optimization_data,
     }
     await manager.broadcast("optimization", message)

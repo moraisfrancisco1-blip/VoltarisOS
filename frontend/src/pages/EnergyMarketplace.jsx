@@ -1,3 +1,4 @@
+import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 
@@ -95,6 +96,7 @@ export default function EnergyMarketplace() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+      <DemoNotice />
       {/* Toast */}
       {toast && (
         <div style={{

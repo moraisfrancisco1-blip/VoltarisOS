@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import datetime, os, random
+from backend.models import utcnow_naive
 
 router = APIRouter()
 
@@ -36,40 +37,40 @@ Communication style:
 Always end with a short actionable insight or recommendation if relevant."""
 
 def build_context_string(context: dict) -> str:
-    """Convert frontend context dict into readable string for the prompt."""
+    """Convert frontend context dict into readable string for the prompt.
+
+    Only values actually supplied by the caller are included. If the context
+    is explicitly flagged `data_status == "simulated"` (or is empty), no
+    fabricated operational numbers (grid price / revenue / P&L / SoC) are
+    invented and injected as if they were real.
+    """
     if not context:
         return ""
-    
+
     parts = []
-    now = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    now = utcnow_naive().strftime("%Y-%m-%d %H:%M UTC")
     parts.append(f"Current time: {now}")
-    
-    if "sites" in context:
+
+    if context.get("sites"):
         parts.append(f"Active sites: {context['sites']}")
-    if "battery_soc" in context:
+    if context.get("battery_soc"):
         parts.append(f"Battery SoC: {context['battery_soc']}%")
-    if "solar_production" in context:
+    if context.get("solar_production"):
         parts.append(f"Solar production now: {context['solar_production']} kW")
-    if "grid_price" in context:
+    if context.get("grid_price"):
         parts.append(f"Current grid price: €{context['grid_price']}/MWh")
-    if "daily_revenue" in context:
+    if context.get("daily_revenue"):
         parts.append(f"Revenue today: €{context['daily_revenue']}")
-    if "total_capacity" in context:
+    if context.get("total_capacity"):
         parts.append(f"Total battery capacity: {context['total_capacity']} kWh")
-    if "pnl" in context:
+    if context.get("pnl"):
         parts.append(f"Trading P&L today: €{context['pnl']}")
-    
-    # Add default live context if none provided
-    if len(parts) == 1:
-        parts += [
-            "Sites: Rotterdam (500 kWh battery, 200 kW solar), Rebordelo (300 kWh battery, 100 kW solar)",
-            f"Battery SoC: Rotterdam 78%, Rebordelo 45%",
-            f"Solar production: Rotterdam 156 kW, Rebordelo 12 kW",
-            f"Grid price now: €{round(random.uniform(55, 130), 1)}/MWh",
-            f"Revenue today: €{round(random.uniform(280, 450), 0)}",
-            "Trading agent: RUNNING | Win rate: 87% | Trades today: 7",
-        ]
-    
+
+    # Never fabricate operational numbers. If no real context was supplied
+    # (simulated or empty), disclose that explicitly instead of inventing data.
+    if context.get("data_status") == "simulated" or len(parts) == 1:
+        parts.append("[Aviso: dados de contexto simulados/indisponíveis — não representam operações reais.]")
+
     return "\n".join(parts)
 
 
@@ -142,15 +143,19 @@ def get_fallback_response(message: str, error: str = "") -> str:
 
 @router.post("/api/copilot")
 def copilot(req: CopilotRequest):
-    start = datetime.datetime.utcnow()
-    response, simulated = get_openai_response(req.message, req.context)
-    elapsed_ms = int((datetime.datetime.utcnow() - start).total_seconds() * 1000)
+    start = utcnow_naive()
+    response, llm_simulated = get_openai_response(req.message, req.context)
+    # Preserve the simulated signal: either the LLM fallback was used, or the
+    # caller supplied a context explicitly flagged as simulated.
+    context_simulated = req.context.get("data_status") == "simulated"
+    simulated = llm_simulated or context_simulated
+    elapsed_ms = int((utcnow_naive() - start).total_seconds() * 1000)
 
     return {
         "response": response,
-        "simulated": simulated,  # true when GPT-4o was unavailable and this is a canned fallback
-        "timestamp": datetime.datetime.utcnow().isoformat(),
-        "model": "gpt-4o" if not simulated else "fallback",
+        "simulated": simulated,  # true when GPT-4o was unavailable or context was simulated
+        "timestamp": utcnow_naive().isoformat(),
+        "model": "fallback" if llm_simulated else "gpt-4o",
         "tokens": len(response.split()) * 2,  # rough estimate
         "latency_ms": elapsed_ms,
     }

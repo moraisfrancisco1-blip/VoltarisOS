@@ -9,7 +9,7 @@ WS   /ws/alerts?token=...     — push stream
 POST /api/alerts/fire         — internal: gateway fires alert → broadcasts
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 import asyncio, json
@@ -62,6 +62,14 @@ def get_db():
         db.close()
 
 
+# ─── Tenant isolation helper ─────────────────────────────────────────────────
+def _effective_tenant(user: dict):
+    """Return a tenant filter value for `user`, or None for SUPER_ADMIN bypass."""
+    if user.get("role") == "SUPER_ADMIN":
+        return None
+    return user.get("tenant_id")
+
+
 # ─── Schemas ─────────────────────────────────────────────────────────────────
 class AlertOut(BaseModel):
     id: int
@@ -77,8 +85,7 @@ class AlertOut(BaseModel):
     acknowledged_by: Optional[str]
     acknowledged_at: Optional[datetime]
     fired_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class AlertRuleCreate(BaseModel):
     name: str
@@ -93,8 +100,7 @@ class AlertRuleOut(AlertRuleCreate):
     tenant_id: int
     enabled: bool
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class FireAlertRequest(BaseModel):
     tenant_id: int
@@ -169,26 +175,32 @@ def _tenant_from_token(token: str):
 # ─── REST: Alerts ─────────────────────────────────────────────────────────────
 @router.get("/api/alerts", response_model=List[AlertOut])
 def list_alerts(
-    tenant_id: int = Query(default=1),
     unacked_only: bool = Query(default=False),
     limit: int = Query(default=50),
     db: Session = Depends(get_db),
-    _user: dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user),
 ):
-    q = db.query(models.Alert).filter(models.Alert.tenant_id == tenant_id)
+    q = db.query(models.Alert)
+    tenant = _effective_tenant(user)
+    if tenant is not None:
+        q = q.filter(models.Alert.tenant_id == tenant)
     if unacked_only:
         q = q.filter(models.Alert.acknowledged == False)
     return q.order_by(models.Alert.fired_at.desc()).limit(limit).all()
 
 
 @router.post("/api/alerts/{alert_id}/ack")
-def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
-    a = db.query(models.Alert).filter(models.Alert.id == alert_id).first()
+def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    q = db.query(models.Alert).filter(models.Alert.id == alert_id)
+    tenant = _effective_tenant(user)
+    if tenant is not None:
+        q = q.filter(models.Alert.tenant_id == tenant)
+    a = q.first()
     if not a:
         raise HTTPException(404, "Alert not found")
     a.acknowledged = True
     a.acknowledged_by = by
-    a.acknowledged_at = datetime.utcnow()
+    a.acknowledged_at = models.utcnow_naive()
     db.commit()
     return {"ok": True}
 
@@ -229,13 +241,20 @@ async def fire_alert(body: FireAlertRequest, db: Session = Depends(get_db), _svc
 
 # ─── REST: Alert Rules ────────────────────────────────────────────────────────
 @router.get("/api/alert-rules", response_model=List[AlertRuleOut])
-def list_rules(tenant_id: int = Query(default=1), db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
-    return db.query(models.AlertRule).filter(models.AlertRule.tenant_id == tenant_id).all()
+def list_rules(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    q = db.query(models.AlertRule)
+    tenant = _effective_tenant(user)
+    if tenant is not None:
+        q = q.filter(models.AlertRule.tenant_id == tenant)
+    return q.all()
 
 
 @router.post("/api/alert-rules", response_model=AlertRuleOut, status_code=201)
-def create_rule(body: AlertRuleCreate, tenant_id: int = Query(default=1), db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
-    rule = models.AlertRule(tenant_id=tenant_id, **body.dict())
+def create_rule(body: AlertRuleCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    tenant_id = user.get("tenant_id")
+    if tenant_id is None:
+        raise HTTPException(400, "tenant_id could not be resolved")
+    rule = models.AlertRule(tenant_id=tenant_id, **body.model_dump())
     db.add(rule)
     db.commit()
     db.refresh(rule)
@@ -243,64 +262,112 @@ def create_rule(body: AlertRuleCreate, tenant_id: int = Query(default=1), db: Se
 
 
 @router.delete("/api/alert-rules/{rule_id}", status_code=204)
-def delete_rule(rule_id: int, db: Session = Depends(get_db), _user: dict = Depends(get_current_user)):
-    rule = db.query(models.AlertRule).filter(models.AlertRule.id == rule_id).first()
+def delete_rule(rule_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    q = db.query(models.AlertRule).filter(models.AlertRule.id == rule_id)
+    tenant = _effective_tenant(user)
+    if tenant is not None:
+        q = q.filter(models.AlertRule.tenant_id == tenant)
+    rule = q.first()
     if not rule:
         raise HTTPException(404)
     db.delete(rule)
     db.commit()
 
 
-# ─── Rules engine — called by gateway ingest ─────────────────────────────────
-async def evaluate_rules(tenant_id: int, device_id: int, device_name: str, reading: dict, db: Session):
-    """Check a reading against all rules for this tenant. Fire alerts as needed."""
-    rules = (
-        db.query(models.AlertRule)
-        .filter(
+# ─── Rules engine — shared threshold/dedup logic ──────────────────────────────
+def _rule_matches(rule, val) -> bool:
+    if rule.operator == "gt" and val > rule.threshold:
+        return True
+    if rule.operator == "lt" and val < rule.threshold:
+        return True
+    if rule.operator == "eq" and val == rule.threshold:
+        return True
+    if rule.operator == "ne" and val != rule.threshold:
+        return True
+    return False
+
+
+def _active_alert_exists(db: Session, tenant_id: int, device_id: int, rule_id: int) -> bool:
+    """True if an unacknowledged alert already exists for this (tenant, device, rule).
+    Used to avoid duplicate alerts for a persistent condition."""
+    return db.query(models.Alert).filter(
+        models.Alert.tenant_id == tenant_id,
+        models.Alert.rule_id == rule_id,
+        models.Alert.device_id == device_id,
+        models.Alert.acknowledged.is_(False),
+    ).first() is not None
+
+
+def _build_alert(rule, tenant_id: int, device_id: int, device_name: str, val):
+    return models.Alert(
+        tenant_id=tenant_id,
+        device_id=device_id,
+        device_name=device_name,
+        rule_id=rule.id,
+        severity=rule.severity,
+        title=f"{rule.name}: {rule.metric} {rule.operator} {rule.threshold}",
+        message=f"{device_name} reported {rule.metric}={float(val):.2f} (threshold {rule.threshold})",
+        metric=rule.metric,
+        value=float(val),
+    )
+
+
+def evaluate_rules_sync(tenant_id: int, device_id: int, device_name: str, reading: dict, db: Session) -> list:
+    """Evaluate one reading against the tenant's enabled rules and persist deduplicated
+    alerts. Returns the newly created Alert objects. Non-critical errors are swallowed
+    so an already-persisted reading is never lost because of alert evaluation."""
+    created = []
+    try:
+        rules = db.query(models.AlertRule).filter(
             models.AlertRule.tenant_id == tenant_id,
             models.AlertRule.enabled == True,
-        )
-        .all()
-    )
+        ).all()
+        for rule in rules:
+            if rule.device_id and rule.device_id != device_id:
+                continue
+            val = reading.get(rule.metric)
+            if val is None or not _rule_matches(rule, val):
+                continue
+            if _active_alert_exists(db, tenant_id, device_id, rule.id):
+                continue  # persistent condition already alerted (dedup)
+            alert = _build_alert(rule, tenant_id, device_id, device_name, val)
+            db.add(alert)
+            created.append(alert)
+        if created:
+            db.commit()
+    except Exception:
+        db.rollback()
+        return []
+    return created
+
+
+async def evaluate_rules(tenant_id: int, device_id: int, device_name: str, reading: dict, db: Session):
+    """Async variant used where a live websocket push is desired. Reuses the same
+    threshold/dedup logic as evaluate_rules_sync."""
+    rules = db.query(models.AlertRule).filter(
+        models.AlertRule.tenant_id == tenant_id,
+        models.AlertRule.enabled == True,
+    ).all()
     for rule in rules:
         if rule.device_id and rule.device_id != device_id:
             continue
         val = reading.get(rule.metric)
-        if val is None:
+        if val is None or not _rule_matches(rule, val):
             continue
-        triggered = False
-        if rule.operator == "gt" and val > rule.threshold:
-            triggered = True
-        elif rule.operator == "lt" and val < rule.threshold:
-            triggered = True
-        elif rule.operator == "eq" and val == rule.threshold:
-            triggered = True
-        elif rule.operator == "ne" and val != rule.threshold:
-            triggered = True
-
-        if triggered:
-            alert = models.Alert(
-                tenant_id=tenant_id,
-                device_id=device_id,
-                device_name=device_name,
-                rule_id=rule.id,
-                severity=rule.severity,
-                title=f"{rule.name}: {rule.metric} {rule.operator} {rule.threshold}",
-                message=f"{device_name} reported {rule.metric}={val:.2f} (threshold {rule.threshold})",
-                metric=rule.metric,
-                value=float(val),
-            )
-            db.add(alert)
-            db.commit()
-            db.refresh(alert)
-            await manager.broadcast(str(tenant_id), {
-                "type": "alert",
-                "id": alert.id,
-                "severity": alert.severity,
-                "title": alert.title,
-                "message": alert.message,
-                "device_name": device_name,
-                "metric": rule.metric,
-                "value": float(val),
-                "fired_at": alert.fired_at.isoformat(),
-            })
+        if _active_alert_exists(db, tenant_id, device_id, rule.id):
+            continue
+        alert = _build_alert(rule, tenant_id, device_id, device_name, val)
+        db.add(alert)
+        db.commit()
+        db.refresh(alert)
+        await manager.broadcast(str(tenant_id), {
+            "type": "alert",
+            "id": alert.id,
+            "severity": alert.severity,
+            "title": alert.title,
+            "message": alert.message,
+            "device_name": device_name,
+            "metric": rule.metric,
+            "value": float(val),
+            "fired_at": alert.fired_at.isoformat(),
+        })

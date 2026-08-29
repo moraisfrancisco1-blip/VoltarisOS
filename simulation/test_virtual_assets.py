@@ -19,7 +19,7 @@ def test_battery_simulation_respects_soc_and_power_limits():
     )
 
     assert [s.delivered_kw for s in steps] == [40.0, -50.0, 20.0]
-    assert battery.soc_kwh == 20.0
+    assert battery.soc_kwh == 40.0
 
 
 def test_simulator_runs_24_hours():

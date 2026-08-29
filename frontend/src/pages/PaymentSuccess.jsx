@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CheckCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, XCircle, ArrowRight } from "lucide-react";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -40,6 +40,9 @@ export default function PaymentSuccess() {
     );
   }
 
+  const paid = sessionData && (sessionData.payment_status === "paid" || sessionData.payment_status === "no_payment_required");
+  const failed = sessionData && sessionData.payment_status === "unpaid";
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -62,13 +65,13 @@ export default function PaymentSuccess() {
           width: "80px",
           height: "80px",
           borderRadius: "50%",
-          background: "rgba(74, 222, 128, 0.1)",
+          background: paid ? "rgba(74, 222, 128, 0.1)" : failed ? "rgba(248, 113, 113, 0.1)" : "rgba(245, 158, 11, 0.1)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           margin: "0 auto 24px"
         }}>
-          <CheckCircle size={48} color="#4ade80" />
+          {paid ? <CheckCircle size={48} color="#4ade80" /> : failed ? <XCircle size={48} color="#f87171" /> : <CheckCircle size={48} color="#f59e0b" />}
         </div>
 
         <h1 style={{
@@ -77,7 +80,7 @@ export default function PaymentSuccess() {
           fontWeight: "700",
           marginBottom: "12px"
         }}>
-          Pagamento Confirmado!
+          {paid ? "Pagamento Confirmado!" : failed ? "Pagamento Falhado" : "Pagamento Pendente"}
         </h1>
 
         <p style={{
@@ -86,7 +89,11 @@ export default function PaymentSuccess() {
           marginBottom: "24px",
           lineHeight: "1.6"
         }}>
-          A tua subscrição foi ativada com sucesso. Já podes aceder a todas as funcionalidades do VoltarisOS.
+          {paid
+            ? "A tua subscrição foi ativada com sucesso. Já podes aceder a todas as funcionalidades do VoltarisOS."
+            : failed
+              ? "O pagamento não foi concluído. Nenhum valor foi cobrado. Tenta novamente."
+              : "Estamos a confirmar o teu pagamento. Isto pode demorar alguns instantes."}
         </p>
 
         {sessionData && (

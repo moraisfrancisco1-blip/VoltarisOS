@@ -31,26 +31,26 @@ class MultiAssetOptimizer:
         flex_loads=[a for a in portfolio.assets if isinstance(a,FlexibleLoadAsset) and a.enabled and not isinstance(a,HeatPumpAsset)]
         heat_pumps=[a for a in portfolio.assets if isinstance(a,HeatPumpAsset) and a.enabled]
         try:
-            from pulp import LpMinimize,LpProblem,LpStatus,LpVariable,COIN_CMD,lpSum,value
+            from pulp import LpMinimize,LpProblem,LpStatus,COIN_CMD,lpSum,value
         except ImportError:
             return MultiAssetOptimizationResult("error",[],0.0,0.0,0.0,solver_time_ms=(time.time()-started)*1000)
         prob=LpProblem("VoltarisOS_MultiAsset_VPP",LpMinimize)
-        grid_import=[LpVariable(f"grid_import_{t}",0,portfolio.max_import_kw) for t in range(n)]
-        grid_export=[LpVariable(f"grid_export_{t}",0,portfolio.max_export_kw) for t in range(n)]
-        peak_import=LpVariable("peak_import_kw",0,portfolio.max_import_kw)
-        export_mode=[LpVariable(f"grid_export_mode_{t}",cat="Binary") for t in range(n)]
+        grid_import=[prob.add_variable(f"grid_import_{t}",0,portfolio.max_import_kw) for t in range(n)]
+        grid_export=[prob.add_variable(f"grid_export_{t}",0,portfolio.max_export_kw) for t in range(n)]
+        peak_import=prob.add_variable("peak_import_kw",0,portfolio.max_import_kw)
+        export_mode=[prob.add_variable(f"grid_export_mode_{t}",cat="Binary") for t in range(n)]
         battery_vars={}
         for a in batteries:
-            charge=[LpVariable(f"{a.asset_id}_charge_{t}",0,a.max_charge_kw) for t in range(n)]
-            discharge=[LpVariable(f"{a.asset_id}_discharge_{t}",0,a.max_discharge_kw) for t in range(n)]
-            soc=[LpVariable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
-            mode=[LpVariable(f"{a.asset_id}_charge_mode_{t}",cat="Binary") for t in range(n)]
+            charge=[prob.add_variable(f"{a.asset_id}_charge_{t}",0,a.max_charge_kw) for t in range(n)]
+            discharge=[prob.add_variable(f"{a.asset_id}_discharge_{t}",0,a.max_discharge_kw) for t in range(n)]
+            soc=[prob.add_variable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
+            mode=[prob.add_variable(f"{a.asset_id}_charge_mode_{t}",cat="Binary") for t in range(n)]
             battery_vars[a.asset_id]={"charge":charge,"discharge":discharge,"soc":soc,"mode":mode}
         ev_vars={}
         for a in evs:
             baseline=self._ev_baseline_profile(a,n)
-            delta=[LpVariable(f"{a.asset_id}_flex_{t}",-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0,a.max_charge_kw-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0) for t in range(n)]
-            soc=[LpVariable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
+            delta=[prob.add_variable(f"{a.asset_id}_flex_{t}",-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0,a.max_charge_kw-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0) for t in range(n)]
+            soc=[prob.add_variable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
             ev_vars[a.asset_id]={"delta":delta,"soc":soc,"baseline":baseline}
         flex_vars,curtailment_vars,recovery_vars={},{},{}
         for a in flex_loads:
@@ -59,15 +59,15 @@ class MultiAssetOptimizer:
                 lo,hi=a.min_power_kw-baseline,a.max_recovery_kw
             else:
                 lo,hi=a.min_power_kw-baseline,a.max_power_kw-baseline
-            flex_vars[a.asset_id]=[LpVariable(f"{a.asset_id}_flex_{t}",lo if a.start_hour<=t<min(a.end_hour,n) else 0.0,hi if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
-            curtailment_vars[a.asset_id]=[LpVariable(f"{a.asset_id}_curtail_{t}",0) for t in range(n)]
+            flex_vars[a.asset_id]=[prob.add_variable(f"{a.asset_id}_flex_{t}",lo if a.start_hour<=t<min(a.end_hour,n) else 0.0,hi if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
+            curtailment_vars[a.asset_id]=[prob.add_variable(f"{a.asset_id}_curtail_{t}",0) for t in range(n)]
             for t in range(n): prob += curtailment_vars[a.asset_id][t]>=-flex_vars[a.asset_id][t]
             if isinstance(a,IndustrialLoadAsset) and a.recovery_kwh>0 and a.max_recovery_kw>0:
-                recovery_vars[a.asset_id]=[LpVariable(f"{a.asset_id}_recovery_{t}",0,a.max_recovery_kw if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
+                recovery_vars[a.asset_id]=[prob.add_variable(f"{a.asset_id}_recovery_{t}",0,a.max_recovery_kw if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
         hp_vars={}
         for a in heat_pumps:
-            d=[LpVariable(f"{a.asset_id}_flex_{t}",a.min_power_kw-a.baseline_power_kw if a.start_hour<=t<min(a.end_hour,n) else 0.0,a.nominal_power_kw-a.baseline_power_kw if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
-            thermal=[LpVariable(f"{a.asset_id}_thermal_{t}",a.min_thermal_kwh,a.max_thermal_kwh) for t in range(n)]
+            d=[prob.add_variable(f"{a.asset_id}_flex_{t}",a.min_power_kw-a.baseline_power_kw if a.start_hour<=t<min(a.end_hour,n) else 0.0,a.nominal_power_kw-a.baseline_power_kw if a.start_hour<=t<min(a.end_hour,n) else 0.0) for t in range(n)]
+            thermal=[prob.add_variable(f"{a.asset_id}_thermal_{t}",a.min_thermal_kwh,a.max_thermal_kwh) for t in range(n)]
             hp_vars[a.asset_id]={"delta":d,"thermal":thermal}
         objective=[]
         for t in range(n):
@@ -111,7 +111,10 @@ class MultiAssetOptimizer:
             for t in range(n):
                 actual=a.baseline_power_kw+v["delta"][t]; prev=a.initial_thermal_kwh if t==0 else v["thermal"][t-1]; prob+=v["thermal"][t]==prev+actual*a.thermal_gain_per_kwh-a.thermal_loss_kwh
             if a.target_thermal_kwh is not None: target=min(max(a.end_hour-1,0),n-1); prob+=v["thermal"][target]>=a.target_thermal_kwh
-            prob+=lpSum(v["delta"])==0
+            # NOTE: no net-zero energy budget on heat pumps — thermal storage lets the
+            # HP schedule freely within [min,max] power and storage bounds. Forcing
+            # lpSum(delta)==0 here is physically artificial (it makes the model
+            # infeasible whenever baseline heat exceeds storage capacity).
         prob.solve(COIN_CMD(msg=False)); status=LpStatus.get(prob.status,"unknown").lower()
         if status!="optimal": return MultiAssetOptimizationResult(status,[],0.0,0.0,0.0,solver_time_ms=(time.time()-started)*1000)
         schedule=[]

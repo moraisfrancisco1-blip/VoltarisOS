@@ -1,6 +1,6 @@
 """Public optimization API built on the VPP domain model."""
 from typing import List, Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from optimization.assets import BatteryAsset, EVAsset, FlexibleLoadAsset, HeatPumpAsset, IndustrialLoadAsset, SolarAsset, VPPPortfolio
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
@@ -61,6 +61,24 @@ class MultiAssetOptimizeRequest(BaseModel):
 
 @router.post("/optimize/multi-asset")
 def optimize_multi_asset(request: MultiAssetOptimizeRequest):
+    # Horizon is defined by the base load series; every time-series input must
+    # cover it. A short price series would silently pad with zeros, producing a
+    # mathematically incomplete optimisation, so reject it explicitly.
+    horizon = len(request.base_load_kw)
+    if horizon <= 0:
+        raise HTTPException(422, "base_load_kw must contain at least 1 value")
+    if len(request.prices_eur_mwh) < horizon:
+        raise HTTPException(
+            422,
+            f"prices_eur_mwh must cover the optimization horizon ({horizon} values); got {len(request.prices_eur_mwh)}",
+        )
+    for solar in request.solar:
+        if solar.forecast_kw and len(solar.forecast_kw) < horizon:
+            raise HTTPException(
+                422,
+                f"solar[{solar.asset_id}].forecast_kw must cover the horizon ({horizon} values); got {len(solar.forecast_kw)}",
+            )
+
     portfolio = VPPPortfolio(base_load_kw=request.base_load_kw, prices_eur_mwh=request.prices_eur_mwh,
         max_import_kw=request.max_import_kw, max_export_kw=request.max_export_kw,
         peak_demand_cost_eur_per_kw=request.peak_demand_cost_eur_per_kw)

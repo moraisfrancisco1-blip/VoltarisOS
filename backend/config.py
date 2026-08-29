@@ -58,6 +58,18 @@ class Settings:
     ENTSOE_BASE_URL: str = os.getenv("ENTSOE_BASE_URL", "https://web-api.tp.entsoe.eu/api")
     EEX_API_KEY: str = os.getenv("EEX_API_KEY", "")
     EEX_BASE_URL: str = os.getenv("EEX_BASE_URL", "https://www.eex.com/data")
+
+    # Carbon — CO2e conversion factor (kg CO2e per kWh).
+    # Reference: EU grid-average of 0.233 kg CO2e/kWh, used by the application
+    # as a configurable default. This is a reference value, NOT a country-specific
+    # measured figure (the project has no such source).
+    CO2_PER_KWH_KG: float = float(os.getenv("CO2_PER_KWH_KG", "0.233"))
+
+    # Monitoring — a device that has reported at least once but stays silent for
+    # more than this many minutes is considered offline (status -> "offline" and a
+    # communication alert). Conservative default of 30 min assumes a gateway that
+    # reports at least every 30 minutes is healthy.
+    DEVICE_OFFLINE_AFTER_MINUTES: int = int(os.getenv("DEVICE_OFFLINE_AFTER_MINUTES", "30"))
     
     # Market configuration
     DEFAULT_MARKET: str = os.getenv("DEFAULT_MARKET", "MIBEL")

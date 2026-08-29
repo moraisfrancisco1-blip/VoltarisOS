@@ -37,7 +37,6 @@ COPY gateway/ ./gateway/
 COPY legal/ ./legal/
 COPY load_test/ ./load_test/
 COPY control/ ./control/
-COPY sites.json ./
 
 # Copy built frontend
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist

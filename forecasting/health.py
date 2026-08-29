@@ -52,7 +52,7 @@ def assess_bundle_health(bundle: ForecastBundle, *, now: datetime | None = None)
             return [ProviderHealth(bundle.source, False, "generated_at is in the future", age_minutes)]
         if bundle.max_age_minutes is None:
             return [ProviderHealth(bundle.source, False, "missing max_age_minutes", age_minutes)]
-        if age_minutes > bundle.max_age_minutes:
+        if age_minutes >= bundle.max_age_minutes:
             return [ProviderHealth(bundle.source, False, "forecast is stale", age_minutes)]
         return [ProviderHealth(bundle.source, True, "fresh", age_minutes)]
     except (TypeError, ValueError) as exc:

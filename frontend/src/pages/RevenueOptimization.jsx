@@ -3,6 +3,7 @@ import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from "recharts";
+import DemoNotice from "../components/DemoNotice";
 
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
@@ -77,6 +78,7 @@ export default function RevenueOptimization() {
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
+      <DemoNotice />
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>

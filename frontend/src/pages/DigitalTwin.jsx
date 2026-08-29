@@ -1,3 +1,4 @@
+import DemoNotice from "../components/DemoNotice";
 import { useEffect, useState } from "react"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
@@ -129,6 +130,7 @@ export default function DigitalTwin({ user }) {
 
   return (
     <div style={{ padding: "28px", maxWidth: "1400px" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "28px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

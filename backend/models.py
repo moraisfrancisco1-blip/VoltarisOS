@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, DateTime, String, JSON, Boolean, ForeignKey, Text, Index
+from sqlalchemy import Column, Integer, Float, DateTime, String, JSON, Boolean, ForeignKey, Text, Index, UniqueConstraint, text
 from datetime import datetime, timezone
 from backend.database import Base
 
@@ -20,6 +20,10 @@ class Tenant(Base):
     primary_color = Column(String, default="#f59e0b")
     created_at = Column(DateTime, default=utcnow_naive)
     active = Column(Boolean, default=True)
+    stripe_customer_id = Column(String, nullable=True)
+    stripe_subscription_id = Column(String, nullable=True)
+    subscription_status = Column(String, nullable=True)
+    subscription_end = Column(DateTime, nullable=True)
 
 
 class User(Base):
@@ -49,14 +53,37 @@ class BatteryState(Base):
     timestamp = Column(DateTime, default=utcnow_naive)
 
 
+class Site(Base):
+    __tablename__ = "sites"
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    location = Column(String, nullable=True)
+    lat = Column(Float, nullable=True)
+    lng = Column(Float, nullable=True)
+    timezone = Column(String, nullable=True)
+    solar_kw = Column(Float, default=0.0)
+    battery_kwh = Column(Float, default=0.0)
+    ev_chargers = Column(Integer, default=0)
+    owner = Column(String, nullable=True)
+    status = Column(String, default="active")
+    created_at = Column(DateTime, default=utcnow_naive)
+
+
 class Device(Base):
     __tablename__ = "devices"
+    __table_args__ = (
+        Index("uq_devices_tenant_external", "tenant_id", "external_id", unique=True,
+              sqlite_where=text("external_id IS NOT NULL"),
+              postgresql_where=text("external_id IS NOT NULL")),
+    )
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     name = Column(String, nullable=False)
-    site_id = Column(Integer, nullable=True)
+    site_id = Column(Integer, ForeignKey("sites.id", ondelete="SET NULL"), nullable=True)
     protocol = Column(String, nullable=False)
     device_type = Column(String, default="inverter")
+    external_id = Column(String, nullable=True)
     config = Column(JSON, nullable=False, default={})
     enabled = Column(Boolean, default=True)
     status = Column(String, default="unknown")
@@ -66,6 +93,9 @@ class Device(Base):
 
 class DeviceReading(Base):
     __tablename__ = "device_readings"
+    __table_args__ = (
+        UniqueConstraint("device_id", "timestamp", name="uq_device_reading_device_timestamp"),
+    )
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, nullable=True, index=True)
     device_id = Column(Integer, nullable=False, index=True)
@@ -130,7 +160,7 @@ class VPPSiteMembership(Base):
     __tablename__ = "vpp_site_memberships"
     id = Column(Integer, primary_key=True, index=True)
     vpp_id = Column(Integer, ForeignKey("vpp_groups.id"), nullable=False, index=True)
-    site_id = Column(Integer, nullable=False)
+    site_id = Column(Integer, ForeignKey("sites.id", ondelete="CASCADE"), nullable=False)
     weight = Column(Float, default=1.0)
 
 
@@ -196,6 +226,9 @@ class VPPDispatchRecord(Base):
     dispatch_kw = Column(Float, nullable=False, default=0.0)
     asset_dispatch = Column(JSON, nullable=True)
     site_dispatch = Column(JSON, nullable=True)
+    schedule = Column(JSON, nullable=True)
+    solver_status = Column(String, nullable=True)
+    committed = Column(Boolean, nullable=False, default=False)
 
 
 # ─── Reports ─────────────────────────────────────────────────────────────────
@@ -239,3 +272,10 @@ class AuditLog(Base):
         Index("ix_audit_logs_tenant_timestamp", "tenant_id", "timestamp"),
         Index("ix_audit_logs_user_timestamp", "user_id", "timestamp"),
     )
+
+
+class StripeEvent(Base):
+    __tablename__ = "stripe_events"
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(String, unique=True, nullable=False, index=True)
+    processed_at = Column(DateTime, default=utcnow_naive, nullable=False)

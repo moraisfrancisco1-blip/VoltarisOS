@@ -6,13 +6,14 @@ from forecasting.contracts import ForecastBundle
 
 
 def bundle(**kwargs):
-    return ForecastBundle(
-        prices_eur_mwh=[50.0] * 24,
-        load_kw=[100.0] * 24,
-        solar_kw=[20.0] * 24,
-        timestamps=[f"2026-08-19T{hour:02d}:00:00+00:00" for hour in range(24)],
-        **kwargs,
-    )
+    base = {
+        "prices_eur_mwh": [50.0] * 24,
+        "load_kw": [100.0] * 24,
+        "solar_kw": [20.0] * 24,
+    }
+    if "timestamps" not in kwargs:
+        base["timestamps"] = [f"2026-08-19T{hour:02d}:00:00+00:00" for hour in range(24)]
+    return ForecastBundle(**base, **kwargs)
 
 
 def test_valid_timezone_aware_hourly_timestamps():
@@ -27,7 +28,7 @@ def test_rejects_naive_timestamps():
 
 def test_rejects_non_hourly_or_non_monotonic_timestamps():
     timestamps = [f"2026-08-19T{hour:02d}:00:00+00:00" for hour in range(24)]
-    timestamps[2] = "2026-08-19T03:30:00+00:00"
+    timestamps[2] = "2026-08-19T02:30:00+00:00"
     with pytest.raises(ValueError, match="hourly cadence"):
         bundle(timestamps=timestamps).validate(24)
 

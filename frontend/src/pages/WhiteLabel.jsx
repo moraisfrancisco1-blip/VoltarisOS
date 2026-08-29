@@ -1,4 +1,5 @@
 import { useState } from "react"
+import DemoNotice from "../components/DemoNotice"
 
 const CARD = {
   background: "var(--surface)",
@@ -84,6 +85,7 @@ export default function whitelabel({ user }) {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>white-label & Multi-tenant</h1>

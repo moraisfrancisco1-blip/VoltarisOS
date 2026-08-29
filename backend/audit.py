@@ -25,7 +25,7 @@ The audit_logs table is APPEND-ONLY — no UPDATE or DELETE operations.
 from typing import Optional, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
-from backend.models import AuditLog
+from backend.models import AuditLog, utcnow_naive
 
 
 def log_audit_event(
@@ -79,7 +79,7 @@ def log_audit_event(
         ip_address=ip_address,
         user_agent=user_agent,
         details=details,
-        timestamp=timestamp or datetime.utcnow(),
+        timestamp=timestamp or utcnow_naive(),
     )
     db.add(audit_log)
     db.commit()

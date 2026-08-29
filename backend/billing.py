@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 from backend.config import settings
+from backend.models import utcnow_naive
 
 logger = logging.getLogger(__name__)
 
@@ -107,7 +108,7 @@ class BillingManager:
             usage_record = stripe.SubscriptionItem.create_usage_record(
                 subscription_item_id,
                 quantity=int(quantity_kwh),  # Stripe expects integer
-                timestamp=int(datetime.utcnow().timestamp()),
+                timestamp=int(utcnow_naive().timestamp()),
                 action="increment",
             )
             
@@ -174,11 +175,11 @@ class BillingManager:
         """
         if period_start is None:
             # Default to current month
-            now = datetime.utcnow()
+            now = utcnow_naive()
             period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = utcnow_naive()
         
         # Get usage from database (audit logs or dedicated usage table)
         from backend.database import SessionLocal

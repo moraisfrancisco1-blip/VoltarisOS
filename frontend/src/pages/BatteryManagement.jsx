@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell, Legend
 } from "recharts";
 import { C, PremiumTooltip, axisStyle, gridStyle, glassCard } from "../components/ChartTheme";
+import DemoNotice from "../components/DemoNotice";
 
 const accent = C.accent;
 const green  = C.green;
@@ -181,6 +182,7 @@ export default function BatteryManagement() {
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "transparent" }}>
+      <DemoNotice />
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>

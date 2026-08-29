@@ -1458,7 +1458,25 @@ export default function Settings() {
                   {/* Action buttons */}
                   <div style={{ display: "flex", gap: 12 }}>
                     <Btn variant="secondary" accent={accent} onClick={() => { setPlanModal(false); setTermsAccepted(false); setBillingCycle("monthly"); }} style={{ flex: 1 }}>Cancel</Btn>
-                    <button disabled={!termsAccepted || selectedPlan === "enterprise"} onClick={() => setPlanChanged(true)} style={{
+                    <button disabled={!termsAccepted || selectedPlan === "enterprise"} onClick={async () => {
+                      if (!termsAccepted || selectedPlan === "enterprise") return;
+                      try {
+                        const res = await fetch("/api/payments/create-checkout-session", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ plan_id: selectedPlan, billing_cycle: billingCycle }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) {
+                          alert(data.detail || "Erro ao iniciar checkout");
+                          return;
+                        }
+                        if (data.url) window.location.href = data.url;
+                      } catch (e) {
+                        console.error(e);
+                        alert("Erro ao iniciar checkout");
+                      }
+                    }} style={{
                       flex: 2, padding: "12px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: termsAccepted && selectedPlan !== "enterprise" ? "pointer" : "not-allowed",
                       background: termsAccepted && selectedPlan !== "enterprise" ? `linear-gradient(135deg, ${accent}, #4f46e5)` : "var(--sub)",
                       color: termsAccepted && selectedPlan !== "enterprise" ? "#fff" : "var(--sub)",

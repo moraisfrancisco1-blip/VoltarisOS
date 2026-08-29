@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
+import DemoNotice from "../components/DemoNotice"
 
 const API = import.meta.env.VITE_API_URL || ""
 
@@ -225,6 +226,7 @@ export default function AIDispatchCopilot() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto", height: "calc(100vh - 80px)", display: "flex", flexDirection: "column" }}>
+      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "16px", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>

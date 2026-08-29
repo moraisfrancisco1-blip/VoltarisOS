@@ -23,9 +23,10 @@ def test_optimizer_accepts_industrial_load_and_heat_pump():
         site_id=10,
         min_power_kw=10,
         nominal_power_kw=60,
+        baseline_power_kw=40,
         initial_thermal_kwh=50,
         target_thermal_kwh=80,
-        max_thermal_kwh=100,
+        max_thermal_kwh=200,
     ))
 
     result = MultiAssetOptimizer().optimize(portfolio)

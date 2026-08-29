@@ -58,7 +58,7 @@ def test_vpp_database_records_build_and_optimize_portfolio(monkeypatch):
     ))
     db.commit()
 
-    monkeypatch.setattr(asset_mapper, "_site_records", lambda: {
+    monkeypatch.setattr(asset_mapper, "_site_records", lambda db: {
         101: {
             "id": 101,
             "name": "Integration Site",

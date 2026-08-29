@@ -1,3 +1,4 @@
+import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
@@ -87,6 +88,7 @@ export default function EVCharging() {
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
+      <DemoNotice>Funcionalidade indisponível — a integração backend para EV Charging não está ativa.</DemoNotice>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
