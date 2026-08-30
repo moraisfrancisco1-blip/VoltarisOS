@@ -76,6 +76,40 @@ def test_cache_manager_is_connected_reflects_backend():
     assert cm.is_connected is True
 
 
+def test_cache_manager_upgrades_to_redis_when_available(monkeypatch):
+    """A Redis that was unreachable at cold-start is picked up on the next live
+    health check (no process restart) — the fix for Railway in-memory-fallback."""
+    from backend.cache import CacheManager, InMemoryCache
+    cm = CacheManager()
+    cm._redis_url = "redis://...@redis.railway.internal:6379"
+    cm._cache = InMemoryCache()  # simulate failed cold-start connection
+
+    class _FakeRedisCache:
+        is_connected = True
+        def __init__(self, url):
+            self.url = url
+
+    monkeypatch.setattr("backend.cache.RedisCache", _FakeRedisCache)
+    assert cm.is_connected is True
+    assert isinstance(cm._cache, _FakeRedisCache)
+
+
+def test_cache_manager_stays_in_memory_when_redis_unreachable(monkeypatch):
+    from backend.cache import CacheManager, InMemoryCache
+    cm = CacheManager()
+    cm._redis_url = "redis://...@redis.railway.internal:6379"
+    cm._cache = InMemoryCache()
+
+    class _FakeRedisCache:
+        is_connected = False
+        def __init__(self, url):
+            pass
+
+    monkeypatch.setattr("backend.cache.RedisCache", _FakeRedisCache)
+    assert cm.is_connected is False
+    assert isinstance(cm._cache, InMemoryCache)  # honest: still unreachable
+
+
 # ── /health/detailed Redis honesty ───────────────────────────────────────────
 def test_health_detailed_redis_not_configured(monkeypatch):
     monkeypatch.delenv("REDIS_URL", raising=False)

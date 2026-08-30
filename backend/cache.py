@@ -163,6 +163,7 @@ class CacheManager:
     """Unified cache manager with Redis/in-memory fallback."""
     
     def __init__(self):
+        self._redis_url = os.getenv("REDIS_URL", "")
         self._cache = None
         self._initialize()
     
@@ -185,13 +186,40 @@ class CacheManager:
         """Get a value from cache."""
         return self._cache.get(key)
 
+    def _try_redis(self) -> bool:
+        """Attempt to connect/upgrade to Redis on demand (health checks).
+
+        Redis is only attempted once at import (CacheManager init). If it was
+        momentarily unreachable then, the backend fell back to in-memory and
+        would stay there forever. This retries live so a Redis that becomes
+        reachable (e.g. after Railway provisioning / cold start) is picked up
+        and used without a process restart.
+        """
+        if isinstance(self._cache, RedisCache):
+            return self._cache.is_connected
+        if not self._redis_url:
+            return False
+        try:
+            candidate = RedisCache(self._redis_url)
+        except Exception:
+            return False
+        if candidate.is_connected:
+            self._cache = candidate
+            return True
+        return False
+
     @property
     def is_connected(self) -> bool:
-        """Whether the active cache backend is a live Redis connection.
+        """Live Redis connectivity — never a stale in-memory fallback state.
 
-        False when Redis is not configured or unreachable (in-memory fallback),
-        so health/readiness never report Redis as healthy when it is not.
+        When Redis is reachable it reports True (and upgrades the backend to
+        Redis); otherwise False (in-memory fallback / unreachable). Uses the
+        REDIS_URL from the environment.
         """
+        if isinstance(self._cache, RedisCache):
+            return self._cache.is_connected
+        if self._try_redis():
+            return True
         return bool(getattr(self._cache, "is_connected", False))
     
     def set(self, key: str, value: Any, ttl: int = 300) -> bool:
