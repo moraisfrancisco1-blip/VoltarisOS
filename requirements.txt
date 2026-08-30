@@ -19,3 +19,5 @@ bcrypt
 slowapi
 stripe
 pyotp
+redis
+celery
