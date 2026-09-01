@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from "recharts";
 import DemoNotice from "../components/DemoNotice";
+import { useAppStore } from "../store/appStore";
 
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
@@ -52,6 +53,7 @@ const genEvents = () => Array.from({ length: 12 }, (_, i) => ({
 }));
 
 export default function CommandCenter({ setPage }) {
+  const simMode = useAppStore(s => s.simMode);
   const [sites, setSites] = useState(initSites());
   const [events, setEvents] = useState(genEvents());
   const [metrics, setMetrics] = useState({ online: 4, total: 5, totalPower: 10.2, activeAlerts: 2, cmdSent: 14 });
@@ -108,6 +110,17 @@ export default function CommandCenter({ setPage }) {
   const statusBg = (s) => s === "online" ? "#10b98120" : s === "warning" ? "#f59e0b20" : "#ef444420";
   const statusColor = (s) => s === "online" ? green : s === "warning" ? amber : red;
   const eventColor = (t) => t === "error" ? red : t === "warning" ? amber : t === "success" ? green : blue;
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Command Center</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13, ...card }}>
+          Sem controlo de despacho físico ligado ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
