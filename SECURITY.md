@@ -15,7 +15,7 @@ We take the security of the VoltarisOS platform seriously. If you believe you ha
 
 ### How to report a vulnerability
 
-Please do not report security vulnerabilities via public GitHub issues. Instead, please send an email to **[insira_seu_email_aqui@exemplo.com]**.
+Please do not report security vulnerabilities via public GitHub issues. Instead, please send an email to **solaris.morais@gmail.com**.
 
 When reporting, please provide:
 *   A clear description of the vulnerability.

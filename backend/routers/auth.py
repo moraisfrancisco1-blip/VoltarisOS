@@ -166,15 +166,43 @@ def get_or_create_tenant(db: Session, name: str, plan: str = "beta") -> models.T
 
 def seed_admin(db: Session):
     """Ensure default SUPER_ADMIN exists on first boot.
-    
+
     The initial admin password MUST be set via ADMIN_INITIAL_PASSWORD env var.
     If not set, a random password is generated and printed to stderr (first boot only).
     The SUPER_ADMIN should change this password immediately after first login.
-    
+
     SUPER_ADMIN is NEVER granted via registration, onboarding, or subscription —
     only via this seed script or manual DB intervention.
+
+    Recovery: if the account owner is locked out (lost password, no record of
+    it), set RESET_ADMIN_PASSWORD=1 (and optionally ADMIN_INITIAL_PASSWORD) in
+    the environment and hit /auth/login once. The password is reset and the
+    new value printed to stderr, same as first boot. Remove
+    RESET_ADMIN_PASSWORD from the environment immediately afterward — leaving
+    it set re-rolls the password on every login attempt.
     """
-    if not db.query(models.User).filter(models.User.email == "admin@voltaris.com").first():
+    admin = db.query(models.User).filter(models.User.email == "admin@voltaris.com").first()
+    if admin and os.environ.get("RESET_ADMIN_PASSWORD") == "1":
+        new_password = os.environ.get("ADMIN_INITIAL_PASSWORD")
+        if not new_password:
+            import secrets
+            new_password = secrets.token_urlsafe(16)
+        admin.password_hash = hash_pw(new_password)
+        admin.active = True
+        db.commit()
+        print(
+            f"\n{'='*60}\n"
+            f"  ADMIN PASSWORD RESET (RESET_ADMIN_PASSWORD=1)\n"
+            f"  Email: admin@voltaris.com\n"
+            f"  Password: {new_password}\n"
+            f"  Remove RESET_ADMIN_PASSWORD from env vars now — it re-rolls\n"
+            f"  the password on every login attempt while set.\n"
+            f"{'='*60}\n",
+            file=sys.stderr,
+        )
+        return
+
+    if not admin:
         tenant = get_or_create_tenant(db, "VoltarisOS Admin", plan="enterprise")
         
         # Get initial password from env, or generate a random one
