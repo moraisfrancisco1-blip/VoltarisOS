@@ -106,8 +106,8 @@ def run_ai_optimization(price: float, battery_soc: float, tenant_id: int):
     raise RuntimeError("run_ai_optimization is deprecated; use run_milp_optimization")
 
 
-@celery_app.task(name="backend.tasks.aggregate_device_data")
-def aggregate_device_data():
+@celery_app.task(name="backend.tasks.aggregate_device_data", bind=True, max_retries=3, default_retry_delay=30)
+def aggregate_device_data(self):
     from backend.database import SessionLocal
     from backend import models
     from datetime import datetime, timedelta, timezone
@@ -122,6 +122,9 @@ def aggregate_device_data():
             item["total_power_kw"] += reading.power_kw or 0
             item["total_energy_kwh"] += reading.energy_kwh or 0
         return {"aggregates": aggregates}
+    except Exception as exc:
+        logger.exception("aggregate_device_data failed")
+        raise self.retry(exc=exc)
     finally:
         db.close()
 
