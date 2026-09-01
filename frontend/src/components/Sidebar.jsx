@@ -192,9 +192,17 @@ function VoltarisLogo({ collapsed }) {
   )
 }
 
+// Core workflow for real testing: everything else stays in the code and routes,
+// just out of the way until "Ver todos os módulos" is clicked. Not a permanent
+// product decision — a reset button for beta testers facing ~38 nav items.
+const CORE_NAV_IDS = new Set([
+  "dashboard", "fleet", "sites", "vpp", "battery", "ev",
+  "forecasting", "alerts", "maintenance", "reports", "settings",
+])
+
 export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobileOpen, setMobileOpen }) {
   const { t } = useTranslation()
-  const { sidebarDefaultCollapsed } = useAppStore()
+  const { sidebarDefaultCollapsed, navSimplified, setNavSimplified } = useAppStore()
   const [collapsed, setCollapsed] = useState(sidebarDefaultCollapsed)
   const accentStore = useAppStore(s => s.accentColor)
   const color = user?.color || accentStore || "#4ade80"
@@ -301,6 +309,8 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
       items: group.items.filter(item => {
         // Role check: can the user access this page at all?
         if (!canAccessPage(role, item.id)) return false
+        // Simplified nav: only the core testing workflow until expanded
+        if (navSimplified && !CORE_NAV_IDS.has(item.id)) return false
         // Show locked items too (with 🔒) — don't filter by plan
         return true
       }),
@@ -500,6 +510,26 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
             )
           })}
         </nav>
+
+        {/* Simplified nav toggle */}
+        {!showCollapsed && (
+          <div style={{ padding: "0 10px 8px", flexShrink: 0 }}>
+            <button
+              onClick={() => setNavSimplified(!navSimplified)}
+              style={{
+                width: "100%", padding: "8px 12px",
+                background: "none", border: "1px dashed var(--border)",
+                borderRadius: "8px", color: "var(--sidebar-sub)", cursor: "pointer",
+                fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center",
+                gap: "6px", transition: "color 0.15s, border-color 0.15s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = "var(--sidebar-text)"; e.currentTarget.style.borderColor = "var(--sidebar-sub)" }}
+              onMouseLeave={e => { e.currentTarget.style.color = "var(--sidebar-sub)"; e.currentTarget.style.borderColor = "var(--border)" }}
+            >
+              {navSimplified ? "Ver todos os módulos" : "Ver menos"}
+            </button>
+          </div>
+        )}
 
         {/* Logout */}
         <div style={{ padding: "10px 10px 16px", borderTop: "1px solid var(--border)", flexShrink: 0 }}>

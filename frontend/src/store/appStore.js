@@ -185,6 +185,11 @@ export const useAppStore = create((set, get) => ({
   sidebarDefaultCollapsed: localStorage.getItem("vos_sidebar_collapsed") === "true",
   setSidebarDefaultCollapsed: (v) => { localStorage.setItem("vos_sidebar_collapsed", String(v)); set({ sidebarDefaultCollapsed: v }) },
 
+  // Simplified nav: only the core testing workflow, rest hidden (not removed) behind "Ver tudo".
+  // Defaults ON so real beta testers aren't dropped into ~38 nav items on day one.
+  navSimplified: localStorage.getItem("vos_nav_simplified") !== "false",
+  setNavSimplified: (v) => { localStorage.setItem("vos_nav_simplified", String(v)); set({ navSimplified: v }) },
+
   // ─── Dashboard layout ────────────────────────────────────────────────────────
   // User can toggle visibility of each widget
   dashWidgets: JSON.parse(localStorage.getItem("vos_dash_widgets") || JSON.stringify({
