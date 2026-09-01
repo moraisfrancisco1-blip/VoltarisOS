@@ -1,5 +1,6 @@
 import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react";
+import { useAppStore } from "../store/appStore";
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie
@@ -47,6 +48,7 @@ const genSchedule = () => Array.from({ length: 12 }, (_, i) => ({
 }));
 
 export default function EVCharging() {
+  const simMode = useAppStore(s => s.simMode);
   const [chargers, setChargers] = useState(CHARGERS.map(c => ({ ...c })));
   const [solar] = useState(genSolar());
   const [schedule] = useState(genSchedule());
@@ -85,6 +87,17 @@ export default function EVCharging() {
     { name: "BESS Buffer", value: Math.round(metrics.solarSelf * 0.25), fill: purple },
     { name: "Grid Import", value: Math.round(100 - metrics.solarSelf), fill: blue },
   ];
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Funcionalidade indisponível — a integração backend para EV Charging não está ativa. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

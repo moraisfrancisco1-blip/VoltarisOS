@@ -51,7 +51,7 @@ function ChartBar({ data, maxVal, color }) {
 }
 
 export default function CarbonCredit() {
-  const { color } = useAppStore()
+  const { color, simMode } = useAppStore()
   const [tab, setTab] = useState("overview")
   const [mintingLive, setMintingLive] = useState(false)
   const [liveCredits, setLiveCredits] = useState(133.5)
@@ -78,6 +78,17 @@ export default function CarbonCredit() {
 
   const totalRevenue = SITE_TOTALS.reduce((a, s) => a + s.ytdRevenue, 0)
   const filteredLedger = selectedStatus === "all" ? LEDGER_ENTRIES : LEDGER_ENTRIES.filter(e => e.status === selectedStatus)
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem créditos de carbono reais registados ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>

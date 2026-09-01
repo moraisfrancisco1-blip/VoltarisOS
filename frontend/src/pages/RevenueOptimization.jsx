@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from "recharts";
 import DemoNotice from "../components/DemoNotice";
+import { useAppStore } from "../store/appStore";
 
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
@@ -49,6 +50,7 @@ const AI_DISPATCH = [
 ];
 
 export default function RevenueOptimization() {
+  const simMode = useAppStore(s => s.simMode);
   const [forecast] = useState(genForecast());
   const [selectedScenario, setSelectedScenario] = useState("Balanced");
   const [metrics, setMetrics] = useState({ todayRev: 5840, projectedRev: 8420, bestArb: 1420, aiUplift: 620 });
@@ -75,6 +77,17 @@ export default function RevenueOptimization() {
     fcr: s.fcr,
     fill: s.color,
   }));
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem otimização de receita real calculada ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

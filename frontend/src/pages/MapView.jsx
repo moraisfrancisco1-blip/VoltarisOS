@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import DemoNotice from "../components/DemoNotice";
+import { useAppStore } from "../store/appStore";
 
 const accent = "#6366f1";
 
@@ -17,6 +18,7 @@ const sites = [
 ];
 
 export default function MapView() {
+  const simMode = useAppStore(s => s.simMode);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [selected, setSelected] = useState(null);
@@ -183,6 +185,18 @@ export default function MapView() {
     borderRadius: 12,
     padding: 20,
   };
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4, color: "var(--text)" }}>Site Map</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12 }}>
+          Este mapa mostra localizações e valores de exemplo, não ligados aos teus sites reais. Ativa o modo Simulação (SIM, no topo) para veres a pré-visualização.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>

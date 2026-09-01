@@ -1,5 +1,6 @@
 import DemoNotice from "../components/DemoNotice";
 import { useState } from "react";
+import { useAppStore } from "../store/appStore";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
@@ -49,6 +50,7 @@ const RADAR_DATA = [
 ];
 
 export default function RegulatoryCompliance() {
+  const simMode = useAppStore(s => s.simMode);
   const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
 
@@ -70,6 +72,17 @@ export default function RegulatoryCompliance() {
     { name: "Pending", value: pending, fill: "rgba(148,163,184,0.85)" },
     { name: "Urgent", value: urgent, fill: red },
   ];
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1200 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem prazos de compliance reais registados ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1200 }}>

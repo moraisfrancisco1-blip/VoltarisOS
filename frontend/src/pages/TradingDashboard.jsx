@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme";
 import DemoNotice from "../components/DemoNotice";
+import { useAppStore } from "../store/appStore";
 
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const MARKETS = ["DAM Portugal", "DAM Spain", "FCR Pan-EU", "aFRR PT", "Intraday EU"];
@@ -42,6 +43,7 @@ const RECENT_TRADES = Array.from({ length: 8 }, (_, i) => ({
 }));
 
 export default function TradingDashboard() {
+  const simMode = useAppStore(s => s.simMode);
   const [priceCurve]      = useState(genPriceCurve);
   const [orderBook, setOrderBook] = useState(genOrderBook);
   const [pnl]             = useState(genPnL);
@@ -72,6 +74,17 @@ export default function TradingDashboard() {
   }, []);
 
   const priceColor  = priceDir > 0 ? C.green : C.red;
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem posições de trading reais ligadas ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

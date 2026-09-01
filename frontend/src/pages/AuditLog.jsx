@@ -21,7 +21,7 @@ function fmt(iso) {
 }
 
 export default function AuditLog({ user }) {
-  const { auditLog, addAuditEntry } = useAppStore()
+  const { auditLog, addAuditEntry, simMode } = useAppStore()
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
 
@@ -32,6 +32,18 @@ export default function AuditLog({ user }) {
   })
 
   const color = user?.color || "#4ade80"
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "32px", maxWidth: "1100px" }}>
+        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Este registo ainda não está ligado ao audit log real do backend. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "32px", maxWidth: "1100px" }}>

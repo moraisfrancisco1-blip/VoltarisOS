@@ -16,6 +16,7 @@ import {
   ReferenceLine, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from "recharts"
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme"
+import { useAppStore } from "../store/appStore"
 
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }
 
@@ -102,6 +103,7 @@ const FLEET = [
 ]
 
 export default function SolarDegradationLab() {
+  const simMode = useAppStore(s => s.simMode)
   const [params, setParams] = useState({
     age: 5, tempAvg: 22, soilingDays: 45, cleanings: 2,
     tiltAngle: 30, panelType: "mono_perc", shadingPct: 3, pidRisk: "low"
@@ -120,6 +122,17 @@ export default function SolarDegradationLab() {
     { metric: "Thermal", value: 100 - Math.max(0, (params.tempAvg - 20) * 3) },
     { metric: "PID Risk", value: params.pidRisk === "low" ? 90 : params.pidRisk === "medium" ? 55 : 25 },
   ]
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Este simulador ainda não está ligado aos teus painéis reais. Ativa o modo Simulação (SIM, no topo) para o experimentares com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

@@ -1,5 +1,6 @@
 import DemoNotice from "../components/DemoNotice";
 import { useEffect, useState } from "react"
+import { useAppStore } from "../store/appStore"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
 function rand(min, max, d = 1) { return +(Math.random() * (max - min) + min).toFixed(d) }
@@ -83,6 +84,7 @@ const CT = ({ active, payload, label }) => {
 }
 
 export default function DigitalTwin({ user }) {
+  const simMode = useAppStore(s => s.simMode)
   const [site, setSite] = useState("rotterdam")
   const [data, setData] = useState({ solar: 156, load: 89, grid: 12, soc: 78, temp: 28, voltage: 48.2, current: 142 })
   const [ts, setTs] = useState(generateTwinData())
@@ -127,6 +129,17 @@ export default function DigitalTwin({ user }) {
   const gc = [grid.x + grid.w / 2, grid.y + grid.h / 2]
   const bc = [battery.x + battery.w / 2, battery.y + battery.h / 2]
   const lc = [load_.x + load_.w / 2, load_.y + load_.h / 2]
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 900 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem gémeo digital ligado a telemetria real ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "28px", maxWidth: "1400px" }}>

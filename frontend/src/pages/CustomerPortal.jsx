@@ -32,7 +32,7 @@ const HOURLY = Array.from({ length: 24 }, (_, i) => ({
 }))
 
 export default function CustomerPortal() {
-  const { color } = useAppStore()
+  const { color, simMode } = useAppStore()
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0])
   const [view, setView] = useState("portal") // "portal" | "preview" | "embed"
   const [customerData, setCustomerData] = useState(() => generateCustomerData(1))
@@ -62,6 +62,17 @@ export default function CustomerPortal() {
   style="border:none;border-radius:12px"
   allow="fullscreen">
 </iframe>`
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem clientes reais ligados ao portal ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>

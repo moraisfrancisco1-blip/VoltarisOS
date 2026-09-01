@@ -51,7 +51,7 @@ function StatCard({ label, value, unit, sub, color: c }) {
 }
 
 export default function EnergyMarketplace() {
-  const { color } = useAppStore()
+  const { color, simMode } = useAppStore()
   const [tab, setTab] = useState("market")
   const [selectedTenant, setSelectedTenant] = useState(null)
   const [tradeForm, setTradeForm] = useState({ volume: "", price: "", side: "buy" })
@@ -93,6 +93,17 @@ export default function EnergyMarketplace() {
   const spreadPrice = orderBids[0].price
   const totalLiquidity = TENANTS.reduce((a, t) => a + t.surplus, 0).toFixed(1)
   const avgPrice = (TENANTS.reduce((a, t) => a + getLivePrice(t.id), 0) / TENANTS.length).toFixed(2)
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem marketplace de energia real ligado ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
