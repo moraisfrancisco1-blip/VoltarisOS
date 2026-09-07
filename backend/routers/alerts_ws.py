@@ -16,7 +16,7 @@ import asyncio, json
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import get_current_user, require_gateway_key
+from backend.security import get_current_user, get_current_user_or_service, require_gateway_key
 
 router = APIRouter()
 
@@ -178,7 +178,7 @@ def list_alerts(
     unacked_only: bool = Query(default=False),
     limit: int = Query(default=50),
     db: Session = Depends(get_db),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user_or_service),
 ):
     q = db.query(models.Alert)
     tenant = _effective_tenant(user)
@@ -241,7 +241,7 @@ async def fire_alert(body: FireAlertRequest, db: Session = Depends(get_db), _svc
 
 # ─── REST: Alert Rules ────────────────────────────────────────────────────────
 @router.get("/api/alert-rules", response_model=List[AlertRuleOut])
-def list_rules(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def list_rules(db: Session = Depends(get_db), user: dict = Depends(get_current_user_or_service)):
     q = db.query(models.AlertRule)
     tenant = _effective_tenant(user)
     if tenant is not None:

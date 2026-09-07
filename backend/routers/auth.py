@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, limiter
+from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter
 from fastapi import Request
 import os
 import sys
@@ -589,7 +589,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: dict = Depen
 # ─── SUPER_ADMIN exclusive routes ──────────────────────────────────────────────
 
 @router.get("/admin/tenants")
-def list_all_tenants(db: Session = Depends(get_db), _sa: dict = Depends(require_super_admin)):
+def list_all_tenants(db: Session = Depends(get_db), _sa: dict = Depends(require_super_admin_or_service)):
     """SUPER_ADMIN only — list all tenants in the platform."""
     tenants = db.query(models.Tenant).all()
     return [
@@ -607,7 +607,7 @@ def list_all_tenants(db: Session = Depends(get_db), _sa: dict = Depends(require_
 
 
 @router.get("/admin/system-health")
-def system_health(_sa: dict = Depends(require_super_admin)):
+def system_health(_sa: dict = Depends(require_super_admin_or_service)):
     """SUPER_ADMIN only — basic system health check."""
     return {
         "status": "healthy",

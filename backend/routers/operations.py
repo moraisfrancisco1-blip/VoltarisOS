@@ -13,7 +13,7 @@ from sqlalchemy import text
 
 from backend.database import SessionLocal
 from backend import models
-from backend.security import require_super_admin
+from backend.security import require_super_admin_or_service
 
 router = APIRouter(prefix="/api/admin", tags=["operations"])
 
@@ -113,7 +113,7 @@ def _migration_state(db: Session):
 
 
 @router.get("/production-readiness")
-def production_readiness(_sa: dict = Depends(require_super_admin), db: Session = Depends(get_db)):
+def production_readiness(_sa: dict = Depends(require_super_admin_or_service), db: Session = Depends(get_db)):
     """Production configuration/readiness for the first physical park.
 
     Distinguishes healthy / degraded / not_configured. No secrets are returned.

@@ -57,6 +57,10 @@ def ctx():
     }
     main.app.dependency_overrides[get_current_user] = lambda: holder["user"]
     main.app.dependency_overrides[require_ingest_identity] = lambda: holder["gateway"]
+    # production-readiness now accepts the Volt Core service key alongside a
+    # human SUPER_ADMIN (see backend/security.py); override that combined
+    # dependency too so these tests keep faking auth without a real JWT.
+    main.app.dependency_overrides[ops_mod.require_super_admin_or_service] = lambda: holder["user"]
 
     db = _Session()
     db.add(models.Tenant(id=1, name="T1", slug="t1", plan="enterprise"))
