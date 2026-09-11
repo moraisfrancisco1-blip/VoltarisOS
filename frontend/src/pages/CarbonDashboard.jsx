@@ -7,6 +7,8 @@ import {
 import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard } from "../components/ChartTheme";
 import { useAppStore } from "../store/appStore";
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -35,6 +37,7 @@ const CREDITS = [
 ];
 
 export default function CarbonDashboard() {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [monthly] = useState(genMonthly);
   const [metrics, setMetrics] = useState({ avoided: 688, scope1: 12.6, scope2: 51.0, scope3: 106.1, credits: 67, creditValue: 8173 });
@@ -68,7 +71,7 @@ export default function CarbonDashboard() {
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem dados de carbono reais ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_carbon")}
         </div>
       </div>
     )

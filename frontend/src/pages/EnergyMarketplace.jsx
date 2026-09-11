@@ -2,6 +2,8 @@ import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const API = import.meta.env.VITE_API_URL || ""
 
 const TENANTS = [
@@ -51,6 +53,7 @@ function StatCard({ label, value, unit, sub, color: c }) {
 }
 
 export default function EnergyMarketplace() {
+  const { t } = useTranslation();
   const { color, simMode } = useAppStore()
   const [tab, setTab] = useState("market")
   const [selectedTenant, setSelectedTenant] = useState(null)
@@ -99,7 +102,7 @@ export default function EnergyMarketplace() {
       <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem marketplace de energia real ligado ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_marketplace")}
         </div>
       </div>
     )

@@ -5,6 +5,8 @@ import DemoNotice from "../components/DemoNotice"
 // white-label customer portal — shows end-customer view
 // Industrial clients see their consumption, savings, carbon offset
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const CUSTOMERS = [
   { id: 1, name: "Renault Factory Lisbon", type: "Industrial", contract_kw: 8000, sector: "Automotive", contact: "Ana Ferreira" },
   { id: 2, name: "EDP Office Campus", type: "Commercial", contract_kw: 3500, sector: "Energy", contact: "João Silva" },
@@ -32,6 +34,7 @@ const HOURLY = Array.from({ length: 24 }, (_, i) => ({
 }))
 
 export default function CustomerPortal() {
+  const { t } = useTranslation();
   const { color, simMode } = useAppStore()
   const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0])
   const [view, setView] = useState("portal") // "portal" | "preview" | "embed"
@@ -68,7 +71,7 @@ export default function CustomerPortal() {
       <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem clientes reais ligados ao portal ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_customer_portal")}
         </div>
       </div>
     )

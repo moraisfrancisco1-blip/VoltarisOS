@@ -152,6 +152,32 @@ test.describe("5. Authenticated app (English) — real UI", () => {
     await expect(page.locator("nav").getByText("Settings")).toBeVisible();
   });
 
+  test("simplified navigation keeps admin modules (Settings, Users) reachable", async ({ page }) => {
+    await seedSession(page, "en"); // fresh context → simplified nav is ON by default
+
+    // The toggle proves simplified mode is active, and it must be translated.
+    await expect(page.getByRole("button", { name: "View all modules" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Ver todos os módulos" })).toHaveCount(0);
+
+    // Admin modules must remain reachable while simplified nav is active.
+    const settingsBtn = page.locator("nav button").filter({ hasText: "Settings" }).first();
+    const usersBtn = page.locator("nav button").filter({ hasText: "Users" }).first();
+    await expect(settingsBtn).toBeVisible();
+    await expect(usersBtn).toBeVisible();
+
+    // ...and actually navigate.
+    await usersBtn.click();
+    await page.waitForTimeout(1000);
+    await expect(page.getByText("Something went wrong on this page")).toHaveCount(0);
+    await settingsBtn.click();
+    await page.waitForTimeout(600);
+    await expect(page.getByText("Something went wrong on this page")).toHaveCount(0);
+
+    // Expanding still works (feature preserved) and its label is translated.
+    await page.getByRole("button", { name: "View all modules" }).click();
+    await expect(page.getByRole("button", { name: "View less" })).toBeVisible();
+  });
+
   test("main application areas show no Portuguese when English is selected", async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", (e) => pageErrors.push(String((e && e.stack) || e)));

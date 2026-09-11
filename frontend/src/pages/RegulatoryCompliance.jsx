@@ -6,6 +6,8 @@ import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from "recharts";
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
@@ -50,6 +52,7 @@ const RADAR_DATA = [
 ];
 
 export default function RegulatoryCompliance() {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [filter, setFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
@@ -78,7 +81,7 @@ export default function RegulatoryCompliance() {
       <div style={{ padding: 24, maxWidth: 1200 }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem prazos de compliance reais registados ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_compliance")}
         </div>
       </div>
     )

@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 import DemoNotice from "../components/DemoNotice"
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const API = import.meta.env.VITE_API_URL || ""
 
 const SUGGESTIONS = [
@@ -175,6 +177,7 @@ function riskBadge(risk) {
 }
 
 export default function AIDispatchCopilot() {
+  const { t } = useTranslation();
   const { color, simMode } = useAppStore()
   const [messages, setMessages] = useState([
     {
@@ -229,7 +232,7 @@ export default function AIDispatchCopilot() {
       <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
-          O Copiloto de Despacho ainda não está ligado a ações reais. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_aidispatch")}
         </div>
       </div>
     )

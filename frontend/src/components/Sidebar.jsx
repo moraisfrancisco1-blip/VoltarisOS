@@ -198,7 +198,7 @@ function VoltarisLogo({ collapsed }) {
 // product decision — a reset button for beta testers facing ~38 nav items.
 const CORE_NAV_IDS = new Set([
   "dashboard", "fleet", "sites", "vpp", "battery", "ev",
-  "forecasting", "alerts", "maintenance", "reports", "settings",
+  "forecasting", "alerts", "maintenance", "reports", "settings", "users",
 ])
 
 export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobileOpen, setMobileOpen }) {
@@ -527,7 +527,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
               onMouseEnter={e => { e.currentTarget.style.color = "var(--sidebar-text)"; e.currentTarget.style.borderColor = "var(--sidebar-sub)" }}
               onMouseLeave={e => { e.currentTarget.style.color = "var(--sidebar-sub)"; e.currentTarget.style.borderColor = "var(--border)" }}
             >
-              {navSimplified ? "Ver todos os módulos" : "Ver menos"}
+              {navSimplified ? t("nav_show_all") : t("nav_show_less")}
             </button>
           </div>
         )}

@@ -59,7 +59,7 @@ export default function ExportCenter({ user }) {
         <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Export Center</h1>
         <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          A exportação de relatórios ainda não gera ficheiros reais. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização.
+          {t("demo_export")}
         </div>
       </div>
     )

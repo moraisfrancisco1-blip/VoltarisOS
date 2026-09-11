@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import DemoNotice from "../components/DemoNotice";
 import { useAppStore } from "../store/appStore";
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const accent = "#6366f1";
 
 const sites = [
@@ -18,6 +20,7 @@ const sites = [
 ];
 
 export default function MapView() {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -192,7 +195,7 @@ export default function MapView() {
         <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4, color: "var(--text)" }}>Site Map</h1>
         <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12 }}>
-          Este mapa mostra localizações e valores de exemplo, não ligados aos teus sites reais. Ativa o modo Simulação (SIM, no topo) para veres a pré-visualização.
+          {t("demo_map")}
         </div>
       </div>
     )

@@ -6,6 +6,8 @@ import {
 import DemoNotice from "../components/DemoNotice";
 import { useAppStore } from "../store/appStore";
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
@@ -53,6 +55,7 @@ const genEvents = () => Array.from({ length: 12 }, (_, i) => ({
 }));
 
 export default function CommandCenter({ setPage }) {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [sites, setSites] = useState(initSites());
   const [events, setEvents] = useState(genEvents());
@@ -116,7 +119,7 @@ export default function CommandCenter({ setPage }) {
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Command Center</h1>
         <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13, ...card }}>
-          Sem controlo de despacho físico ligado ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_command_center")}
         </div>
       </div>
     );

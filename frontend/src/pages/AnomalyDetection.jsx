@@ -6,6 +6,8 @@ import {
 import DemoNotice from "../components/DemoNotice"
 import { useAppStore } from "../store/appStore"
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b"
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa"
 const orange = "#f97316"
@@ -140,6 +142,7 @@ const TYPE_BREAKDOWN = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AnomalyDetection({ setPage }) {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode)
   const [feed, setFeed] = useState(genFeed)
   const [heatAnoms, setHeatAnoms] = useState(genHeatmapAnomalies)
@@ -186,7 +189,7 @@ export default function AnomalyDetection({ setPage }) {
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Anomaly Detection</h1>
         <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
-          Sem deteção de anomalias real ligada ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_anomaly")}
         </div>
       </div>
     )

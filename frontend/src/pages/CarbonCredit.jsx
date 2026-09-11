@@ -2,6 +2,8 @@ import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const LEDGER_ENTRIES = [
   { id: "CC-2024-001842", site: "Lisboa Norte BESS", kwh: 4200, credits: 1.26, date: "2024-06-04", status: "minted", txHash: "0xa3f2...9e1b" },
   { id: "CC-2024-001841", site: "Madrid Sur Grid", kwh: 8750, credits: 2.63, date: "2024-06-04", status: "minted", txHash: "0xb71c...4d2a" },
@@ -51,6 +53,7 @@ function ChartBar({ data, maxVal, color }) {
 }
 
 export default function CarbonCredit() {
+  const { t } = useTranslation();
   const { color, simMode } = useAppStore()
   const [tab, setTab] = useState("overview")
   const [mintingLive, setMintingLive] = useState(false)
@@ -84,7 +87,7 @@ export default function CarbonCredit() {
       <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem créditos de carbono reais registados ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_carbon_credit")}
         </div>
       </div>
     )

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react"
 import { useAppStore } from "../store/appStore"
 import DemoNotice from "../components/DemoNotice"
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const API = import.meta.env.VITE_API_URL || ""
 
 const FACTORS = [
@@ -132,6 +134,7 @@ const HISTORY = Array.from({ length: 24 }, (_, i) => ({
 }))
 
 export default function GridResilienceScore() {
+  const { t } = useTranslation();
   const { color, simMode } = useAppStore()
   const [sites, setSites] = useState(MOCK_SITES)
   const [selected, setSelected] = useState(MOCK_SITES[0])
@@ -170,7 +173,7 @@ export default function GridResilienceScore() {
         <h1 style={{ fontSize: "22px", fontWeight: "700", color: "var(--text)", margin: 0 }}>Grid Resilience Score</h1>
         <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
-          Sem dados reais de resiliência ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_resilience")}
         </div>
       </div>
     )

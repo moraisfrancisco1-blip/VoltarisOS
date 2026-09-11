@@ -7,6 +7,8 @@ import { C, ChartDefs, PremiumTooltip, axisStyle, gridStyle, glassCard, KpiCard 
 import DemoNotice from "../components/DemoNotice";
 import { useAppStore } from "../store/appStore";
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const rand = (min, max, dec = 1) => parseFloat((Math.random() * (max - min) + min).toFixed(dec));
 const MARKETS = ["DAM Portugal", "DAM Spain", "FCR Pan-EU", "aFRR PT", "Intraday EU"];
 
@@ -43,6 +45,7 @@ const RECENT_TRADES = Array.from({ length: 8 }, (_, i) => ({
 }));
 
 export default function TradingDashboard() {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [priceCurve]      = useState(genPriceCurve);
   const [orderBook, setOrderBook] = useState(genOrderBook);
@@ -80,7 +83,7 @@ export default function TradingDashboard() {
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem posições de trading reais ligadas ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_trading")}
         </div>
       </div>
     )

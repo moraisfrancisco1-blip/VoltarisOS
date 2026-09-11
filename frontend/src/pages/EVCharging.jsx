@@ -95,7 +95,7 @@ export default function EVCharging() {
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Funcionalidade indisponível — a integração backend para EV Charging não está ativa. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_ev")}
         </div>
       </div>
     )

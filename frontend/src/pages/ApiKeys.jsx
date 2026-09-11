@@ -51,8 +51,7 @@ export default function ApiKeys({ user }) {
         <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>API Keys</h1>
         <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Gestão de API keys ainda não está ligada ao backend real — as chaves criadas aqui não funcionam
-          para autenticação de facto. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização.
+          {t("demo_apikeys")}
         </div>
       </div>
     )

@@ -2,6 +2,8 @@ import { useState } from "react"
 import DemoNotice from "../components/DemoNotice"
 import { useAppStore } from "../store/appStore"
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const CARD = {
   background: "var(--surface)",
   border: "1px solid rgba(255,255,255,0.12)",
@@ -41,6 +43,7 @@ const TENANTS = [
 ]
 
 export default function whitelabel({ user }) {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode)
   const color = user?.color || "#4ade80"
   const [tab, setTab] = useState("tenants")
@@ -90,7 +93,7 @@ export default function whitelabel({ user }) {
       <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          A gestão de tenants white-label ainda não está ligada ao backend real. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização.
+          {t("demo_whitelabel")}
         </div>
       </div>
     )

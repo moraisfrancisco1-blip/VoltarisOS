@@ -6,6 +6,8 @@ import {
 import DemoNotice from "../components/DemoNotice";
 import { useAppStore } from "../store/appStore";
 
+import { useTranslation } from "../i18n/useTranslation";
+
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
 
@@ -50,6 +52,7 @@ const AI_DISPATCH = [
 ];
 
 export default function RevenueOptimization() {
+  const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [forecast] = useState(genForecast());
   const [selectedScenario, setSelectedScenario] = useState("Balanced");
@@ -83,7 +86,7 @@ export default function RevenueOptimization() {
       <div style={{ padding: 24, maxWidth: 1400 }}>
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          Sem otimização de receita real calculada ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+          {t("demo_revenue")}
         </div>
       </div>
     )
