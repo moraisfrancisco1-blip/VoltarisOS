@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { C, glassCard } from "../components/ChartTheme";
+import { useTranslation } from "../i18n/useTranslation";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -62,7 +63,7 @@ function PowerFlowDiagram({ solar, bess, grid, load, hub }) {
       <text x={HUB.x} y={HUB.y - 7} textAnchor="middle" fill={C.accent} fontSize={9.5} fontWeight={800}
         letterSpacing={1}>VPP HUB</text>
       <text x={HUB.x} y={HUB.y + 13} textAnchor="middle" fill="var(--text)" fontSize={12} fontWeight={900}
-        style={{ filter: `drop-shadow(0 0 6px ${C.accent}80)` }}>{hub != null ? `${hub.toFixed(1)} kW` : "Sem dados"}</text>
+        style={{ filter: `drop-shadow(0 0 6px ${C.accent}80)` }}>{hub != null ? `${hub.toFixed(1)} kW` : t("dash_no_data")}</text>
 
       {nodes.map(n => (
         <g key={n.id}>
@@ -80,6 +81,7 @@ function PowerFlowDiagram({ solar, bess, grid, load, hub }) {
   );
 }
 export default function Dashboard({ setPage }) {
+  const { t } = useTranslation();
   const [sites, setSites] = useState([]);
   const [devices, setDevices] = useState([]);
   const [readings, setReadings] = useState({});
@@ -117,7 +119,7 @@ export default function Dashboard({ setPage }) {
       setReadings(Object.fromEntries(entries));
       setLastUpdated(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     } catch (e) {
-      setError("Não foi possível carregar o dashboard.");
+      setError(t("dash_err_load"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -172,7 +174,7 @@ export default function Dashboard({ setPage }) {
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: "var(--text)", letterSpacing: -0.8,
             textShadow: `0 0 30px ${C.accent}40` }}>Operations Center</h1>
           <div style={{ color: "var(--sub)", fontSize: 12, marginTop: 4, display: "flex", alignItems: "center", gap: 7 }}>
-            {lastUpdated ? `Atualizado: ${lastUpdated}` : "A carregar…"}
+            {lastUpdated ? `${t("state_updated")} ${lastUpdated}` : t("state_loading")}
           </div>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -201,12 +203,12 @@ export default function Dashboard({ setPage }) {
       </div>
 
       {loading ? (
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Carregando dashboard…</div>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("dash_loading")}</div>
       ) : error && sites.length === 0 ? (
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Não foi possível carregar os dados.</div>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("dash_err_data")}</div>
       ) : sites.length === 0 ? (
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>
-          Sem sites disponíveis. Cria um site para começar.
+          {t("dash_no_sites")}
         </div>
       ) : (
         <>
@@ -225,7 +227,7 @@ export default function Dashboard({ setPage }) {
               />
             ) : (
               <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>
-                Sem dados de telemetria (sem readings recentes). Adiciona dispositivos com ingestão de leituras.
+                {t("dash_no_telemetry")}
               </div>
             )}
           </div>
@@ -234,7 +236,7 @@ export default function Dashboard({ setPage }) {
           <div style={glassCard(C.blue)}>
             <div style={{ ...label, marginBottom: 12 }}>Site Health Summary</div>
             {siteRows.length === 0 ? (
-              <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Sem sites.</div>
+              <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("dash_no_sites_short")}</div>
             ) : (
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>

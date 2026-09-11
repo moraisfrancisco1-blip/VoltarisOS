@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { XCircle, ArrowLeft } from "lucide-react";
+import { useTranslation } from "../i18n/useTranslation";
 
 export default function PaymentCancel() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -41,7 +43,7 @@ export default function PaymentCancel() {
           fontWeight: "700",
           marginBottom: "12px"
         }}>
-          Pagamento Cancelado
+          {t("pay_cancel_title")}
         </h1>
 
         <p style={{
@@ -50,7 +52,7 @@ export default function PaymentCancel() {
           marginBottom: "24px",
           lineHeight: "1.6"
         }}>
-          O pagamento foi cancelado. Nenhum valor foi cobrado. Podes tentar novamente quando quiseres.
+          {t("pay_cancel_desc")}
         </p>
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -71,7 +73,7 @@ export default function PaymentCancel() {
             }}
           >
             <ArrowLeft size={20} />
-            Voltar
+            {t("pay_back")}
           </button>
           <button
             onClick={() => navigate("/pricing")}
@@ -86,7 +88,7 @@ export default function PaymentCancel() {
               cursor: "pointer"
             }}
           >
-            Ver Planos
+            {t("pay_view_plans")}
           </button>
         </div>
       </div>

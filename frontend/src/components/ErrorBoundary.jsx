@@ -1,4 +1,6 @@
 import { Component } from "react"
+import { t as translate } from "../i18n/translations"
+import { useAppStore } from "../store/appStore"
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -21,6 +23,7 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
+      const t = (key) => translate(key, useAppStore.getState().language)
       return (
         <div style={{
           minHeight: "100vh",
@@ -38,10 +41,10 @@ export default class ErrorBoundary extends Component {
           }}>
             <div style={{ fontSize: "42px", marginBottom: "12px" }}>⚠️</div>
             <div style={{ color: "var(--text)", fontSize: "18px", fontWeight: "700", marginBottom: "8px" }}>
-              Algo correu mal nesta página
+              {t("err_title")}
             </div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", marginBottom: "24px", lineHeight: 1.5 }}>
-              Encontrámos um erro inesperado. O resto do VoltarisOS continua a funcionar — tenta recarregar esta página.
+              {t("err_body")}
             </div>
             <button
               onClick={this.handleReload}
@@ -53,7 +56,7 @@ export default class ErrorBoundary extends Component {
                 cursor: "pointer",
               }}
             >
-              Recarregar
+              {t("err_reload")}
             </button>
           </div>
         </div>

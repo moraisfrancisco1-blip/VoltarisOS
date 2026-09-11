@@ -9,7 +9,7 @@ import logoFull from "../logo_full.png"
 function PaywallModal({ pageId, userPlan, onClose }) {
   const { t } = useTranslation()
   const info = getPaywallInfo(pageId)
-  const currentPlanName = PLAN_NAMES[userPlan] || userPlan || "Desconhecido"
+  const currentPlanName = PLAN_NAMES[userPlan] || userPlan || t("paywall_unknown")
 
   return (
     <div
@@ -50,15 +50,15 @@ function PaywallModal({ pageId, userPlan, onClose }) {
           color: "#fff", fontSize: "20px", fontWeight: "700",
           margin: "0 0 8px", letterSpacing: "-0.3px",
         }}>
-          Funcionalidade Premium 🔒
+          {t("paywall_title")}
         </h3>
         <p style={{
           color: "rgba(255,255,255,0.6)", fontSize: "13.5px",
           margin: "0 0 24px", lineHeight: 1.6,
         }}>
-          Esta funcionalidade requer o plano{" "}
+          {t("paywall_requires")}{" "}
           <strong style={{ color: "#f59e0b" }}>{info.requiredPlanName}</strong>{" "}
-          ou superior. O teu plano atual é{" "}
+          {t("paywall_or_higher")}{" "}
           <strong style={{ color: "#f97316" }}>{currentPlanName}</strong>.
         </p>
 
@@ -74,20 +74,20 @@ function PaywallModal({ pageId, userPlan, onClose }) {
             marginBottom: "12px",
           }}>
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", fontWeight: "600" }}>
-              Plano Necessário
+              {t("paywall_required_plan")}
             </span>
             <span style={{
               color: "#f59e0b", fontSize: "18px", fontWeight: "800",
               letterSpacing: "-0.3px",
             }}>
-              {info.requiredPlanPrice}
+              {t(info.requiredPlanPrice)}
             </span>
           </div>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}>
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "12px", fontWeight: "600" }}>
-              Plano Atual
+              {t("paywall_current_plan")}
             </span>
             <span style={{
               color: "rgba(255,255,255,0.7)", fontSize: "14px", fontWeight: "600",
@@ -101,7 +101,7 @@ function PaywallModal({ pageId, userPlan, onClose }) {
             color: "rgba(255,255,255,0.55)", fontSize: "12.5px",
             lineHeight: 1.5,
           }}>
-            {info.requiredPlanDescription}
+            {t(info.requiredPlanDescription)}
           </div>
         </div>
 
@@ -120,7 +120,7 @@ function PaywallModal({ pageId, userPlan, onClose }) {
             onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
             onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
           >
-            Fechar
+            {t("paywall_close")}
           </button>
           <button
             onClick={() => {
@@ -139,7 +139,7 @@ function PaywallModal({ pageId, userPlan, onClose }) {
             onMouseEnter={e => e.currentTarget.style.boxShadow = "0 6px 28px rgba(245,158,11,0.5)"}
             onMouseLeave={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(245,158,11,0.3)"}
           >
-            Fazer Upgrade para {info.requiredPlanName}
+            {t("paywall_upgrade_to")} {info.requiredPlanName}
           </button>
         </div>
       </div>
@@ -150,11 +150,12 @@ function PaywallModal({ pageId, userPlan, onClose }) {
 
 // ─── Lock icon component ────────────────────────────────────────────────────
 function LockBadge() {
+  const { t } = useTranslation()
   return (
     <span style={{
       marginLeft: "auto", fontSize: "12px", opacity: 0.5,
       display: "flex", alignItems: "center", flexShrink: 0,
-    }} title="Funcionalidade bloqueada — requer upgrade de plano">
+    }} title={t("nav_locked_tooltip")}>
       🔒
     </span>
   )

@@ -13,16 +13,22 @@ const PAGE_TITLE_KEYS = {
   carbon: "page_carbon", autonomous: "page_autonomous",
   twin: "page_twin", maintenance: "page_maintenance",
   whitelabel: "page_whitelabel", audit: "page_audit", apikeys: "page_apikeys", export: "page_export",
+  revenue_opt: "page_revenue_opt", compliance: "page_compliance", command_center: "page_command_center",
+  scorecard: "page_scorecard", anomaly: "page_anomaly",
+  integrations: "nav_integrations", vpp: "nav_vpp", resilience: "nav_resilience",
+  dispatch_copilot: "nav_dispatch_copilot", marketplace: "nav_marketplace",
+  carbon_credit: "nav_carbon_credit", customer_portal: "nav_customer_portal",
+  solar_intel: "nav_solar_intel", arbitrage: "nav_arbitrage", degradation_lab: "nav_degradation_lab",
 }
 
 const BILLING_URL = "mailto:francisco@voltarisos.com?subject=VoltarisOS%20Plan%20Upgrade"
 
 const PLANS = [
-  { id: "beta",       name: "Beta",       price: "Grátis", period: "",      desc: "Acesso antecipado · código beta necessário", color: "#4ade80", badge: "Beta Tester" },
-  { id: "home",       name: "Home",       price: "€69",    period: "/mo",   desc: "1 site · até 50 kWh",    color: "#10b981", badge: null },
-  { id: "starter",    name: "Starter",    price: "€279",   period: "/mo",   desc: "5 sites · até 500 kWh",  color: "#6366f1", badge: "Mais Popular" },
-  { id: "pro",        name: "Pro",        price: "€1 099", period: "/mo",   desc: "20 sites · AI avançada", color: "#f59e0b", badge: "Melhor Valor" },
-  { id: "enterprise", name: "Enterprise", price: "€3 999", period: "/mo",   desc: "Ilimitado · white-label", color: "#ec4899", badge: null },
+  { id: "beta",       name: "Beta",       priceKey: "plan_price_free", period: "",      descKey: "plan_desc_beta",       color: "#4ade80", badgeKey: "plan_badge_beta" },
+  { id: "home",       name: "Home",       price: "€69",    period: "/mo",   descKey: "plan_desc_home",       color: "#10b981", badgeKey: null },
+  { id: "starter",    name: "Starter",    price: "€279",   period: "/mo",   descKey: "plan_desc_starter",    color: "#6366f1", badgeKey: "plan_badge_popular" },
+  { id: "pro",        name: "Pro",        price: "€1 099", period: "/mo",   descKey: "plan_desc_pro",        color: "#f59e0b", badgeKey: "plan_badge_best" },
+  { id: "enterprise", name: "Enterprise", price: "€3 999", period: "/mo",   descKey: "plan_desc_enterprise", color: "#ec4899", badgeKey: null },
 ]
 
 export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) {
@@ -102,7 +108,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
       {!isMobile && (
         <button
           onClick={() => { setSimMode(!simMode); addToast(simMode ? t("topbar_sim_off") : t("topbar_sim_on"), "info") }}
-          title={simMode ? "Desativar simulação" : "Ativar simulação"}
+          title={simMode ? t("topbar_sim_disable_title") : t("topbar_sim_enable_title")}
           style={{
             padding: "7px 12px",
             background: simMode ? "#78350f30" : "rgba(255,255,255,0.06)",
@@ -113,7 +119,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           }}
         >
           <span>🧪</span>
-          <span>SIM</span>
+          <span>{t("topbar_sim_short")}</span>
         </button>
       )}
 
@@ -214,7 +220,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
-          Change Plan
+          {t("topbar_change_plan")}
         </button>
       )}
 
@@ -262,8 +268,8 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
           {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
             <div>
-              <h2 style={{ color: "var(--text)", margin: 0, fontSize: "20px", fontWeight: 700 }}>Choose your plan</h2>
-              <p style={{ color: "var(--sub)", margin: "4px 0 0", fontSize: "13px" }}>Plano beta gratuito disponível com código de acesso.</p>
+              <h2 style={{ color: "var(--text)", margin: 0, fontSize: "20px", fontWeight: 700 }}>{t("plan_choose_title")}</h2>
+              <p style={{ color: "var(--sub)", margin: "4px 0 0", fontSize: "13px" }}>{t("plan_beta_note")}</p>
             </div>
             <button
               onClick={() => setPlanOpen(false)}
@@ -290,24 +296,24 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                   <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--text)" }}>{plan.name}</span>
-                  {plan.badge ? (
+                  {plan.badgeKey ? (
                     <span style={{
                       fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
                       color: "#fff", background: plan.color, padding: "2px 8px", borderRadius: "20px",
-                    }}>{plan.badge}</span>
+                    }}>{t(plan.badgeKey)}</span>
                   ) : (
                     <span style={{
                       fontSize: "9px", fontWeight: 700, textTransform: "uppercase",
                       color: "var(--text)", background: `${plan.color}25`, padding: "2px 8px", borderRadius: "20px",
                       border: `1px solid ${plan.color}40`,
-                    }}>Select</span>
+                    }}>{t("plan_select")}</span>
                   )}
                 </div>
                 <div style={{ marginBottom: "6px" }}>
-                  <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--text)" }}>{plan.price}</span>
+                  <span style={{ fontSize: "22px", fontWeight: 800, color: "var(--text)" }}>{plan.priceKey ? t(plan.priceKey) : plan.price}</span>
                   <span style={{ fontSize: "12px", color: "var(--sub)", marginLeft: "2px" }}>{plan.period}</span>
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--sub)" }}>{plan.desc}</div>
+                <div style={{ fontSize: "12px", color: "var(--sub)" }}>{t(plan.descKey)}</div>
               </a>
             ))}
           </div>
@@ -332,7 +338,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
                 fontWeight: "600",
               }}
             >
-              Manage billing & invoices →
+              {t("plan_manage_billing")}
             </button>
             <a
               href={BILLING_URL}
@@ -340,7 +346,7 @@ export default function TopBar({ page, user, isMobile, onMenuToggle, setPage }) 
               rel="noopener noreferrer"
               style={{ color: "var(--sub)", fontSize: "12px", textDecoration: "underline" }}
             >
-              Contact support
+              {t("plan_contact_support")}
             </a>
           </div>
         </div>

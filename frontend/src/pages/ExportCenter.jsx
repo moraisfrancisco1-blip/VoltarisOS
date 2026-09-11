@@ -16,16 +16,16 @@ export default function ExportCenter({ user }) {
   const [includeBranding, setIncludeBranding] = useState(true)
 
   const EXPORT_ITEMS = [
-    { id: "dashboard", label: "Dashboard Overview", desc: t("exp_desc_dashboard") || "Main KPIs, energy charts, battery status", icon: "⊞", category: t("exp_cat_reports") || "Reports" },
-    { id: "battery", label: "Battery BMS Report", desc: t("exp_desc_battery") || "Historical SOC, cycles, temperature, cell health", icon: "🔋", category: t("exp_cat_reports") || "Reports" },
-    { id: "trading", label: "Trading P&L", desc: t("exp_desc_trading") || "Profit/loss per session, executed orders, market exposure", icon: "📈", category: t("exp_cat_reports") || "Reports" },
-    { id: "carbon", label: "Carbon Footprint", desc: t("exp_desc_carbon") || "Avoided emissions, green certificates, monthly comparison", icon: "🌱", category: t("exp_cat_reports") || "Reports" },
-    { id: "maintenance", label: "Maintenance Schedule", desc: t("exp_desc_maintenance") || "Maintenance plan, predictive alerts, failure history", icon: "🔧", category: t("exp_cat_reports") || "Reports" },
-    { id: "alerts_hist", label: "Alerts History", desc: t("exp_desc_alerts") || "All triggered alerts with timestamp and resolution", icon: "🔔", category: t("exp_cat_operations") || "Operations" },
-    { id: "sites", label: "Sites Overview", desc: t("exp_desc_sites") || "Site list, capacity, status, geolocation", icon: "📍", category: t("exp_cat_operations") || "Operations" },
-    { id: "users", label: "User Activity", desc: t("exp_desc_users") || "Logins, actions per user, access audit", icon: "👥", category: t("exp_cat_operations") || "Operations" },
-    { id: "investor", label: "Investor Report", desc: t("exp_desc_investor") || "Revenue, EBITDA, ROI per project — boardroom format", icon: "💰", category: t("exp_cat_financial") || "Financial" },
-    { id: "audit", label: "Audit Log Export", desc: t("exp_desc_audit") || "Complete action log for compliance", icon: "📋", category: t("exp_cat_compliance") || "Compliance" },
+    { id: "dashboard", labelKey: "exp_label_dashboard", desc: t("exp_desc_dashboard") || "Main KPIs, energy charts, battery status", icon: "⊞", category: t("exp_cat_reports") || "Reports" },
+    { id: "battery", labelKey: "exp_label_battery", desc: t("exp_desc_battery") || "Historical SOC, cycles, temperature, cell health", icon: "🔋", category: t("exp_cat_reports") || "Reports" },
+    { id: "trading", labelKey: "exp_label_trading", desc: t("exp_desc_trading") || "Profit/loss per session, executed orders, market exposure", icon: "📈", category: t("exp_cat_reports") || "Reports" },
+    { id: "carbon", labelKey: "exp_label_carbon", desc: t("exp_desc_carbon") || "Avoided emissions, green certificates, monthly comparison", icon: "🌱", category: t("exp_cat_reports") || "Reports" },
+    { id: "maintenance", labelKey: "exp_label_maintenance", desc: t("exp_desc_maintenance") || "Maintenance plan, predictive alerts, failure history", icon: "🔧", category: t("exp_cat_reports") || "Reports" },
+    { id: "alerts_hist", labelKey: "exp_label_alerts", desc: t("exp_desc_alerts") || "All triggered alerts with timestamp and resolution", icon: "🔔", category: t("exp_cat_operations") || "Operations" },
+    { id: "sites", labelKey: "exp_label_sites", desc: t("exp_desc_sites") || "Site list, capacity, status, geolocation", icon: "📍", category: t("exp_cat_operations") || "Operations" },
+    { id: "users", labelKey: "exp_label_users", desc: t("exp_desc_users") || "Logins, actions per user, access audit", icon: "👥", category: t("exp_cat_operations") || "Operations" },
+    { id: "investor", labelKey: "exp_label_investor", desc: t("exp_desc_investor") || "Revenue, EBITDA, ROI per project — boardroom format", icon: "💰", category: t("exp_cat_financial") || "Financial" },
+    { id: "audit", labelKey: "exp_label_audit", desc: t("exp_desc_audit") || "Complete action log for compliance", icon: "📋", category: t("exp_cat_compliance") || "Compliance" },
   ]
 
   const toggle = (id) => setSelected(s => ({ ...s, [id]: !s[id] }))
@@ -34,8 +34,8 @@ export default function ExportCenter({ user }) {
     setExporting(item.id)
     await new Promise(r => setTimeout(r, 1800))
     setExporting(null)
-    addToast(`${item.label} ${t("exported_as") || "exported as"} ${format}`, "success")
-    addAuditEntry({ user: user?.email || "admin@voltaris.com", action: "Exported report", resource: item.label })
+    addToast(`${t(item.labelKey)} ${t("exported_as") || "exported as"} ${format}`, "success")
+    addAuditEntry({ user: user?.email || "admin@voltaris.com", actionKey: "audit_action_export_report", resource: item.labelKey ? t(item.labelKey) : item.label })
   }
 
   const exportAll = async () => {
@@ -166,7 +166,7 @@ export default function ExportCenter({ user }) {
                   )}
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <span style={{ fontSize: "20px" }}>{item.icon}</span>
-                    <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{item.label}</span>
+                    <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{t(item.labelKey)}</span>
                   </div>
                   <div style={{ color: "var(--sub)", fontSize: "12px", lineHeight: "1.5", marginBottom: "14px" }}>{item.desc}</div>
                   <button

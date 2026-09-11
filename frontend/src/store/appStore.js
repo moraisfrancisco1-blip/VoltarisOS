@@ -1,4 +1,5 @@
 import { create } from "zustand"
+import { getInitialLanguage, isSupportedLanguage, LANG_STORAGE_KEY, FALLBACK_LANGUAGE } from "../i18n/translations"
 
 // ─── Theme presets ────────────────────────────────────────────────────────────
 // Each theme has: bg, surface, surface2 (widget inner), border, sidebar, text, sub,
@@ -162,8 +163,14 @@ export const THEMES = {
 
 export const useAppStore = create((set, get) => ({
   // ─── Language ────────────────────────────────────────────────────────────────
-  language: localStorage.getItem("vos_lang") || "pt",
-  setLanguage: (lang) => { localStorage.setItem("vos_lang", lang); set({ language: lang }) },
+  // Resolution: explicit saved choice → browser preference → English fallback.
+  // An explicit user selection is persisted and never overridden by detection.
+  language: getInitialLanguage(),
+  setLanguage: (lang) => {
+    const next = isSupportedLanguage(lang) ? lang : FALLBACK_LANGUAGE
+    localStorage.setItem(LANG_STORAGE_KEY, next)
+    set({ language: next })
+  },
 
   // ─── Theme ───────────────────────────────────────────────────────────────────
   theme: localStorage.getItem("vos_theme") || "dark",
@@ -230,11 +237,11 @@ export const useAppStore = create((set, get) => ({
 
   // ─── Notifications ───────────────────────────────────────────────────────────
   notifications: [
-    { id: 1, title: "Battery SOC crítico", body: "Site Rotterdam — 8% SOC", time: "2m atrás", read: false, type: "alert" },
-    { id: 2, title: "Ordem de trade executada", body: "EPEX venda 45 MWh @ €128/MWh", time: "14m atrás", read: false, type: "trade" },
-    { id: 3, title: "Manutenção prevista", body: "Inversor A3 — substituição em 6 dias", time: "1h atrás", read: true, type: "maintenance" },
-    { id: 4, title: "Novo utilizador registado", body: "j.silva@greenvolt.pt", time: "3h atrás", read: true, type: "user" },
-    { id: 5, title: "Relatório CO₂ gerado", body: "Maio 2026 — 12.4t poupadas", time: "5h atrás", read: true, type: "carbon" },
+    { id: 1, titleKey: "notif_n1_title", bodyKey: "notif_n1_body", minutesAgo: 2, read: false, type: "alert" },
+    { id: 2, titleKey: "notif_n2_title", bodyKey: "notif_n2_body", minutesAgo: 14, read: false, type: "trade" },
+    { id: 3, titleKey: "notif_n3_title", bodyKey: "notif_n3_body", minutesAgo: 60, read: true, type: "maintenance" },
+    { id: 4, titleKey: "notif_n4_title", bodyKey: "notif_n4_body", minutesAgo: 180, read: true, type: "user" },
+    { id: 5, titleKey: "notif_n5_title", bodyKey: "notif_n5_body", minutesAgo: 300, read: true, type: "carbon" },
   ],
   markAllRead: () => set(s => ({ notifications: s.notifications.map(n => ({ ...n, read: true })) })),
   markRead: (id) => set(s => ({ notifications: s.notifications.map(n => n.id === id ? { ...n, read: true } : n) })),
@@ -242,11 +249,11 @@ export const useAppStore = create((set, get) => ({
 
   // ─── Audit log ───────────────────────────────────────────────────────────────
   auditLog: [
-    { id: 1, user: "admin@voltaris.com", action: "Login", resource: "Auth", ip: "91.122.45.1", time: new Date(Date.now() - 300000).toISOString() },
-    { id: 2, user: "admin@voltaris.com", action: "Criou utilizador", resource: "Users", ip: "91.122.45.1", time: new Date(Date.now() - 600000).toISOString() },
-    { id: 3, user: "admin@voltaris.com", action: "Exportou relatório", resource: "Reports", ip: "91.122.45.1", time: new Date(Date.now() - 1200000).toISOString() },
-    { id: 4, user: "admin@voltaris.com", action: "Alterou white-label", resource: "Settings", ip: "91.122.45.1", time: new Date(Date.now() - 3600000).toISOString() },
-    { id: 5, user: "admin@voltaris.com", action: "Trading agent ativado", resource: "Autonomous", ip: "91.122.45.1", time: new Date(Date.now() - 7200000).toISOString() },
+    { id: 1, user: "admin@voltaris.com", actionKey: "audit_action_login", resource: "Auth", ip: "91.122.45.1", time: new Date(Date.now() - 300000).toISOString() },
+    { id: 2, user: "admin@voltaris.com", actionKey: "audit_action_create_user", resource: "Users", ip: "91.122.45.1", time: new Date(Date.now() - 600000).toISOString() },
+    { id: 3, user: "admin@voltaris.com", actionKey: "audit_action_export_report", resource: "Reports", ip: "91.122.45.1", time: new Date(Date.now() - 1200000).toISOString() },
+    { id: 4, user: "admin@voltaris.com", actionKey: "audit_action_whitelabel", resource: "Settings", ip: "91.122.45.1", time: new Date(Date.now() - 3600000).toISOString() },
+    { id: 5, user: "admin@voltaris.com", actionKey: "audit_action_trading_agent", resource: "Autonomous", ip: "91.122.45.1", time: new Date(Date.now() - 7200000).toISOString() },
   ],
   addAuditEntry: (entry) => set(s => ({
     auditLog: [{ ...entry, id: Date.now(), time: new Date().toISOString(), ip: "91.122.45.1" }, ...s.auditLog]

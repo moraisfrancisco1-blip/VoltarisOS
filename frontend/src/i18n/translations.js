@@ -1,5 +1,10 @@
 // VoltarisOS — i18n translations
-// Languages: PT (default), EN, FR, ES, NL
+// Supported languages: PT, EN, FR, ES, NL. English is the fallback.
+//
+// Language resolution priority (see getInitialLanguage):
+//   1. Explicit language chosen by the user (persisted in localStorage)
+//   2. Browser preferred language (navigator.languages / navigator.language)
+//   3. English fallback ("en")
 
 export const LANGUAGES = {
   pt: { label: "Português", flag: "🇵🇹", code: "pt" },
@@ -7,6 +12,48 @@ export const LANGUAGES = {
   fr: { label: "Français",  flag: "🇫🇷", code: "fr" },
   es: { label: "Español",   flag: "🇪🇸", code: "es" },
   nl: { label: "Nederlands",flag: "🇳🇱", code: "nl" },
+}
+
+// localStorage key holding an explicit user language choice.
+export const LANG_STORAGE_KEY = "vos_lang"
+
+// Language used when nothing else can be resolved.
+export const FALLBACK_LANGUAGE = "en"
+
+const SUPPORTED_LANGS = Object.keys(LANGUAGES)
+
+export function isSupportedLanguage(code) {
+  return typeof code === "string" && SUPPORTED_LANGS.includes(code)
+}
+
+// Detect the best supported language from the browser preferences.
+// Examples: pt-PT/pt-BR → pt · en-US/en-GB → en · nl-NL → nl · unsupported → en
+export function detectBrowserLanguage() {
+  if (typeof navigator === "undefined") return FALLBACK_LANGUAGE
+  const preferred = Array.isArray(navigator.languages) && navigator.languages.length
+    ? navigator.languages
+    : (navigator.language ? [navigator.language] : [])
+
+  for (const raw of preferred) {
+    if (!raw) continue
+    const lower = String(raw).toLowerCase()
+    // Exact match (e.g. "pt-pt" if we ever add region codes)
+    if (isSupportedLanguage(lower)) return lower
+    // Base language match (e.g. "pt-br" → "pt", "en-us" → "en", "nl-nl" → "nl")
+    const base = lower.split("-")[0]
+    if (isSupportedLanguage(base)) return base
+  }
+  return FALLBACK_LANGUAGE
+}
+
+// Resolve the initial language. An explicit, persisted user choice ALWAYS wins
+// over browser detection, so automatic detection never overrides the user.
+export function getInitialLanguage() {
+  if (typeof localStorage !== "undefined") {
+    const saved = localStorage.getItem(LANG_STORAGE_KEY)
+    if (isSupportedLanguage(saved)) return saved
+  }
+  return detectBrowserLanguage()
 }
 
 const T = {
@@ -511,13 +558,472 @@ const T = {
   auth_hide_pass:      { pt:"Ocultar password",          en:"Hide password",          fr:"Masquer le mot de passe",es:"Ocultar contraseña",     nl:"Wachtwoord verbergen" },
   auth_show_pass:      { pt:"Ver password",              en:"Show password",          fr:"Voir le mot de passe",   es:"Ver contraseña",         nl:"Wachtwoord tonen" },
   auth_system_label:   { pt:"Sistema operacional",       en:"Operating system",       fr:"Système d'exploitation", es:"Sistema operativo",      nl:"Besturingssysteem" },
+
+  // ─── COMMAND PALETTE ─────────────────────────────────────────────────────────
+  cmd_placeholder:      { pt:"Pesquisar páginas e ações...", en:"Search pages and actions...", fr:"Rechercher pages et actions...", es:"Buscar páginas y acciones...", nl:"Zoek pagina's en acties..." },
+  cmd_no_results:       { pt:"Nenhum resultado para", en:"No results for", fr:"Aucun résultat pour", es:"Sin resultados para", nl:"Geen resultaten voor" },
+  cmd_navigate:         { pt:"navegar", en:"navigate", fr:"naviguer", es:"navegar", nl:"navigeren" },
+  cmd_select:           { pt:"selecionar", en:"select", fr:"sélectionner", es:"seleccionar", nl:"selecteren" },
+  cmd_close:            { pt:"fechar", en:"close", fr:"fermer", es:"cerrar", nl:"sluiten" },
+  cmd_action_sim_on:    { pt:"Modo Simulação ON", en:"Simulation Mode ON", fr:"Mode Simulation ON", es:"Modo Simulación ON", nl:"Simulatiemodus AAN" },
+  cmd_action_sim_off:   { pt:"Modo Simulação OFF", en:"Simulation Mode OFF", fr:"Mode Simulation OFF", es:"Modo Simulación OFF", nl:"Simulatiemodus UIT" },
+  cmd_action_theme_light:{ pt:"Tema Claro", en:"Light Theme", fr:"Thème Clair", es:"Tema Claro", nl:"Licht Thema" },
+  cmd_action_theme_dark: { pt:"Tema Escuro", en:"Dark Theme", fr:"Thème Sombre", es:"Tema Oscuro", nl:"Donker Thema" },
+  cmd_action_logout:     { pt:"Sair da conta", en:"Log out", fr:"Se déconnecter", es:"Cerrar sesión", nl:"Uitloggen" },
+  cmd_group_actions:     { pt:"Ações", en:"Actions", fr:"Actions", es:"Acciones", nl:"Acties" },
+
+  // ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+  notif_title:          { pt:"Notificações", en:"Notifications", fr:"Notifications", es:"Notificaciones", nl:"Meldingen" },
+  notif_new:            { pt:"novas", en:"new", fr:"nouvelles", es:"nuevas", nl:"nieuw" },
+  notif_mark_all_read:  { pt:"Marcar todas lidas", en:"Mark all as read", fr:"Tout marquer comme lu", es:"Marcar todo como leído", nl:"Alles als gelezen markeren" },
+  notif_view_all:       { pt:"Ver todas as notificações", en:"View all notifications", fr:"Voir toutes les notifications", es:"Ver todas las notificaciones", nl:"Alle meldingen bekijken" },
+  notif_ago_min:        { pt:"m atrás", en:"m ago", fr:"min", es:"min", nl:"min" },
+  notif_ago_hour:       { pt:"h atrás", en:"h ago", fr:"h", es:"h", nl:"u" },
+  notif_n1_title:       { pt:"Battery SOC crítico", en:"Critical battery SOC", fr:"SOC batterie critique", es:"SOC de batería crítico", nl:"Kritieke batterij SOC" },
+  notif_n1_body:        { pt:"Site Rotterdam — 8% SOC", en:"Site Rotterdam — 8% SOC", fr:"Site Rotterdam — 8% SOC", es:"Site Rotterdam — 8% SOC", nl:"Site Rotterdam — 8% SOC" },
+  notif_n2_title:       { pt:"Ordem de trade executada", en:"Trade order executed", fr:"Ordre de trade exécuté", es:"Orden de trade ejecutada", nl:"Trade-order uitgevoerd" },
+  notif_n2_body:        { pt:"EPEX venda 45 MWh @ €128/MWh", en:"EPEX sell 45 MWh @ €128/MWh", fr:"EPEX vente 45 MWh @ €128/MWh", es:"EPEX venta 45 MWh @ €128/MWh", nl:"EPEX verkoop 45 MWh @ €128/MWh" },
+  notif_n3_title:       { pt:"Manutenção prevista", en:"Scheduled maintenance", fr:"Maintenance prévue", es:"Mantenimiento programado", nl:"Gepland onderhoud" },
+  notif_n3_body:        { pt:"Inversor A3 — substituição em 6 dias", en:"Inverter A3 — replacement in 6 days", fr:"Onduleur A3 — remplacement dans 6 jours", es:"Inversor A3 — sustitución en 6 días", nl:"Omvormer A3 — vervanging over 6 dagen" },
+  notif_n4_title:       { pt:"Novo utilizador registado", en:"New user registered", fr:"Nouvel utilisateur enregistré", es:"Nuevo usuario registrado", nl:"Nieuwe gebruiker geregistreerd" },
+  notif_n4_body:        { pt:"j.silva@greenvolt.pt", en:"j.silva@greenvolt.pt", fr:"j.silva@greenvolt.pt", es:"j.silva@greenvolt.pt", nl:"j.silva@greenvolt.pt" },
+  notif_n5_title:       { pt:"Relatório CO₂ gerado", en:"CO₂ report generated", fr:"Rapport CO₂ généré", es:"Informe CO₂ generado", nl:"CO₂-rapport gegenereerd" },
+  notif_n5_body:        { pt:"Maio 2026 — 12.4t poupadas", en:"May 2026 — 12.4t saved", fr:"Mai 2026 — 12.4t économisées", es:"Mayo 2026 — 12.4t ahorradas", nl:"Mei 2026 — 12.4t bespaard" },
+
+  // ─── SHORTCUTS OVERLAY ───────────────────────────────────────────────────────
+  shortcuts_title:      { pt:"Atalhos de Teclado", en:"Keyboard Shortcuts", fr:"Raccourcis Clavier", es:"Atajos de Teclado", nl:"Sneltoetsen" },
+  shortcuts_sub:        { pt:"Atalhos disponíveis no VoltarisOS", en:"Shortcuts available in VoltarisOS", fr:"Raccourcis disponibles dans VoltarisOS", es:"Atajos disponibles en VoltarisOS", nl:"Sneltoetsen beschikbaar in VoltarisOS" },
+  shortcuts_sec_nav:    { pt:"Navegação", en:"Navigation", fr:"Navigation", es:"Navegación", nl:"Navigatie" },
+  shortcuts_sec_system: { pt:"Sistema", en:"System", fr:"Système", es:"Sistema", nl:"Systeem" },
+  shortcuts_sec_page:   { pt:"Página", en:"Page", fr:"Page", es:"Página", nl:"Pagina" },
+  shortcuts_open_cmd:   { pt:"Abrir Command Palette", en:"Open Command Palette", fr:"Ouvrir la palette de commandes", es:"Abrir Command Palette", nl:"Command Palette openen" },
+  shortcuts_show:       { pt:"Mostrar atalhos de teclado", en:"Show keyboard shortcuts", fr:"Afficher les raccourcis clavier", es:"Mostrar atajos de teclado", nl:"Sneltoetsen tonen" },
+  shortcuts_close_modal:{ pt:"Fechar modal / overlay", en:"Close modal / overlay", fr:"Fermer modal / overlay", es:"Cerrar modal / overlay", nl:"Modal / overlay sluiten" },
+  shortcuts_save:       { pt:"Guardar / exportar página atual", en:"Save / export current page", fr:"Enregistrer / exporter la page actuelle", es:"Guardar / exportar página actual", nl:"Huidige pagina opslaan / exporteren" },
+  shortcuts_demo:       { pt:"Ativar Modo Demo", en:"Enable Demo Mode", fr:"Activer le mode démo", es:"Activar modo demo", nl:"Demomodus inschakelen" },
+  shortcuts_toggle_theme:{ pt:"Toggle tema claro/escuro", en:"Toggle light/dark theme", fr:"Basculer thème clair/sombre", es:"Alternar tema claro/oscuro", nl:"Licht/donker thema wisselen" },
+  shortcuts_go_dashboard:{ pt:"Ir para Dashboard", en:"Go to Dashboard", fr:"Aller au tableau de bord", es:"Ir al Panel", nl:"Naar Dashboard" },
+  shortcuts_go_trading:{ pt:"Ir para Trading", en:"Go to Trading", fr:"Aller au Trading", es:"Ir a Trading", nl:"Naar Trading" },
+  shortcuts_go_battery:{ pt:"Ir para Battery BMS", en:"Go to Battery BMS", fr:"Aller à BMS Batterie", es:"Ir a BMS Batería", nl:"Naar Batterij BMS" },
+  shortcuts_go_alerts:  { pt:"Ir para Alerts", en:"Go to Alerts", fr:"Aller aux Alertes", es:"Ir a Alertas", nl:"Naar Meldingen" },
+  shortcuts_go_map:     { pt:"Ir para Map View", en:"Go to Map View", fr:"Aller à la Vue Carte", es:"Ir al Mapa", nl:"Naar Kaart" },
+
+  // ─── ONBOARDING WIZARD ───────────────────────────────────────────────────────
+  onb_welcome_title:    { pt:"Bem-vindo ao VoltarisOS", en:"Welcome to VoltarisOS", fr:"Bienvenue sur VoltarisOS", es:"Bienvenido a VoltarisOS", nl:"Welkom bij VoltarisOS" },
+  onb_welcome_sub:      { pt:"A plataforma de gestão de energia mais avançada do mercado.", en:"The most advanced energy management platform on the market.", fr:"La plateforme de gestion d'énergie la plus avancée du marché.", es:"La plataforma de gestión de energía más avanzada del mercado.", nl:"Het meest geavanceerde energiebeheerplatform op de markt." },
+  onb_welcome_body:     { pt:"O VoltarisOS permite-te gerir baterias BESS, negociar energia em tempo real, monitorizar frotas industriais, e muito mais — tudo numa única plataforma.", en:"VoltarisOS lets you manage BESS batteries, trade energy in real time, monitor industrial fleets, and much more — all in a single platform.", fr:"VoltarisOS vous permet de gérer des batteries BESS, de trader l'énergie en temps réel, de surveiller des flottes industrielles, et bien plus — dans une seule plateforme.", es:"VoltarisOS te permite gestionar baterías BESS, negociar energía en tiempo real, monitorizar flotas industriales y mucho más — todo en una sola plataforma.", nl:"Met VoltarisOS beheer je BESS-batterijen, handel je energie in real time, monitor je industriële vloten en nog veel meer — allemaal in één platform." },
+  onb_welcome_body2:    { pt:"Vamos configurar a tua conta em 2 passos rápidos.", en:"Let's set up your account in 2 quick steps.", fr:"Configurons votre compte en 2 étapes rapides.", es:"Configuremos tu cuenta en 2 pasos rápidos.", nl:"Laten we je account in 2 snelle stappen instellen." },
+  onb_sites_title:      { pt:"Configura os teus sites", en:"Set up your sites", fr:"Configurez vos sites", es:"Configura tus sitios", nl:"Stel je sites in" },
+  onb_sites_sub:        { pt:"Adiciona os teus locais de produção e armazenamento.", en:"Add your generation and storage locations.", fr:"Ajoutez vos sites de production et de stockage.", es:"Añade tus ubicaciones de generación y almacenamiento.", nl:"Voeg je productie- en opslaglocaties toe." },
+  onb_field_site_name:  { pt:"Nome do site", en:"Site name", fr:"Nom du site", es:"Nombre del sitio", nl:"Sitenaam" },
+  onb_field_site_ph:    { pt:"Ex: Rotterdam BESS", en:"e.g. Rotterdam BESS", fr:"Ex : Rotterdam BESS", es:"Ej: Rotterdam BESS", nl:"Bv. Rotterdam BESS" },
+  onb_field_location:   { pt:"Localização", en:"Location", fr:"Emplacement", es:"Ubicación", nl:"Locatie" },
+  onb_field_location_ph:{ pt:"Ex: Rotterdam, NL", en:"e.g. Rotterdam, NL", fr:"Ex : Rotterdam, NL", es:"Ej: Rotterdam, NL", nl:"Bv. Rotterdam, NL" },
+  onb_field_capacity:   { pt:"Capacidade (MWh)", en:"Capacity (MWh)", fr:"Capacité (MWh)", es:"Capacidad (MWh)", nl:"Capaciteit (MWh)" },
+  onb_field_capacity_ph:{ pt:"Ex: 8.5", en:"e.g. 8.5", fr:"Ex : 8.5", es:"Ej: 8.5", nl:"Bv. 8.5" },
+  onb_alerts_title:     { pt:"Define os teus alertas", en:"Set up your alerts", fr:"Configurez vos alertes", es:"Configura tus alertas", nl:"Stel je meldingen in" },
+  onb_alerts_sub:       { pt:"Recebe notificações quando algo exige atenção.", en:"Get notified when something needs attention.", fr:"Recevez des notifications lorsque quelque chose nécessite attention.", es:"Recibe notificaciones cuando algo requiere atención.", nl:"Ontvang meldingen wanneer iets aandacht vereist." },
+  onb_alert_soc:        { pt:"SOC crítico abaixo de 10%", en:"Critical SOC below 10%", fr:"SOC critique sous 10%", es:"SOC crítico por debajo del 10%", nl:"Kritieke SOC onder 10%" },
+  onb_alert_temp:       { pt:"Temperatura > 45°C", en:"Temperature > 45°C", fr:"Température > 45°C", es:"Temperatura > 45°C", nl:"Temperatuur > 45°C" },
+  onb_alert_price:      { pt:"Preço spot acima de €150/MWh", en:"Spot price above €150/MWh", fr:"Prix spot au-dessus de €150/MWh", es:"Precio spot por encima de €150/MWh", nl:"Spotprijs boven €150/MWh" },
+  onb_alert_comm:       { pt:"Falha de comunicação com inversor", en:"Inverter communication failure", fr:"Échec de communication avec l'onduleur", es:"Fallo de comunicación con el inversor", nl:"Communicatiestoring met omvormer" },
+  onb_alert_co2:        { pt:"Relatório CO₂ mensal gerado", en:"Monthly CO₂ report generated", fr:"Rapport CO₂ mensuel généré", es:"Informe CO₂ mensual generado", nl:"Maandelijks CO₂-rapport gegenereerd" },
+  onb_setup:            { pt:"Setup", en:"Setup", fr:"Configuration", es:"Configuración", nl:"Installatie" },
+  onb_skip:             { pt:"Saltar configuração", en:"Skip setup", fr:"Ignorer la configuration", es:"Omitir configuración", nl:"Installatie overslaan" },
+  onb_prev:             { pt:"Anterior", en:"Previous", fr:"Précédent", es:"Anterior", nl:"Vorige" },
+  onb_next:             { pt:"Próximo →", en:"Next →", fr:"Suivant →", es:"Siguiente →", nl:"Volgende →" },
+  onb_start:            { pt:"Começar ⚡", en:"Get started ⚡", fr:"Commencer ⚡", es:"Empezar ⚡", nl:"Aan de slag ⚡" },
+  onb_done_toast:       { pt:"Configuração concluída! Bem-vindo ao VoltarisOS.", en:"Setup complete! Welcome to VoltarisOS.", fr:"Configuration terminée ! Bienvenue sur VoltarisOS.", es:"¡Configuración completada! Bienvenido a VoltarisOS.", nl:"Installatie voltooid! Welkom bij VoltarisOS." },
+
+  // ─── SIMULATION BANNER / DEMO NOTICE ─────────────────────────────────────────
+  sim_banner:           { pt:"MODO SIMULAÇÃO ATIVO — Os dados apresentados são fictícios", en:"SIMULATION MODE ACTIVE — Displayed data is fictitious", fr:"MODE SIMULATION ACTIF — Les données affichées sont fictives", es:"MODO SIMULACIÓN ACTIVO — Los datos mostrados son ficticios", nl:"SIMULATIEMODUS ACTIEF — De getoonde gegevens zijn fictief" },
+  sim_disable:          { pt:"Desativar", en:"Disable", fr:"Désactiver", es:"Desactivar", nl:"Uitschakelen" },
+  sim_off_toast:        { pt:"Modo Simulação desativado", en:"Simulation mode disabled", fr:"Mode simulation désactivé", es:"Modo simulación desactivado", nl:"Simulatiemodus uitgeschakeld" },
+  demo_notice:          { pt:"Demo mode — alguns dados desta página são simulados e não representam operações reais.", en:"Demo mode — some data on this page is simulated and does not represent real operations.", fr:"Mode démo — certaines données de cette page sont simulées.", es:"Modo demo — algunos datos de esta página son simulados.", nl:"Demomodus — sommige gegevens op deze pagina zijn gesimuleerd." },
+
+  // ─── ERROR BOUNDARY ──────────────────────────────────────────────────────────
+  err_title:            { pt:"Algo correu mal nesta página", en:"Something went wrong on this page", fr:"Une erreur est survenue sur cette page", es:"Algo salió mal en esta página", nl:"Er ging iets mis op deze pagina" },
+  err_body:             { pt:"Encontrámos um erro inesperado. O resto do VoltarisOS continua a funcionar — tenta recarregar esta página.", en:"We hit an unexpected error. The rest of VoltarisOS keeps working — try reloading this page.", fr:"Une erreur inattendue s'est produite. Le reste de VoltarisOS continue de fonctionner — essayez de recharger cette page.", es:"Encontramos un error inesperado. El resto de VoltarisOS sigue funcionando — intenta recargar esta página.", nl:"Er deed zich een onverwachte fout voor. De rest van VoltarisOS blijft werken — probeer deze pagina opnieuw te laden." },
+  err_reload:           { pt:"Recarregar", en:"Reload", fr:"Recharger", es:"Recargar", nl:"Herladen" },
+
+  // ─── AI COPILOT ──────────────────────────────────────────────────────────────
+  copilot_sug_1:        { pt:"Qual é a receita de hoje?", en:"What is today's revenue?", fr:"Quel est le revenu aujourd'hui ?", es:"¿Cuál es la recepción de hoy?", nl:"Wat is de omzet van vandaag?" },
+  copilot_sug_2:        { pt:"Estado das baterias agora?", en:"Battery status right now?", fr:"État des batteries maintenant ?", es:"¿Estado de las baterías ahora?", nl:"Batterijstatus nu?" },
+  copilot_sug_3:        { pt:"Quando devo descarregar esta tarde?", en:"When should I discharge this afternoon?", fr:"Quand dois-je décharger cet après-midi ?", es:"¿Cuándo debo descargar esta tarde?", nl:"Wanneer moet ik vanmiddag ontladen?" },
+  copilot_sug_4:        { pt:"Quanto CO₂ evitei este mês?", en:"How much CO₂ did I avoid this month?", fr:"Combien de CO₂ ai-je évité ce mois-ci ?", es:"¿Cuánto CO₂ evité este mes?", nl:"Hoeveel CO₂ heb ik deze maand vermeden?" },
+  copilot_sug_5:        { pt:"Há alertas de manutenção?", en:"Are there maintenance alerts?", fr:"Y a-t-il des alertes de maintenance ?", es:"¿Hay alertas de mantenimiento?", nl:"Zijn er onderhoudsmeldingen?" },
+  copilot_welcome:      { pt:"Olá! Sou o **VoltarisAI**, o teu copiloto de energia. Pergunta-me qualquer coisa sobre os teus sites, baterias, trading ou receita.", en:"Hi! I'm **VoltarisAI**, your energy copilot. Ask me anything about your sites, batteries, trading or revenue.", fr:"Bonjour ! Je suis **VoltarisAI**, votre copilote énergétique. Posez-moi vos questions sur vos sites, batteries, trading ou revenus.", es:"¡Hola! Soy **VoltarisAI**, tu copiloto de energía. Pregúntame lo que quieras sobre tus sitios, baterías, trading o ingresos.", nl:"Hallo! Ik ben **VoltarisAI**, jouw energie-copiloot. Vraag me alles over je sites, batterijen, trading of omzet." },
+  copilot_error:        { pt:"Erro de ligação ao servidor. Tenta novamente.", en:"Connection error. Please try again.", fr:"Erreur de connexion au serveur. Réessayez.", es:"Error de conexión con el servidor. Inténtalo de nuevo.", nl:"Verbindingsfout. Probeer het opnieuw." },
+  copilot_placeholder:  { pt:"Pergunta ao VoltarisAI...", en:"Ask VoltarisAI...", fr:"Demandez à VoltarisAI...", es:"Pregunta a VoltarisAI...", nl:"Vraag het VoltarisAI..." },
+  copilot_demo:         { pt:"Demo — alguns dados de contexto (preço, receita, P&L) são simulados.", en:"Demo — some context data (price, revenue, P&L) is simulated.", fr:"Démo — certaines données de contexte (prix, revenus, P&L) sont simulées.", es:"Demo — algunos datos de contexto (precio, ingresos, P&L) son simulados.", nl:"Demo — sommige contextgegevens (prijs, omzet, P&L) zijn gesimuleerd." },
+
+  // ─── TOPBAR EXTRAS / PLAN MODAL ──────────────────────────────────────────────
+  topbar_sim_enable_title:  { pt:"Ativar simulação", en:"Enable simulation", fr:"Activer la simulation", es:"Activar simulación", nl:"Simulatie inschakelen" },
+  topbar_sim_disable_title: { pt:"Desativar simulação", en:"Disable simulation", fr:"Désactiver la simulation", es:"Desactivar simulación", nl:"Simulatie uitschakelen" },
+  topbar_sim_short:         { pt:"SIM", en:"SIM", fr:"SIM", es:"SIM", nl:"SIM" },
+  topbar_change_plan:       { pt:"Mudar de Plano", en:"Change Plan", fr:"Changer de forfait", es:"Cambiar plan", nl:"Plan wijzigen" },
+  plan_choose_title:        { pt:"Escolhe o teu plano", en:"Choose your plan", fr:"Choisissez votre forfait", es:"Elige tu plan", nl:"Kies je plan" },
+  plan_beta_note:           { pt:"Plano beta gratuito disponível com código de acesso.", en:"Free beta plan available with access code.", fr:"Forfait bêta gratuit disponible avec code d'accès.", es:"Plan beta gratuito disponible con código de acceso.", nl:"Gratis bètaplan beschikbaar met toegangscode." },
+  plan_manage_billing:      { pt:"Gerir faturação e faturas →", en:"Manage billing & invoices →", fr:"Gérer la facturation et les factures →", es:"Gestionar facturación y facturas →", nl:"Facturatie en facturen beheren →" },
+  plan_contact_support:     { pt:"Contactar suporte", en:"Contact support", fr:"Contacter le support", es:"Contactar soporte", nl:"Contact opnemen met support" },
+  plan_select:              { pt:"Selecionar", en:"Select", fr:"Sélectionner", es:"Seleccionar", nl:"Selecteren" },
+  plan_badge_popular:       { pt:"Mais Popular", en:"Most Popular", fr:"Le plus populaire", es:"Más popular", nl:"Meest populair" },
+  plan_badge_best:          { pt:"Melhor Valor", en:"Best Value", fr:"Meilleur rapport", es:"Mejor valor", nl:"Beste waarde" },
+  plan_badge_beta:          { pt:"Beta Tester", en:"Beta Tester", fr:"Testeur bêta", es:"Probador beta", nl:"Bèta tester" },
+  plan_price_free:          { pt:"Grátis", en:"Free", fr:"Gratuit", es:"Gratis", nl:"Gratis" },
+  plan_desc_beta:           { pt:"Acesso antecipado · código beta necessário", en:"Early access · beta code required", fr:"Accès anticipé · code bêta requis", es:"Acceso anticipado · código beta requerido", nl:"Vroege toegang · bètacode vereist" },
+  plan_desc_home:           { pt:"1 site · até 50 kWh", en:"1 site · up to 50 kWh", fr:"1 site · jusqu'à 50 kWh", es:"1 sitio · hasta 50 kWh", nl:"1 site · tot 50 kWh" },
+  plan_desc_starter:        { pt:"5 sites · até 500 kWh", en:"5 sites · up to 500 kWh", fr:"5 sites · jusqu'à 500 kWh", es:"5 sitios · hasta 500 kWh", nl:"5 sites · tot 500 kWh" },
+  plan_desc_pro:            { pt:"20 sites · AI avançada", en:"20 sites · advanced AI", fr:"20 sites · IA avancée", es:"20 sitios · IA avanzada", nl:"20 sites · geavanceerde AI" },
+  plan_desc_enterprise:     { pt:"Ilimitado · white-label", en:"Unlimited · white-label", fr:"Illimité · marque blanche", es:"Ilimitado · marca blanca", nl:"Onbeperkt · white-label" },
+
+  // ─── PAYWALL ─────────────────────────────────────────────────────────────────
+  paywall_title:            { pt:"Funcionalidade Premium 🔒", en:"Premium Feature 🔒", fr:"Fonctionnalité Premium 🔒", es:"Función Premium 🔒", nl:"Premium-functie 🔒" },
+  paywall_requires:         { pt:"Esta funcionalidade requer o plano", en:"This feature requires the", fr:"Cette fonctionnalité nécessite le forfait", es:"Esta función requiere el plan", nl:"Deze functie vereist het plan" },
+  paywall_or_higher:        { pt:"ou superior. O teu plano atual é", en:"plan or higher. Your current plan is", fr:"ou supérieur. Votre forfait actuel est", es:"o superior. Tu plan actual es", nl:"of hoger. Je huidige plan is" },
+  paywall_required_plan:    { pt:"Plano Necessário", en:"Required Plan", fr:"Forfait requis", es:"Plan necesario", nl:"Vereist plan" },
+  paywall_current_plan:     { pt:"Plano Atual", en:"Current Plan", fr:"Forfait actuel", es:"Plan actual", nl:"Huidig plan" },
+  paywall_close:            { pt:"Fechar", en:"Close", fr:"Fermer", es:"Cerrar", nl:"Sluiten" },
+  paywall_upgrade_to:       { pt:"Fazer Upgrade para", en:"Upgrade to", fr:"Passer à", es:"Mejorar a", nl:"Upgraden naar" },
+  paywall_unknown:          { pt:"Desconhecido", en:"Unknown", fr:"Inconnu", es:"Desconocido", nl:"Onbekend" },
+  nav_locked_tooltip:       { pt:"Funcionalidade bloqueada — requer upgrade de plano", en:"Feature locked — plan upgrade required", fr:"Fonctionnalité verrouillée — mise à niveau requise", es:"Función bloqueada — se requiere mejorar el plan", nl:"Functie vergrendeld — plan-upgrade vereist" },
+
+  // ─── ALERTS PAGE ─────────────────────────────────────────────────────────────
+  alerts_title:         { pt:"Alertas e Notificações", en:"Alerts & Notifications", fr:"Alertes et notifications", es:"Alertas y notificaciones", nl:"Meldingen en notificaties" },
+  alerts_sub:           { pt:"Alertas ativos e regras de alerta", en:"Active alerts and alert rules", fr:"Alertes actives et règles d'alerte", es:"Alertas activas y reglas de alerta", nl:"Actieve meldingen en meldingsregels" },
+  alerts_unack:         { pt:"alertas por reconhecer", en:"unacknowledged alerts", fr:"alertes non reconnues", es:"alertas sin reconocer", nl:"niet-bevestigde meldingen" },
+  alerts_loading:       { pt:"Carregando alertas…", en:"Loading alerts…", fr:"Chargement des alertes…", es:"Cargando alertas…", nl:"Meldingen laden…" },
+  alerts_load_error:    { pt:"Não foi possível carregar os alertas.", en:"Could not load alerts.", fr:"Impossible de charger les alertes.", es:"No se pudieron cargar los alertas.", nl:"Meldingen konden niet worden geladen." },
+  alerts_empty:         { pt:"Sem alertas.", en:"No alerts.", fr:"Aucune alerte.", es:"Sin alertas.", nl:"Geen meldingen." },
+  alerts_none_category: { pt:"Sem alertas nesta categoria.", en:"No alerts in this category.", fr:"Aucune alerte dans cette catégorie.", es:"Sin alertas en esta categoría.", nl:"Geen meldingen in deze categorie." },
+  alerts_ack_all:       { pt:"Reconhecer todos", en:"Acknowledge All", fr:"Tout reconnaître", es:"Reconocer todo", nl:"Alles bevestigen" },
+  alerts_ack:           { pt:"Reconhecer", en:"Ack", fr:"Reconnaître", es:"Reconocer", nl:"Bevestigen" },
+  alerts_acknowledged:  { pt:"reconhecido", en:"acknowledged", fr:"reconnu", es:"reconocido", nl:"bevestigd" },
+  alerts_device:        { pt:"Dispositivo", en:"Device", fr:"Appareil", es:"Dispositivo", nl:"Apparaat" },
+  alerts_tab_active:    { pt:"Ativos", en:"Active", fr:"Actives", es:"Activos", nl:"Actief" },
+  alerts_tab_rules:     { pt:"Regras de Alertas", en:"Alert Rules", fr:"Règles d'alerte", es:"Reglas de alerta", nl:"Meldingsregels" },
+  alerts_filter_all:    { pt:"Todos", en:"All", fr:"Tous", es:"Todos", nl:"Alle" },
+  alerts_filter_critical:{ pt:"Crítico", en:"Critical", fr:"Critique", es:"Crítico", nl:"Kritiek" },
+  alerts_filter_warning:{ pt:"Aviso", en:"Warning", fr:"Avertissement", es:"Aviso", nl:"Waarschuwing" },
+  alerts_filter_info:   { pt:"Info", en:"Info", fr:"Info", es:"Info", nl:"Info" },
+  alerts_rules_title:   { pt:"Regras de Alertas", en:"Alert Rules", fr:"Règles d'alerte", es:"Reglas de alerta", nl:"Meldingsregels" },
+  alerts_rules_sub:     { pt:"Quando uma leitura corresponde a uma regra, dispara um alerta.", en:"When a reading matches a rule, an alert fires.", fr:"Lorsqu'une mesure correspond à une règle, une alerte est déclenchée.", es:"Cuando una lectura coincide con una regla, se dispara una alerta.", nl:"Wanneer een meting aan een regel voldoet, wordt een melding geactiveerd." },
+  alerts_rules_loading: { pt:"Carregando regras…", en:"Loading rules…", fr:"Chargement des règles…", es:"Cargando reglas…", nl:"Regels laden…" },
+  alerts_rules_empty:   { pt:"Sem regras de alerta.", en:"No alert rules.", fr:"Aucune règle d'alerte.", es:"Sin reglas de alerta.", nl:"Geen meldingsregels." },
+  alerts_add_rule:      { pt:"Adicionar Regra", en:"Add Rule", fr:"Ajouter une règle", es:"Añadir regla", nl:"Regel toevoegen" },
+  alerts_field_name:    { pt:"Nome", en:"Name", fr:"Nom", es:"Nombre", nl:"Naam" },
+  alerts_field_metric:  { pt:"Métrica", en:"Metric", fr:"Métrique", es:"Métrica", nl:"Metriek" },
+  alerts_field_operator:{ pt:"Operador", en:"Operator", fr:"Opérateur", es:"Operador", nl:"Operator" },
+  alerts_field_threshold:{ pt:"Limite", en:"Threshold", fr:"Seuil", es:"Umbral", nl:"Drempel" },
+  alerts_field_severity:{ pt:"Severidade", en:"Severity", fr:"Sévérité", es:"Severidad", nl:"Ernst" },
+  alerts_create_rule:   { pt:"Criar Regra", en:"Create Rule", fr:"Créer une règle", es:"Crear regla", nl:"Regel aanmaken" },
+  alerts_creating:      { pt:"A criar…", en:"Creating…", fr:"Création…", es:"Creando…", nl:"Aanmaken…" },
+  alerts_del:           { pt:"Apagar", en:"Del", fr:"Suppr", es:"Elim", nl:"Verw" },
+  alerts_enabled:       { pt:"ativa", en:"enabled", fr:"activée", es:"activa", nl:"actief" },
+  alerts_disabled:      { pt:"inativa", en:"disabled", fr:"désactivée", es:"inactiva", nl:"inactief" },
+  alerts_err_ack:       { pt:"Não foi possível reconhecer o alerta.", en:"Could not acknowledge the alert.", fr:"Impossible de reconnaître l'alerte.", es:"No se pudo reconocer el alerta.", nl:"Melding kon niet worden bevestigd." },
+  alerts_err_ack_all:   { pt:"Não foi possível reconhecer os alertas.", en:"Could not acknowledge the alerts.", fr:"Impossible de reconnaître les alertes.", es:"No se pudieron reconocer los alertas.", nl:"Meldingen konden niet worden bevestigd." },
+  alerts_err_rules_load:{ pt:"Não foi possível carregar as regras de alerta.", en:"Could not load alert rules.", fr:"Impossible de charger les règles d'alerte.", es:"No se pudieron cargar las reglas de alerta.", nl:"Meldingsregels konden niet worden geladen." },
+  alerts_err_rule_del:  { pt:"Não foi possível apagar a regra.", en:"Could not delete the rule.", fr:"Impossible de supprimer la règle.", es:"No se pudo eliminar la regla.", nl:"Regel kon niet worden verwijderd." },
+  alerts_err_required:  { pt:"Nome e métrica são obrigatórios.", en:"Name and metric are required.", fr:"Le nom et la métrique sont obligatoires.", es:"El nombre y la métrica son obligatorios.", nl:"Naam en metriek zijn verplicht." },
+  alerts_err_create:    { pt:"Erro ao criar a regra.", en:"Error creating the rule.", fr:"Erreur lors de la création de la règle.", es:"Error al crear la regla.", nl:"Fout bij het aanmaken van de regel." },
+
+  // ─── AUDIT LOG ───────────────────────────────────────────────────────────────
+  audit_title:          { pt:"Registo de Auditoria", en:"Audit Log", fr:"Journal d'audit", es:"Registro de auditoría", nl:"Auditlog" },
+  audit_sub:            { pt:"Registo completo de todas as ações realizadas no sistema", en:"Complete log of all actions performed in the system", fr:"Journal complet de toutes les actions effectuées dans le système", es:"Registro completo de todas las acciones realizadas en el sistema", nl:"Volledig logboek van alle acties in het systeem" },
+  audit_stat_total:     { pt:"Total de eventos", en:"Total events", fr:"Total des événements", es:"Total de eventos", nl:"Totaal gebeurtenissen" },
+  audit_stat_today:     { pt:"Hoje", en:"Today", fr:"Aujourd'hui", es:"Hoy", nl:"Vandaag" },
+  audit_stat_users:     { pt:"Utilizadores ativos", en:"Active users", fr:"Utilisateurs actifs", es:"Usuarios activos", nl:"Actieve gebruikers" },
+  audit_stat_ips:       { pt:"IPs únicos", en:"Unique IPs", fr:"IP uniques", es:"IPs únicas", nl:"Unieke IP's" },
+  audit_search_ph:      { pt:"Pesquisar por utilizador, ação, recurso...", en:"Search by user, action, resource...", fr:"Rechercher par utilisateur, action, ressource...", es:"Buscar por usuario, acción, recurso...", nl:"Zoeken op gebruiker, actie, resource..." },
+  audit_export_csv:     { pt:"Exportar CSV", en:"Export CSV", fr:"Exporter CSV", es:"Exportar CSV", nl:"CSV exporteren" },
+  audit_col_timestamp:  { pt:"Timestamp", en:"Timestamp", fr:"Horodatage", es:"Marca de tiempo", nl:"Tijdstempel" },
+  audit_col_user:       { pt:"Utilizador", en:"User", fr:"Utilisateur", es:"Usuario", nl:"Gebruiker" },
+  audit_col_action:     { pt:"Ação", en:"Action", fr:"Action", es:"Acción", nl:"Actie" },
+  audit_col_resource:   { pt:"Recurso", en:"Resource", fr:"Ressource", es:"Recurso", nl:"Resource" },
+  audit_col_ip:         { pt:"IP", en:"IP", fr:"IP", es:"IP", nl:"IP" },
+  audit_empty:          { pt:"Nenhum evento encontrado", en:"No events found", fr:"Aucun événement trouvé", es:"No se encontraron eventos", nl:"Geen gebeurtenissen gevonden" },
+  audit_action_login:      { pt:"Login", en:"Login", fr:"Connexion", es:"Inicio de sesión", nl:"Inloggen" },
+  audit_action_logout:     { pt:"Logout", en:"Logout", fr:"Déconnexion", es:"Cierre de sesión", nl:"Uitloggen" },
+  audit_action_create_user:{ pt:"Criou utilizador", en:"Created user", fr:"Utilisateur créé", es:"Creó usuario", nl:"Gebruiker aangemaakt" },
+  audit_action_export_report:{ pt:"Exportou relatório", en:"Exported report", fr:"Rapport exporté", es:"Exportó informe", nl:"Rapport geëxporteerd" },
+  audit_action_whitelabel:{ pt:"Alterou white-label", en:"Changed white-label", fr:"Marque blanche modifiée", es:"Cambió white-label", nl:"White-label gewijzigd" },
+  audit_action_trading_agent:{ pt:"Trading agent ativado", en:"Trading agent enabled", fr:"Agent de trading activé", es:"Agente de trading activado", nl:"Trading-agent ingeschakeld" },
+  audit_action_settings:   { pt:"Alterou settings", en:"Changed settings", fr:"Paramètres modifiés", es:"Cambió ajustes", nl:"Instellingen gewijzigd" },
+  audit_action_delete_site:{ pt:"Apagou site", en:"Deleted site", fr:"Site supprimé", es:"Eliminó sitio", nl:"Site verwijderd" },
+  audit_action_create_site:{ pt:"Criou site", en:"Created site", fr:"Site créé", es:"Creó sitio", nl:"Site aangemaakt" },
+  audit_action_api_key:    { pt:"API Key gerada", en:"API Key generated", fr:"Clé API générée", es:"API Key generada", nl:"API-sleutel gegenereerd" },
+  audit_action_api_key_created:{ pt:"API key criada", en:"API key created", fr:"Clé API créée", es:"API key creada", nl:"API-sleutel aangemaakt" },
+  audit_action_export_file:{ pt:"Exportou ficheiro", en:"Exported file", fr:"Fichier exporté", es:"Exportó archivo", nl:"Bestand geëxporteerd" },
+  audit_action_export_audit:{ pt:"Exportou registo de auditoria", en:"Exported audit log", fr:"Journal d'audit exporté", es:"Exportó registro de auditoría", nl:"Auditlog geëxporteerd" },
+
+  // ─── PAYMENTS ────────────────────────────────────────────────────────────────
+  pay_processing:       { pt:"A processar pagamento...", en:"Processing payment...", fr:"Traitement du paiement...", es:"Procesando pago...", nl:"Betaling verwerken..." },
+  pay_confirmed:        { pt:"Pagamento Confirmado!", en:"Payment Confirmed!", fr:"Paiement confirmé !", es:"¡Pago confirmado!", nl:"Betaling bevestigd!" },
+  pay_failed:           { pt:"Pagamento Falhado", en:"Payment Failed", fr:"Paiement échoué", es:"Pago fallido", nl:"Betaling mislukt" },
+  pay_pending:          { pt:"Pagamento Pendente", en:"Payment Pending", fr:"Paiement en attente", es:"Pago pendiente", nl:"Betaling in behandeling" },
+  pay_confirmed_desc:   { pt:"A tua subscrição foi ativada com sucesso. Já podes aceder a todas as funcionalidades do VoltarisOS.", en:"Your subscription was activated successfully. You can now access all VoltarisOS features.", fr:"Votre abonnement a été activé avec succès. Vous pouvez désormais accéder à toutes les fonctionnalités de VoltarisOS.", es:"Tu suscripción se activó correctamente. Ya puedes acceder a todas las funciones de VoltarisOS.", nl:"Je abonnement is succesvol geactiveerd. Je hebt nu toegang tot alle VoltarisOS-functies." },
+  pay_failed_desc:      { pt:"O pagamento não foi concluído. Nenhum valor foi cobrado. Tenta novamente.", en:"The payment was not completed. No amount was charged. Please try again.", fr:"Le paiement n'a pas été finalisé. Aucun montant n'a été débité. Réessayez.", es:"El pago no se completó. No se cobró ningún importe. Inténtalo de nuevo.", nl:"De betaling is niet voltooid. Er is niets in rekening gebracht. Probeer het opnieuw." },
+  pay_pending_desc:     { pt:"Estamos a confirmar o teu pagamento. Isto pode demorar alguns instantes.", en:"We are confirming your payment. This may take a few moments.", fr:"Nous confirmons votre paiement. Cela peut prendre quelques instants.", es:"Estamos confirmando tu pago. Esto puede tardar unos instantes.", nl:"We bevestigen je betaling. Dit kan even duren." },
+  pay_details:          { pt:"Detalhes da Subscrição", en:"Subscription Details", fr:"Détails de l'abonnement", es:"Detalles de la suscripción", nl:"Abonnementsgegevens" },
+  pay_email:            { pt:"Email", en:"Email", fr:"E-mail", es:"Email", nl:"E-mail" },
+  pay_plan:             { pt:"Plano", en:"Plan", fr:"Forfait", es:"Plan", nl:"Plan" },
+  pay_cycle:            { pt:"Ciclo", en:"Cycle", fr:"Cycle", es:"Ciclo", nl:"Cyclus" },
+  pay_go_dashboard:     { pt:"Aceder ao Dashboard", en:"Go to Dashboard", fr:"Accéder au tableau de bord", es:"Acceder al Panel", nl:"Naar Dashboard" },
+  pay_cancel_title:     { pt:"Pagamento Cancelado", en:"Payment Cancelled", fr:"Paiement annulé", es:"Pago cancelado", nl:"Betaling geannuleerd" },
+  pay_cancel_desc:      { pt:"O pagamento foi cancelado. Nenhum valor foi cobrado. Podes tentar novamente quando quiseres.", en:"The payment was cancelled. No amount was charged. You can try again whenever you want.", fr:"Le paiement a été annulé. Aucun montant n'a été débité. Vous pouvez réessayer quand vous le souhaitez.", es:"El pago fue cancelado. No se cobró ningún importe. Puedes intentarlo de nuevo cuando quieras.", nl:"De betaling is geannuleerd. Er is niets in rekening gebracht. Je kunt het opnieuw proberen wanneer je wilt." },
+  pay_back:             { pt:"Voltar", en:"Back", fr:"Retour", es:"Volver", nl:"Terug" },
+  pay_view_plans:       { pt:"Ver Planos", en:"View Plans", fr:"Voir les forfaits", es:"Ver planes", nl:"Plannen bekijken" },
+
+  // ─── API KEYS ────────────────────────────────────────────────────────────────
+  apikeys_title:        { pt:"Chaves API", en:"API Keys", fr:"Clés API", es:"Claves API", nl:"API-sleutels" },
+  apikeys_new:          { pt:"Nova API Key", en:"New API Key", fr:"Nouvelle clé API", es:"Nueva API Key", nl:"Nieuwe API-sleutel" },
+  apikeys_created_on:   { pt:"Criado em", en:"Created on", fr:"Créé le", es:"Creado el", nl:"Aangemaakt op" },
+  apikeys_last_used:    { pt:"Último uso", en:"Last used", fr:"Dernière utilisation", es:"Último uso", nl:"Laatst gebruikt" },
+  apikeys_active:       { pt:"Ativa", en:"Active", fr:"Active", es:"Activa", nl:"Actief" },
+  apikeys_revoked:      { pt:"Revogada", en:"Revoked", fr:"Révoquée", es:"Revocada", nl:"Ingetrokken" },
+  apikeys_hide:         { pt:"Ocultar", en:"Hide", fr:"Masquer", es:"Ocultar", nl:"Verbergen" },
+  apikeys_reveal:       { pt:"Revelar", en:"Reveal", fr:"Afficher", es:"Revelar", nl:"Tonen" },
+  apikeys_copy:         { pt:"Copiar", en:"Copy", fr:"Copier", es:"Copiar", nl:"Kopiëren" },
+  apikeys_revoke:       { pt:"Revogar", en:"Revoke", fr:"Révoquer", es:"Revocar", nl:"Intrekken" },
+  apikeys_docs:         { pt:"Documentação da API", en:"API Documentation", fr:"Documentation de l'API", es:"Documentación de la API", nl:"API-documentatie" },
+  apikeys_docs_pre:     { pt:"Usa o header", en:"Use the header", fr:"Utilisez l'en-tête", es:"Usa el encabezado", nl:"Gebruik de header" },
+  apikeys_docs_post:    { pt:"em todos os pedidos à API REST do VoltarisOS.", en:"in all requests to the VoltarisOS REST API.", fr:"dans toutes les requêtes vers l'API REST de VoltarisOS.", es:"en todas las solicitudes a la API REST de VoltarisOS.", nl:"in alle verzoeken naar de VoltarisOS REST API." },
+  apikeys_sample_scada: { pt:"Integração SCADA", en:"SCADA Integration", fr:"Intégration SCADA", es:"Integración SCADA", nl:"SCADA-integratie" },
+  apikeys_sample_ext:   { pt:"Dashboard Externo", en:"External Dashboard", fr:"Tableau de bord externe", es:"Panel externo", nl:"Extern dashboard" },
+  apikeys_sample_hook:  { pt:"Webhook Alertas", en:"Alerts Webhook", fr:"Webhook d'alertes", es:"Webhook de alertas", nl:"Meldingen-webhook" },
+  apikeys_today:        { pt:"Hoje", en:"Today", fr:"Aujourd'hui", es:"Hoy", nl:"Vandaag" },
+  apikeys_3d_ago:       { pt:"Há 3 dias", en:"3 days ago", fr:"Il y a 3 jours", es:"Hace 3 días", nl:"3 dagen geleden" },
+  apikeys_never:        { pt:"Nunca", en:"Never", fr:"Jamais", es:"Nunca", nl:"Nooit" },
+
+  // ─── EXPORT CENTER LABELS ────────────────────────────────────────────────────
+  exp_label_dashboard:  { pt:"Visão Geral do Dashboard", en:"Dashboard Overview", fr:"Vue d'ensemble du tableau de bord", es:"Resumen del Panel", nl:"Dashboard-overzicht" },
+  exp_label_battery:    { pt:"Relatório BMS Bateria", en:"Battery BMS Report", fr:"Rapport BMS Batterie", es:"Informe BMS Batería", nl:"Batterij BMS-rapport" },
+  exp_label_trading:    { pt:"P&L de Trading", en:"Trading P&L", fr:"P&L de trading", es:"P&L de trading", nl:"Trading P&L" },
+  exp_label_carbon:     { pt:"Pegada de Carbono", en:"Carbon Footprint", fr:"Empreinte carbone", es:"Huella de carbono", nl:"CO₂-voetafdruk" },
+  exp_label_maintenance:{ pt:"Plano de Manutenção", en:"Maintenance Schedule", fr:"Planning de maintenance", es:"Programa de mantenimiento", nl:"Onderhoudsschema" },
+  exp_label_alerts:     { pt:"Histórico de Alertas", en:"Alerts History", fr:"Historique des alertes", es:"Historial de alertas", nl:"Meldingengeschiedenis" },
+  exp_label_sites:      { pt:"Visão Geral de Sites", en:"Sites Overview", fr:"Vue d'ensemble des sites", es:"Resumen de sitios", nl:"Sites-overzicht" },
+  exp_label_users:      { pt:"Atividade de Utilizadores", en:"User Activity", fr:"Activité des utilisateurs", es:"Actividad de usuarios", nl:"Gebruikersactiviteit" },
+  exp_label_investor:   { pt:"Relatório de Investidor", en:"Investor Report", fr:"Rapport investisseur", es:"Informe de inversor", nl:"Investeerdersrapport" },
+  exp_label_audit:      { pt:"Exportação do Registo de Auditoria", en:"Audit Log Export", fr:"Export du journal d'audit", es:"Exportación del registro de auditoría", nl:"Auditlog-export" },
+  apikeys_new_created:  { pt:"Nova key criada! Copia agora — não voltará a ser mostrada.", en:"New key created! Copy it now — it won't be shown again.", fr:"Nouvelle clé créée ! Copiez-la maintenant — elle ne sera plus affichée.", es:"¡Nueva key creada! Cópiala ahora — no volverá a mostrarse.", nl:"Nieuwe sleutel aangemaakt! Kopieer nu — wordt niet opnieuw getoond." },
+  apikeys_placeholder:  { pt:"Ex: Integração InfluxDB", en:"e.g. InfluxDB Integration", fr:"Ex : Intégration InfluxDB", es:"Ej: Integración InfluxDB", nl:"Bv. InfluxDB-integratie" },
+  scope_read:           { pt:"Leitura", en:"Read", fr:"Lecture", es:"Lectura", nl:"Lezen" },
+  scope_read_write:     { pt:"Leitura + Escrita", en:"Read + Write", fr:"Lecture + Écriture", es:"Lectura + Escritura", nl:"Lezen + Schrijven" },
+
+  // ─── LOGIN / AUTH EXTRAS ─────────────────────────────────────────────────────
+  auth_hero_title:      { pt:"A Plataforma Inteligente para Ativos de Energia", en:"The Intelligent Platform for Energy Assets", fr:"La plateforme intelligente pour les actifs énergétiques", es:"La plataforma inteligente para activos energéticos", nl:"Het intelligente platform voor energie-assets" },
+  auth_hero_sub:        { pt:"Monitorização em tempo real, otimização por IA e trading autónomo para centrais elétricas virtuais.", en:"Real-time monitoring, AI optimization and autonomous trading for virtual power plants.", fr:"Surveillance en temps réel, optimisation par IA et trading autonome pour les centrales virtuelles.", es:"Monitorización en tiempo real, optimización por IA y trading autónomo para centrales eléctricas virtuales.", nl:"Realtime monitoring, AI-optimalisatie en autonome handel voor virtuele energiecentrales." },
+  auth_security_title:  { pt:"Segurança de Nível Empresarial", en:"Enterprise-Grade Security", fr:"Sécurité de niveau entreprise", es:"Seguridad de nivel empresarial", nl:"Beveiliging op bedrijfsniveau" },
+  auth_security_sub:    { pt:"Encriptação AES-256 · RBAC · 2FA", en:"AES-256 encryption · RBAC · 2FA", fr:"Chiffrement AES-256 · RBAC · 2FA", es:"Cifrado AES-256 · RBAC · 2FA", nl:"AES-256-encryptie · RBAC · 2FA" },
+  auth_setup_title:     { pt:"Configura o teu workspace", en:"Set up your workspace", fr:"Configurez votre espace de travail", es:"Configura tu espacio de trabajo", nl:"Stel je werkruimte in" },
+  auth_setup_sub:       { pt:"Preenche os dados para começar a usar o VoltarisOS.", en:"Fill in the details to start using VoltarisOS.", fr:"Remplissez les données pour commencer à utiliser VoltarisOS.", es:"Rellena los datos para empezar a usar VoltarisOS.", nl:"Vul de gegevens in om VoltarisOS te gaan gebruiken." },
+  auth_access_code:     { pt:"Código de Acesso", en:"Access Code", fr:"Code d'accès", es:"Código de acceso", nl:"Toegangscode" },
+  auth_access_ph:       { pt:"Introduz o teu código de convite", en:"Enter your invite code", fr:"Saisissez votre code d'invitation", es:"Introduce tu código de invitación", nl:"Voer je uitnodigingscode in" },
+  auth_tier_types:      { pt:"tipos disponíveis", en:"types available", fr:"types disponibles", es:"tipos disponibles", nl:"typen beschikbaar" },
+  auth_tier_type:       { pt:"tipo disponível", en:"type available", fr:"type disponible", es:"tipo disponible", nl:"type beschikbaar" },
+  auth_invite_help:     { pt:"Insere o código recebido para validar o teu plano.", en:"Enter the code you received to validate your plan.", fr:"Saisissez le code reçu pour valider votre forfait.", es:"Introduce el código recibido para validar tu plan.", nl:"Voer de ontvangen code in om je plan te valideren." },
+  auth_plan_assigned:   { pt:"— atribuído automaticamente", en:"— automatically assigned", fr:"— attribué automatiquement", es:"— asignado automáticamente", nl:"— automatisch toegewezen" },
+  auth_choose_plan_desc:{ pt:"Escolhe o plano que melhor se adapta às tuas necessidades.", en:"Choose the plan that best fits your needs.", fr:"Choisissez le forfait qui correspond à vos besoins.", es:"Elige el plan que mejor se adapte a tus necesidades.", nl:"Kies het plan dat het beste bij je past." },
+  auth_min_8:           { pt:"Mínimo 8 caracteres", en:"At least 8 characters", fr:"Au moins 8 caractères", es:"Mínimo 8 caracteres", nl:"Minimaal 8 tekens" },
+  auth_accept_terms_pre:{ pt:"Li e aceito os", en:"I have read and accept the", fr:"J'ai lu et j'accepte les", es:"He leído y acepto los", nl:"Ik heb de" },
+  auth_terms_of_use:    { pt:"Termos de Uso", en:"Terms of Use", fr:"Conditions d'utilisation", es:"Términos de uso", nl:"Gebruiksvoorwaarden" },
+  auth_accept_terms_post:{ pt:"e reconheço que é proibida a engenharia reversa ou cópia do Software.", en:"and acknowledge that reverse engineering or copying the Software is prohibited.", fr:"et je reconnais que l'ingénierie inverse ou la copie du Logiciel est interdite.", es:"y reconozco que está prohibida la ingeniería inversa o la copia del Software.", nl:"gelezen en accepteer, en erken dat reverse-engineering of kopiëren van de Software verboden is." },
+  auth_select_plan_err: { pt:"Seleciona um plano de subscrição para continuar.", en:"Select a subscription plan to continue.", fr:"Sélectionnez un forfait pour continuer.", es:"Selecciona un plan de suscripción para continuar.", nl:"Selecteer een abonnementsplan om door te gaan." },
+  auth_invalid_code:    { pt:"Código inválido", en:"Invalid code", fr:"Code invalide", es:"Código inválido", nl:"Ongeldige code" },
+  auth_plan_home:       { pt:"Home — €69/mês (1 instalação)", en:"Home — €69/mo (1 installation)", fr:"Home — 69 €/mois (1 installation)", es:"Home — 69 €/mes (1 instalación)", nl:"Home — €69/maand (1 installatie)" },
+  auth_plan_smart:      { pt:"Smart — €149/mês (até 2 instalações + IA)", en:"Smart — €149/mo (up to 2 installations + AI)", fr:"Smart — 149 €/mois (jusqu'à 2 installations + IA)", es:"Smart — 149 €/mes (hasta 2 instalaciones + IA)", nl:"Smart — €149/maand (tot 2 installaties + AI)" },
+  auth_plan_starter:    { pt:"Starter — €279/mês (até 5 instalações)", en:"Starter — €279/mo (up to 5 installations)", fr:"Starter — 279 €/mois (jusqu'à 5 installations)", es:"Starter — 279 €/mes (hasta 5 instalaciones)", nl:"Starter — €279/maand (tot 5 installaties)" },
+  auth_plan_pro:        { pt:"Pro — €1.099/mês (até 20 instalações + IA Avançada)", en:"Pro — €1,099/mo (up to 20 installations + Advanced AI)", fr:"Pro — 1 099 €/mois (jusqu'à 20 installations + IA avancée)", es:"Pro — 1.099 €/mes (hasta 20 instalaciones + IA avanzada)", nl:"Pro — €1.099/maand (tot 20 installaties + geavanceerde AI)" },
+  auth_plan_enterprise: { pt:"Enterprise — €3.999/mês (Instalações Ilimitadas)", en:"Enterprise — €3,999/mo (Unlimited installations)", fr:"Enterprise — 3 999 €/mois (installations illimitées)", es:"Enterprise — 3.999 €/mes (instalaciones ilimitadas)", nl:"Enterprise — €3.999/maand (onbeperkte installaties)" },
+  auth_terms_title:     { pt:"Termos de Uso — VoltarisOS", en:"Terms of Use — VoltarisOS", fr:"Conditions d'utilisation — VoltarisOS", es:"Términos de uso — VoltarisOS", nl:"Gebruiksvoorwaarden — VoltarisOS" },
+  auth_terms_intro:     { pt:"Ao criar conta e utilizar o VoltarisOS (\"Software\") aceita, de forma vinculativa, que:", en:"By creating an account and using VoltarisOS (\"Software\") you bindingly agree that:", fr:"En créant un compte et en utilisant VoltarisOS (\"Logiciel\"), vous acceptez de manière contraignante que :", es:"Al crear una cuenta y utilizar VoltarisOS (\"Software\") aceptas, de forma vinculante, que:", nl:"Door een account aan te maken en VoltarisOS (\"Software\") te gebruiken, accepteert u bindend dat:" },
+  auth_terms_1:         { pt:"O Software, incluindo código-fonte, algoritmos, interfaces e documentação, é propriedade exclusiva de VoltarisOS e protegido por direitos de autor (Diretiva 2009/24/CE, Convenção de Berna, TRIPS).", en:"The Software, including source code, algorithms, interfaces and documentation, is the exclusive property of VoltarisOS and protected by copyright (Directive 2009/24/EC, Berne Convention, TRIPS).", fr:"Le Logiciel, y compris le code source, les algorithmes, les interfaces et la documentation, est la propriété exclusive de VoltarisOS et protégé par le droit d'auteur (Directive 2009/24/CE, Convention de Berne, TRIPS).", es:"El Software, incluido el código fuente, algoritmos, interfaces y documentación, es propiedad exclusiva de VoltarisOS y está protegido por derechos de autor (Directiva 2009/24/CE, Convenio de Berna, TRIPS).", nl:"De Software, inclusief broncode, algoritmen, interfaces en documentatie, is exclusief eigendom van VoltarisOS en beschermd door auteursrecht (Richtlijn 2009/24/EG, Berner Conventie, TRIPS)." },
+  auth_terms_2_pre:     { pt:"É", en:"It is", fr:"Il est", es:"Está", nl:"Het is" },
+  auth_terms_2_strong:  { pt:"expressamente proibido", en:"expressly prohibited", fr:"expressément interdit", es:"expresamente prohibido", nl:"uitdrukkelijk verboden" },
+  auth_terms_2_post:    { pt:": copiar, distribuir, modificar, fazer engenharia reversa, descompilar, desmontar ou tentar extrair a lógica/algoritmos do Software.", en:": to copy, distribute, modify, reverse engineer, decompile, disassemble or attempt to extract the Software's logic/algorithms.", fr:": de copier, distribuer, modifier, faire de l'ingénierie inverse, décompiler, désassembler ou tenter d'extraire la logique/algorithmes du Logiciel.", es:": copiar, distribuir, modificar, hacer ingeniería inversa, descompilar, desensamblar o intentar extraer la lógica/algoritmos del Software.", nl:": de Software te kopiëren, distribueren, wijzigen, reverse-engineeren, decompileren, disassembleren of te proberen de logica/algoritmen te extraheren." },
+  auth_terms_3:         { pt:"O Software contém segredos comerciais confidenciais — não pode divulgar, partilhar ou reutilizar essa informação para fins não autorizados, mesmo tendo acesso legítimo em fase de teste (beta).", en:"The Software contains confidential trade secrets — you may not disclose, share or reuse this information for unauthorized purposes, even with legitimate access during the test (beta) phase.", fr:"Le Logiciel contient des secrets commerciaux confidentiels — vous ne pouvez pas divulguer, partager ou réutiliser ces informations à des fins non autorisées, même avec un accès légitime en phase de test (bêta).", es:"El Software contiene secretos comerciales confidenciales — no puedes divulgar, compartir o reutilizar esa información para fines no autorizados, incluso con acceso legítimo en fase de prueba (beta).", nl:"De Software bevat vertrouwelijke handelsgeheimen — u mag deze informatie niet openbaren, delen of hergebruiken voor ongeoorloofde doeleinden, zelfs niet met legitieme toegang tijdens de testfase (bèta)." },
+  auth_terms_4:         { pt:"O acesso concedido durante o período beta é revogável a qualquer momento e não confere qualquer direito de propriedade ou licença permanente.", en:"Access granted during the beta period is revocable at any time and does not grant any ownership right or permanent license.", fr:"L'accès accordé pendant la période bêta est révocable à tout moment et ne confère aucun droit de propriété ni licence permanente.", es:"El acceso concedido durante el período beta es revocable en cualquier momento y no confiere ningún derecho de propiedad ni licencia permanente.", nl:"Toegang tijdens de bètaperiode is te allen tijde intrekbaar en verleent geen eigendomsrecht of permanente licentie." },
+  auth_terms_5:         { pt:"Qualquer violação destes termos pode resultar em revogação imediata de acesso e responsabilização civil.", en:"Any breach of these terms may result in immediate revocation of access and civil liability.", fr:"Toute violation de ces conditions peut entraîner une révocation immédiate de l'accès et une responsabilité civile.", es:"Cualquier violación de estos términos puede resultar en la revocación inmediata del acceso y responsabilidad civil.", nl:"Elke schending van deze voorwaarden kan leiden tot onmiddellijke intrekking van toegang en civiele aansprakelijkheid." },
+  auth_terms_footer:    { pt:"Texto integral: Licença de Software Proprietário VoltarisOS (documento legal completo disponível mediante pedido).", en:"Full text: VoltarisOS Proprietary Software License (complete legal document available on request).", fr:"Texte intégral : Licence de logiciel propriétaire VoltarisOS (document juridique complet disponible sur demande).", es:"Texto íntegro: Licencia de Software Propietario VoltarisOS (documento legal completo disponible a petición).", nl:"Volledige tekst: VoltarisOS propriëtaire softwarelicentie (volledig juridisch document op verzoek beschikbaar)." },
+  auth_plan_intended:   { pt:"Plano Pretendido", en:"Intended Plan", fr:"Forfait souhaité", es:"Plan deseado", nl:"Gewenst plan" },
+  auth_select_plan_opt: { pt:"Seleciona um plano...", en:"Select a plan...", fr:"Sélectionnez un forfait...", es:"Selecciona un plan...", nl:"Selecteer een plan..." },
+  auth_company_ph:      { pt:"Ex: GreenVolt Energy", en:"e.g. GreenVolt Energy", fr:"Ex : GreenVolt Energy", es:"Ej: GreenVolt Energy", nl:"Bv. GreenVolt Energy" },
+  auth_accept_required: { pt:"Tens de aceitar os Termos de Uso para criar conta.", en:"You must accept the Terms of Use to create an account.", fr:"Vous devez accepter les conditions d'utilisation pour créer un compte.", es:"Debes aceptar los Términos de uso para crear una cuenta.", nl:"Je moet de gebruiksvoorwaarden accepteren om een account aan te maken." },
+
+  // ─── DASHBOARD ───────────────────────────────────────────────────────────────
+  dash_err_load:        { pt:"Não foi possível carregar o dashboard.", en:"Could not load the dashboard.", fr:"Impossible de charger le tableau de bord.", es:"No se pudo cargar el panel.", nl:"Dashboard kon niet worden geladen." },
+  dash_loading:         { pt:"Carregando dashboard…", en:"Loading dashboard…", fr:"Chargement du tableau de bord…", es:"Cargando panel…", nl:"Dashboard laden…" },
+  dash_err_data:        { pt:"Não foi possível carregar os dados.", en:"Could not load the data.", fr:"Impossible de charger les données.", es:"No se pudieron cargar los datos.", nl:"Gegevens konden niet worden geladen." },
+  dash_no_sites:        { pt:"Sem sites disponíveis. Cria um site para começar.", en:"No sites available. Create a site to get started.", fr:"Aucun site disponible. Créez un site pour commencer.", es:"Sin sitios disponibles. Crea un sitio para empezar.", nl:"Geen sites beschikbaar. Maak een site aan om te beginnen." },
+  dash_no_telemetry:    { pt:"Sem dados de telemetria (sem readings recentes). Adiciona dispositivos com ingestão de leituras.", en:"No telemetry data (no recent readings). Add devices with reading ingestion.", fr:"Aucune donnée de télémétrie (pas de mesures récentes). Ajoutez des appareils avec ingestion de mesures.", es:"Sin datos de telemetría (sin lecturas recientes). Añade dispositivos con ingesta de lecturas.", nl:"Geen telemetriegegevens (geen recente metingen). Voeg apparaten met meting-inname toe." },
+
+  // ─── SITES ───────────────────────────────────────────────────────────────────
+  sites_err_load:       { pt:"Não foi possível carregar os sites.", en:"Could not load the sites.", fr:"Impossible de charger les sites.", es:"No se pudieron cargar los sitios.", nl:"Sites konden niet worden geladen." },
+  sites_err_name:       { pt:"O nome é obrigatório.", en:"Name is required.", fr:"Le nom est obligatoire.", es:"El nombre es obligatorio.", nl:"Naam is verplicht." },
+  sites_err_create:     { pt:"Erro ao criar o site.", en:"Error creating the site.", fr:"Erreur lors de la création du site.", es:"Error al crear el sitio.", nl:"Fout bij het aanmaken van de site." },
+  sites_err_delete:     { pt:"Não foi possível apagar o site.", en:"Could not delete the site.", fr:"Impossible de supprimer le site.", es:"No se pudo eliminar el sitio.", nl:"Site kon niet worden verwijderd." },
+  sites_loading:        { pt:"Carregando sites…", en:"Loading sites…", fr:"Chargement des sites…", es:"Cargando sitios…", nl:"Sites laden…" },
+  sites_empty:          { pt:"Ainda não tens sites. Clica em \"+ Add Site\" para criar o primeiro.", en:"You don't have any sites yet. Click \"+ Add Site\" to create the first one.", fr:"Vous n'avez pas encore de sites. Cliquez sur \"+ Add Site\" pour créer le premier.", es:"Aún no tienes sitios. Haz clic en \"+ Add Site\" para crear el primero.", nl:"Je hebt nog geen sites. Klik op \"+ Add Site\" om de eerste aan te maken." },
+
+  // ─── FLEET / DEVICES ─────────────────────────────────────────────────────────
+  fleet_err_load:       { pt:"Não foi possível carregar os dispositivos.", en:"Could not load the devices.", fr:"Impossible de charger les appareils.", es:"No se pudieron cargar los dispositivos.", nl:"Apparaten konden niet worden geladen." },
+  fleet_err_name:       { pt:"O nome é obrigatório.", en:"Name is required.", fr:"Le nom est obligatoire.", es:"El nombre es obligatorio.", nl:"Naam is verplicht." },
+  fleet_err_create:     { pt:"Erro ao criar o dispositivo.", en:"Error creating the device.", fr:"Erreur lors de la création de l'appareil.", es:"Error al crear el dispositivo.", nl:"Fout bij het aanmaken van het apparaat." },
+  fleet_err_delete:     { pt:"Não foi possível apagar o dispositivo.", en:"Could not delete the device.", fr:"Impossible de supprimer l'appareil.", es:"No se pudo eliminar el dispositivo.", nl:"Apparaat kon niet worden verwijderd." },
+  fleet_loading:        { pt:"Carregando dispositivos…", en:"Loading devices…", fr:"Chargement des appareils…", es:"Cargando dispositivos…", nl:"Apparaten laden…" },
+  fleet_empty:          { pt:"Ainda não tens dispositivos. Clica em \"+ Add Device\" para criar o primeiro.", en:"You don't have any devices yet. Click \"+ Add Device\" to create the first one.", fr:"Vous n'avez pas encore d'appareils. Cliquez sur \"+ Add Device\" pour créer le premier.", es:"Aún no tienes dispositivos. Haz clic en \"+ Add Device\" para crear el primero.", nl:"Je hebt nog geen apparaten. Klik op \"+ Add Device\" om de eerste aan te maken." },
+
+  // ─── FORECASTING ─────────────────────────────────────────────────────────────
+  forecast_err_sites:   { pt:"Não foi possível carregar os sites.", en:"Could not load the sites.", fr:"Impossible de charger les sites.", es:"No se pudieron cargar los sitios.", nl:"Sites konden niet worden geladen." },
+  forecast_err_fc:      { pt:"Não foi possível obter a previsão:", en:"Could not get the forecast:", fr:"Impossible d'obtenir la prévision :", es:"No se pudo obtener la previsión:", nl:"Prognose kon niet worden opgehaald:" },
+  forecast_loading_sites:{ pt:"Carregando sites…", en:"Loading sites…", fr:"Chargement des sites…", es:"Cargando sitios…", nl:"Sites laden…" },
+  forecast_no_sites:    { pt:"Sem sites disponíveis. Cria um site primeiro para gerar previsões.", en:"No sites available. Create a site first to generate forecasts.", fr:"Aucun site disponible. Créez d'abord un site pour générer des prévisions.", es:"Sin sitios disponibles. Crea primero un sitio para generar previsiones.", nl:"Geen sites beschikbaar. Maak eerst een site aan om prognoses te genereren." },
+  forecast_calculating: { pt:"A calcular previsão…", en:"Calculating forecast…", fr:"Calcul de la prévision…", es:"Calculando previsión…", nl:"Prognose berekenen…" },
+  forecast_unavailable: { pt:"Previsão não disponível para este site.", en:"Forecast not available for this site.", fr:"Prévision non disponible pour ce site.", es:"Previsión no disponible para este sitio.", nl:"Prognose niet beschikbaar voor deze site." },
+
+  // ─── REPORTS ─────────────────────────────────────────────────────────────────
+  reports_err_load:     { pt:"Não foi possível carregar os relatórios.", en:"Could not load the reports.", fr:"Impossible de charger les rapports.", es:"No se pudieron cargar los informes.", nl:"Rapporten konden niet worden geladen." },
+  reports_err_type:     { pt:"Tipo de relatório obrigatório.", en:"Report type is required.", fr:"Le type de rapport est obligatoire.", es:"El tipo de informe es obligatorio.", nl:"Rapporttype is verplicht." },
+  reports_err_generate: { pt:"Erro ao gerar o relatório.", en:"Error generating the report.", fr:"Erreur lors de la génération du rapport.", es:"Error al generar el informe.", nl:"Fout bij het genereren van het rapport." },
+  reports_no_sites:     { pt:"Sem sites disponíveis.", en:"No sites available.", fr:"Aucun site disponible.", es:"Sin sitios disponibles.", nl:"Geen sites beschikbaar." },
+  reports_loading:      { pt:"Carregando relatórios…", en:"Loading reports…", fr:"Chargement des rapports…", es:"Cargando informes…", nl:"Rapporten laden…" },
+  reports_empty:        { pt:"Sem relatórios. Gera o primeiro acima.", en:"No reports. Generate the first one above.", fr:"Aucun rapport. Générez le premier ci-dessus.", es:"Sin informes. Genera el primero arriba.", nl:"Geen rapporten. Genereer hierboven de eerste." },
+
+  // ─── MISC ────────────────────────────────────────────────────────────────────
+  ev_unavailable:       { pt:"Funcionalidade indisponível — a integração backend para EV Charging não está ativa.", en:"Feature unavailable — the backend integration for EV Charging is not active.", fr:"Fonctionnalité indisponible — l'intégration backend pour la recharge VE n'est pas active.", es:"Función no disponible — la integración backend para carga EV no está activa.", nl:"Functie niet beschikbaar — de backend-integratie voor EV-laden is niet actief." },
+  settings_checkout_err:{ pt:"Erro ao iniciar checkout", en:"Error starting checkout", fr:"Erreur lors du lancement du paiement", es:"Error al iniciar el pago", nl:"Fout bij starten van checkout" },
+  state_creating:       { pt:"A criar…", en:"Creating…", fr:"Création…", es:"Creando…", nl:"Aanmaken…" },
+  state_deleting:       { pt:"A apagar…", en:"Deleting…", fr:"Suppression…", es:"Eliminando…", nl:"Verwijderen…" },
+  state_generating:     { pt:"A gerar…", en:"Generating…", fr:"Génération…", es:"Generando…", nl:"Genereren…" },
+  state_loading:        { pt:"A carregar…", en:"Loading…", fr:"Chargement…", es:"Cargando…", nl:"Laden…" },
+  state_updated:        { pt:"Atualizado:", en:"Updated:", fr:"Mis à jour :", es:"Actualizado:", nl:"Bijgewerkt:" },
+  dash_no_data:         { pt:"Sem dados", en:"No data", fr:"Aucune donnée", es:"Sin datos", nl:"Geen gegevens" },
+  dash_no_sites_short:  { pt:"Sem sites.", en:"No sites.", fr:"Aucun site.", es:"Sin sitios.", nl:"Geen sites." },
+
+  // ─── DIGITAL TWIN ────────────────────────────────────────────────────────────
+  dt_sub:               { pt:"Espelho digital em tempo real · Simulação física do site", en:"Real-time digital mirror · Physical site simulation", fr:"Miroir numérique en temps réel · Simulation physique du site", es:"Gemelo digital en tiempo real · Simulación física del sitio", nl:"Realtime digitale spiegel · Fysieke site-simulatie" },
+  dt_panels:            { pt:"painéis", en:"panels", fr:"panneaux", es:"paneles", nl:"panelen" },
+  dt_grid:              { pt:"Rede Elétrica", en:"Electrical Grid", fr:"Réseau électrique", es:"Red eléctrica", nl:"Elektriciteitsnet" },
+  dt_metrics:           { pt:"Métricas Físicas", en:"Physical Metrics", fr:"Métriques physiques", es:"Métricas físicas", nl:"Fysieke metriek" },
+  dt_voltage:           { pt:"Tensão DC", en:"DC Voltage", fr:"Tension CC", es:"Tensión CC", nl:"DC-spanning" },
+  dt_freq:              { pt:"Frequência Rede", en:"Grid Frequency", fr:"Fréquence réseau", es:"Frecuencia de red", nl:"Netfrequentie" },
+  dt_efficiency:        { pt:"Eficiência", en:"Efficiency", fr:"Efficacité", es:"Eficiencia", nl:"Efficiëntie" },
+  dt_soc_forecast:      { pt:"Previsão SoC", en:"SoC Forecast", fr:"Prévision SoC", es:"Previsión SoC", nl:"SoC-prognose" },
+  dt_next_24h:          { pt:"próximas 24h", en:"next 24h", fr:"prochaines 24h", es:"próximas 24h", nl:"komende 24u" },
+  dt_diagram:           { pt:"Diagrama de Energia", en:"Energy Diagram", fr:"Diagramme d'énergie", es:"Diagrama de energía", nl:"Energiediagram" },
+  dt_battery:           { pt:"Bateria BESS", en:"BESS Battery", fr:"Batterie BESS", es:"Batería BESS", nl:"BESS-batterij" },
+  dt_consumption:       { pt:"Consumo", en:"Consumption", fr:"Consommation", es:"Consumo", nl:"Verbruik" },
+  dt_current:           { pt:"Corrente", en:"Current", fr:"Courant", es:"Corriente", nl:"Stroom" },
+  dt_temp:              { pt:"Temperatura", en:"Temperature", fr:"Température", es:"Temperatura", nl:"Temperatuur" },
+
+  // ─── AUTONOMOUS TRADING ──────────────────────────────────────────────────────
+  auto_demo_notice:     { pt:"Demonstração — este agente não executa ordens reais (dados simulados)", en:"Demonstration — this agent does not execute real orders (simulated data)", fr:"Démonstration — cet agent n'exécute pas d'ordres réels (données simulées)", es:"Demostración — este agente no ejecuta órdenes reales (datos simulados)", nl:"Demonstratie — deze agent voert geen echte orders uit (gesimuleerde gegevens)" },
+  auto_pause:           { pt:"⏸ Pausar Agente", en:"⏸ Pause Agent", fr:"⏸ Mettre l'agent en pause", es:"⏸ Pausar agente", nl:"⏸ Agent pauzeren" },
+  auto_start:           { pt:"▶ Ativar Agente", en:"▶ Activate Agent", fr:"▶ Activer l'agent", es:"▶ Activar agente", nl:"▶ Agent activeren" },
+  auto_trades_today:    { pt:"Trades Hoje", en:"Trades Today", fr:"Trades aujourd'hui", es:"Trades hoy", nl:"Trades vandaag" },
+  auto_last_action:     { pt:"Última Ação", en:"Last Action", fr:"Dernière action", es:"Última acción", nl:"Laatste actie" },
+  auto_simulated:       { pt:"Dados simulados — este agente não executa trades reais.", en:"Simulated data — this agent does not execute real trades.", fr:"Données simulées — cet agent n'exécute pas de trades réels.", es:"Datos simulados — este agente no ejecuta trades reales.", nl:"Gesimuleerde gegevens — deze agent voert geen echte trades uit." },
+  auto_soc_min:         { pt:"SoC mínimo (%)", en:"Min SoC (%)", fr:"SoC minimum (%)", es:"SoC mínimo (%)", nl:"Min. SoC (%)" },
+  auto_soc_max:         { pt:"SoC máximo (%)", en:"Max SoC (%)", fr:"SoC maximum (%)", es:"SoC máximo (%)", nl:"Max. SoC (%)" },
+  auto_decision_log:    { pt:"Log de Decisões", en:"Decision Log", fr:"Journal des décisions", es:"Registro de decisiones", nl:"Beslissingslog" },
+  auto_status:          { pt:"Estado", en:"Status", fr:"Statut", es:"Estado", nl:"Status" },
+  auto_pnl_total:       { pt:"P&L Total", en:"Total P&L", fr:"P&L total", es:"P&L total", nl:"Totaal P&L" },
+  auto_trades_total:    { pt:"Trades Total", en:"Total Trades", fr:"Trades totaux", es:"Trades totales", nl:"Totaal trades" },
+  auto_win_rate:        { pt:"Win Rate", en:"Win Rate", fr:"Taux de réussite", es:"Tasa de éxito", nl:"Winstpercentage" },
+  auto_pnl_realtime:    { pt:"P&L em Tempo Real", en:"Real-Time P&L", fr:"P&L en temps réel", es:"P&L en tiempo real", nl:"Realtime P&L" },
+  auto_pnl_accum:       { pt:"Lucro acumulado do agente (€)", en:"Agent accumulated profit (€)", fr:"Profit cumulé de l'agent (€)", es:"Beneficio acumulado del agente (€)", nl:"Geaccumuleerde winst van agent (€)" },
+  auto_rules:           { pt:"Regras do Agente", en:"Agent Rules", fr:"Règles de l'agent", es:"Reglas del agente", nl:"Agentregels" },
+  auto_sell_above:      { pt:"Vender acima de (€/MWh)", en:"Sell above (€/MWh)", fr:"Vendre au-dessus de (€/MWh)", es:"Vender por encima de (€/MWh)", nl:"Verkopen boven (€/MWh)" },
+  auto_buy_below:       { pt:"Comprar abaixo de (€/MWh)", en:"Buy below (€/MWh)", fr:"Acheter en dessous de (€/MWh)", es:"Comprar por debajo de (€/MWh)", nl:"Kopen onder (€/MWh)" },
+  auto_max_trade:       { pt:"Max trade (kWh)", en:"Max trade (kWh)", fr:"Trade max (kWh)", es:"Trade máx (kWh)", nl:"Max trade (kWh)" },
+  auto_refresh_4s:      { pt:"atualiza a cada 4s", en:"updates every 4s", fr:"actualisé toutes les 4s", es:"actualiza cada 4s", nl:"ververst elke 4s" },
+
+  // ─── PLAN DESCRIPTIONS (config) ──────────────────────────────────────────────
+  plan_price_suffix:    { pt:"/mês", en:"/mo", fr:"/mois", es:"/mes", nl:"/maand" },
+  plan_price_home:      { pt:"€69/mês", en:"€69/mo", fr:"69 €/mois", es:"69 €/mes", nl:"€69/maand" },
+  plan_price_smart:     { pt:"€149/mês", en:"€149/mo", fr:"149 €/mois", es:"149 €/mes", nl:"€149/maand" },
+  plan_price_starter:   { pt:"€279/mês", en:"€279/mo", fr:"279 €/mois", es:"279 €/mes", nl:"€279/maand" },
+  plan_price_pro:       { pt:"€1.099/mês", en:"€1,099/mo", fr:"1 099 €/mois", es:"1.099 €/mes", nl:"€1.099/maand" },
+  plan_price_enterprise:{ pt:"€3.999/mês", en:"€3,999/mo", fr:"3 999 €/mois", es:"3.999 €/mes", nl:"€3.999/maand" },
+  plan_price_on_request:{ pt:"Sob consulta", en:"On request", fr:"Sur demande", es:"Bajo consulta", nl:"Op aanvraag" },
+  plan_desc_cfg_beta:   { pt:"Acesso completo a todos os módulos durante o período beta.", en:"Full access to all modules during the beta period.", fr:"Accès complet à tous les modules pendant la période bêta.", es:"Acceso completo a todos los módulos durante el período beta.", nl:"Volledige toegang tot alle modules tijdens de bètapériode." },
+  plan_desc_cfg_home:   { pt:"Monitorização essencial para 1 instalação residencial.", en:"Essential monitoring for 1 residential installation.", fr:"Surveillance essentielle pour 1 installation résidentielle.", es:"Monitorización esencial para 1 instalación residencial.", nl:"Essentiële monitoring voor 1 residentiële installatie." },
+  plan_desc_cfg_smart:  { pt:"Otimização IA e arbitragem para até 2 instalações.", en:"AI optimization and arbitrage for up to 2 installations.", fr:"Optimisation IA et arbitrage pour jusqu'à 2 installations.", es:"Optimización IA y arbitraje para hasta 2 instalaciones.", nl:"AI-optimalisatie en arbitrage voor tot 2 installaties." },
+  plan_desc_cfg_starter:{ pt:"Trading, previsões e operações para até 5 sites.", en:"Trading, forecasts and operations for up to 5 sites.", fr:"Trading, prévisions et opérations pour jusqu'à 5 sites.", es:"Trading, previsiones y operaciones para hasta 5 sitios.", nl:"Trading, prognoses en operaties voor tot 5 sites." },
+  plan_desc_cfg_pro:    { pt:"IA avançada, copiloto e autonomia para portfolios de até 20 sites.", en:"Advanced AI, copilot and autonomy for portfolios up to 20 sites.", fr:"IA avancée, copilote et autonomie pour des portefeuilles jusqu'à 20 sites.", es:"IA avanzada, copiloto y autonomía para carteras de hasta 20 sitios.", nl:"Geavanceerde AI, copiloot en autonomie voor portfolio's tot 20 sites." },
+  plan_desc_cfg_enterprise:{ pt:"Whitelabel, API, auditoria e gestão empresarial ilimitada.", en:"Whitelabel, API, audit and unlimited enterprise management.", fr:"Marque blanche, API, audit et gestion d'entreprise illimitée.", es:"Marca blanca, API, auditoría y gestión empresarial ilimitada.", nl:"Whitelabel, API, audit en onbeperkt bedrijfsbeheer." },
+
+  // ─── USER MANAGEMENT ─────────────────────────────────────────────────────────
+  um_ago_min:           { pt:"min atrás", en:"min ago", fr:"min", es:"min", nl:"min" },
+  um_ago_h:             { pt:"h atrás", en:"h ago", fr:"h", es:"h", nl:"u" },
+  um_ago_d:             { pt:"d atrás", en:"d ago", fr:"j", es:"d", nl:"d" },
+  um_err_admin_only:    { pt:"Só administradores podem ver a lista de utilizadores.", en:"Only administrators can view the user list.", fr:"Seuls les administrateurs peuvent voir la liste des utilisateurs.", es:"Solo los administradores pueden ver la lista de usuarios.", nl:"Alleen beheerders kunnen de gebruikerslijst bekijken." },
+  um_err_load:          { pt:"Não foi possível carregar os utilizadores.", en:"Could not load the users.", fr:"Impossible de charger les utilisateurs.", es:"No se pudieron cargar los usuarios.", nl:"Gebruikers konden niet worden geladen." },
+  um_err_invite:        { pt:"Erro ao convidar utilizador", en:"Error inviting user", fr:"Erreur lors de l'invitation de l'utilisateur", es:"Error al invitar al usuario", nl:"Fout bij uitnodigen gebruiker" },
+  um_err_remove:        { pt:"Erro ao remover utilizador", en:"Error removing user", fr:"Erreur lors de la suppression de l'utilisateur", es:"Error al eliminar usuario", nl:"Fout bij verwijderen gebruiker" },
+  um_err_toggle:        { pt:"Erro ao alterar estado", en:"Error changing status", fr:"Erreur lors du changement de statut", es:"Error al cambiar el estado", nl:"Fout bij wijzigen status" },
+  um_title:             { pt:"Gestão de Utilizadores", en:"User Management", fr:"Gestion des utilisateurs", es:"Gestión de usuarios", nl:"Gebruikersbeheer" },
+  um_sub:               { pt:"Equipa real ligada à base de dados — sem dados de exemplo.", en:"Real team connected to the database — no sample data.", fr:"Équipe réelle connectée à la base de données — aucune donnée fictive.", es:"Equipo real conectado a la base de datos — sin datos de ejemplo.", nl:"Echt team gekoppeld aan de database — geen voorbeeldgegevens." },
+  um_invite_btn:        { pt:"+ Convidar Utilizador", en:"+ Invite User", fr:"+ Inviter un utilisateur", es:"+ Invitar usuario", nl:"+ Gebruiker uitnodigen" },
+  um_stat_total:        { pt:"Total de Utilizadores", en:"Total Users", fr:"Total des utilisateurs", es:"Total de usuarios", nl:"Totaal gebruikers" },
+  um_invite_title:      { pt:"Convidar Novo Utilizador", en:"Invite New User", fr:"Inviter un nouvel utilisateur", es:"Invitar nuevo usuario", nl:"Nieuwe gebruiker uitnodigen" },
+  um_invite_note:       { pt:"Por segurança, o role \"Admin\" não pode ser atribuído aqui — apenas o superadmin original tem esse acesso.", en:"For security, the \"Admin\" role cannot be assigned here — only the original superadmin has that access.", fr:"Pour des raisons de sécurité, le rôle \"Admin\" ne peut pas être attribué ici — seul le superadmin d'origine a cet accès.", es:"Por seguridad, el rol \"Admin\" no puede asignarse aquí — solo el superadmin original tiene ese acceso.", nl:"Uit veiligheidsoverwegingen kan de rol \"Admin\" hier niet worden toegewezen — alleen de oorspronkelijke superadmin heeft die toegang." },
+  um_ph_min8:           { pt:"mín. 8 caracteres", en:"min. 8 characters", fr:"min. 8 caractères", es:"mín. 8 caracteres", nl:"min. 8 tekens" },
+  um_cancel:            { pt:"Cancelar", en:"Cancel", fr:"Annuler", es:"Cancelar", nl:"Annuleren" },
+  um_col_user:          { pt:"Utilizador", en:"User", fr:"Utilisateur", es:"Usuario", nl:"Gebruiker" },
+  um_col_role:          { pt:"Role", en:"Role", fr:"Rôle", es:"Rol", nl:"Rol" },
+  um_col_status:        { pt:"Estado", en:"Status", fr:"Statut", es:"Estado", nl:"Status" },
+  um_col_lastlogin:     { pt:"Último Login", en:"Last Login", fr:"Dernière connexion", es:"Último inicio de sesión", nl:"Laatste login" },
+  um_active:            { pt:"Ativo", en:"Active", fr:"Actif", es:"Activo", nl:"Actief" },
+  um_inactive:          { pt:"Inativo", en:"Inactive", fr:"Inactif", es:"Inactivo", nl:"Inactief" },
+  um_deactivate:        { pt:"Desativar", en:"Deactivate", fr:"Désactiver", es:"Desactivar", nl:"Deactiveren" },
+  um_activate:          { pt:"Ativar", en:"Activate", fr:"Activer", es:"Activar", nl:"Activeren" },
+  um_empty:             { pt:"Nenhum utilizador encontrado", en:"No users found", fr:"Aucun utilisateur trouvé", es:"No se encontraron usuarios", nl:"Geen gebruikers gevonden" },
+  um_perm_ref:          { pt:"Referência de Permissões", en:"Permissions Reference", fr:"Référence des permissions", es:"Referencia de permisos", nl:"Machtigingenreferentie" },
+  um_perm_full:         { pt:"Acesso total", en:"Full access", fr:"Accès total", es:"Acceso total", nl:"Volledige toegang" },
+  um_perm_unique:       { pt:"Único, não atribuível", en:"Unique, non-assignable", fr:"Unique, non attribuable", es:"Único, no asignable", nl:"Uniek, niet toewijsbaar" },
+  um_perm_user_mgmt:    { pt:"Gestão de utilizadores", en:"User management", fr:"Gestion des utilisateurs", es:"Gestión de usuarios", nl:"Gebruikersbeheer" },
+  um_perm_all_config:   { pt:"Toda a configuração", en:"All configuration", fr:"Toute la configuration", es:"Toda la configuración", nl:"Alle configuratie" },
+  um_perm_view_control: { pt:"Ver + controlar", en:"View + control", fr:"Voir + contrôler", es:"Ver + controlar", nl:"Bekijken + besturen" },
+  um_perm_trading:      { pt:"Trading", en:"Trading", fr:"Trading", es:"Trading", nl:"Trading" },
+  um_perm_grid:         { pt:"Serviços de rede", en:"Grid services", fr:"Services réseau", es:"Servicios de red", nl:"Netdiensten" },
+  um_perm_alerts:       { pt:"Alertas", en:"Alerts", fr:"Alertes", es:"Alertas", nl:"Meldingen" },
+  um_perm_readonly:     { pt:"Só leitura", en:"Read-only", fr:"Lecture seule", es:"Solo lectura", nl:"Alleen-lezen" },
+  um_perm_financial:    { pt:"Financeiro", en:"Financial", fr:"Financier", es:"Financiero", nl:"Financieel" },
+  um_perm_reports:      { pt:"Relatórios", en:"Reports", fr:"Rapports", es:"Informes", nl:"Rapporten" },
+  um_perm_no_control:   { pt:"Sem controlo", en:"No control", fr:"Sans contrôle", es:"Sin control", nl:"Geen besturing" },
+  um_perm_dashboard:    { pt:"Dashboard", en:"Dashboard", fr:"Tableau de bord", es:"Panel", nl:"Dashboard" },
+  um_perm_basic_metrics:{ pt:"Métricas básicas", en:"Basic metrics", fr:"Métriques de base", es:"Métricas básicas", nl:"Basisstatistieken" },
+  um_perm_no_actions:   { pt:"Sem ações", en:"No actions", fr:"Sans actions", es:"Sin acciones", nl:"Geen acties" },
+  um_never:             { pt:"Nunca", en:"Never", fr:"Jamais", es:"Nunca", nl:"Nooit" },
+  um_now:               { pt:"Agora mesmo", en:"Just now", fr:"À l'instant", es:"Ahora mismo", nl:"Zojuist" },
+  um_confirm_remove:    { pt:"Remover este utilizador definitivamente?", en:"Remove this user permanently?", fr:"Supprimer définitivement cet utilisateur ?", es:"¿Eliminar este usuario definitivamente?", nl:"Deze gebruiker definitief verwijderen?" },
+  um_stat_active:       { pt:"Ativos", en:"Active", fr:"Actifs", es:"Activos", nl:"Actief" },
+  um_stat_admins:       { pt:"Admins", en:"Admins", fr:"Admins", es:"Admins", nl:"Admins" },
+  um_stat_operators:    { pt:"Operadores", en:"Operators", fr:"Opérateurs", es:"Operadores", nl:"Operators" },
+  um_full_name:         { pt:"Nome Completo", en:"Full Name", fr:"Nom complet", es:"Nombre completo", nl:"Volledige naam" },
+  um_initial_password:  { pt:"Password Inicial", en:"Initial Password", fr:"Mot de passe initial", es:"Contraseña inicial", nl:"Initieel wachtwoord" },
+  um_name_ph:           { pt:"ex: Maria Kovacs", en:"e.g. Maria Kovacs", fr:"ex : Maria Kovacs", es:"ej: Maria Kovacs", nl:"bv. Maria Kovacs" },
+  um_email_ph:          { pt:"user@empresa.com", en:"user@company.com", fr:"user@entreprise.com", es:"user@empresa.com", nl:"user@bedrijf.com" },
+  um_sending:           { pt:"A enviar...", en:"Sending...", fr:"Envoi...", es:"Enviando...", nl:"Verzenden..." },
+  um_invited:           { pt:"Convidado!", en:"Invited!", fr:"Invité !", es:"¡Invitado!", nl:"Uitgenodigd!" },
+  um_send_invite:       { pt:"Enviar Convite", en:"Send Invite", fr:"Envoyer l'invitation", es:"Enviar invitación", nl:"Uitnodiging verzenden" },
+  um_team_members:      { pt:"Membros da Equipa", en:"Team Members", fr:"Membres de l'équipe", es:"Miembros del equipo", nl:"Teamleden" },
+  um_search_ph:         { pt:"Procurar por nome ou email...", en:"Search by name or email...", fr:"Rechercher par nom ou e-mail...", es:"Buscar por nombre o email...", nl:"Zoeken op naam of e-mail..." },
+  um_loading:           { pt:"A carregar...", en:"Loading...", fr:"Chargement...", es:"Cargando...", nl:"Laden..." },
+  um_protected:         { pt:"Conta protegida", en:"Protected account", fr:"Compte protégé", es:"Cuenta protegida", nl:"Beveiligd account" },
+  um_remove:            { pt:"Remover", en:"Remove", fr:"Supprimer", es:"Eliminar", nl:"Verwijderen" },
 }
 
 export default T
 
-// Helper to get translation
-export function t(key, lang = "pt") {
+// Helper to get translation.
+// Falls back to English for any language that does not define the key,
+// and finally to the key itself so missing entries are easy to spot.
+export function t(key, lang = FALLBACK_LANGUAGE) {
   const entry = T[key]
   if (!entry) return key
-  return entry[lang] || entry["en"] || key
+  return entry[lang] || entry[FALLBACK_LANGUAGE] || key
 }

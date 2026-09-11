@@ -41,6 +41,7 @@ function ShieldIcon() {
 
 // ─── Terms of Use modal ───────────────────────────────────────────────────
 function TermsModal({ onClose }) {
+  const { t } = useTranslation()
   return (
     <div
       onClick={onClose}
@@ -58,17 +59,17 @@ function TermsModal({ onClose }) {
           borderRadius: "16px", padding: "28px 30px", color: "rgba(255,255,255,0.85)",
         }}
       >
-        <h3 style={{ margin: "0 0 14px", fontSize: "16px", color: "#f59e0b" }}>Termos de Uso — VoltarisOS</h3>
+        <h3 style={{ margin: "0 0 14px", fontSize: "16px", color: "#f59e0b" }}>{t("auth_terms_title")}</h3>
         <div style={{ fontSize: "13px", lineHeight: 1.6, color: "rgba(255,255,255,0.7)" }}>
-          <p>Ao criar conta e utilizar o VoltarisOS ("Software") aceita, de forma vinculativa, que:</p>
+          <p>{t("auth_terms_intro")}</p>
           <ul style={{ paddingLeft: "18px" }}>
-            <li>O Software, incluindo código-fonte, algoritmos, interfaces e documentação, é propriedade exclusiva de VoltarisOS e protegido por direitos de autor (Diretiva 2009/24/CE, Convenção de Berna, TRIPS).</li>
-            <li>É <strong>expressamente proibido</strong>: copiar, distribuir, modificar, fazer engenharia reversa, descompilar, desmontar ou tentar extrair a lógica/algoritmos do Software.</li>
-            <li>O Software contém segredos comerciais confidenciais — não pode divulgar, partilhar ou reutilizar essa informação para fins não autorizados, mesmo tendo acesso legítimo em fase de teste (beta).</li>
-            <li>O acesso concedido durante o período beta é revogável a qualquer momento e não confere qualquer direito de propriedade ou licença permanente.</li>
-            <li>Qualquer violação destes termos pode resultar em revogação imediata de acesso e responsabilização civil.</li>
+            <li>{t("auth_terms_1")}</li>
+            <li>{t("auth_terms_2_pre")} <strong>{t("auth_terms_2_strong")}</strong>{t("auth_terms_2_post")}</li>
+            <li>{t("auth_terms_3")}</li>
+            <li>{t("auth_terms_4")}</li>
+            <li>{t("auth_terms_5")}</li>
           </ul>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "12px" }}>Texto integral: Licença de Software Proprietário VoltarisOS (documento legal completo disponível mediante pedido).</p>
+          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "12px" }}>{t("auth_terms_footer")}</p>
         </div>
         <button
           onClick={onClose}
@@ -78,7 +79,7 @@ function TermsModal({ onClose }) {
             border: "none", borderRadius: "10px", color: "#0a0f1a",
             fontWeight: "700", fontSize: "13px", cursor: "pointer",
           }}
-        >Fechar</button>
+        >{t("paywall_close")}</button>
       </div>
     </div>
   )
@@ -302,13 +303,13 @@ export default function Login({ onLogin }) {
         onLogin(res.data)
       } else {
         if (!termsAccepted) {
-          setError("Tens de aceitar os Termos de Uso para criar conta.")
+          setError(t("auth_accept_required"))
           setLoading(false)
           return
         }
         // If no valid beta code, plan is mandatory
         if (!inviteResult && !form.plan) {
-          setError("Seleciona um plano de subscrição para continuar.")
+          setError(t("auth_select_plan_err"))
           setLoading(false)
           return
         }
@@ -351,7 +352,7 @@ export default function Login({ onLogin }) {
         setForm(f => ({ ...f, role: res.data.roles[0] }))
       }
     } catch (e) {
-      setInviteError(e.response?.data?.detail || "Código inválido")
+      setInviteError(e.response?.data?.detail || t("auth_invalid_code"))
       setInviteResult(null)
     } finally {
       setInviteValidating(false)
@@ -422,13 +423,13 @@ export default function Login({ onLogin }) {
             color: "#fff", textAlign: "center", margin: "0 0 12px",
             lineHeight: 1.25, maxWidth: "420px",
           }}>
-            A Plataforma Inteligente para Ativos de Energia
+            {t("auth_hero_title")}
           </h1>
           <p style={{
             fontSize: "15px", color: "rgba(255,255,255,0.5)", textAlign: "center",
             margin: "0 0 40px", maxWidth: "380px", lineHeight: 1.5,
           }}>
-            Monitorização em tempo real, otimização por IA e trading autónomo para centrais elétricas virtuais.
+            {t("auth_hero_sub")}
           </p>
 
           {/* Security badge */}
@@ -441,8 +442,8 @@ export default function Login({ onLogin }) {
           }}>
             <span style={{ color: "#10b981", display: "flex" }}><ShieldIcon /></span>
             <div>
-              <div style={{ color: "#10b981", fontSize: "13px", fontWeight: "700", letterSpacing: "0.2px" }}>Segurança de Nível Empresarial</div>
-              <div style={{ color: "rgba(16,185,129,0.5)", fontSize: "11px", marginTop: "1px" }}>Encriptação AES-256 · RBAC · 2FA</div>
+              <div style={{ color: "#10b981", fontSize: "13px", fontWeight: "700", letterSpacing: "0.2px" }}>{t("auth_security_title")}</div>
+              <div style={{ color: "rgba(16,185,129,0.5)", fontSize: "11px", marginTop: "1px" }}>{t("auth_security_sub")}</div>
             </div>
           </div>
         </div>
@@ -481,10 +482,10 @@ export default function Login({ onLogin }) {
               fontSize: "26px", fontWeight: "800", letterSpacing: "-0.5px",
               color: "#0f172a", margin: "0 0 6px",
             }}>
-              Configura o teu workspace
+              {t("auth_setup_title")}
             </h2>
             <p style={{ fontSize: "14px", color: "#64748b", margin: 0 }}>
-              Preenche os dados para começar a usar o VoltarisOS.
+              {t("auth_setup_sub")}
             </p>
           </div>
 
@@ -495,11 +496,11 @@ export default function Login({ onLogin }) {
               letterSpacing: "0.5px", textTransform: "uppercase",
               color: inviteResult ? "#10b981" : inviteError ? "#ef4444" : "#334155",
             }}>
-              <LockIcon /> Código de Acesso
+              <LockIcon /> {t("auth_access_code")}
             </label>
             <div style={{ position: "relative" }}>
               <input
-                placeholder="Introduz o teu código de convite"
+                placeholder={t("auth_access_ph")}
                 value={form.beta_code}
                 onChange={e => handleBetaCodeChange(e.target.value)}
                 onFocus={() => setFocused("beta_code")}
@@ -531,8 +532,8 @@ export default function Login({ onLogin }) {
               }}>
                 <span style={{ fontSize: "16px" }}>🎯</span>
                 <div>
-                  <div style={{ color: "#059669", fontSize: "12px", fontWeight: "700" }}>Plano {inviteResult.label}</div>
-                  <div style={{ color: "#10b981", fontSize: "11px", marginTop: "2px" }}>Tier: {inviteResult.tier} · {inviteResult.roles?.length || 0} {inviteResult.roles?.length === 1 ? "tipo disponível" : "tipos disponíveis"}</div>
+                  <div style={{ color: "#059669", fontSize: "12px", fontWeight: "700" }}>{t("pay_plan")} {inviteResult.label}</div>
+                  <div style={{ color: "#10b981", fontSize: "11px", marginTop: "2px" }}>Tier: {inviteResult.tier} · {inviteResult.roles?.length || 0} {inviteResult.roles?.length === 1 ? t("auth_tier_type") : t("auth_tier_types")}</div>
                 </div>
               </div>
             )}
@@ -548,7 +549,7 @@ export default function Login({ onLogin }) {
             )}
             {!inviteResult && !inviteError && !inviteValidating && (
               <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "6px" }}>
-                Insere o código recebido para validar o teu plano.
+                {t("auth_invite_help")}
               </div>
             )}
           </div>
@@ -559,7 +560,7 @@ export default function Login({ onLogin }) {
               fontSize: "12px", fontWeight: "700", display: "block", marginBottom: "8px",
               letterSpacing: "0.5px", textTransform: "uppercase", color: "#334155",
             }}>
-              Plano Pretendido
+              {t("auth_plan_intended")}
             </label>
             {inviteResult ? (
               <div style={{
@@ -569,7 +570,7 @@ export default function Login({ onLogin }) {
               }}>
                 <span style={{ fontSize: "14px" }}>🎯</span>
                 <span style={{ color: "#059669", fontSize: "14px", fontWeight: "600" }}>
-                  Plano {inviteResult.label} — atribuído automaticamente
+                  {t("pay_plan")} {inviteResult.label} {t("auth_plan_assigned")}
                 </span>
               </div>
             ) : (
@@ -581,15 +582,15 @@ export default function Login({ onLogin }) {
                   onBlur={() => setFocused(null)}
                   style={{ ...lightInputStyle(focused === "plan"), cursor: "pointer" }}
                 >
-                  <option value="">Seleciona um plano...</option>
-                  <option value="home">Home — €69/mês (1 instalação)</option>
-                  <option value="smart">Smart — €149/mês (até 2 instalações + IA)</option>
-                  <option value="starter">Starter — €279/mês (até 5 instalações)</option>
-                  <option value="pro">Pro — €1.099/mês (até 20 instalações + IA Avançada)</option>
-                  <option value="enterprise">Enterprise — €3.999/mês (Instalações Ilimitadas)</option>
+                  <option value="">{t("auth_select_plan_opt")}</option>
+                  <option value="home">{t("auth_plan_home")}</option>
+                  <option value="smart">{t("auth_plan_smart")}</option>
+                  <option value="starter">{t("auth_plan_starter")}</option>
+                  <option value="pro">{t("auth_plan_pro")}</option>
+                  <option value="enterprise">{t("auth_plan_enterprise")}</option>
                 </select>
                 <div style={{ fontSize: "11px", color: "#94a3b8", marginTop: "6px" }}>
-                  Escolhe o plano que melhor se adapta às tuas necessidades.
+                  {t("auth_choose_plan_desc")}
                 </div>
               </div>
             )}
@@ -604,7 +605,7 @@ export default function Login({ onLogin }) {
               {t("auth_company_name")}
             </label>
             <input
-              placeholder="Ex: GreenVolt Energy"
+              placeholder={t("auth_company_ph")}
               value={form.company}
               onChange={e => setForm({ ...form, company: e.target.value })}
               onFocus={() => setFocused("company")}
@@ -644,7 +645,7 @@ export default function Login({ onLogin }) {
             <div style={{ position: "relative" }}>
               <input
                 type={showPass ? "text" : "password"}
-                placeholder="Mínimo 8 caracteres"
+                placeholder={t("auth_min_8")}
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
                 onFocus={() => setFocused("password")}
@@ -719,11 +720,11 @@ export default function Login({ onLogin }) {
               style={{ marginTop: "2px", accentColor: "#f59e0b", width: "16px", height: "16px", flexShrink: 0, cursor: "pointer" }}
             />
             <span>
-              Li e aceito os{" "}
+              {t("auth_accept_terms_pre")}{" "}
               <button type="button" onClick={(e) => { e.preventDefault(); setShowTerms(true) }}
                 style={{ background: "none", border: "none", padding: 0, color: "#d97706", textDecoration: "underline", cursor: "pointer", fontSize: "inherit", fontWeight: "600" }}
-              >Termos de Uso</button>
-              {" "}e reconheço que é proibida a engenharia reversa ou cópia do Software.
+              >{t("auth_terms_of_use")}</button>
+              {" "}{t("auth_accept_terms_post")}
             </span>
           </label>
 

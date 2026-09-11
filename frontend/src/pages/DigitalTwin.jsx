@@ -1,6 +1,7 @@
 import DemoNotice from "../components/DemoNotice";
 import { useEffect, useState } from "react"
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
+import { useTranslation } from "../i18n/useTranslation"
 
 function rand(min, max, d = 1) { return +(Math.random() * (max - min) + min).toFixed(d) }
 
@@ -83,6 +84,7 @@ const CT = ({ active, payload, label }) => {
 }
 
 export default function DigitalTwin({ user }) {
+  const { t } = useTranslation()
   const [site, setSite] = useState("rotterdam")
   const [data, setData] = useState({ solar: 156, load: 89, grid: 12, soc: 78, temp: 28, voltage: 48.2, current: 142 })
   const [ts, setTs] = useState(generateTwinData())
@@ -141,7 +143,7 @@ export default function DigitalTwin({ user }) {
           </div>
           <div>
             <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Digital Twin</h1>
-            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Espelho digital em tempo real · Simulação física do site</p>
+            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>{t("dt_sub")}</p>
           </div>
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
@@ -163,8 +165,8 @@ export default function DigitalTwin({ user }) {
         <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <div>
-              <div style={{ fontWeight: "700", fontSize: "14px" }}>Diagrama de Energia</div>
-              <div style={{ color: "var(--sub)", fontSize: "11px" }}>{SITES[site].name} · {SITES[site].capacity} · {SITES[site].panels} painéis</div>
+              <div style={{ fontWeight: "700", fontSize: "14px" }}>{t("dt_diagram")}</div>
+              <div style={{ color: "var(--sub)", fontSize: "11px" }}>{SITES[site].name} · {SITES[site].capacity} · {SITES[site].panels} {t("dt_panels")}</div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#4ade80" }}>
               <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", animation: "pulse 1.5s infinite" }} />
@@ -180,23 +182,23 @@ export default function DigitalTwin({ user }) {
 
             {/* Components */}
             <Component x={solar.x} y={solar.y} w={solar.w} h={solar.h} label="Solar PV" value={`${data.solar}`} unit="kW" color="#f59e0b" icon="☀" status="ok" />
-            <Component x={grid.x} y={grid.y} w={grid.w} h={grid.h} label="Rede Elétrica" value={`${data.grid}`} unit="kW" color="#60a5fa" icon="⚡" status="ok" />
-            <Component x={battery.x} y={battery.y} w={battery.w} h={battery.h} label="Bateria BESS" value={`${data.soc}%`} unit="SoC" color="#4ade80" icon="🔋" status={data.soc < 20 ? "warning" : "ok"} />
-            <Component x={load_.x} y={load_.y} w={load_.w} h={load_.h} label="Consumo" value={`${data.load}`} unit="kW" color="#a78bfa" icon="🏭" status="ok" />
+            <Component x={grid.x} y={grid.y} w={grid.w} h={grid.h} label={t("dt_grid")} value={`${data.grid}`} unit="kW" color="#60a5fa" icon="⚡" status="ok" />
+            <Component x={battery.x} y={battery.y} w={battery.w} h={battery.h} label={t("dt_battery")} value={`${data.soc}%`} unit="SoC" color="#4ade80" icon="🔋" status={data.soc < 20 ? "warning" : "ok"} />
+            <Component x={load_.x} y={load_.y} w={load_.w} h={load_.h} label={t("dt_consumption")} value={`${data.load}`} unit="kW" color="#a78bfa" icon="🏭" status="ok" />
           </svg>
         </div>
 
         {/* Live metrics */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
-            <div style={{ fontWeight: "700", fontSize: "13px", marginBottom: "12px" }}>Métricas Físicas</div>
+            <div style={{ fontWeight: "700", fontSize: "13px", marginBottom: "12px" }}>{t("dt_metrics")}</div>
             {[
-              { l: "Tensão DC", v: `${data.voltage} V`, c: "#f59e0b" },
-              { l: "Corrente", v: `${data.current} A`, c: "#60a5fa" },
-              { l: "Temperatura", v: `${data.temp}°C`, c: data.temp > 35 ? "#f87171" : "#4ade80" },
-              { l: "Frequência Rede", v: "50.02 Hz", c: "#a78bfa" },
+              { l: t("dt_voltage"), v: `${data.voltage} V`, c: "#f59e0b" },
+              { l: t("dt_current"), v: `${data.current} A`, c: "#60a5fa" },
+              { l: t("dt_temp"), v: `${data.temp}°C`, c: data.temp > 35 ? "#f87171" : "#4ade80" },
+              { l: t("dt_freq"), v: "50.02 Hz", c: "#a78bfa" },
               { l: "Power Factor", v: "0.98", c: "#34d399" },
-              { l: "Eficiência", v: "94.2%", c: color },
+              { l: t("dt_efficiency"), v: "94.2%", c: color },
             ].map(m => (
               <div key={m.l} style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", alignItems: "center" }}>
                 <span style={{ color: "var(--sub)", fontSize: "12px" }}>{m.l}</span>
@@ -205,8 +207,8 @@ export default function DigitalTwin({ user }) {
             ))}
           </div>
           <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)", flex: 1 }}>
-            <div style={{ fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>Previsão SoC</div>
-            <div style={{ color: "var(--sub)", fontSize: "10px", marginBottom: "10px" }}>próximas 24h</div>
+            <div style={{ fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>{t("dt_soc_forecast")}</div>
+            <div style={{ color: "var(--sub)", fontSize: "10px", marginBottom: "10px" }}>{t("dt_next_24h")}</div>
             {[15, 30, 60].map(min => {
               const projected = Math.min(100, Math.max(0, data.soc + (battCharging ? min * 0.08 : -min * 0.05)))
               return (
@@ -229,7 +231,7 @@ export default function DigitalTwin({ user }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
         {[
           { key: "solar", label: "Solar (kW)", color: "#f59e0b" },
-          { key: "load", label: "Consumo (kW)", color: "#a78bfa" },
+          { key: "load", label: `${t("dt_consumption")} (kW)`, color: "#a78bfa" },
           { key: "soc", label: "SoC (%)", color: "#4ade80" },
         ].map(c => (
           <div key={c.key} style={{ background: "var(--surface)", borderRadius: "14px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
