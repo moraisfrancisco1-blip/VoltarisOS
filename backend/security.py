@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from slowapi import Limiter
@@ -224,3 +224,96 @@ async def require_ingest_identity(creds: HTTPAuthorizationCredentials = Depends(
         return {"sub": "gateway", "role": "GATEWAY", "tenant_id": tenant_id}
 
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chave de serviço inválida")
+
+
+# ─── Volt Core service key (machine-to-machine, read-only, closed allowlist) ──
+# Lets the Volt Core agent-operations hub (a separate app) read a small, fixed
+# set of platform status endpoints without a human login or a stored admin
+# session/password. A distinct credential from user JWTs and from the device
+# GATEWAY_API_KEY(S) above — this key can never write, and never reaches
+# anything outside VOLT_CORE_SERVICE_ALLOWLIST below.
+#
+# Deliberately an ALLOWLIST, not a denylist: adding a new route to the app
+# later never grants this key access to it — only someone editing the set
+# below, on purpose, does. Enforced globally by VoltCoreServiceKeyMiddleware
+# (backend/main.py), which runs before routing, so a wrong key or a right key
+# used outside the allowlist gets a 403 no matter which route it's aimed at —
+# including write endpoints this module never touches.
+VOLT_CORE_SERVICE_HEADER = "x-volt-core-key"  # Starlette lowercases header names
+
+VOLT_CORE_SERVICE_ALLOWLIST = frozenset({
+    ("GET", "/api/admin/tenants"),
+    ("GET", "/api/admin/system-health"),
+    ("GET", "/api/admin/production-readiness"),
+    ("GET", "/api/alerts"),
+    ("GET", "/api/alert-rules"),
+})
+
+# Synthetic identity substituted for a JWT-derived user on the allowlisted
+# routes only. tenant_id=None reads as "no tenant filter" wherever routes
+# already treat SUPER_ADMIN's tenant_id=None that way (see _effective_tenant
+# in alerts_ws.py) — a platform-wide read view, matching /api/admin/tenants.
+VOLT_CORE_SERVICE_IDENTITY = {"sub": "volt-core-service", "role": "SERVICE_READONLY", "tenant_id": None}
+
+
+def _volt_core_key_matches(supplied: str) -> bool:
+    """Read the configured key fresh on every call (not cached at import time)
+    so rotating VOLT_CORE_SERVICE_KEY takes effect without a redeploy — same
+    reasoning as _load_gateway_keys() above."""
+    configured = os.environ.get("VOLT_CORE_SERVICE_KEY", "")
+    return bool(configured) and hmac.compare_digest(supplied, configured)
+
+
+def check_volt_core_service_key(method: str, path: str, supplied_key):
+    """Core allowlist check, shared by the middleware and (indirectly, via
+    request.state) the per-route dependencies below.
+
+    Returns:
+      - False — no key was supplied; caller must fall through to normal auth,
+        completely unchanged. This is the case for every request from real
+        users, always, since they never send this header.
+      - True  — key matches AND (method, path) is in the closed allowlist.
+    Raises HTTPException(403) for a wrong key, or a right key used outside
+    the allowlist — both are rejected outright, never silently falling back
+    to "please log in" (a 401), because that would misrepresent a scoping
+    violation as a missing credential.
+    """
+    if supplied_key is None:
+        return False
+    if not _volt_core_key_matches(supplied_key):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Chave de serviço inválida")
+    if (method, path) not in VOLT_CORE_SERVICE_ALLOWLIST:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Esta chave não tem acesso a este endpoint")
+    return True
+
+
+def _is_volt_core_service_request(request: Request) -> bool:
+    """True only when VoltCoreServiceKeyMiddleware already validated this
+    exact request (key + allowlist) and marked it on request.state. Routes
+    never re-derive trust from the header themselves."""
+    return getattr(request.state, "volt_core_service", False) is True
+
+
+async def get_current_user_or_service(
+    request: Request, creds: HTTPAuthorizationCredentials = Depends(_bearer)
+) -> dict:
+    """Drop-in replacement for Depends(get_current_user) on the two GET
+    endpoints (/api/alerts, /api/alert-rules) that accept the Volt Core
+    service key. Human traffic is completely unaffected: no header, no
+    change in behavior."""
+    if _is_volt_core_service_request(request):
+        return VOLT_CORE_SERVICE_IDENTITY
+    return await get_current_user(creds)
+
+
+async def require_super_admin_or_service(
+    request: Request, creds: HTTPAuthorizationCredentials = Depends(_bearer)
+) -> dict:
+    """Drop-in replacement for Depends(require_super_admin) on the three
+    SUPER_ADMIN-only GET endpoints the Volt Core key may read."""
+    if _is_volt_core_service_request(request):
+        return VOLT_CORE_SERVICE_IDENTITY
+    user = await get_current_user(creds)
+    if user.get("role") != "SUPER_ADMIN":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito ao Super Admin da plataforma")
+    return user

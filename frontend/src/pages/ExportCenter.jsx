@@ -7,7 +7,7 @@ const FORMATS = ["PDF", "CSV", "Excel", "JSON"]
 
 export default function ExportCenter({ user }) {
   const { t } = useTranslation()
-  const { addToast, addAuditEntry } = useAppStore()
+  const { addToast, addAuditEntry, simMode } = useAppStore()
   const color = user?.color || "#4ade80"
   const [format, setFormat] = useState("PDF")
   const [range, setRange] = useState("30d")
@@ -52,6 +52,18 @@ export default function ExportCenter({ user }) {
   })
 
   const anySelected = Object.values(selected).some(Boolean)
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "32px", maxWidth: "1000px" }}>
+        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Export Center</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          A exportação de relatórios ainda não gera ficheiros reais. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "32px", maxWidth: "1000px" }}>

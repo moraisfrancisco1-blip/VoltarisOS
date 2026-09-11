@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, PieChart, Pie
 } from "recharts";
 import DemoNotice from "../components/DemoNotice";
+import { useAppStore } from "../store/appStore";
 
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
@@ -53,6 +54,7 @@ const WATERFALL = [
 ];
 
 export default function InvestorView() {
+  const simMode = useAppStore(s => s.simMode);
   const [revenue] = useState(genRevenue());
   const [metrics, setMetrics] = useState({ totalCapex: 37000, portfolioIRR: 16.8, portfolioNPV: 16940, dscr: 1.58, payback: 6.4 });
 
@@ -75,6 +77,17 @@ export default function InvestorView() {
       return { ...w, base, abs: Math.abs(w.value) };
     });
   })();
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem métricas de investidor reais calculadas ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

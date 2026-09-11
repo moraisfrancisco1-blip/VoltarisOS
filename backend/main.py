@@ -64,7 +64,7 @@ from backend.routers.websocket import router as websocket_router
 from backend.routers.operations import router as operations_router
 from backend.security import get_current_user, limiter
 from backend.startup import validate_startup_config
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -185,6 +185,33 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+# ─── Volt Core Service Key Middleware ────────────────────────────────────────
+# Global gate for the read-only, machine-to-machine service key used by Volt
+# Core (see backend/security.py for the allowlist and key check). Runs before
+# routing so a wrong key, or a right key used outside its 5-endpoint allowlist,
+# is rejected with 403 no matter which route it's aimed at — write endpoints
+# and VPP dispatch/bid included — without editing those routes' own files.
+# Requests that don't carry the header are untouched and behave exactly as
+# before; this only ever activates for traffic that opts in via the header.
+from backend.security import VOLT_CORE_SERVICE_HEADER, check_volt_core_service_key
+from starlette.responses import JSONResponse
+
+
+class VoltCoreServiceKeyMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        supplied = request.headers.get(VOLT_CORE_SERVICE_HEADER)
+        if supplied is not None:
+            try:
+                check_volt_core_service_key(request.method, request.url.path, supplied)
+            except HTTPException as exc:
+                return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+            request.state.volt_core_service = True
+        return await call_next(request)
+
+
+app.add_middleware(VoltCoreServiceKeyMiddleware)
 
 # All data/business routers require a valid JWT — only /health, /api/auth/login and
 # /api/auth/register (defined inside auth.router without this dependency) stay public.

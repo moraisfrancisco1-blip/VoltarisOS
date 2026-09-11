@@ -6,13 +6,13 @@ Polls physical devices and pushes normalised readings to the VoltarisOS backend.
 
 | Protocol     | Library    | Notes |
 |-------------|-----------|-------|
-| SolarEdge API | httpx     | Cloud REST, read-only |
-| Fronius JSON  | httpx     | Local LAN |
-| Huawei FusionSolar | httpx | Local or cloud |
-| SMA Sunny Portal | httpx  | Local LAN |
+| SolarEdge API | httpx     | Cloud REST, read-only. power_kw/energy_kwh parsed. |
+| Fronius JSON  | httpx     | Local LAN. power_kw parsed from Body.Data.PAC.Value. |
 | Modbus TCP   | pymodbus   | SunSpec registers |
 | Modbus RTU   | pymodbus   | RS-485 serial |
 | OPC-UA       | asyncua    | Wind farm SCADAs |
+| Huawei FusionSolar | httpx | Connects and authenticates, but power_kw/energy_kwh are **not yet parsed** — only the raw payload is stored, so these readings are excluded from forecasting. Needs a confirmed real energy-flow payload before parsing (see docs/EQUIPMENT_ADAPTER_CONTRACT.md). |
+| SMA Sunny Portal | httpx  | Connects, but power_kw/energy_kwh are **not yet parsed** — same caveat as Huawei above. |
 
 ## Setup
 

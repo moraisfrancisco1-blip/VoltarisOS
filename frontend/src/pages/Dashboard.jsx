@@ -238,7 +238,8 @@ export default function Dashboard({ setPage }) {
             {siteRows.length === 0 ? (
               <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("dash_no_sites_short")}</div>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", minWidth: 640, borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                     {["Site", "Location", "Status", "Solar kW", "BESS kWh", "Devices", "Online", "Power kW"].map(h => (
@@ -263,6 +264,7 @@ export default function Dashboard({ setPage }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </>

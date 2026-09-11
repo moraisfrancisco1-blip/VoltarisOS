@@ -129,6 +129,43 @@ def create_site(site: Site, user: dict = Depends(get_current_user), db: Session 
     return db_site
 
 
+class SiteUpdate(BaseModel):
+    """Partial update — every field optional, only provided ones are changed."""
+    name: Optional[str] = None
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    timezone: Optional[str] = None
+    solar_kw: Optional[float] = None
+    battery_kwh: Optional[float] = None
+    ev_chargers: Optional[int] = None
+    owner: Optional[str] = None
+    status: Optional[str] = None
+
+    @field_validator("timezone")
+    @classmethod
+    def validate_timezone(cls, v):
+        if v is None or v == "":
+            return v
+        try:
+            from zoneinfo import ZoneInfo
+            ZoneInfo(v)
+        except Exception:
+            raise ValueError(f"Invalid IANA timezone: {v!r}")
+        return v
+
+
+@router.patch("/sites/{site_id}", response_model=SiteOut)
+def update_site(site_id: int, patch: SiteUpdate, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Partially update a site. Same ownership rules as delete: tenant-scoped, 404 no-leak."""
+    site = _get_owned_site(db, site_id, user)
+    for field, value in patch.model_dump(exclude_unset=True).items():
+        setattr(site, field, value)
+    db.commit()
+    db.refresh(site)
+    return site
+
+
 @router.delete("/sites/{site_id}")
 def delete_site(site_id: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete a site. Users can only delete their own tenant's sites (404 no-leak)."""

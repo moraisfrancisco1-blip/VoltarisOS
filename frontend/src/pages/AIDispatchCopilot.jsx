@@ -175,7 +175,7 @@ function riskBadge(risk) {
 }
 
 export default function AIDispatchCopilot() {
-  const { color } = useAppStore()
+  const { color, simMode } = useAppStore()
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -222,6 +222,17 @@ export default function AIDispatchCopilot() {
   function cancel() {
     setMessages(prev => [...prev, { role: "system", text: "Command cancelled.", type: "cancelled" }])
     setPendingAction(null)
+  }
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
+          O Copiloto de Despacho ainda não está ligado a ações reais. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
   }
 
   return (

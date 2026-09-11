@@ -108,15 +108,25 @@ async def _poll_http_vendor(protocol: str, config: dict):
         return DeviceReading(power_kw=power_kw, raw=body)
 
     elif protocol == "sma":
+        # NOTE: connects and stores the raw response, but does not parse
+        # power_kw/energy_kwh — Sunny Portal's getDashValues.json schema
+        # varies by device/firmware and hasn't been confirmed against a
+        # real unit. Do not add key guesses here; readings from this
+        # protocol are excluded from forecasting until it's implemented
+        # against a verified payload (see docs/EQUIPMENT_ADAPTER_CONTRACT.md).
         url = f"https://{host}/dyn/getDashValues.json"
         async with httpx.AsyncClient(timeout=8, verify=False) as c:
             r = await c.post(url, json={"destDev": []})
             r.raise_for_status()
             body = r.json()
+        logger.warning("SMA connector stores raw payload only; power_kw/energy_kwh are not parsed yet")
         return DeviceReading(raw=body)
 
     elif protocol == "huawei":
-        # Huawei FusionSolar — login then get real-time data
+        # Huawei FusionSolar — login then get real-time data.
+        # NOTE: same caveat as SMA above — power_kw/energy_kwh are not
+        # extracted from the energy-flow response yet; confirm the real
+        # payload shape before parsing it.
         token = config.get("token")
         plant_id = config.get("plant_id")
         if not token or not plant_id:
@@ -127,6 +137,7 @@ async def _poll_http_vendor(protocol: str, config: dict):
             r = await c.get(url)
             r.raise_for_status()
             body = r.json()
+        logger.warning("Huawei connector stores raw payload only; power_kw/energy_kwh are not parsed yet")
         return DeviceReading(raw=body)
 
     return None

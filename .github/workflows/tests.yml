@@ -3,15 +3,21 @@ name: VoltarisOS Tests
 on:
   push:
     branches:
+      - main
       - master
       - "codex/**"
   pull_request:
     branches:
+      - main
       - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-only-secret-key-not-for-production
+      DATABASE_URL: sqlite:///./ci_test.db
+      ENVIRONMENT: development
 
     steps:
       - name: Checkout
@@ -29,8 +35,8 @@ jobs:
       - name: Compile VPP router
         run: python -m py_compile backend/routers/vpp.py
 
-      - name: Run VPP optimizer, control and simulation tests
-        run: python -m pytest -q optimization/test_multi_asset_optimizer.py control/test_dispatch_executor.py simulation/test_flexible_assets.py simulation/test_economic_consistency.py simulation/scenarios/test_mixed_vpp_24h.py
+      - name: Run full test suite (backend, forecasting, optimization, simulation, control, gateway)
+        run: python -m pytest -q backend forecasting optimization simulation control gateway
 
       - name: Prepare artifacts directory
         run: mkdir -p artifacts

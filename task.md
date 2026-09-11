@@ -7,30 +7,22 @@
 - CORS restricted to production domain
 - Frontend axios/fetch interceptor auto-attaches token
 
-## This round — 6 points before beta testers
-1. [DONE] Change-password endpoint added (/api/auth/change-password) — need to actually
-   change admin123 password via this endpoint once deployed, or tell user to do it in UI
-2. [DONE] Rate limiting via slowapi — shared `limiter` instance in backend/security.py,
-   imported in main.py (app.state.limiter) and auth.py (@limiter.limit decorators)
-   - register: 5/minute, login: 10/minute
-3. [IN PROGRESS] /api/alerts/fire — was fully public, now needs require_gateway_key
-   dependency (GATEWAY_API_KEY env var, fail-closed if not set). Added helper in
-   security.py. STILL NEED: apply Depends(require_gateway_key) to the fire_alert route
-   in alerts_ws.py, and generate+tell user the GATEWAY_API_KEY value for Railway.
-4. [TODO] Copilot fallback responses are fake/static but don't disclose it — add
-   a `"simulated": true` flag in response + a visible note in the fallback text.
-5. [TODO] React ErrorBoundary — wrap App in an error boundary component so one
-   crashing page doesn't white-screen the whole app.
-6. [TODO] WebSocket /ws/alerts accepts token=="demo" as valid → returns tenant "1".
-   Remove that shortcut, require real JWT always (except maybe explicit dev flag).
+## This round — 6 points before beta testers (verified 2026-09-01, all resolved)
+1. [DONE] Change-password endpoint added (/api/auth/change-password).
+   ACTION STILL NEEDED FROM USER: confirm the default admin123 password
+   was actually changed via this endpoint/UI on the production account.
+2. [DONE] Rate limiting via slowapi — register: 5/minute, login: 10/minute.
+3. [DONE] /api/alerts/fire protected by Depends(require_gateway_key) in
+   alerts_ws.py (fails closed with 503 if GATEWAY_API_KEY is unset, 401 on
+   a wrong key).
+4. [DONE] Copilot fallback responses set "simulated": true and "model":
+   "fallback" in the API response, plus a visible "⚠️ Dados simulados"
+   prefix in the fallback text itself (backend/routers/copilot.py).
+5. [DONE] React ErrorBoundary wraps <App /> in frontend/src/main.jsx.
+6. [DONE] No "demo" token bypass exists in backend/routers/websocket.py or
+   alerts_ws.py — all three WS endpoints require a real JWT via
+   decode_token() and close with code 4001 on failure.
 
-## Next steps
-- Finish alerts_ws.py fire_alert protection
-- Copilot honesty flag
-- ErrorBoundary component
-- Remove "demo" WS bypass
-- pip install slowapi already done locally; added to requirements.txt
-- Test locally (spin up on a free port, curl all critical paths, rate-limit test)
-- Build frontend, commit, push (token already in .env.github, remote already configured with it)
-- Give user: GATEWAY_API_KEY value + reminder to set SECRET_KEY, GATEWAY_API_KEY in Railway
-- Tell user to change admin password via new endpoint or ask them to pick one now
+All 6 points confirmed complete by reading the current code on `main`.
+This file is kept as a record; no further action needed here except the
+admin password check in point 1.

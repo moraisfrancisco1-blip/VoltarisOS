@@ -132,7 +132,7 @@ const HISTORY = Array.from({ length: 24 }, (_, i) => ({
 }))
 
 export default function GridResilienceScore() {
-  const { color } = useAppStore()
+  const { color, simMode } = useAppStore()
   const [sites, setSites] = useState(MOCK_SITES)
   const [selected, setSelected] = useState(MOCK_SITES[0])
   const [tick, setTick] = useState(0)
@@ -163,6 +163,18 @@ export default function GridResilienceScore() {
   const degraded = sites.filter(s => s.score >= 40 && s.score < 60).length
 
   const fleetColor = scoreColor(avgScore)
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: "700", color: "var(--text)", margin: 0 }}>Grid Resilience Score</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
+          Sem dados reais de resiliência ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>

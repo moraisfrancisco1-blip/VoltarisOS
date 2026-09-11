@@ -5,6 +5,7 @@ pandas
 pyomo
 pulp[cbc]
 pytest
+pytest-asyncio
 sqlalchemy
 pydantic
 scipy
@@ -19,3 +20,5 @@ bcrypt
 slowapi
 stripe
 pyotp
+redis
+celery

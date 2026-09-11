@@ -1,5 +1,6 @@
 import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react";
+import { useAppStore } from "../store/appStore";
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line, ComposedChart,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Legend, Cell
@@ -49,6 +50,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const MARKET_TABS = ["FCR", "aFRR", "mFRR", "TERRE", "imFRR"];
 
 export default function GridServices() {
+  const simMode = useAppStore(s => s.simMode);
   const [services, setServices] = useState({
     fcr: true, afrr: true, mfrr: false, peakShave: true,
     spinReserve: false, curtailment: true, voltageReg: false, blackStart: false,
@@ -146,6 +148,17 @@ export default function GridServices() {
 
   const todayRevenue = { fcr: 20.20, afrr: 22.80, dr: 31.50, peakshave: 8.20, curtailment: 4.50 };
   const totalRevenue = Object.values(todayRevenue).reduce((a, b) => a + b, 0).toFixed(2);
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+          Sem serviços de rede reais ligados ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>

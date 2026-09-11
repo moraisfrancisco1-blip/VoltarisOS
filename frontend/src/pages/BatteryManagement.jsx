@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { C, PremiumTooltip, axisStyle, gridStyle, glassCard } from "../components/ChartTheme";
 import DemoNotice from "../components/DemoNotice";
+import { useAppStore } from "../store/appStore";
 
 const accent = C.accent;
 const green  = C.green;
@@ -110,6 +111,7 @@ function TempGauge({ value, max = 60 }) {
 }
 
 export default function BatteryManagement() {
+  const simMode = useAppStore(s => s.simMode);
   const [selected, setSelected] = useState(0);
   const [tab, setTab] = useState("Overview");
   const [filter, setFilter] = useState("All");
@@ -179,6 +181,17 @@ export default function BatteryManagement() {
       id: row * 12 + col,
     }))
   );
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "transparent" }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 6, color: "#fff", letterSpacing: -0.5 }}>Battery Energy Storage System</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13, ...card2 }}>
+          Sem BESS reais ligados ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "transparent" }}>

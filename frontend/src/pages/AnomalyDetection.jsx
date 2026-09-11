@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, Cell
 } from "recharts"
 import DemoNotice from "../components/DemoNotice"
+import { useAppStore } from "../store/appStore"
 
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b"
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa"
@@ -139,6 +140,7 @@ const TYPE_BREAKDOWN = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AnomalyDetection({ setPage }) {
+  const simMode = useAppStore(s => s.simMode)
   const [feed, setFeed] = useState(genFeed)
   const [heatAnoms, setHeatAnoms] = useState(genHeatmapAnomalies)
   const [trend] = useState(genTrendData)
@@ -177,6 +179,18 @@ export default function AnomalyDetection({ setPage }) {
   const filteredFeed = selectedSev === "all" ? feed : feed.filter(x => x.sev === selectedSev)
   const sevCounts = { critical: 0, high: 0, medium: 0, low: 0 }
   feed.forEach(x => { if (sevCounts[x.sev] !== undefined) sevCounts[x.sev]++ })
+
+  if (!simMode) {
+    return (
+      <div style={{ padding: 24, maxWidth: 1400 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Anomaly Detection</h1>
+        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
+          Sem deteção de anomalias real ligada ainda. Ativa o modo Simulação (SIM, no topo) para veres uma pré-visualização com dados de exemplo.
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 18, maxWidth: 1400 }}>
