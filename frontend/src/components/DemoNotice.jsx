@@ -1,4 +1,8 @@
-export default function DemoNotice({ children = "Demo mode — alguns dados desta página são simulados e não representam operações reais." }) {
+import { useTranslation } from "../i18n/useTranslation"
+
+export default function DemoNotice({ children }) {
+  const { t } = useTranslation()
+  const text = children || t("demo_notice")
   return (
     <div style={{
       padding: "10px 14px", borderRadius: 10, marginBottom: 16,
@@ -7,7 +11,7 @@ export default function DemoNotice({ children = "Demo mode — alguns dados dest
       display: "flex", alignItems: "center", gap: 8,
     }}>
       <span style={{ fontSize: 14 }}>🧪</span>
-      <span>{children}</span>
+      <span>{text}</span>
     </div>
   );
 }

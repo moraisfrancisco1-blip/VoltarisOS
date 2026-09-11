@@ -133,22 +133,24 @@ export const PLAN_NAMES = {
 }
 
 // Plan prices (for Paywall modal)
+// Values are i18n keys resolved at render time via t().
 export const PLAN_PRICES = {
-  home: "€69/mês",
-  smart: "€149/mês",
-  starter: "€279/mês",
-  pro: "€1.099/mês",
-  enterprise: "€3.999/mês",
+  home: "plan_price_home",
+  smart: "plan_price_smart",
+  starter: "plan_price_starter",
+  pro: "plan_price_pro",
+  enterprise: "plan_price_enterprise",
 }
 
 // Plan descriptions
+// Values are i18n keys resolved at render time via t().
 export const PLAN_DESCRIPTIONS = {
-  beta: "Acesso completo a todos os módulos durante o período beta.",
-  home: "Monitorização essencial para 1 instalação residencial.",
-  smart: "Otimização IA e arbitragem para até 2 instalações.",
-  starter: "Trading, previsões e operações para até 5 sites.",
-  pro: "IA avançada, copiloto e autonomia para portfolios de até 20 sites.",
-  enterprise: "Whitelabel, API, auditoria e gestão empresarial ilimitada.",
+  beta: "plan_desc_cfg_beta",
+  home: "plan_desc_cfg_home",
+  smart: "plan_desc_cfg_smart",
+  starter: "plan_desc_cfg_starter",
+  pro: "plan_desc_cfg_pro",
+  enterprise: "plan_desc_cfg_enterprise",
 }
 
 /**
@@ -199,7 +201,7 @@ export function getPaywallInfo(pageId) {
   return {
     requiredPlan,
     requiredPlanName: PLAN_NAMES[requiredPlan] || requiredPlan,
-    requiredPlanPrice: PLAN_PRICES[requiredPlan] || "Sob consulta",
+    requiredPlanPrice: PLAN_PRICES[requiredPlan] || "plan_price_on_request",
     requiredPlanDescription: PLAN_DESCRIPTIONS[requiredPlan] || "",
     moduleKey,
   }

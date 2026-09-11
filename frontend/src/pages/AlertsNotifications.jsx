@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { C, glassCard } from "../components/ChartTheme";
+import { useTranslation } from "../i18n/useTranslation";
 
 const accent = C.indigo;
 const API = import.meta.env.VITE_API_URL || "";
@@ -37,6 +38,7 @@ function InputField({ label: lb, value, onChange, type = "text", options, unit }
 }
 
 export default function AlertsNotifications() {
+  const { t } = useTranslation();
   const [alerts, setAlerts] = useState([]);
   const [rules, setRules] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -60,7 +62,7 @@ export default function AlertsNotifications() {
       const data = await res.json();
       setAlerts(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError("Não foi possível carregar os alertas.");
+      setError(t("alerts_load_error"));
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ export default function AlertsNotifications() {
       const data = await res.json();
       setRules(Array.isArray(data) ? data : []);
     } catch (e) {
-      setRulesError("Não foi possível carregar as regras de alerta.");
+      setRulesError(t("alerts_err_rules_load"));
     } finally {
       setRulesLoading(false);
     }
@@ -94,7 +96,7 @@ export default function AlertsNotifications() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await loadAlerts();
     } catch (e) {
-      setError("Não foi possível reconhecer o alerta.");
+      setError(t("alerts_err_ack"));
     } finally {
       setAckingId(null);
     }
@@ -107,12 +109,12 @@ export default function AlertsNotifications() {
       await Promise.all(unacked.map(a => fetch(`${API}/api/alerts/${a.id}/ack?by=user`, { method: "POST" })));
       await loadAlerts();
     } catch (e) {
-      setError("Não foi possível reconhecer os alertas.");
+      setError(t("alerts_err_ack_all"));
     }
   };
 
   const createRule = async () => {
-    if (!ruleForm.name || !ruleForm.metric) { setFormError("Nome e métrica são obrigatórios."); return; }
+    if (!ruleForm.name || !ruleForm.metric) { setFormError(t("alerts_err_required")); return; }
     setSaving(true);
     setFormError(null);
     try {
@@ -136,7 +138,7 @@ export default function AlertsNotifications() {
       setRuleForm({ ...BLANK_RULE });
       await loadRules();
     } catch (e) {
-      setFormError(e.message || "Erro ao criar a regra.");
+      setFormError(e.message || t("alerts_err_create"));
     } finally {
       setSaving(false);
     }
@@ -150,7 +152,7 @@ export default function AlertsNotifications() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await loadRules();
     } catch (e) {
-      setRulesError("Não foi possível apagar a regra.");
+      setRulesError(t("alerts_err_rule_del"));
     } finally {
       setDeletingRuleId(null);
     }
@@ -166,8 +168,8 @@ export default function AlertsNotifications() {
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8, color: "var(--text)" }}>Alerts & Notifications</h1>
-          <p style={{ color: "var(--sub)", margin: 0 }}>Active alerts and alert rules</p>
+          <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 8, color: "var(--text)" }}>{t("alerts_title")}</h1>
+          <p style={{ color: "var(--sub)", margin: 0 }}>{t("alerts_sub")}</p>
         </div>
         {unacked > 0 && (
           <div style={{
@@ -175,7 +177,7 @@ export default function AlertsNotifications() {
             borderRadius: 10, padding: "10px 18px", fontSize: 13, color: C.red,
             boxShadow: `0 0 16px ${C.red}22`, fontWeight: 600,
           }}>
-            ⚠ {unacked} unacknowledged alert{unacked > 1 ? "s" : ""}
+            ⚠ {unacked} {t("alerts_unack")}
           </div>
         )}
       </div>
@@ -193,15 +195,15 @@ export default function AlertsNotifications() {
         background: "var(--surface2)", borderRadius: 10, padding: 4,
         width: "fit-content", border: "1px solid rgba(255,255,255,0.12)"
       }}>
-        {["active", "rules"].map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            background: tab === t ? accent : "transparent",
-            color: tab === t ? "#fff" : "rgba(148,163,184,0.85)",
+        {["active", "rules"].map(tabKey => (
+          <button key={tabKey} onClick={() => setTab(tabKey)} style={{
+            background: tab === tabKey ? accent : "transparent",
+            color: tab === tabKey ? "#fff" : "rgba(148,163,184,0.85)",
             border: "none", borderRadius: 8, padding: "8px 20px", cursor: "pointer", fontSize: 13, fontWeight: 500,
             textTransform: "capitalize",
-            boxShadow: tab === t ? `0 0 12px ${accent}55` : "none",
+            boxShadow: tab === tabKey ? `0 0 12px ${accent}55` : "none",
             transition: "all 0.15s",
-          }}>{t === "rules" ? "Alert Rules" : t}</button>
+          }}>{tabKey === "rules" ? t("alerts_tab_rules") : t("alerts_tab_active")}</button>
         ))}
       </div>
 
@@ -222,7 +224,7 @@ export default function AlertsNotifications() {
                   textTransform: "capitalize",
                   boxShadow: active && ts.glow ? ts.glow : "none",
                 }}>
-                  {f} ({count})
+                  {t(f === "all" ? "alerts_filter_all" : f === "critical" ? "alerts_filter_critical" : f === "warning" ? "alerts_filter_warning" : "alerts_filter_info")} ({count})
                 </button>
               );
             })}
@@ -230,20 +232,20 @@ export default function AlertsNotifications() {
               marginLeft: "auto", background: `${C.green}18`, color: C.green,
               border: `1px solid ${C.green}44`, borderRadius: 8, padding: "6px 16px",
               cursor: "pointer", fontSize: 13, boxShadow: `0 0 10px ${C.green}22`, opacity: unacked === 0 ? 0.5 : 1,
-            }}>Acknowledge All</button>
+            }}>{t("alerts_ack_all")}</button>
           </div>
 
           {loading ? (
-            <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>Carregando alertas…</div>
+            <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>{t("alerts_loading")}</div>
           ) : error && alerts.length === 0 ? (
-            <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>Não foi possível carregar os alertas.</div>
+            <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>{t("alerts_load_error")}</div>
           ) : alerts.length === 0 ? (
-            <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>Sem alertas.</div>
+            <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>{t("alerts_empty")}</div>
           ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filtered.length === 0 && (
               <div style={{ ...glassCard(C.indigo), textAlign: "center", color: "var(--sub)", padding: 40 }}>
-                No alerts in this category
+                {t("alerts_none_category")}
               </div>
             )}
             {filtered.map(alert => {
@@ -267,11 +269,11 @@ export default function AlertsNotifications() {
                           }}>
                             {alert.severity}
                           </span>
-                          {alert.acknowledged && <span style={{ fontSize: 11, color: "var(--sub)", marginLeft: 8 }}>acknowledged</span>}
+                          {alert.acknowledged && <span style={{ fontSize: 11, color: "var(--sub)", marginLeft: 8 }}>{t("alerts_acknowledged")}</span>}
                         </div>
                         <div style={{ fontSize: 13, color: "var(--sub)" }}>{alert.message}</div>
                         <div style={{ fontSize: 11, color: "rgba(148,163,184,0.45)", marginTop: 4 }}>
-                          {alert.device_name ? `Device: ${alert.device_name}` : ""} · {fmtTime(alert.fired_at)}
+                          {alert.device_name ? `${t("alerts_device")}: ${alert.device_name}` : ""} · {fmtTime(alert.fired_at)}
                         </div>
                       </div>
                     </div>
@@ -281,7 +283,7 @@ export default function AlertsNotifications() {
                           background: `${C.green}18`, color: C.green,
                           border: `1px solid ${C.green}44`, borderRadius: 6, padding: "5px 12px",
                           cursor: "pointer", fontSize: 12, boxShadow: `0 0 8px ${C.green}22`, opacity: ackingId === alert.id ? 0.6 : 1,
-                        }}>{ackingId === alert.id ? "…" : "Ack"}</button>
+                        }}>{ackingId === alert.id ? "…" : t("alerts_ack")}</button>
                       )}
                     </div>
                   </div>
@@ -297,17 +299,17 @@ export default function AlertsNotifications() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           {/* Rules list */}
           <div style={glassCard(C.indigo)}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text)" }}>Alert Rules</h2>
-            <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 16 }}>When a reading matches a rule, an alert fires.</p>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text)" }}>{t("alerts_rules_title")}</h2>
+            <p style={{ color: "var(--sub)", fontSize: 12, marginBottom: 16 }}>{t("alerts_rules_sub")}</p>
             {rulesError && (
               <div style={{ padding: 10, borderRadius: 8, background: "#ef444418", border: "1px solid #ef4444", color: C.red, fontSize: 12, marginBottom: 12 }}>
                 {rulesError}
               </div>
             )}
             {rulesLoading ? (
-              <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Carregando regras…</div>
+              <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("alerts_rules_loading")}</div>
             ) : rules.length === 0 ? (
-              <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Sem regras de alerta.</div>
+              <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("alerts_rules_empty")}</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {rules.map(rule => (
@@ -319,13 +321,13 @@ export default function AlertsNotifications() {
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{rule.name}</div>
                       <div style={{ fontSize: 11, color: "var(--sub)" }}>
-                        {rule.metric} {rule.operator} {rule.threshold ?? "—"} · {rule.severity} · {rule.enabled ? "enabled" : "disabled"}
+                        {rule.metric} {rule.operator} {rule.threshold ?? "—"} · {rule.severity} · {rule.enabled ? t("alerts_enabled") : t("alerts_disabled")}
                       </div>
                     </div>
                     <button onClick={() => deleteRule(rule.id)} disabled={deletingRuleId === rule.id} style={{
                       padding: "4px 10px", background: "#ef444415", border: "1px solid #ef4444", borderRadius: 6,
                       color: C.red, fontSize: 11, cursor: "pointer", opacity: deletingRuleId === rule.id ? 0.6 : 1,
-                    }}>{deletingRuleId === rule.id ? "…" : "Del"}</button>
+                    }}>{deletingRuleId === rule.id ? "…" : t("alerts_del")}</button>
                   </div>
                 ))}
               </div>
@@ -334,13 +336,13 @@ export default function AlertsNotifications() {
 
           {/* Create rule */}
           <div style={glassCard(C.blue)}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text)" }}>Add Rule</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text)" }}>{t("alerts_add_rule")}</h2>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
-              <InputField label="Name" value={ruleForm.name} onChange={f("name")} />
-              <InputField label="Metric" value={ruleForm.metric} onChange={f("metric")} />
-              <InputField label="Operator" value={ruleForm.operator} onChange={f("operator")} options={OPERATORS} />
-              <InputField label="Threshold" value={ruleForm.threshold} onChange={f("threshold")} type="number" />
-              <InputField label="Severity" value={ruleForm.severity} onChange={f("severity")} options={SEVERITIES} />
+              <InputField label={t("alerts_field_name")} value={ruleForm.name} onChange={f("name")} />
+              <InputField label={t("alerts_field_metric")} value={ruleForm.metric} onChange={f("metric")} />
+              <InputField label={t("alerts_field_operator")} value={ruleForm.operator} onChange={f("operator")} options={OPERATORS} />
+              <InputField label={t("alerts_field_threshold")} value={ruleForm.threshold} onChange={f("threshold")} type="number" />
+              <InputField label={t("alerts_field_severity")} value={ruleForm.severity} onChange={f("severity")} options={SEVERITIES} />
             </div>
             {formError && (
               <div style={{ padding: 10, borderRadius: 8, background: "#ef444418", border: "1px solid #ef4444", color: C.red, fontSize: 12, marginBottom: 12 }}>
@@ -350,7 +352,7 @@ export default function AlertsNotifications() {
             <button onClick={createRule} disabled={saving} style={{
               background: accent, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px",
               cursor: "pointer", fontSize: 13, boxShadow: `0 0 16px ${accent}55`, fontWeight: 600, opacity: saving ? 0.6 : 1,
-            }}>{saving ? "A criar…" : "Create Rule"}</button>
+            }}>{saving ? t("alerts_creating") : t("alerts_create_rule")}</button>
           </div>
         </div>
       )}

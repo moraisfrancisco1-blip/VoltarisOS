@@ -49,6 +49,7 @@ import ShortcutsOverlay from "./components/ShortcutsOverlay"
 import SimBanner from "./components/SimBanner"
 import OnboardingWizard from "./components/OnboardingWizard"
 import { useAppStore, THEMES } from "./store/appStore"
+import { LANG_STORAGE_KEY } from "./i18n/translations"
 import { canAccessPage, isSuperAdmin } from "./config/roleAccess"
 import { canAccessPlanFeature } from "./config/planFeatureGates"
 import "./index.css"
@@ -284,7 +285,14 @@ export default function App() {
     return token ? { token, company, color, role, plan, allowed_modules } : null
   })
 
-  const handleLogout = () => { localStorage.clear(); setUser(null) }
+  // Preserve the explicit language preference across logout / session clears,
+  // so the user's chosen language survives logout, refresh and future visits.
+  const handleLogout = () => {
+    const lang = localStorage.getItem(LANG_STORAGE_KEY) || useAppStore.getState().language
+    localStorage.clear()
+    if (lang) localStorage.setItem(LANG_STORAGE_KEY, lang)
+    setUser(null)
+  }
 
   return (
     <BrowserRouter>

@@ -1,41 +1,43 @@
 import { useEffect, useState, useRef } from "react"
 import { useAppStore } from "../store/appStore"
+import { useTranslation } from "../i18n/useTranslation"
 
 const ALL_PAGES = [
-  { id: "dashboard", label: "Dashboard", group: "Core", icon: "⊞" },
-  { id: "sites", label: "Sites", group: "Core", icon: "📍" },
-  { id: "map", label: "Map View", group: "Core", icon: "🗺" },
-  { id: "fleet", label: "Fleet Management", group: "Core", icon: "🏭" },
-  { id: "twin", label: "Digital Twin", group: "Core", icon: "🔁" },
-  { id: "battery", label: "Battery BMS", group: "Energy", icon: "🔋" },
-  { id: "ev", label: "EV Charging", group: "Energy", icon: "⚡" },
-  { id: "grid", label: "Grid Services", group: "Energy", icon: "⚙" },
-  { id: "carbon", label: "Carbon Dashboard", group: "Energy", icon: "🌱" },
-  { id: "trading", label: "Trading", group: "Markets", icon: "📈" },
-  { id: "autonomous", label: "AI Trading Agent", group: "Markets", icon: "🤖" },
-  { id: "forecasting", label: "Forecasting", group: "Markets", icon: "☀" },
-  { id: "alerts", label: "Alerts", group: "Operations", icon: "🔔" },
-  { id: "maintenance", label: "Predictive Maintenance", group: "Operations", icon: "🔧" },
-  { id: "reports", label: "Reports", group: "Operations", icon: "📄" },
-  { id: "investor", label: "Investor View", group: "Operations", icon: "💰" },
-  { id: "users", label: "User Management", group: "Admin", icon: "👥" },
-  { id: "settings", label: "Settings", group: "Admin", icon: "⚙" },
-  { id: "whitelabel", label: "white-label", group: "Admin", icon: "🎨" },
-  { id: "audit", label: "Audit Log", group: "Admin", icon: "📋" },
-  { id: "apikeys", label: "API Keys", group: "Admin", icon: "🔑" },
-  { id: "export", label: "Export Center", group: "Admin", icon: "⬇" },
+  { id: "dashboard", labelKey: "page_dashboard", groupKey: "nav_core", icon: "⊞" },
+  { id: "sites", labelKey: "page_sites", groupKey: "nav_core", icon: "📍" },
+  { id: "map", labelKey: "page_map", groupKey: "nav_core", icon: "🗺" },
+  { id: "fleet", labelKey: "page_fleet", groupKey: "nav_core", icon: "🏭" },
+  { id: "twin", labelKey: "page_twin", groupKey: "nav_core", icon: "🔁" },
+  { id: "battery", labelKey: "page_battery", groupKey: "nav_energy", icon: "🔋" },
+  { id: "ev", labelKey: "page_ev", groupKey: "nav_energy", icon: "⚡" },
+  { id: "grid", labelKey: "page_grid", groupKey: "nav_energy", icon: "⚙" },
+  { id: "carbon", labelKey: "page_carbon", groupKey: "nav_energy", icon: "🌱" },
+  { id: "trading", labelKey: "page_trading", groupKey: "nav_markets", icon: "📈" },
+  { id: "autonomous", labelKey: "page_autonomous", groupKey: "nav_markets", icon: "🤖" },
+  { id: "forecasting", labelKey: "page_forecasting", groupKey: "nav_markets", icon: "☀" },
+  { id: "alerts", labelKey: "page_alerts", groupKey: "nav_operations", icon: "🔔" },
+  { id: "maintenance", labelKey: "page_maintenance", groupKey: "nav_operations", icon: "🔧" },
+  { id: "reports", labelKey: "page_reports", groupKey: "nav_operations", icon: "📄" },
+  { id: "investor", labelKey: "page_investor", groupKey: "nav_operations", icon: "💰" },
+  { id: "users", labelKey: "page_users", groupKey: "nav_admin", icon: "👥" },
+  { id: "settings", labelKey: "page_settings", groupKey: "nav_admin", icon: "⚙" },
+  { id: "whitelabel", labelKey: "page_whitelabel", groupKey: "nav_admin", icon: "🎨" },
+  { id: "audit", labelKey: "page_audit", groupKey: "nav_admin", icon: "📋" },
+  { id: "apikeys", labelKey: "page_apikeys", groupKey: "nav_admin", icon: "🔑" },
+  { id: "export", labelKey: "page_export", groupKey: "nav_admin", icon: "⬇" },
 ]
 
 const ACTIONS = [
-  { label: "Modo Simulação ON", action: "sim_on", group: "Ações", icon: "🧪" },
-  { label: "Modo Simulação OFF", action: "sim_off", group: "Ações", icon: "🧪" },
-  { label: "Tema Claro", action: "theme_light", group: "Ações", icon: "☀" },
-  { label: "Tema Escuro", action: "theme_dark", group: "Ações", icon: "🌙" },
-  { label: "Sair da conta", action: "logout", group: "Ações", icon: "🚪" },
+  { labelKey: "cmd_action_sim_on", action: "sim_on", groupKey: "cmd_group_actions", icon: "🧪" },
+  { labelKey: "cmd_action_sim_off", action: "sim_off", groupKey: "cmd_group_actions", icon: "🧪" },
+  { labelKey: "cmd_action_theme_light", action: "theme_light", groupKey: "cmd_group_actions", icon: "☀" },
+  { labelKey: "cmd_action_theme_dark", action: "theme_dark", groupKey: "cmd_group_actions", icon: "🌙" },
+  { labelKey: "cmd_action_logout", action: "logout", groupKey: "cmd_group_actions", icon: "🚪" },
 ]
 
 export default function CommandPalette({ setPage, onLogout }) {
   const { cmdOpen, setCmdOpen, setSimMode, setTheme, addToast } = useAppStore()
+  const { t } = useTranslation()
   const [query, setQuery] = useState("")
   const [idx, setIdx] = useState(0)
   const inputRef = useRef(null)
@@ -66,7 +68,7 @@ export default function CommandPalette({ setPage, onLogout }) {
   ]
 
   const filtered = query
-    ? allItems.filter(i => i.label.toLowerCase().includes(query.toLowerCase()) || i.group?.toLowerCase().includes(query.toLowerCase()))
+    ? allItems.filter(i => t(i.labelKey).toLowerCase().includes(query.toLowerCase()) || t(i.groupKey)?.toLowerCase().includes(query.toLowerCase()))
     : allItems.slice(0, 12)
 
   useEffect(() => setIdx(0), [query])
@@ -76,8 +78,8 @@ export default function CommandPalette({ setPage, onLogout }) {
     if (item.type === "page") {
       setPage(item.id)
     } else {
-      if (item.action === "sim_on") { setSimMode(true); addToast("Modo Simulação ativado", "info") }
-      if (item.action === "sim_off") { setSimMode(false); addToast("Modo Simulação desativado", "info") }
+      if (item.action === "sim_on") { setSimMode(true); addToast(t("topbar_sim_on"), "info") }
+      if (item.action === "sim_off") { setSimMode(false); addToast(t("sim_off_toast"), "info") }
       if (item.action === "theme_light") setTheme("light")
       if (item.action === "theme_dark") setTheme("dark")
       if (item.action === "logout") onLogout()
@@ -95,8 +97,9 @@ export default function CommandPalette({ setPage, onLogout }) {
   // Group items
   const grouped = {}
   filtered.forEach(item => {
-    if (!grouped[item.group]) grouped[item.group] = []
-    grouped[item.group].push(item)
+    const g = t(item.groupKey)
+    if (!grouped[g]) grouped[g] = []
+    grouped[g].push(item)
   })
 
   let globalIdx = 0
@@ -135,7 +138,7 @@ export default function CommandPalette({ setPage, onLogout }) {
             value={query}
             onChange={e => setQuery(e.target.value)}
             onKeyDown={handleKey}
-            placeholder="Pesquisar páginas e ações..."
+            placeholder={t("cmd_placeholder")}
             style={{
               flex: 1, background: "none", border: "none", outline: "none",
               color: "var(--text)", fontSize: "16px", fontFamily: "inherit",
@@ -174,7 +177,7 @@ export default function CommandPalette({ setPage, onLogout }) {
                     }}
                   >
                     <span style={{ fontSize: "16px", width: "20px", textAlign: "center" }}>{item.icon}</span>
-                    <span style={{ flex: 1 }}>{item.label}</span>
+                    <span style={{ flex: 1 }}>{t(item.labelKey)}</span>
                     {isActive && (
                       <kbd style={{
                         padding: "2px 7px", background: "#0f1a2e", border: "1px solid #1e2d45",
@@ -188,7 +191,7 @@ export default function CommandPalette({ setPage, onLogout }) {
           ))}
           {filtered.length === 0 && (
             <div style={{ padding: "32px", textAlign: "center", color: "var(--sub)" }}>
-              Nenhum resultado para "{query}"
+              {t("cmd_no_results")} "{query}"
             </div>
           )}
         </div>
@@ -198,7 +201,7 @@ export default function CommandPalette({ setPage, onLogout }) {
           padding: "10px 20px", borderTop: "1px solid #1a2234",
           display: "flex", gap: "16px", alignItems: "center",
         }}>
-          {[["↑↓", "navegar"], ["↵", "selecionar"], ["ESC", "fechar"]].map(([k, v]) => (
+          {[["↑↓", t("cmd_navigate")], ["↵", t("cmd_select")], ["ESC", t("cmd_close")]].map(([k, v]) => (
             <span key={k} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <kbd style={{
                 padding: "2px 6px", background: "#1f2937", border: "1px solid var(--sub)",

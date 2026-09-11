@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { C, glassCard } from "../components/ChartTheme";
+import { useTranslation } from "../i18n/useTranslation";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -18,6 +19,7 @@ const statusColor = (s) =>
   s === "done" ? C.green : s === "error" ? C.red : s === "running" ? C.amber : "rgba(148,163,184,0.85)";
 
 export default function ReportsAnalytics() {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState([]);
   const [sites, setSites] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export default function ReportsAnalytics() {
       const data = await res.json();
       setJobs(Array.isArray(data) ? data : []);
     } catch (e) {
-      setError("Não foi possível carregar os relatórios.");
+      setError(t("reports_err_load"));
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export default function ReportsAnalytics() {
   }, []);
 
   const generate = async () => {
-    if (!form.report_type) { setFormError("Tipo de relatório obrigatório."); return; }
+    if (!form.report_type) { setFormError(t("reports_err_type")); return; }
     setSaving(true);
     setFormError(null);
     try {
@@ -88,7 +90,7 @@ export default function ReportsAnalytics() {
       setForm({ ...form, period: "" });
       await loadJobs();
     } catch (e) {
-      setFormError(e.message || "Erro ao gerar o relatório.");
+      setFormError(e.message || t("reports_err_generate"));
     } finally {
       setSaving(false);
     }
@@ -135,7 +137,7 @@ export default function ReportsAnalytics() {
 
           <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 4 }}>Sites (optional)</div>
           {sites.length === 0 ? (
-            <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 14 }}>Sem sites disponíveis.</div>
+            <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 14 }}>{t("reports_no_sites")}</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
               {sites.map(s => (
@@ -164,7 +166,7 @@ export default function ReportsAnalytics() {
 
           <button onClick={generate} disabled={saving}
             style={{ background: C.indigo, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", cursor: "pointer", fontSize: 13, fontWeight: 600, opacity: saving ? 0.6 : 1 }}>
-            {saving ? "A gerar…" : "Generate Report"}
+            {saving ? t("state_generating") : "Generate Report"}
           </button>
         </div>
 
@@ -173,11 +175,11 @@ export default function ReportsAnalytics() {
         <div style={glassCard(C.blue)}>
           <div style={{ ...label, marginBottom: 12 }}>Reports ({jobs.length})</div>
           {loading ? (
-            <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Carregando relatórios…</div>
+            <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("reports_loading")}</div>
           ) : error && jobs.length === 0 ? (
-            <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Não foi possível carregar os relatórios.</div>
+            <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("reports_err_load")}</div>
           ) : jobs.length === 0 ? (
-            <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Sem relatórios. Gera o primeiro acima.</div>
+            <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("reports_empty")}</div>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>

@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { C, PremiumTooltip, axisStyle, gridStyle, glassCard } from "../components/ChartTheme";
+import { useTranslation } from "../i18n/useTranslation";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -17,6 +18,7 @@ function fmtHour(iso) {
 }
 
 export default function ForecastingDashboard() {
+  const { t } = useTranslation();
   const [sites, setSites] = useState([]);
   const [selectedSiteId, setSelectedSiteId] = useState(null);
   const [horizon, setHorizon] = useState(48);
@@ -38,7 +40,7 @@ export default function ForecastingDashboard() {
         setSelectedSiteId(list[0].id);
       }
     } catch (e) {
-      setError("Não foi possível carregar os sites.");
+      setError(t("forecast_err_sites"));
     } finally {
       setLoadingSites(false);
     }
@@ -58,7 +60,7 @@ export default function ForecastingDashboard() {
       const data = await res.json();
       setForecast(data);
     } catch (e) {
-      setError(`Não foi possível obter a previsão: ${e.message}`);
+      setError(`${t("forecast_err_fc")} ${e.message}`);
       setForecast(null);
     } finally {
       setLoadingForecast(false);
@@ -137,16 +139,16 @@ export default function ForecastingDashboard() {
       </div>
 
       {loadingSites ? (
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Carregando sites…</div>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("forecast_loading_sites")}</div>
       ) : sites.length === 0 ? (
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>
-          Sem sites disponíveis. Cria um site primeiro para gerar previsões.
+          {t("forecast_no_sites")}
         </div>
       ) : loadingForecast ? (
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>A calcular previsão…</div>
+        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("forecast_calculating")}</div>
       ) : !forecast || series.length === 0 ? (
         <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>
-          Previsão não disponível para este site.
+          {t("forecast_unavailable")}
         </div>
       ) : (
         <>

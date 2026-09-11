@@ -1,25 +1,27 @@
 import { useEffect } from "react"
 import { useAppStore } from "../store/appStore"
+import { useTranslation } from "../i18n/useTranslation"
 
 const SHORTCUTS = [
-  { section: "Navegação" },
-  { key: "⌘K", desc: "Abrir Command Palette" },
-  { key: "?", desc: "Mostrar atalhos de teclado" },
-  { key: "ESC", desc: "Fechar modal / overlay" },
-  { section: "Sistema" },
-  { key: "⌘S", desc: "Guardar / exportar página atual" },
-  { key: "⌘⇧D", desc: "Ativar Modo Demo" },
-  { key: "⌘⇧L", desc: "Toggle tema claro/escuro" },
-  { section: "Página" },
-  { key: "G D", desc: "Ir para Dashboard" },
-  { key: "G T", desc: "Ir para Trading" },
-  { key: "G B", desc: "Ir para Battery BMS" },
-  { key: "G A", desc: "Ir para Alerts" },
-  { key: "G M", desc: "Ir para Map View" },
+  { sectionKey: "shortcuts_sec_nav" },
+  { key: "⌘K", descKey: "shortcuts_open_cmd" },
+  { key: "?", descKey: "shortcuts_show" },
+  { key: "ESC", descKey: "shortcuts_close_modal" },
+  { sectionKey: "shortcuts_sec_system" },
+  { key: "⌘S", descKey: "shortcuts_save" },
+  { key: "⌘⇧D", descKey: "shortcuts_demo" },
+  { key: "⌘⇧L", descKey: "shortcuts_toggle_theme" },
+  { sectionKey: "shortcuts_sec_page" },
+  { key: "G D", descKey: "shortcuts_go_dashboard" },
+  { key: "G T", descKey: "shortcuts_go_trading" },
+  { key: "G B", descKey: "shortcuts_go_battery" },
+  { key: "G A", descKey: "shortcuts_go_alerts" },
+  { key: "G M", descKey: "shortcuts_go_map" },
 ]
 
 export default function ShortcutsOverlay() {
   const { shortcutsOpen, setShortcutsOpen } = useAppStore()
+  const { t } = useTranslation()
 
   useEffect(() => {
     const handler = (e) => {
@@ -59,8 +61,8 @@ export default function ShortcutsOverlay() {
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}>
           <div>
-            <div style={{ color: "var(--text)", fontWeight: "700", fontSize: "16px" }}>Keyboard Shortcuts</div>
-            <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "2px" }}>Atalhos disponíveis no VoltarisOS</div>
+            <div style={{ color: "var(--text)", fontWeight: "700", fontSize: "16px" }}>{t("shortcuts_title")}</div>
+            <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "2px" }}>{t("shortcuts_sub")}</div>
           </div>
           <button onClick={() => setShortcutsOpen(false)} style={{
             background: "#1f2937", border: "1px solid var(--sub)",
@@ -71,21 +73,21 @@ export default function ShortcutsOverlay() {
         </div>
         <div style={{ padding: "16px 24px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 24px" }}>
           {SHORTCUTS.map((s, i) => {
-            if (s.section) return (
+            if (s.sectionKey) return (
               <div key={i} style={{
                 gridColumn: "1 / -1",
                 color: "var(--sub)", fontSize: "10px", fontWeight: "700",
                 textTransform: "uppercase", letterSpacing: "1px",
                 padding: "12px 0 6px",
                 borderBottom: "1px solid #1a2234", marginBottom: "8px",
-              }}>{s.section}</div>
+              }}>{t(s.sectionKey)}</div>
             )
             return (
               <div key={i} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "6px 0",
               }}>
-                <span style={{ color: "var(--sub)", fontSize: "13px" }}>{s.desc}</span>
+                <span style={{ color: "var(--sub)", fontSize: "13px" }}>{t(s.descKey)}</span>
                 <kbd style={{
                   padding: "3px 8px", background: "#1f2937", border: "1px solid var(--sub)",
                   borderRadius: "6px", fontSize: "11px", color: "var(--text)",

@@ -1468,13 +1468,13 @@ export default function Settings() {
                         });
                         const data = await res.json();
                         if (!res.ok) {
-                          alert(data.detail || "Erro ao iniciar checkout");
+                          alert(data.detail || t("settings_checkout_err"));
                           return;
                         }
                         if (data.url) window.location.href = data.url;
                       } catch (e) {
                         console.error(e);
-                        alert("Erro ao iniciar checkout");
+                        alert(t("settings_checkout_err"));
                       }
                     }} style={{
                       flex: 2, padding: "12px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: termsAccepted && selectedPlan !== "enterprise" ? "pointer" : "not-allowed",

@@ -1,31 +1,31 @@
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
+import { useTranslation } from "../i18n/useTranslation"
 import logoFull from "../logo_full.png"
 
-const STEPS = [
+const buildSteps = (t) => [
   {
-    title: "Bem-vindo ao VoltarisOS",
-    subtitle: "A plataforma de gestão de energia mais avançada do mercado.",
+    title: t("onb_welcome_title"),
+    subtitle: t("onb_welcome_sub"),
     icon: "⚡",
     content: (
       <div style={{ color: "var(--sub)", fontSize: "14px", lineHeight: "1.7" }}>
-        O VoltarisOS permite-te gerir baterias BESS, negociar energia em tempo real,
-        monitorizar frotas industriais, e muito mais — tudo numa única plataforma.
+        {t("onb_welcome_body")}
         <br /><br />
-        Vamos configurar a tua conta em 2 passos rápidos.
+        {t("onb_welcome_body2")}
       </div>
     ),
   },
   {
-    title: "Configura os teus sites",
-    subtitle: "Adiciona os teus locais de produção e armazenamento.",
+    title: t("onb_sites_title"),
+    subtitle: t("onb_sites_sub"),
     icon: "📍",
     content: (
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {[
-          { label: "Nome do site", placeholder: "Ex: Rotterdam BESS" },
-          { label: "Localização", placeholder: "Ex: Rotterdam, NL" },
-          { label: "Capacidade (MWh)", placeholder: "Ex: 8.5" },
+          { label: t("onb_field_site_name"), placeholder: t("onb_field_site_ph") },
+          { label: t("onb_field_location"), placeholder: t("onb_field_location_ph") },
+          { label: t("onb_field_capacity"), placeholder: t("onb_field_capacity_ph") },
         ].map(f => (
           <div key={f.label}>
             <div style={{ color: "var(--sub)", fontSize: "12px", marginBottom: "6px" }}>{f.label}</div>
@@ -46,17 +46,17 @@ const STEPS = [
     ),
   },
   {
-    title: "Define os teus alertas",
-    subtitle: "Recebe notificações quando algo exige atenção.",
+    title: t("onb_alerts_title"),
+    subtitle: t("onb_alerts_sub"),
     icon: "🔔",
     content: (
       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
         {[
-          { label: "SOC crítico abaixo de 10%", checked: true },
-          { label: "Temperatura > 45°C", checked: true },
-          { label: "Preço spot acima de €150/MWh", checked: false },
-          { label: "Falha de comunicação com inversor", checked: true },
-          { label: "Relatório CO₂ mensal gerado", checked: false },
+          { label: t("onb_alert_soc"), checked: true },
+          { label: t("onb_alert_temp"), checked: true },
+          { label: t("onb_alert_price"), checked: false },
+          { label: t("onb_alert_comm"), checked: true },
+          { label: t("onb_alert_co2"), checked: false },
         ].map(item => (
           <label key={item.label} style={{
             display: "flex", alignItems: "center", gap: "12px",
@@ -78,16 +78,18 @@ const STEPS = [
 
 export default function OnboardingWizard() {
   const { onboarded, setOnboarded, addToast } = useAppStore()
+  const { t } = useTranslation()
   const [step, setStep] = useState(0)
 
   if (onboarded) return null
 
-  const isLast = step === STEPS.length - 1
-  const current = STEPS[step]
+  const steps = buildSteps(t)
+  const isLast = step === steps.length - 1
+  const current = steps[step]
 
   const finish = () => {
     setOnboarded()
-    addToast("Configuração concluída! Bem-vindo ao VoltarisOS.", "success")
+    addToast(t("onb_done_toast"), "success")
   }
 
   return (
@@ -110,7 +112,7 @@ export default function OnboardingWizard() {
           position: "relative",
         }}>
           <div style={{
-            height: "100%", width: `${((step + 1) / STEPS.length) * 100}%`,
+            height: "100%", width: `${((step + 1) / steps.length) * 100}%`,
             background: "linear-gradient(90deg, #4ade80, #22d3ee)",
             transition: "width 0.4s ease",
           }} />
@@ -123,7 +125,7 @@ export default function OnboardingWizard() {
             padding: "3px 10px", background: "#4ade8015",
             border: "1px solid #4ade8030", borderRadius: "20px",
             color: "#4ade80", fontSize: "11px", fontWeight: "600",
-          }}>Setup {step + 1}/{STEPS.length}</div>
+          }}>{t("onb_setup")} {step + 1}/{steps.length}</div>
         </div>
 
         {/* Content */}
@@ -142,7 +144,7 @@ export default function OnboardingWizard() {
           <button
             onClick={finish}
             style={{ background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "13px" }}
-          >Saltar configuração</button>
+          >{t("onb_skip")}</button>
           <div style={{ display: "flex", gap: "10px" }}>
             {step > 0 && (
               <button
@@ -152,7 +154,7 @@ export default function OnboardingWizard() {
                   border: "1px solid var(--sub)", borderRadius: "8px",
                   color: "var(--sub)", cursor: "pointer", fontSize: "14px",
                 }}
-              >Anterior</button>
+              >{t("onb_prev")}</button>
             )}
             <button
               onClick={() => isLast ? finish() : setStep(s => s + 1)}
@@ -162,7 +164,7 @@ export default function OnboardingWizard() {
                 border: "none", borderRadius: "8px",
                 color: "#0a0f1a", cursor: "pointer", fontSize: "14px", fontWeight: "700",
               }}
-            >{isLast ? "Começar ⚡" : "Próximo →"}</button>
+            >{isLast ? t("onb_start") : t("onb_next")}</button>
           </div>
         </div>
       </div>

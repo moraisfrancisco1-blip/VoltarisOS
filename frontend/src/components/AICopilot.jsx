@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from "react"
 import axios from "axios"
+import { useTranslation } from "../i18n/useTranslation"
 
 const SUGGESTIONS = [
-  "Qual é a receita de hoje?",
-  "Estado das baterias agora?",
-  "Quando devo descarregar esta tarde?",
-  "Quanto CO₂ evitei este mês?",
-  "Há alertas de manutenção?",
+  "copilot_sug_1",
+  "copilot_sug_2",
+  "copilot_sug_3",
+  "copilot_sug_4",
+  "copilot_sug_5",
 ]
+
+const LOCALES = { pt: "pt-PT", en: "en-GB", fr: "fr-FR", es: "es-ES", nl: "nl-NL" }
 
 function parseMarkdown(text) {
   return text
@@ -16,12 +19,13 @@ function parseMarkdown(text) {
 }
 
 export default function AICopilot({ user }) {
+  const { t, lang } = useTranslation()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      text: "Olá! Sou o **VoltarisAI**, o teu copiloto de energia. Pergunta-me qualquer coisa sobre os teus sites, baterias, trading ou receita.",
-      ts: new Date().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
+      text: t("copilot_welcome"),
+      ts: new Date().toLocaleTimeString(LOCALES[lang] || "en-GB", { hour: "2-digit", minute: "2-digit" })
     }
   ])
   const [input, setInput] = useState("")
@@ -42,7 +46,7 @@ export default function AICopilot({ user }) {
     const msg = text || input.trim()
     if (!msg) return
     setInput("")
-    const ts = new Date().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" })
+    const ts = new Date().toLocaleTimeString(LOCALES[lang] || "en-GB", { hour: "2-digit", minute: "2-digit" })
     setMessages(m => [...m, { role: "user", text: msg, ts }])
     setLoading(true)
     try {
@@ -56,11 +60,11 @@ export default function AICopilot({ user }) {
       setMessages(m => [...m, {
         role: "assistant",
         text: r.data.response,
-        ts: new Date().toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }),
+        ts: new Date().toLocaleTimeString(LOCALES[lang] || "en-GB", { hour: "2-digit", minute: "2-digit" }),
         tokens: r.data.tokens
       }])
     } catch {
-      setMessages(m => [...m, { role: "assistant", text: "Erro de ligação ao servidor. Tenta novamente.", ts, error: true }])
+      setMessages(m => [...m, { role: "assistant", text: t("copilot_error"), ts, error: true }])
     }
     setLoading(false)
   }
@@ -114,7 +118,7 @@ export default function AICopilot({ user }) {
 
           {/* Demo notice */}
           <div style={{ padding: "6px 12px", background: "#3a2c05", borderBottom: "1px solid #1a2234", fontSize: "10px", lineHeight: "1.4", color: "#fbbf24", flexShrink: 0 }}>
-            🧪 Demo — alguns dados de contexto (preço, receita, P&amp;L) são simulados.
+            🧪 {t("copilot_demo")}
           </div>
 
           {/* Header */}
@@ -128,7 +132,7 @@ export default function AICopilot({ user }) {
               <div style={{ fontWeight: "700", fontSize: "13px" }}>VoltarisAI</div>
               <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#4ade80" }}>
                 <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#4ade80" }} />
-                Online
+                {t("online")}
               </div>
             </div>
             <div style={{ marginLeft: "auto", fontSize: "10px", color: "var(--sub)", background: "#0d1525", padding: "3px 8px", borderRadius: "6px", border: "1px solid #1a2234" }}>
@@ -177,7 +181,7 @@ export default function AICopilot({ user }) {
           {messages.length <= 2 && (
             <div style={{ padding: "0 12px 8px", display: "flex", flexWrap: "wrap", gap: "6px", flexShrink: 0 }}>
               {SUGGESTIONS.slice(0, 3).map((s, i) => (
-                <button key={i} onClick={() => send(s)} style={{
+                <button key={i} onClick={() => send(t(s))} style={{
                   padding: "5px 10px", borderRadius: "20px", fontSize: "11px",
                   background: "#0d1525", border: "1px solid #1a2234",
                   color: "var(--sub)", cursor: "pointer",
@@ -185,7 +189,7 @@ export default function AICopilot({ user }) {
                   onMouseEnter={e => { e.currentTarget.style.borderColor = color + "44"; e.currentTarget.style.color = color }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = "#1a2234"; e.currentTarget.style.color = "var(--sub)" }}
                 >
-                  {s}
+                  {t(s)}
                 </button>
               ))}
             </div>
@@ -199,7 +203,7 @@ export default function AICopilot({ user }) {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-              placeholder="Pergunta ao VoltarisAI..."
+              placeholder={t("copilot_placeholder")}
               style={{
                 flex: 1, background: "#111827", border: "1px solid #1a2234",
                 borderRadius: "8px", padding: "9px 12px", color: "var(--text)",

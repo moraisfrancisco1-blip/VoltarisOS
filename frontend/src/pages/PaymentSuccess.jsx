@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, ArrowRight } from "lucide-react";
+import { useTranslation } from "../i18n/useTranslation";
 
 export default function PaymentSuccess() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [sessionData, setSessionData] = useState(null);
@@ -35,7 +37,7 @@ export default function PaymentSuccess() {
         justifyContent: "center",
         background: "var(--bg)"
       }}>
-        <div style={{ color: "var(--text)", fontSize: "18px" }}>A processar pagamento...</div>
+        <div style={{ color: "var(--text)", fontSize: "18px" }}>{t("pay_processing")}</div>
       </div>
     );
   }
@@ -80,7 +82,7 @@ export default function PaymentSuccess() {
           fontWeight: "700",
           marginBottom: "12px"
         }}>
-          {paid ? "Pagamento Confirmado!" : failed ? "Pagamento Falhado" : "Pagamento Pendente"}
+          {paid ? t("pay_confirmed") : failed ? t("pay_failed") : t("pay_pending")}
         </h1>
 
         <p style={{
@@ -90,10 +92,10 @@ export default function PaymentSuccess() {
           lineHeight: "1.6"
         }}>
           {paid
-            ? "A tua subscrição foi ativada com sucesso. Já podes aceder a todas as funcionalidades do VoltarisOS."
+            ? t("pay_confirmed_desc")
             : failed
-              ? "O pagamento não foi concluído. Nenhum valor foi cobrado. Tenta novamente."
-              : "Estamos a confirmar o teu pagamento. Isto pode demorar alguns instantes."}
+              ? t("pay_failed_desc")
+              : t("pay_pending_desc")}
         </p>
 
         {sessionData && (
@@ -105,12 +107,12 @@ export default function PaymentSuccess() {
             textAlign: "left"
           }}>
             <div style={{ color: "var(--sub)", fontSize: "12px", marginBottom: "8px" }}>
-              Detalhes da Subscrição
+              {t("pay_details")}
             </div>
             <div style={{ color: "var(--text)", fontSize: "14px" }}>
-              <div>Email: {sessionData.customer_email || "N/A"}</div>
-              <div>Plano: {sessionData.metadata?.plan_id || "N/A"}</div>
-              <div>Ciclo: {sessionData.metadata?.billing_cycle || "N/A"}</div>
+              <div>{t("pay_email")}: {sessionData.customer_email || "N/A"}</div>
+              <div>{t("pay_plan")}: {sessionData.metadata?.plan_id || "N/A"}</div>
+              <div>{t("pay_cycle")}: {sessionData.metadata?.billing_cycle || "N/A"}</div>
             </div>
           </div>
         )}
@@ -131,7 +133,7 @@ export default function PaymentSuccess() {
             gap: "8px"
           }}
         >
-          Aceder ao Dashboard
+          {t("pay_go_dashboard")}
           <ArrowRight size={20} />
         </button>
       </div>

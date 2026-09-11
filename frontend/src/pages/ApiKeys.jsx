@@ -14,9 +14,9 @@ export default function ApiKeys({ user }) {
   const color = user?.color || "#4ade80"
 
   const [keys, setKeys] = useState([
-    { id: 1, name: "Integração SCADA", key: "vos_4aK9mPxQnBrLwTzYcEfHjVsGiUdOy3", scope: "read", created: "2026-01-15", lastUsed: "Hoje", active: true },
-    { id: 2, name: "Dashboard Externo", key: "vos_7dRqNpWlKoAvBcXsSfTeGhIjUmZyE1", scope: "read,write", created: "2026-03-02", lastUsed: "Há 3 dias", active: true },
-    { id: 3, name: "Webhook Alertas", key: "vos_1xCvBnMqWerTyUiOpAsD2fGhJkLzX", scope: "alerts", created: "2026-04-10", lastUsed: "Nunca", active: false },
+    { id: 1, nameKey: "apikeys_sample_scada", key: "vos_4aK9mPxQnBrLwTzYcEfHjVsGiUdOy3", scope: "read", created: "2026-01-15", lastUsedKey: "apikeys_today", active: true },
+    { id: 2, nameKey: "apikeys_sample_ext", key: "vos_7dRqNpWlKoAvBcXsSfTeGhIjUmZyE1", scope: "read,write", created: "2026-03-02", lastUsedKey: "apikeys_3d_ago", active: true },
+    { id: 3, nameKey: "apikeys_sample_hook", key: "vos_1xCvBnMqWerTyUiOpAsD2fGhJkLzX", scope: "alerts", created: "2026-04-10", lastUsedKey: "apikeys_never", active: false },
   ])
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState("")
@@ -26,13 +26,13 @@ export default function ApiKeys({ user }) {
 
   const createKey = () => {
     if (!newName.trim()) return
-    const k = { id: Date.now(), name: newName, key: generateKey(), scope: newScope, created: new Date().toISOString().split("T")[0], lastUsed: "Nunca", active: true }
+    const k = { id: Date.now(), name: newName, key: generateKey(), scope: newScope, created: new Date().toISOString().split("T")[0], lastUsedKey: "apikeys_never", active: true }
     setKeys(prev => [...prev, k])
     setNewKey(k.key)
     setShowCreate(false)
     setNewName("")
     addToast(`API Key "${newName}" ${t("created_success") || "created successfully"}`, "success")
-    addAuditEntry({ user: user?.email || "admin@voltaris.com", action: "API Key created", resource: "API Keys" })
+    addAuditEntry({ user: user?.email || "admin@voltaris.com", actionKey: "audit_action_api_key_created", resource: "API Keys" })
   }
 
   const revokeKey = (id) => {
@@ -51,7 +51,7 @@ export default function ApiKeys({ user }) {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px" }}>
         <div>
-          <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>API Keys</h1>
+          <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>{t("apikeys_title")}</h1>
           <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("apikeys_sub") || "Access tokens to integrate external systems with VoltarisOS"}</p>
         </div>
         <button
@@ -65,7 +65,7 @@ export default function ApiKeys({ user }) {
             display: "flex", alignItems: "center", gap: "8px",
           }}
         >
-          <span style={{ fontSize: "16px" }}>+</span> Nova API Key
+          <span style={{ fontSize: "16px" }}>+</span> {t("apikeys_new")}
         </button>
       </div>
 
@@ -79,14 +79,14 @@ export default function ApiKeys({ user }) {
           <span style={{ fontSize: "20px" }}>🔑</span>
           <div style={{ flex: 1 }}>
             <div style={{ color: "#4ade80", fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>
-              Nova key criada! Copia agora — não voltará a ser mostrada.
+              {t("apikeys_new_created")}
             </div>
             <code style={{ color: "var(--text)", fontSize: "12px", fontFamily: "monospace", wordBreak: "break-all" }}>{newKey}</code>
           </div>
           <button onClick={() => copyKey(newKey)} style={{
             padding: "8px 14px", background: "#4ade8020", border: "1px solid #4ade8040",
             borderRadius: "8px", color: "#4ade80", cursor: "pointer", fontSize: "12px", fontWeight: "600",
-          }}>Copiar</button>
+          }}>{t("apikeys_copy")}</button>
           <button onClick={() => setNewKey(null)} style={{
             background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "20px",
           }}>×</button>
@@ -106,7 +106,7 @@ export default function ApiKeys({ user }) {
               <input
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
-                placeholder="Ex: Integração InfluxDB"
+                placeholder={t("apikeys_placeholder")}
                 style={{
                   width: "100%", padding: "10px 14px",
                   background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
@@ -129,8 +129,8 @@ export default function ApiKeys({ user }) {
                   outline: "none", boxSizing: "border-box",
                 }}
               >
-                <option value="read">Leitura</option>
-                <option value="read,write">Leitura + Escrita</option>
+                <option value="read">{t("scope_read")}</option>
+                <option value="read,write">{t("scope_read_write")}</option>
                 <option value="alerts">{t("perm_alerts_only") || "Alerts Only"}</option>
                 <option value="trading">{t("perm_trading_only") || "Trading Only"}</option>
                 <option value="full">{t("perm_full_access") || "Full Access"}</option>
@@ -168,9 +168,9 @@ export default function ApiKeys({ user }) {
                   fontSize: "18px",
                 }}>🔑</div>
                 <div>
-                  <div style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{k.name}</div>
+                  <div style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{k.nameKey ? t(k.nameKey) : k.name}</div>
                   <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "2px" }}>
-                    Criado em {k.created} · Último uso: {k.lastUsed}
+                    {t("apikeys_created_on")} {k.created} · {t("apikeys_last_used")}: {t(k.lastUsedKey)}
                   </div>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function ApiKeys({ user }) {
                   borderRadius: "20px",
                   color: k.active ? color : "#f87171",
                   fontSize: "11px", fontWeight: "600",
-                }}>{k.active ? "Ativa" : "Revogada"}</span>
+                }}>{k.active ? t("apikeys_active") : t("apikeys_revoked")}</span>
                 <span style={{
                   padding: "3px 10px", background: "#1e2d4520",
                   border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px",
@@ -205,14 +205,14 @@ export default function ApiKeys({ user }) {
                   padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "8px", color: "var(--sub)", cursor: "pointer", fontSize: "12px",
                 }}
-              >{revealed[k.id] ? "Ocultar" : "Revelar"}</button>
+              >{revealed[k.id] ? t("apikeys_hide") : t("apikeys_reveal")}</button>
               <button
                 onClick={() => copyKey(k.key)}
                 style={{
                   padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
                   borderRadius: "8px", color: "var(--sub)", cursor: "pointer", fontSize: "12px",
                 }}
-              >Copiar</button>
+              >{t("apikeys_copy")}</button>
               {k.active && (
                 <button
                   onClick={() => revokeKey(k.id)}
@@ -220,7 +220,7 @@ export default function ApiKeys({ user }) {
                     padding: "8px 12px", background: "#2d0a0a", border: "1px solid #7f1d1d",
                     borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "12px",
                   }}
-                >Revogar</button>
+                >{t("apikeys_revoke")}</button>
               )}
             </div>
           </div>
@@ -235,9 +235,9 @@ export default function ApiKeys({ user }) {
       }}>
         <span style={{ fontSize: "20px" }}>📖</span>
         <div>
-          <div style={{ color: "var(--sub)", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>API Documentation</div>
+          <div style={{ color: "var(--sub)", fontSize: "13px", fontWeight: "600", marginBottom: "2px" }}>{t("apikeys_docs")}</div>
           <div style={{ color: "var(--sub)", fontSize: "12px" }}>
-            Usa o header <code style={{ color: "#60a5fa" }}>Authorization: Bearer vos_...</code> em todos os pedidos à API REST do VoltarisOS.
+            {t("apikeys_docs_pre")} <code style={{ color: "#60a5fa" }}>Authorization: Bearer vos_...</code> {t("apikeys_docs_post")}
           </div>
         </div>
       </div>

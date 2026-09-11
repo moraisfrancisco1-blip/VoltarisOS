@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
+import { useTranslation } from "../i18n/useTranslation"
 
 const TYPE_ICONS = {
   alert: { icon: "🔋", color: "#f87171" },
@@ -11,9 +12,16 @@ const TYPE_ICONS = {
 
 export default function NotificationBell({ color = "#4ade80" }) {
   const { notifications, markAllRead, markRead } = useAppStore()
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const unread = notifications.filter(n => !n.read).length
+
+  const formatTime = (mins) => {
+    if (mins == null) return ""
+    if (mins < 60) return `${mins}${t("notif_ago_min")}`
+    return `${Math.round(mins / 60)}${t("notif_ago_hour")}`
+  }
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
@@ -65,19 +73,19 @@ export default function NotificationBell({ color = "#4ade80" }) {
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>Notificações</span>
+              <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{t("notif_title")}</span>
               {unread > 0 && (
                 <span style={{
                   padding: "1px 7px", background: "#ef444420", color: "#f87171",
                   borderRadius: "20px", fontSize: "11px", fontWeight: "600",
-                }}>{unread} novas</span>
+                }}>{unread} {t("notif_new")}</span>
               )}
             </div>
             {unread > 0 && (
               <button
                 onClick={markAllRead}
                 style={{ background: "none", border: "none", color: color, cursor: "pointer", fontSize: "12px" }}
-              >Marcar todas lidas</button>
+              >{t("notif_mark_all_read")}</button>
             )}
           </div>
 
@@ -106,12 +114,12 @@ export default function NotificationBell({ color = "#4ade80" }) {
                   }}>{ti.icon}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: n.read ? "var(--sub)" : "var(--text)", fontSize: "13px", fontWeight: n.read ? "400" : "600", marginBottom: "2px" }}>
-                      {n.title}
+                      {t(n.titleKey)}
                     </div>
                     <div style={{ color: "var(--sub)", fontSize: "12px", marginBottom: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {n.body}
+                      {t(n.bodyKey)}
                     </div>
-                    <div style={{ color: "var(--sub)", fontSize: "11px" }}>{n.time}</div>
+                    <div style={{ color: "var(--sub)", fontSize: "11px" }}>{formatTime(n.minutesAgo)}</div>
                   </div>
                   {!n.read && (
                     <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: color, flexShrink: 0, marginTop: "6px" }} />
@@ -131,7 +139,7 @@ export default function NotificationBell({ color = "#4ade80" }) {
             }}
               onMouseEnter={e => { e.currentTarget.style.background = "#1a2234"; e.currentTarget.style.color = "var(--sub)" }}
               onMouseLeave={e => { e.currentTarget.style.background = "#0d1525"; e.currentTarget.style.color = "var(--sub)" }}
-            >Ver todas as notificações</button>
+            >{t("notif_view_all")}</button>
           </div>
         </div>
       )}

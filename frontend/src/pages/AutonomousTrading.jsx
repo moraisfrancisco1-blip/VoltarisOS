@@ -57,7 +57,7 @@ export default function AutonomousTrading({ user }) {
           </div>
           <div>
             <h1 style={{ fontSize: "24px", fontWeight: "800", margin: 0, letterSpacing: "-0.5px" }}>Autonomous Trading Agent</h1>
-            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>Demonstração — este agente não executa ordens reais (dados simulados)</p>
+            <p style={{ color: "var(--sub)", fontSize: "13px", marginTop: "2px" }}>{t("auto_demo_notice")}</p>
           </div>
         </div>
         <button onClick={toggle} style={{
@@ -67,7 +67,7 @@ export default function AutonomousTrading({ user }) {
           background: isRunning ? "#450a0a" : "#0a2a1a",
           color: isRunning ? "#f87171" : "#4ade80",
         }}>
-          {isRunning ? "⏸ Pausar Agente" : "▶ Ativar Agente"}
+          {isRunning ? t("auto_pause") : t("auto_start")}
         </button>
       </div>
 
@@ -75,12 +75,12 @@ export default function AutonomousTrading({ user }) {
       {status && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px", marginBottom: "20px" }}>
           {[
-            { label: "Estado", value: status.status.toUpperCase(), color: isRunning ? "#4ade80" : "#f59e0b", extra: isRunning ? <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", display: "inline-block", marginRight: "6px", animation: "blink 1s infinite" }} /> : null },
-            { label: "P&L Total", value: `€ ${status.pnl?.toFixed(2)}`, color: status.pnl > 0 ? "#4ade80" : "#f87171" },
-            { label: "Trades Hoje", value: status.trades_today, color: color },
-            { label: "Trades Total", value: status.trades_total, color: "#60a5fa" },
-            { label: "Win Rate", value: `${(status.win_rate * 100).toFixed(0)}%`, color: "#a78bfa" },
-            { label: "Última Ação", value: status.last_action, color: "var(--sub)", small: true },
+            { label: t("auto_status"), value: status.status.toUpperCase(), color: isRunning ? "#4ade80" : "#f59e0b", extra: isRunning ? <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#4ade80", display: "inline-block", marginRight: "6px", animation: "blink 1s infinite" }} /> : null },
+            { label: t("auto_pnl_total"), value: `€ ${status.pnl?.toFixed(2)}`, color: status.pnl > 0 ? "#4ade80" : "#f87171" },
+            { label: t("auto_trades_today"), value: status.trades_today, color: color },
+            { label: t("auto_trades_total"), value: status.trades_total, color: "#60a5fa" },
+            { label: t("auto_win_rate"), value: `${(status.win_rate * 100).toFixed(0)}%`, color: "#a78bfa" },
+            { label: t("auto_last_action"), value: status.last_action, color: "var(--sub)", small: true },
           ].map((s, i) => (
             <div key={i} style={{ background: "var(--surface)", borderRadius: "12px", padding: "16px", border: "1px solid rgba(255,255,255,0.12)" }}>
               <div style={{ color: "var(--sub)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>{s.label}</div>
@@ -95,15 +95,15 @@ export default function AutonomousTrading({ user }) {
       {status?.simulated && (
         <div style={{ padding: "10px 14px", borderRadius: 10, marginBottom: 20, background: "#3a2c05", border: "1px solid #f59e0b55", color: "#fcd34d", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
           <span>🧪</span>
-          <span>Dados simulados — este agente não executa trades reais.</span>
+          <span>{t("auto_simulated")}</span>
         </div>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "16px", marginBottom: "16px" }}>
         {/* P&L Chart */}
         <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>P&L em Tempo Real</div>
-          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>Lucro acumulado do agente (€)</div>
+          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "4px" }}>{t("auto_pnl_realtime")}</div>
+          <div style={{ color: "var(--sub)", fontSize: "11px", marginBottom: "16px" }}>{t("auto_pnl_accum")}</div>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={pnlHistory} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
               <XAxis dataKey="t" stroke="var(--surface2)" tick={{ fill: "var(--sub)", fontSize: 9 }} interval="preserveStartEnd" />
@@ -117,13 +117,13 @@ export default function AutonomousTrading({ user }) {
 
         {/* Config */}
         <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "16px" }}>Regras do Agente</div>
+          <div style={{ fontWeight: "700", fontSize: "14px", marginBottom: "16px" }}>{t("auto_rules")}</div>
           {[
-            { label: "Vender acima de (€/MWh)", key: "sell_min_price" },
-            { label: "Comprar abaixo de (€/MWh)", key: "buy_max_price" },
-            { label: "SoC mínimo (%)", key: "soc_min" },
-            { label: "SoC máximo (%)", key: "soc_max" },
-            { label: "Max trade (kWh)", key: "max_trade_kwh" },
+            { label: t("auto_sell_above"), key: "sell_min_price" },
+            { label: t("auto_buy_below"), key: "buy_max_price" },
+            { label: t("auto_soc_min"), key: "soc_min" },
+            { label: t("auto_soc_max"), key: "soc_max" },
+            { label: t("auto_max_trade"), key: "max_trade_kwh" },
           ].map(f => (
             <div key={f.key} style={{ marginBottom: "12px" }}>
               <label style={{ color: "var(--sub)", fontSize: "11px", display: "block", marginBottom: "4px" }}>{f.label}</label>
@@ -151,9 +151,9 @@ export default function AutonomousTrading({ user }) {
       {/* Live log */}
       <div style={{ background: "var(--surface)", borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.12)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-          <div style={{ fontWeight: "700", fontSize: "14px" }}>Log de Decisões</div>
+          <div style={{ fontWeight: "700", fontSize: "14px" }}>{t("auto_decision_log")}</div>
           {isRunning && <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#4ade80", animation: "blink 1s infinite" }} />}
-          <div style={{ color: "var(--sub)", fontSize: "11px" }}>atualiza a cada 4s</div>
+          <div style={{ color: "var(--sub)", fontSize: "11px" }}>{t("auto_refresh_4s")}</div>
         </div>
         <div ref={logRef} style={{ maxHeight: "300px", overflowY: "auto" }}>
           {log.map((entry, i) => (

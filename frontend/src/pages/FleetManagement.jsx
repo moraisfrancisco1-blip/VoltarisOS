@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "../i18n/useTranslation";
 
 const accent = "#6366f1"; const green = "#10b981"; const amber = "#f59e0b";
 const red = "#ef4444"; const blue = "#60a5fa"; const purple = "#a78bfa";
@@ -34,6 +35,7 @@ function InputField({ label: lb, value, onChange, type = "text", options, unit, 
 }
 
 export default function FleetManagement({ setPage }) {
+  const { t } = useTranslation();
   const [devices, setDevices] = useState([]);
   const [readings, setReadings] = useState({});
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export default function FleetManagement({ setPage }) {
       }));
       setReadings(Object.fromEntries(entries));
     } catch (e) {
-      setError("Não foi possível carregar os dispositivos.");
+      setError(t("fleet_err_load"));
     } finally {
       setLoading(false);
     }
@@ -86,7 +88,7 @@ export default function FleetManagement({ setPage }) {
   const openCreate = () => { setForm({ ...BLANK }); setShowForm(true); setFormError(null); };
 
   const saveForm = async () => {
-    if (!form.name) { setFormError("O nome é obrigatório."); return; }
+    if (!form.name) { setFormError(t("fleet_err_name")); return; }
     setSaving(true);
     setFormError(null);
     try {
@@ -110,7 +112,7 @@ export default function FleetManagement({ setPage }) {
       setShowForm(false);
       await loadDevices();
     } catch (e) {
-      setFormError(e.message || "Erro ao criar o dispositivo.");
+      setFormError(e.message || t("fleet_err_create"));
     } finally {
       setSaving(false);
     }
@@ -125,7 +127,7 @@ export default function FleetManagement({ setPage }) {
       setDeleteId(null);
       await loadDevices();
     } catch (e) {
-      setError("Não foi possível apagar o dispositivo.");
+      setError(t("fleet_err_delete"));
     } finally {
       setDeleting(false);
     }
@@ -187,12 +189,12 @@ export default function FleetManagement({ setPage }) {
         </div>
 
         {loading ? (
-          <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Carregando dispositivos…</div>
+          <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("fleet_loading")}</div>
         ) : error && devices.length === 0 ? (
-          <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>Não foi possível carregar os dispositivos.</div>
+          <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>{t("fleet_err_load")}</div>
         ) : devices.length === 0 ? (
           <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13 }}>
-            Ainda não tens dispositivos. Clica em "+ Add Device" para criar o primeiro.
+            {t("fleet_empty")}
           </div>
         ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
@@ -317,7 +319,7 @@ export default function FleetManagement({ setPage }) {
               <button onClick={() => setShowForm(false)}
                 style={{ padding: "8px 20px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 13, cursor: "pointer" }}>Cancel</button>
               <button onClick={saveForm} disabled={saving}
-                style={{ padding: "8px 20px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? "A criar…" : "Create Device"}</button>
+                style={{ padding: "8px 20px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>{saving ? t("state_creating") : "Create Device"}</button>
             </div>
           </div>
         </div>
@@ -333,7 +335,7 @@ export default function FleetManagement({ setPage }) {
               <button onClick={() => setDeleteId(null)}
                 style={{ padding: "7px 16px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
               <button onClick={confirmDelete} disabled={deleting}
-                style={{ padding: "7px 16px", background: red, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}>{deleting ? "A apagar…" : "Delete"}</button>
+                style={{ padding: "7px 16px", background: red, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", opacity: deleting ? 0.6 : 1 }}>{deleting ? t("state_deleting") : "Delete"}</button>
             </div>
           </div>
         </div>

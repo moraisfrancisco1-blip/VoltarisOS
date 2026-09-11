@@ -1,33 +1,40 @@
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
+import { useTranslation } from "../i18n/useTranslation"
 import DemoNotice from "../components/DemoNotice"
 
 const ACTION_COLORS = {
-  "Login": "#4ade80",
-  "Logout": "#f87171",
-  "Criou utilizador": "#818cf8",
-  "Exportou relatório": "#22d3ee",
-  "Alterou white-label": "#f59e0b",
-  "Trading agent ativado": "#a78bfa",
-  "Alterou settings": "var(--sub)",
-  "Apagou site": "#f87171",
-  "Criou site": "#4ade80",
-  "API Key gerada": "#f59e0b",
+  audit_action_login: "#4ade80",
+  audit_action_logout: "#f87171",
+  audit_action_create_user: "#818cf8",
+  audit_action_export_report: "#22d3ee",
+  audit_action_whitelabel: "#f59e0b",
+  audit_action_trading_agent: "#a78bfa",
+  audit_action_settings: "var(--sub)",
+  audit_action_delete_site: "#f87171",
+  audit_action_create_site: "#4ade80",
+  audit_action_api_key: "#f59e0b",
+  audit_action_api_key_created: "#f59e0b",
+  audit_action_export_file: "#22d3ee",
+  audit_action_export_audit: "#22d3ee",
 }
 
-function fmt(iso) {
-  const d = new Date(iso)
-  return d.toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-}
+const LOCALES = { pt: "pt-PT", en: "en-GB", fr: "fr-FR", es: "es-ES", nl: "nl-NL" }
 
 export default function AuditLog({ user }) {
   const { auditLog, addAuditEntry } = useAppStore()
+  const { t, lang } = useTranslation()
   const [search, setSearch] = useState("")
   const [filter, setFilter] = useState("all")
 
+  const fmt = (iso) => {
+    const d = new Date(iso)
+    return d.toLocaleString(LOCALES[lang] || "en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+  }
+
   const filtered = auditLog.filter(e => {
     const q = search.toLowerCase()
-    const match = !q || e.user.toLowerCase().includes(q) || e.action.toLowerCase().includes(q) || e.resource.toLowerCase().includes(q)
+    const match = !q || e.user.toLowerCase().includes(q) || t(e.actionKey).toLowerCase().includes(q) || e.resource.toLowerCase().includes(q)
     return match
   })
 
@@ -38,17 +45,17 @@ export default function AuditLog({ user }) {
       <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
-        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>
-        <p style={{ color: "var(--sub)", fontSize: "14px" }}>Registo completo de todas as ações realizadas no sistema</p>
+        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>{t("audit_title")}</h1>
+        <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("audit_sub")}</p>
       </div>
 
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
         {[
-          { label: "Total de eventos", value: auditLog.length, color: "#818cf8" },
-          { label: "Hoje", value: auditLog.filter(e => new Date(e.time).toDateString() === new Date().toDateString()).length, color: color },
-          { label: "Utilizadores ativos", value: [...new Set(auditLog.map(e => e.user))].length, color: "#22d3ee" },
-          { label: "IPs únicos", value: [...new Set(auditLog.map(e => e.ip))].length, color: "#f59e0b" },
+          { label: t("audit_stat_total"), value: auditLog.length, color: "#818cf8" },
+          { label: t("audit_stat_today"), value: auditLog.filter(e => new Date(e.time).toDateString() === new Date().toDateString()).length, color: color },
+          { label: t("audit_stat_users"), value: [...new Set(auditLog.map(e => e.user))].length, color: "#22d3ee" },
+          { label: t("audit_stat_ips"), value: [...new Set(auditLog.map(e => e.ip))].length, color: "#f59e0b" },
         ].map(s => (
           <div key={s.label} style={{
             background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
@@ -68,7 +75,7 @@ export default function AuditLog({ user }) {
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
-            placeholder="Pesquisar por utilizador, ação, recurso..."
+            placeholder={t("audit_search_ph")}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{
@@ -82,7 +89,7 @@ export default function AuditLog({ user }) {
           />
         </div>
         <button
-          onClick={() => addAuditEntry({ user: user?.email || "admin@voltaris.com", action: "Exportou audit log", resource: "Audit" })}
+          onClick={() => addAuditEntry({ user: user?.email || "admin@voltaris.com", actionKey: "audit_action_export_audit", resource: "Audit" })}
           style={{
             padding: "10px 18px", background: `${color}15`,
             border: `1px solid ${color}30`, borderRadius: "10px",
@@ -91,7 +98,7 @@ export default function AuditLog({ user }) {
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Exportar CSV
+          {t("audit_export_csv")}
         </button>
       </div>
 
@@ -100,7 +107,7 @@ export default function AuditLog({ user }) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-              {["Timestamp", "Utilizador", "Ação", "Recurso", "IP"].map(h => (
+              {[t("audit_col_timestamp"), t("audit_col_user"), t("audit_col_action"), t("audit_col_resource"), t("audit_col_ip")].map(h => (
                 <th key={h} style={{
                   padding: "12px 16px", textAlign: "left",
                   color: "var(--sub)", fontSize: "11px", fontWeight: "700",
@@ -111,7 +118,7 @@ export default function AuditLog({ user }) {
           </thead>
           <tbody>
             {filtered.map((entry, i) => {
-              const ac = ACTION_COLORS[entry.action] || "var(--sub)"
+              const ac = ACTION_COLORS[entry.actionKey] || "var(--sub)"
               return (
                 <tr
                   key={entry.id}
@@ -141,7 +148,7 @@ export default function AuditLog({ user }) {
                       padding: "3px 10px",
                       background: `${ac}18`, border: `1px solid ${ac}30`,
                       borderRadius: "20px", color: ac, fontSize: "12px", fontWeight: "600",
-                    }}>{entry.action}</span>
+                    }}>{t(entry.actionKey)}</span>
                   </td>
                   <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "13px" }}>{entry.resource}</td>
                   <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace" }}>{entry.ip}</td>
@@ -152,7 +159,7 @@ export default function AuditLog({ user }) {
         </table>
         {filtered.length === 0 && (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--sub)" }}>
-            Nenhum evento encontrado
+            {t("audit_empty")}
           </div>
         )}
       </div>
