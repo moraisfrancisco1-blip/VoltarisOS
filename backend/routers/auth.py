@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter
+from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role
 from fastapi import Request
 import os
 import sys
@@ -398,10 +398,14 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
     plan = str(tenant.plan) if tenant and tenant.plan else "beta"
     
+    # Canonical role: legacy spellings in old DB rows (e.g. "admin", "superadmin")
+    # are normalized to the RBAC v2 value used by every guard and by the frontend.
+    canonical_role = normalize_role(user.role)
+
     # Compute allowed modules for this plan
     allowed_modules = get_allowed_modules_for_plan(plan)
     # If SUPER_ADMIN, grant ALL modules including super_admin_*
-    if user.role == "SUPER_ADMIN":
+    if canonical_role == "SUPER_ADMIN":
         from backend.permissions import ALL_MODULES
         allowed_modules = set(ALL_MODULES)
     
@@ -409,7 +413,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "sub": user.email,
         "company": tenant.name if tenant else user.name,
         "color": user.color,
-        "role": user.role,
+        "role": canonical_role,
         "tenant_id": user.tenant_id,
         "plan": plan,
     })
@@ -429,7 +433,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "token": token,
         "company": tenant.name if tenant else user.name,
         "color": user.color,
-        "role": user.role,
+        "role": canonical_role,
         "email": user.email,
         "2fa_enabled": user.totp_enabled,
         "plan": plan,
@@ -458,7 +462,7 @@ def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_us
         "id": user.id,
         "email": user.email,
         "name": user.name,
-        "role": user.role,
+        "role": normalize_role(user.role),
         "color": user.color,
         "company": tenant.name if tenant else user.name,
         "plan": plan,

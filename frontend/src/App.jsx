@@ -50,7 +50,7 @@ import SimBanner from "./components/SimBanner"
 import OnboardingWizard from "./components/OnboardingWizard"
 import { useAppStore, THEMES } from "./store/appStore"
 import { LANG_STORAGE_KEY } from "./i18n/translations"
-import { canAccessPage, isSuperAdmin } from "./config/roleAccess"
+import { canAccessPage, isSuperAdmin, normalizeRole } from "./config/roleAccess"
 import { canAccessPlanFeature } from "./config/planFeatureGates"
 import "./index.css"
 
@@ -278,7 +278,10 @@ export default function App() {
     const token = localStorage.getItem("token")
     const company = localStorage.getItem("company")
     const color = localStorage.getItem("color")
-    const role = localStorage.getItem("role") || "TENANT_MEMBER"
+    const storedRole = localStorage.getItem("role")
+    // Self-heal legacy role spellings (e.g. "admin") to the canonical RBAC v2 value.
+    const role = normalizeRole(storedRole)
+    if (token && storedRole !== role) localStorage.setItem("role", role)
     const plan = localStorage.getItem("plan") || "beta"
     const allowedModulesStr = localStorage.getItem("allowed_modules")
     const allowed_modules = allowedModulesStr ? JSON.parse(allowedModulesStr) : []
@@ -294,6 +297,25 @@ export default function App() {
     setUser(null)
   }
 
+  // Reconcile the session role with the backend on load. Existing sessions may
+  // still carry a legacy role spelling in localStorage/JWT; /auth/me returns the
+  // canonical RBAC v2 role, which we persist so the whole UI (including the
+  // admin navigation) recognises the account consistently.
+  useEffect(() => {
+    if (!user?.token) return
+    let cancelled = false
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (!me || cancelled || !me.role) return
+        const canonical = normalizeRole(me.role)
+        localStorage.setItem("role", canonical)
+        setUser((u) => (u && u.role !== canonical ? { ...u, role: canonical } : u))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.token])
+
   return (
     <BrowserRouter>
       <Routes>
@@ -305,14 +327,15 @@ export default function App() {
         <Route path="/*" element={
           !user ? (
             <Login onLogin={(u) => {
-              localStorage.setItem("role", u.role || "TENANT_MEMBER")
+              const role = normalizeRole(u.role)
+              localStorage.setItem("role", role)
               localStorage.setItem("plan", u.plan || "beta")
               if (u.allowed_modules) {
                 localStorage.setItem("allowed_modules", JSON.stringify(u.allowed_modules))
               }
               setUser({
                 ...u,
-                role: u.role || "TENANT_MEMBER",
+                role,
                 plan: u.plan || "beta",
                 allowed_modules: u.allowed_modules || [],
               })

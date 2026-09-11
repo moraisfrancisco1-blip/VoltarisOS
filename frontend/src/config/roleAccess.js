@@ -8,6 +8,37 @@
 //
 // Plan-based module access is handled in planFeatureGates.js (mirrors backend/permissions.py).
 
+// Canonical RBAC v2 roles + normalization of legacy/variant spellings.
+// Mirrors backend/security.py normalize_role() so the frontend always works
+// with the same canonical values the backend issues.
+export const CANONICAL_ROLES = ["SUPER_ADMIN", "TENANT_ADMIN", "TENANT_MEMBER"]
+
+const ROLE_ALIASES = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  SUPERADMIN: "SUPER_ADMIN",
+  ADMIN: "SUPER_ADMIN",
+  OWNER: "SUPER_ADMIN",
+  PLATFORM_ADMIN: "SUPER_ADMIN",
+  TENANT_ADMIN: "TENANT_ADMIN",
+  TENANTADMIN: "TENANT_ADMIN",
+  ORG_ADMIN: "TENANT_ADMIN",
+  ORGANIZATION_ADMIN: "TENANT_ADMIN",
+  TENANT_MEMBER: "TENANT_MEMBER",
+  TENANTMEMBER: "TENANT_MEMBER",
+  MEMBER: "TENANT_MEMBER",
+  USER: "TENANT_MEMBER",
+  OPERATOR: "TENANT_MEMBER",
+  VIEWER: "TENANT_MEMBER",
+  INSTALLER: "TENANT_MEMBER",
+}
+
+export function normalizeRole(role) {
+  if (role == null) return "TENANT_MEMBER"
+  const key = String(role).trim().toUpperCase().replace(/-/g, "_").replace(/ /g, "_")
+  if (!key) return "TENANT_MEMBER"
+  return ROLE_ALIASES[key] || String(role).trim()
+}
+
 export const ROLE_PAGE_ACCESS = {
   TENANT_ADMIN: [
     // Core
@@ -37,25 +68,29 @@ export const ROLE_PAGE_ACCESS = {
 }
 
 export function isSuperAdmin(role) {
-  return role === "SUPER_ADMIN"
+  return normalizeRole(role) === "SUPER_ADMIN"
 }
 
 export function isTenantAdmin(role) {
-  return role === "TENANT_ADMIN" || role === "SUPER_ADMIN"
+  const r = normalizeRole(role)
+  return r === "TENANT_ADMIN" || r === "SUPER_ADMIN"
 }
 
 export function isAdminRole(role) {
-  return role === "SUPER_ADMIN" || role === "TENANT_ADMIN"
+  const r = normalizeRole(role)
+  return r === "SUPER_ADMIN" || r === "TENANT_ADMIN"
 }
 
 export function getAllowedPages(role, allPageIds) {
-  if (role === "SUPER_ADMIN") return allPageIds
-  return ROLE_PAGE_ACCESS[role] || ROLE_PAGE_ACCESS.TENANT_MEMBER
+  const r = normalizeRole(role)
+  if (r === "SUPER_ADMIN") return allPageIds
+  return ROLE_PAGE_ACCESS[r] || ROLE_PAGE_ACCESS.TENANT_MEMBER
 }
 
 export function canAccessPage(role, pageId) {
-  if (role === "SUPER_ADMIN") return true
-  const allowed = ROLE_PAGE_ACCESS[role] || ROLE_PAGE_ACCESS.TENANT_MEMBER
+  const r = normalizeRole(role)
+  if (r === "SUPER_ADMIN") return true
+  const allowed = ROLE_PAGE_ACCESS[r] || ROLE_PAGE_ACCESS.TENANT_MEMBER
   return allowed.includes(pageId)
 }
 

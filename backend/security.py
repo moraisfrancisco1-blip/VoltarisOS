@@ -37,6 +37,51 @@ def _require_secret(key: str) -> str:
 SECRET_KEY = _require_secret("SECRET_KEY")
 ALGORITHM = "HS256"
 
+
+# ─── RBAC v2 — canonical roles + legacy normalization ────────────────────────
+# Single source of truth for the role values the whole app (backend guards and
+# the frontend RBAC) understands. Legacy / variant spellings found in older DB
+# rows or JWTs are mapped onto these so the same account is always recognised.
+CANONICAL_ROLES = ("SUPER_ADMIN", "TENANT_ADMIN", "TENANT_MEMBER")
+
+# Alias → canonical. Lookup key is upper-cased with spaces/hyphens collapsed to
+# underscores, so "Super Admin", "super-admin" and "SUPERADMIN" all match.
+_ROLE_ALIASES = {
+    # Platform owner (pre-RBAC-v2 rows stored this account as "admin").
+    "SUPER_ADMIN": "SUPER_ADMIN",
+    "SUPERADMIN": "SUPER_ADMIN",
+    "ADMIN": "SUPER_ADMIN",
+    "OWNER": "SUPER_ADMIN",
+    "PLATFORM_ADMIN": "SUPER_ADMIN",
+    # Organization admins.
+    "TENANT_ADMIN": "TENANT_ADMIN",
+    "TENANTADMIN": "TENANT_ADMIN",
+    "ORG_ADMIN": "TENANT_ADMIN",
+    "ORGANIZATION_ADMIN": "TENANT_ADMIN",
+    # Regular end users / operators.
+    "TENANT_MEMBER": "TENANT_MEMBER",
+    "TENANTMEMBER": "TENANT_MEMBER",
+    "MEMBER": "TENANT_MEMBER",
+    "USER": "TENANT_MEMBER",
+    "OPERATOR": "TENANT_MEMBER",
+    "VIEWER": "TENANT_MEMBER",
+    "INSTALLER": "TENANT_MEMBER",
+}
+
+
+def normalize_role(role) -> str:
+    """Map a legacy/variant role string onto the canonical RBAC v2 role.
+
+    Unknown roles (e.g. GATEWAY, SERVICE_READONLY) are returned unchanged so
+    non-user service identities keep working.
+    """
+    if role is None:
+        return "TENANT_MEMBER"
+    key = str(role).strip().upper().replace("-", "_").replace(" ", "_")
+    if not key:
+        return "TENANT_MEMBER"
+    return _ROLE_ALIASES.get(key, str(role).strip())
+
 _bearer = HTTPBearer(auto_error=False)
 
 # Shared limiter instance — must be the SAME object used in app.state.limiter (main.py)
@@ -74,10 +119,18 @@ def decode_token(token: str) -> dict:
 
 
 async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
-    """FastAPI dependency — require a valid Bearer JWT. Raises 401 if missing/invalid."""
+    """FastAPI dependency — require a valid Bearer JWT. Raises 401 if missing/invalid.
+
+    The decoded role is normalized to the canonical RBAC v2 value here, so every
+    downstream guard (require_admin, require_super_admin, permissions, …) sees
+    the same role regardless of how it was spelled when the token was issued.
+    """
     if creds is None or not creds.credentials:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autenticação necessária")
-    return decode_token(creds.credentials)
+    user = decode_token(creds.credentials)
+    if user.get("role") is not None:
+        user["role"] = normalize_role(user.get("role"))
+    return user
 
 
 async def require_admin(user: dict = Depends(get_current_user)) -> dict:

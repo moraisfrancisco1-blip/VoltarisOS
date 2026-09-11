@@ -178,6 +178,27 @@ test.describe("5. Authenticated app (English) — real UI", () => {
     await expect(page.getByRole("button", { name: "View less" })).toBeVisible();
   });
 
+  test("legacy role spelling is normalized to canonical SUPER_ADMIN", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => {
+      localStorage.setItem("token", "e2e-legacy");
+      localStorage.setItem("role", "admin"); // legacy pre-RBAC-v2 spelling
+      localStorage.setItem("plan", "beta");
+      localStorage.setItem("vos_onboarded", "true");
+      localStorage.setItem("vos_lang", "en");
+    });
+    await page.reload();
+    await expect(page.locator("nav")).toBeVisible();
+
+    // localStorage is self-healed to the canonical value...
+    await expect
+      .poll(async () => page.evaluate(() => localStorage.getItem("role")))
+      .toBe("SUPER_ADMIN");
+    // ...and the admin navigation (Settings/Users) is therefore visible.
+    await expect(page.locator("nav").getByText("Settings")).toBeVisible();
+    await expect(page.locator("nav").getByText("Users")).toBeVisible();
+  });
+
   test("main application areas show no Portuguese when English is selected", async ({ page }) => {
     const pageErrors = [];
     page.on("pageerror", (e) => pageErrors.push(String((e && e.stack) || e)));
