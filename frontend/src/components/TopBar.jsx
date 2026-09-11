@@ -19,6 +19,7 @@ const PAGE_TITLE_KEYS = {
   dispatch_copilot: "nav_dispatch_copilot", marketplace: "nav_marketplace",
   carbon_credit: "nav_carbon_credit", customer_portal: "nav_customer_portal",
   solar_intel: "nav_solar_intel", arbitrage: "nav_arbitrage", degradation_lab: "nav_degradation_lab",
+  super_admin_tenants: "page_super_tenants", super_admin_system_health: "page_system_health",
 }
 
 const BILLING_URL = "mailto:francisco@voltarisos.com?subject=VoltarisOS%20Plan%20Upgrade"

@@ -25,9 +25,9 @@ const LOGIN_TITLE = {
 };
 
 // Seed an authenticated session (as a logged-in user would have) WITHOUT touching auth/backend.
-async function seedSession(page, lang) {
+async function seedSession(page, lang, extra = {}) {
   await page.goto("/");
-  await page.evaluate((l) => {
+  await page.evaluate(({ l, extra }) => {
     localStorage.setItem("token", "e2e-token");
     localStorage.setItem("company", "Voltaris E2E");
     localStorage.setItem("color", "#4ade80");
@@ -35,7 +35,8 @@ async function seedSession(page, lang) {
     localStorage.setItem("plan", "beta");
     localStorage.setItem("vos_onboarded", "true"); // dismiss onboarding overlay
     localStorage.setItem("vos_lang", l || "en");
-  }, lang);
+    Object.entries(extra || {}).forEach(([k, v]) => localStorage.setItem(k, String(v)));
+  }, { l: lang || null, extra });
   await page.reload();
   await expect(page.locator("nav")).toBeVisible();
 }
@@ -197,6 +198,39 @@ test.describe("5. Authenticated app (English) — real UI", () => {
     // ...and the admin navigation (Settings/Users) is therefore visible.
     await expect(page.locator("nav").getByText("Settings")).toBeVisible();
     await expect(page.locator("nav").getByText("Users")).toBeVisible();
+  });
+
+  test("SUPER_ADMIN sees Settings, Users and the platform modules", async ({ page }) => {
+    await seedSession(page, "en", { vos_nav_simplified: false });
+    const nav = page.locator("nav");
+    await expect(nav.getByText("Settings")).toBeVisible();
+    await expect(nav.getByText("Users")).toBeVisible();
+    await expect(nav.getByText("Tenant Management")).toBeVisible();
+    await expect(nav.getByText("System Health")).toBeVisible();
+    // The super-admin label must no longer read "DEV".
+    await expect(page.locator("aside")).not.toContainText("DEV");
+  });
+
+  test("Tenant Management opens its actual page", async ({ page }) => {
+    await seedSession(page, "en", { vos_nav_simplified: false });
+    await page.locator("nav button").filter({ hasText: "Tenant Management" }).first().click();
+    await page.waitForTimeout(800);
+    await expect(page.getByRole("heading", { name: "Tenant Management" })).toBeVisible();
+  });
+
+  test("System Health opens its actual page", async ({ page }) => {
+    await seedSession(page, "en", { vos_nav_simplified: false });
+    await page.locator("nav button").filter({ hasText: "System Health" }).first().click();
+    await page.waitForTimeout(800);
+    await expect(page.getByRole("heading", { name: "System Health" })).toBeVisible();
+  });
+
+  test("non-SUPER_ADMIN cannot access the platform pages", async ({ page }) => {
+    await seedSession(page, "en", { role: "TENANT_ADMIN", vos_nav_simplified: false });
+    const nav = page.locator("nav");
+    await expect(nav).toBeVisible();
+    await expect(nav.getByText("Tenant Management")).toHaveCount(0);
+    await expect(nav.getByText("System Health")).toHaveCount(0);
   });
 
   test("main application areas show no Portuguese when English is selected", async ({ page }) => {

@@ -427,7 +427,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
                 color: superAdmin ? "#ef4444" : admin ? "#10b981" : "#8b5cf6",
                 textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700",
               }}>
-                {role === "SUPER_ADMIN" ? "DEV" : role === "TENANT_ADMIN" ? "ADMIN" : role}
+                {role === "SUPER_ADMIN" ? t("role_super_admin") : role === "TENANT_ADMIN" ? "ADMIN" : role}
               </div>
             </div>
           </div>
@@ -447,7 +447,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
                   opacity: isDevGroup ? 1 : 0.6,
                   textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
                 }}>
-                  {isDevGroup ? "🔧 DEV" : t(group.labelKey)}
+                  {t(group.labelKey)}
                 </div>
               )}
               {showCollapsed && gi > 0 && (

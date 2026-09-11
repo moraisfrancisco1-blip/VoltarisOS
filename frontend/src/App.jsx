@@ -42,6 +42,8 @@ import CustomerPortal from "./pages/CustomerPortal"
 import SolarMarketIntelligence from "./pages/SolarMarketIntelligence"
 import EnergyArbitrage from "./pages/EnergyArbitrage"
 import SolarDegradationLab from "./pages/SolarDegradationLab"
+import SuperAdminTenants from "./pages/SuperAdminTenants"
+import SuperAdminSystemHealth from "./pages/SuperAdminSystemHealth"
 import AICopilot from "./components/AICopilot"
 import CommandPalette from "./components/CommandPalette"
 import ToastContainer from "./components/ToastContainer"
@@ -92,6 +94,8 @@ const PAGES = {
   solar_intel: SolarMarketIntelligence,
   arbitrage: EnergyArbitrage,
   degradation_lab: SolarDegradationLab,
+  super_admin_tenants: SuperAdminTenants,
+  super_admin_system_health: SuperAdminSystemHealth,
 }
 
 function useIsMobile() {
