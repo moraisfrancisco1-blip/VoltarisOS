@@ -62,7 +62,7 @@ from backend.routers.payments import router as payments_router
 from backend.routers.twofa import router as twofa_router
 from backend.routers.websocket import router as websocket_router
 from backend.routers.operations import router as operations_router
-from backend.security import get_current_user, limiter
+from backend.security import get_current_user, limiter, require_password_changed
 from backend.startup import validate_startup_config
 from fastapi import Depends, HTTPException, Request
 from slowapi import _rate_limit_exceeded_handler
@@ -216,6 +216,12 @@ app.add_middleware(VoltCoreServiceKeyMiddleware)
 # All data/business routers require a valid JWT — only /health, /api/auth/login and
 # /api/auth/register (defined inside auth.router without this dependency) stay public.
 _auth_dep = [Depends(get_current_user)]
+
+# Accounts still holding a temporary password (first-login onboarding) pass
+# authentication but are blocked from every data/business router until they
+# change it. No-op for tokens without the claim — i.e. every existing session,
+# and for SUPER_ADMIN, which is never part of this flow.
+_auth_dep = [Depends(get_current_user), Depends(require_password_changed)]
 
 app.include_router(optimization_router, dependencies=_auth_dep)
 app.include_router(trading_router, dependencies=_auth_dep)

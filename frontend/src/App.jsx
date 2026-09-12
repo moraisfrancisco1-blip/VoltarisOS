@@ -5,6 +5,7 @@ import PaymentSuccess from "./pages/PaymentSuccess"
 import PaymentCancel from "./pages/PaymentCancel"
 import Sidebar from "./components/Sidebar"
 import TopBar from "./components/TopBar"
+import ForcedPasswordChange from "./components/ForcedPasswordChange"
 import Dashboard from "./pages/Dashboard"
 import Sites from "./pages/Sites"
 import FleetManagement from "./pages/FleetManagement"
@@ -278,6 +279,11 @@ function AppShell({ user, onLogout }) {
 }
 
 export default function App() {
+  // Temporary-password sessions (tenant onboarding): the account is authenticated
+  // but must change its password before the app renders anything else.
+  const [mustChangePassword, setMustChangePassword] = useState(
+    () => localStorage.getItem("must_change_password") === "1"
+  )
   const [user, setUser] = useState(() => {
     const token = localStorage.getItem("token")
     const company = localStorage.getItem("company")
@@ -337,6 +343,12 @@ export default function App() {
               if (u.allowed_modules) {
                 localStorage.setItem("allowed_modules", JSON.stringify(u.allowed_modules))
               }
+              if (u.must_change_password) {
+                localStorage.setItem("must_change_password", "1")
+              } else {
+                localStorage.removeItem("must_change_password")
+              }
+              setMustChangePassword(!!u.must_change_password)
               setUser({
                 ...u,
                 role,
@@ -344,6 +356,13 @@ export default function App() {
                 allowed_modules: u.allowed_modules || [],
               })
             }} />
+          ) : mustChangePassword ? (
+            // First login with a temporary password — the backend blocks every
+            // platform route until the change is done, so this cannot be skipped.
+            <ForcedPasswordChange
+              onDone={() => setMustChangePassword(false)}
+              onCancel={handleLogout}
+            />
           ) : (
             <AppShell user={user} onLogout={handleLogout} />
           )

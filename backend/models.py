@@ -36,6 +36,10 @@ class User(Base):
     role = Column(String, default="TENANT_MEMBER")
     color = Column(String, default="#4ade80")
     active = Column(Boolean, default=True)
+    # Set when an account is created with a temporary password (e.g. the first
+    # user of a new tenant) — the account must change it on first login.
+    # NULL/False for every account created before this flag existed.
+    must_change_password = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=utcnow_naive)
     terms_accepted_at = Column(DateTime, nullable=True)

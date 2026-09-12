@@ -300,6 +300,15 @@ export default function Login({ onLogin }) {
         if (res.data.allowed_modules) {
           localStorage.setItem("allowed_modules", JSON.stringify(res.data.allowed_modules))
         }
+        // Temporary password (tenant onboarding): the account may authenticate
+        // but must replace its password before using the platform. Flag the
+        // session so the app renders the forced change screen; the backend
+        // blocks every platform route while the flag is set.
+        if (res.data.must_change_password) {
+          localStorage.setItem("must_change_password", "1")
+        } else {
+          localStorage.removeItem("must_change_password")
+        }
         onLogin(res.data)
       } else {
         if (!termsAccepted) {

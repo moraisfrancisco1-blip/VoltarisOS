@@ -14,7 +14,11 @@ const BLANK_FORM = {
   name: "", slug: "", plan: "beta",
   max_sites: "", max_devices: "",
   primary_color: "#f59e0b", logo_url: "",
+  // Optional first user for the new tenant (onboarding).
+  admin_name: "", admin_email: "", admin_password: "",
 };
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 const inputStyle = {
   width: "100%", padding: "9px 12px", background: "var(--surface2)",
@@ -46,6 +50,8 @@ export default function SuperAdminTenants() {
   const [form, setForm] = useState({ ...BLANK_FORM });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState(null);
+  // Credentials of the first user just created (temporary password shown once).
+  const [credentials, setCredentials] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -70,6 +76,11 @@ export default function SuperAdminTenants() {
 
   const create = async () => {
     if (!form.name.trim()) { setFormError(t("sa_required_name")); return; }
+    const adminEmail = form.admin_email.trim().toLowerCase();
+    if (adminEmail && !EMAIL_RE.test(adminEmail)) { setFormError(t("sa_invalid_email")); return; }
+    if (adminEmail && form.admin_password && form.admin_password.length < 8) {
+      setFormError(t("sa_short_password")); return;
+    }
     setSaving(true);
     setFormError(null);
     try {
@@ -82,6 +93,13 @@ export default function SuperAdminTenants() {
       if (form.slug.trim()) payload.slug = form.slug.trim();
       if (form.max_sites !== "") payload.max_sites = Number(form.max_sites);
       if (form.max_devices !== "") payload.max_devices = Number(form.max_devices);
+      // Optional first user (TENANT_ADMIN) with a temporary password the
+      // account must change on first login.
+      if (adminEmail) {
+        payload.admin_email = adminEmail;
+        if (form.admin_name.trim()) payload.admin_name = form.admin_name.trim();
+        if (form.admin_password) payload.admin_password = form.admin_password;
+      }
 
       const res = await fetch(`${API}/api/admin/tenants`, {
         method: "POST",
@@ -90,7 +108,17 @@ export default function SuperAdminTenants() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.detail || t("sa_create_error"));
-      addToast(t("sa_created"), "success");
+
+      if (data.first_user) {
+        setCredentials({
+          email: data.first_user.email,
+          name: data.first_user.name,
+          password: data.first_user.temporary_password || form.admin_password,
+        });
+        addToast(t("sa_created_user"), "success");
+      } else {
+        addToast(t("sa_created"), "success");
+      }
       setShowForm(false);
       await load();
     } catch (e) {
@@ -131,6 +159,41 @@ export default function SuperAdminTenants() {
           </button>
         </div>
       </div>
+
+      {/* First-user credentials — the temporary password is shown only once */}
+      {credentials && (
+        <div style={{ ...glassCard(C.amber), border: `1px solid ${C.amber}66` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.amber }}>
+              {t("sa_first_user_title")} — {credentials.name}
+            </div>
+            <button
+              onClick={() => setCredentials(null)}
+              style={{ background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: 14 }}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 10 }}>{t("sa_temp_pass_once")}</div>
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+            background: "var(--surface2)", border: "1px solid var(--border)",
+            borderRadius: 8, padding: "10px 12px", fontFamily: "monospace", fontSize: 13, color: "var(--text)",
+          }}>
+            <span data-testid="first-user-credentials">{credentials.email} · {credentials.password}</span>
+            <button
+              onClick={() => navigator.clipboard?.writeText(`${credentials.email} · ${credentials.password}`)}
+              style={{
+                padding: "5px 12px", background: `${C.amber}22`, color: C.amber,
+                border: `1px solid ${C.amber}55`, borderRadius: 6, cursor: "pointer",
+                fontSize: 11, fontWeight: 600, flexShrink: 0,
+              }}
+            >
+              {t("sa_copy")}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div style={glassCard(C.indigo)}>
         <div style={{ ...label, marginBottom: 12 }}>{t("page_super_tenants")} ({tenants.length})</div>
@@ -224,6 +287,24 @@ export default function SuperAdminTenants() {
               </Field>
               <Field label={t("sa_field_logo")}>
                 <input value={form.logo_url} onChange={set("logo_url")} placeholder="https://..." style={inputStyle} />
+              </Field>
+            </div>
+
+            {/* ── Optional first user (tenant onboarding) ─────────────────── */}
+            <div style={{ marginTop: 4, paddingTop: 14, borderTop: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text)" }}>{t("sa_first_user_title")}</div>
+              <div style={{ fontSize: 11, color: "var(--sub)", margin: "2px 0 12px" }}>{t("sa_first_user_hint")}</div>
+
+              <Field label={t("sa_field_admin_name")}>
+                <input value={form.admin_name} onChange={set("admin_name")} style={inputStyle} />
+              </Field>
+
+              <Field label={t("sa_field_admin_email")}>
+                <input value={form.admin_email} onChange={set("admin_email")} placeholder="nome@empresa.com" style={inputStyle} />
+              </Field>
+
+              <Field label={t("sa_field_admin_pass")} hint={t("sa_admin_pass_ph")}>
+                <input value={form.admin_password} onChange={set("admin_password")} style={inputStyle} />
               </Field>
             </div>
 

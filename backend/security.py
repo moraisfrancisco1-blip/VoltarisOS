@@ -163,6 +163,36 @@ def require_role(*allowed_roles: str):
     return _dep
 
 
+# ─── Forced first-login password change ──────────────────────────────────────
+# Accounts created with a temporary password (the first user of a new tenant,
+# or any admin-created account flagged as such) may log in but must change it
+# before using the platform. SUPER_ADMIN is deliberately excluded: the platform
+# owner account is seeded by seed_admin() and never enters this onboarding flow.
+def password_change_required(user: dict) -> bool:
+    """True when a decoded identity must change its temporary password first."""
+    if not user:
+        return False
+    if user.get("role") == "SUPER_ADMIN":
+        return False
+    return bool(user.get("must_change_password"))
+
+
+async def require_password_changed(user: dict = Depends(get_current_user)) -> dict:
+    """FastAPI dependency — block platform usage until the temporary password
+    has been replaced.
+
+    Strictly additive: the claim is only present on tokens issued for an account
+    with `must_change_password` set, so every pre-existing session and every
+    normal account behaves exactly as before.
+    """
+    if password_change_required(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Tem de alterar a password temporária antes de usar a plataforma",
+        )
+    return user
+
+
 async def check_module_access(module_name: str, user: dict = Depends(get_current_user)) -> dict:
     """FastAPI dependency — validate that the user's active plan includes the requested module.
 

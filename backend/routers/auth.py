@@ -12,10 +12,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role
+from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role, require_password_changed
 from fastapi import Request
 import os
 import re
+import secrets
 import sys
 from backend.audit import log_user_login
 from backend.twofa import verify_totp_code
@@ -57,7 +58,12 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 class CreateTenantRequest(BaseModel):
-    """SUPER_ADMIN-only tenant creation payload (mirrors the Tenant model)."""
+    """SUPER_ADMIN-only tenant creation payload (mirrors the Tenant model).
+
+    Optionally also onboards the tenant's first user (`admin_email`): created as
+    TENANT_ADMIN with a temporary password the account must change on first
+    login. SUPER_ADMIN can never be created through this endpoint.
+    """
     name: str
     slug: str | None = None
     plan: str = "beta"
@@ -65,6 +71,10 @@ class CreateTenantRequest(BaseModel):
     max_devices: int | None = None
     primary_color: str | None = None
     logo_url: str | None = None
+    # ─── Optional first user (tenant onboarding) ─────────────────────────────
+    admin_name: str | None = None
+    admin_email: str | None = None
+    admin_password: str | None = None  # temporary; generated when omitted
 
 # Self-registration roles — NEVER include SUPER_ADMIN or TENANT_ADMIN here.
 # TENANT_ADMIN is only granted via admin invite or during organization creation.
@@ -414,6 +424,12 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     # are normalized to the RBAC v2 value used by every guard and by the frontend.
     canonical_role = normalize_role(user.role)
 
+    # First-login onboarding: the account still holds a temporary password and
+    # must replace it before using the platform. Carried in the JWT so every
+    # guarded route enforces it without an extra DB lookup. SUPER_ADMIN is
+    # deliberately never part of this flow.
+    must_change_password = bool(user.must_change_password) and canonical_role != "SUPER_ADMIN"
+
     # Compute allowed modules for this plan
     allowed_modules = get_allowed_modules_for_plan(plan)
     # If SUPER_ADMIN, grant ALL modules including super_admin_*
@@ -428,6 +444,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "role": canonical_role,
         "tenant_id": user.tenant_id,
         "plan": plan,
+        "must_change_password": must_change_password,
     })
     
     # Log successful login
@@ -447,6 +464,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "color": user.color,
         "role": canonical_role,
         "email": user.email,
+        "must_change_password": must_change_password,
         "2fa_enabled": user.totp_enabled,
         "plan": plan,
         "tenant_id": user.tenant_id,
@@ -482,6 +500,7 @@ def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_us
         "max_sites": tenant.max_sites if tenant else PLAN_MAX_SITES.get(plan, 1),
         "allowed_modules": sorted(list(allowed_modules)),
         "twofa_enabled": user.totp_enabled,
+        "must_change_password": bool(user.must_change_password),
         "last_login": user.last_login.isoformat() if user.last_login else None,
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
@@ -489,7 +508,12 @@ def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_us
 
 @router.post("/auth/change-password")
 def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
-    """Any logged-in user can change their own password."""
+    """Any logged-in user can change their own password.
+
+    Also completes the forced first-login change: the flag is cleared and a
+    fresh token (without the must_change_password claim) is returned, so the
+    caller can continue without logging in again.
+    """
     user = db.query(models.User).filter(models.User.email == current.get("sub")).first()
     if not user:
         raise HTTPException(404, "Utilizador não encontrado")
@@ -497,13 +521,32 @@ def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), c
         raise HTTPException(401, "Password atual incorreta")
     if len(req.new_password) < 8:
         raise HTTPException(400, "A nova password deve ter pelo menos 8 caracteres")
+    if req.new_password == req.current_password:
+        raise HTTPException(400, "A nova password tem de ser diferente da atual")
     user.password_hash = hash_pw(req.new_password)
+    user.must_change_password = False
     db.commit()
-    return {"message": "Password alterada com sucesso"}
+
+    tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
+    plan = str(tenant.plan) if tenant and tenant.plan else "beta"
+    token = create_token({
+        "sub": user.email,
+        "company": tenant.name if tenant else user.name,
+        "color": user.color,
+        "role": normalize_role(user.role),
+        "tenant_id": user.tenant_id,
+        "plan": plan,
+        "must_change_password": False,
+    })
+    return {
+        "message": "Password alterada com sucesso",
+        "token": token,
+        "must_change_password": False,
+    }
 
 
 @router.post("/auth/invite")
-def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: dict = Depends(require_admin)):
+def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin-only: create a teammate account directly (no beta code needed).
     Role is restricted to TENANT_MEMBER/TENANT_ADMIN — SUPER_ADMIN can NEVER be
     granted through this endpoint, only via seed_admin() on first boot or manual DB."""
@@ -538,7 +581,7 @@ def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: di
 
 
 @router.get("/auth/users")
-def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_admin)):
+def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin endpoint — list all users within the same tenant (multi-tenant isolation)."""
     admin_user = db.query(models.User).filter(models.User.email == _admin.get("sub")).first()
     tenant_id = admin_user.tenant_id if admin_user else None
@@ -565,7 +608,7 @@ def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_adm
 
 
 @router.patch("/auth/users/{user_id}/toggle-active")
-def toggle_active(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin)):
+def toggle_active(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin-only: enable/disable a user account. Cannot deactivate SUPER_ADMIN accounts."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -584,7 +627,7 @@ def toggle_active(user_id: int, db: Session = Depends(get_db), admin: dict = Dep
 
 
 @router.delete("/auth/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin)):
+def delete_user(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin-only: remove a user. Cannot remove SUPER_ADMIN accounts."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -625,6 +668,7 @@ def list_all_tenants(db: Session = Depends(get_db), _sa: dict = Depends(require_
 # ─── Tenant creation helpers (SUPER_ADMIN only) ────────────────────────────────
 _TENANT_SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$")
 _TENANT_HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _slugify_tenant(value: str) -> str:
@@ -672,6 +716,25 @@ def create_tenant(
     if not _TENANT_HEX_RE.match(primary_color):
         raise HTTPException(422, "Cor primária inválida. Use o formato #RRGGBB.")
 
+    # ─── Optional first user (tenant onboarding) ─────────────────────────────
+    # Validated before anything is written, so a bad payload never leaves a
+    # tenant behind without the first user it was supposed to onboard.
+    admin_email = (req.admin_email or "").strip().lower()
+    admin_password = req.admin_password or ""
+    generated_password = False
+    if admin_email:
+        if not _EMAIL_RE.match(admin_email):
+            raise HTTPException(422, "Email do primeiro utilizador inválido.")
+        if admin_password and len(admin_password) < 8:
+            raise HTTPException(422, "A password temporária deve ter pelo menos 8 caracteres.")
+        if db.query(models.User).filter(func.lower(models.User.email) == admin_email).first():
+            raise HTTPException(409, "Email já registado.")
+        if not admin_password:
+            # One-time temporary password, echoed in the response so the
+            # SUPER_ADMIN can hand it over (same pattern as seed_admin).
+            admin_password = secrets.token_urlsafe(9)
+            generated_password = True
+
     tenant = models.Tenant(
         name=name,
         slug=slug,
@@ -683,8 +746,40 @@ def create_tenant(
         active=True,
     )
     db.add(tenant)
+    db.flush()  # tenant.id, still inside the transaction
+
+    new_user = None
+    if admin_email:
+        # Role is fixed: the tenant owner. SUPER_ADMIN is never grantable here.
+        new_user = models.User(
+            tenant_id=tenant.id,
+            email=admin_email,
+            password_hash=hash_pw(admin_password),
+            name=(req.admin_name or "").strip() or name,
+            role="TENANT_ADMIN",
+            color=primary_color,
+            active=True,
+            must_change_password=True,
+        )
+        db.add(new_user)
+
     db.commit()
     db.refresh(tenant)
+
+    first_user = None
+    if new_user is not None:
+        db.refresh(new_user)
+        first_user = {
+            "id": new_user.id,
+            "name": new_user.name,
+            "email": new_user.email,
+            "role": new_user.role,
+            "must_change_password": True,
+            "generated": generated_password,
+            # Only echoed when generated — the admin already knows a password
+            # they typed themselves.
+            "temporary_password": admin_password if generated_password else None,
+        }
 
     return {
         "id": tenant.id,
@@ -697,6 +792,7 @@ def create_tenant(
         "logo_url": tenant.logo_url,
         "active": tenant.active,
         "created_at": tenant.created_at.isoformat() if tenant.created_at else None,
+        "first_user": first_user,
     }
 
 

@@ -352,3 +352,118 @@ test.describe("5. Tenant creation", () => {
     await expect(modal.getByText("Já existe um tenant com esse nome.")).toBeVisible();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. First user onboarding — temporary password + forced first-login change
+// ─────────────────────────────────────────────────────────────────────────────
+test.describe("6. First user onboarding", () => {
+  test("Create Tenant exposes the first-user onboarding fields", async ({ page }) => {
+    await stubTenantsApi(page);
+    await openTenantManagement(page);
+
+    await page.getByRole("button", { name: "Create Tenant", exact: true }).click();
+    const modal = tenantModal(page);
+
+    await expect(modal.getByText("First user", { exact: true })).toBeVisible();
+    await expect(modal.getByText("This user must change the password on first login.")).toBeVisible();
+    await expect(modal.getByText("User email", { exact: true })).toBeVisible();
+    await expect(modal.getByText("Temporary password", { exact: true })).toBeVisible();
+    await expect(modal.locator('input[placeholder="nome@empresa.com"]')).toBeVisible();
+  });
+
+  test("an invalid first-user email is rejected before any request", async ({ page }) => {
+    const state = await stubTenantsApi(page);
+    await openTenantManagement(page);
+
+    await page.getByRole("button", { name: "Create Tenant", exact: true }).click();
+    const modal = tenantModal(page);
+    await modal.locator("input").nth(0).fill("Acme Bad Email");
+    await modal.locator('input[placeholder="nome@empresa.com"]').fill("not-an-email");
+    await modal.getByRole("button", { name: "Create", exact: true }).click();
+
+    await expect(modal.getByText("Invalid email.")).toBeVisible();
+    expect(state.posts, "no POST must be sent with an invalid email").toBe(0);
+  });
+
+  test("a generated temporary password is shown once after creation", async ({ page }) => {
+    await page.route("**/api/admin/tenants", async (route) => {
+      const req = route.request();
+      if (req.method() === "POST") {
+        const body = JSON.parse(req.postData() || "{}");
+        return route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: 9, name: body.name, slug: "acme-onboarding", plan: body.plan || "beta",
+            max_sites: 1, active: true, created_at: new Date().toISOString(),
+            first_user: {
+              id: 3, name: body.admin_name || body.name, email: body.admin_email,
+              role: "TENANT_ADMIN", must_change_password: true,
+              generated: true, temporary_password: "gen-temp-pass-123",
+            },
+          }),
+        });
+      }
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
+
+    await openTenantManagement(page);
+    await page.getByRole("button", { name: "Create Tenant", exact: true }).click();
+    const modal = tenantModal(page);
+    await modal.locator("input").nth(0).fill("Acme Onboarding");
+    await modal.locator('input[placeholder="nome@empresa.com"]').fill("owner@acme.com");
+    await modal.locator("input").last().fill("");       // let the backend generate it
+    await modal.getByRole("button", { name: "Create", exact: true }).click();
+
+    await expect(page.getByText("Tenant and first user created.")).toBeVisible();
+    const creds = page.getByTestId("first-user-credentials");
+    await expect(creds).toContainText("owner@acme.com");
+    await expect(creds).toContainText("gen-temp-pass-123");
+  });
+
+  test("a temporary-password login forces the password change", async ({ page }) => {
+    await page.route("**/api/auth/login", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          token: "e2e-temporary-session",
+          company: "Acme Energy",
+          color: "#4ade80",
+          role: "TENANT_ADMIN",
+          email: "owner@acme.com",
+          plan: "starter",
+          tenant_id: 7,
+          allowed_modules: [],
+          must_change_password: true,
+        }),
+      })
+    );
+    await page.route("**/api/auth/change-password", (route) =>
+      route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Password atual incorreta" }),
+      })
+    );
+
+    await page.goto("/");
+    await page.locator('input[placeholder="admin@voltaris.com"]').fill("owner@acme.com");
+    await page.locator('input[type="password"]').first().fill("temp-password-123");
+    await page.getByRole("button", { name: /Sign in/ }).click();
+
+    const gate = page.getByTestId("forced-password-change");
+    await expect(gate).toBeVisible();
+    // The application shell stays blocked until the password is changed.
+    await expect(page.locator("nav")).toHaveCount(0);
+
+    await gate.locator("input").nth(1).fill("new-password-123");
+    await gate.locator("input").nth(2).fill("different-password");
+    await gate.getByRole("button", { name: "Save and continue" }).click();
+    await expect(gate.getByText("The passwords do not match.")).toBeVisible();
+
+    await gate.locator("input").nth(2).fill("new-password-123");
+    await gate.getByRole("button", { name: "Save and continue" }).click();
+    await expect(gate.getByText("Password atual incorreta")).toBeVisible();
+  });
+});
