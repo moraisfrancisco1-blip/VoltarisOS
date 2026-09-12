@@ -103,6 +103,7 @@ WRITE_ENDPOINTS = [
     ("POST", "/api/devices"),
     ("PUT", "/api/devices/1"),
     ("DELETE", "/api/devices/1"),
+    ("POST", "/api/admin/tenants"),
 ]
 
 

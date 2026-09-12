@@ -8,12 +8,14 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from jose import jwt
 from datetime import datetime, timedelta
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
 from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role
 from fastapi import Request
 import os
+import re
 import sys
 from backend.audit import log_user_login
 from backend.twofa import verify_totp_code
@@ -53,6 +55,16 @@ class RegisterRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+class CreateTenantRequest(BaseModel):
+    """SUPER_ADMIN-only tenant creation payload (mirrors the Tenant model)."""
+    name: str
+    slug: str | None = None
+    plan: str = "beta"
+    max_sites: int | None = None
+    max_devices: int | None = None
+    primary_color: str | None = None
+    logo_url: str | None = None
 
 # Self-registration roles — NEVER include SUPER_ADMIN or TENANT_ADMIN here.
 # TENANT_ADMIN is only granted via admin invite or during organization creation.
@@ -608,6 +620,84 @@ def list_all_tenants(db: Session = Depends(get_db), _sa: dict = Depends(require_
         }
         for t in tenants
     ]
+
+
+# ─── Tenant creation helpers (SUPER_ADMIN only) ────────────────────────────────
+_TENANT_SLUG_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,48}[a-z0-9])?$")
+_TENANT_HEX_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def _slugify_tenant(value: str) -> str:
+    """Derive a URL-safe identifier from a tenant name."""
+    slug = re.sub(r"[^a-z0-9]+", "-", (value or "").strip().lower()).strip("-")
+    return slug[:50]
+
+
+@router.post("/admin/tenants", status_code=201)
+def create_tenant(
+    req: CreateTenantRequest,
+    db: Session = Depends(get_db),
+    _sa: dict = Depends(require_super_admin),
+):
+    """SUPER_ADMIN only — create a new tenant.
+
+    Strictly human super-admin: the read-only Volt Core service key is a closed
+    GET allowlist and is rejected on this write endpoint by the middleware.
+    """
+    name = (req.name or "").strip()
+    if not name:
+        raise HTTPException(422, "O nome do tenant é obrigatório.")
+
+    slug = (req.slug or "").strip().lower() or _slugify_tenant(name)
+    if not _TENANT_SLUG_RE.match(slug):
+        raise HTTPException(422, "Identificador (slug) inválido. Use letras minúsculas, números e hífenes (2 a 50 caracteres).")
+
+    plan = (req.plan or "beta").strip().lower()
+    if plan not in TIER_ORDER:
+        raise HTTPException(422, f"Plano inválido. Válidos: {', '.join(TIER_ORDER.keys())}")
+
+    if db.query(models.Tenant).filter(models.Tenant.slug == slug).first():
+        raise HTTPException(409, "Já existe um tenant com esse identificador (slug).")
+    if db.query(models.Tenant).filter(func.lower(models.Tenant.name) == name.lower()).first():
+        raise HTTPException(409, "Já existe um tenant com esse nome.")
+
+    max_sites = req.max_sites if req.max_sites is not None else PLAN_MAX_SITES.get(plan, 1)
+    if max_sites < 1:
+        raise HTTPException(422, "O limite de sites tem de ser pelo menos 1.")
+    max_devices = req.max_devices if req.max_devices is not None else 50
+    if max_devices < 1:
+        raise HTTPException(422, "O limite de dispositivos tem de ser pelo menos 1.")
+
+    primary_color = (req.primary_color or "#f59e0b").strip()
+    if not _TENANT_HEX_RE.match(primary_color):
+        raise HTTPException(422, "Cor primária inválida. Use o formato #RRGGBB.")
+
+    tenant = models.Tenant(
+        name=name,
+        slug=slug,
+        plan=plan,
+        max_sites=max_sites,
+        max_devices=max_devices,
+        primary_color=primary_color,
+        logo_url=(req.logo_url.strip() if req.logo_url else None),
+        active=True,
+    )
+    db.add(tenant)
+    db.commit()
+    db.refresh(tenant)
+
+    return {
+        "id": tenant.id,
+        "name": tenant.name,
+        "slug": tenant.slug,
+        "plan": tenant.plan,
+        "max_sites": tenant.max_sites,
+        "max_devices": tenant.max_devices,
+        "primary_color": tenant.primary_color,
+        "logo_url": tenant.logo_url,
+        "active": tenant.active,
+        "created_at": tenant.created_at.isoformat() if tenant.created_at else None,
+    }
 
 
 @router.get("/admin/system-health")

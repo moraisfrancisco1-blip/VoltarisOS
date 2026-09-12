@@ -258,3 +258,97 @@ test.describe("5. Authenticated app (English) — real UI", () => {
     if (pageErrors.length) console.log("PAGE ERRORS:\n" + pageErrors.join("\n---\n"));
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Tenant creation — Tenant Management (SUPER_ADMIN only)
+// ─────────────────────────────────────────────────────────────────────────────
+// Stateful stub for /api/admin/tenants (GET lists, POST appends). Registered
+// *after* the global 503 catch-all in beforeEach, so it takes precedence.
+async function stubTenantsApi(page) {
+  const state = {
+    posts: 0,
+    tenants: [
+      { id: 1, name: "Acme Energy", slug: "acme-energy", plan: "beta", max_sites: 1, active: true, created_at: "2026-01-05T10:00:00Z" },
+    ],
+  };
+  await page.route("**/api/admin/tenants", async (route) => {
+    const req = route.request();
+    if (req.method() === "POST") {
+      state.posts += 1;
+      const body = JSON.parse(req.postData() || "{}");
+      const name = String(body.name || "").trim();
+      if (!name || state.tenants.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
+        const detail = name ? "Já existe um tenant com esse nome." : "O nome do tenant é obrigatório.";
+        return route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ detail }) });
+      }
+      const created = {
+        id: state.tenants.length + 1,
+        name,
+        slug: body.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        plan: body.plan || "beta",
+        max_sites: body.max_sites ?? 1,
+        active: true,
+        created_at: new Date().toISOString(),
+      };
+      state.tenants = [...state.tenants, created];
+      return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify(created) });
+    }
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(state.tenants) });
+  });
+  return state;
+}
+
+async function openTenantManagement(page) {
+  await seedSession(page, "en", { vos_nav_simplified: false });
+  await page.locator("nav button").filter({ hasText: "Tenant Management" }).first().click();
+  await page.waitForTimeout(800);
+  await expect(page.getByRole("heading", { name: "Tenant Management" })).toBeVisible();
+}
+
+function tenantModal(page) {
+  return page.locator("div").filter({ has: page.getByRole("heading", { name: "New Tenant" }) }).last();
+}
+
+test.describe("5. Tenant creation", () => {
+  test("SUPER_ADMIN creates a tenant and the list refreshes", async ({ page }) => {
+    await stubTenantsApi(page);
+    await openTenantManagement(page);
+    await expect(page.getByText("Acme Energy")).toBeVisible();
+
+    await page.getByRole("button", { name: "Create Tenant", exact: true }).click();
+    const modal = tenantModal(page);
+    await expect(modal).toBeVisible();
+
+    await modal.locator("input").nth(0).fill("Nordic Grid");
+    await modal.locator("select").selectOption("pro");
+    await modal.getByRole("button", { name: "Create", exact: true }).click();
+
+    await expect(page.getByText("Tenant created successfully.")).toBeVisible();
+    await expect(modal).toHaveCount(0);
+    await expect(page.getByText("Nordic Grid")).toBeVisible();
+  });
+
+  test("required name is validated before any request is sent", async ({ page }) => {
+    const state = await stubTenantsApi(page);
+    await openTenantManagement(page);
+
+    await page.getByRole("button", { name: "Create Tenant", exact: true }).click();
+    const modal = tenantModal(page);
+    await modal.getByRole("button", { name: "Create", exact: true }).click();
+
+    await expect(modal.getByText("Tenant name is required.")).toBeVisible();
+    expect(state.posts, "no POST must be sent when the name is empty").toBe(0);
+  });
+
+  test("a duplicate tenant name surfaces a clear error", async ({ page }) => {
+    await stubTenantsApi(page);
+    await openTenantManagement(page);
+
+    await page.getByRole("button", { name: "Create Tenant", exact: true }).click();
+    const modal = tenantModal(page);
+    await modal.locator("input").nth(0).fill("Acme Energy");
+    await modal.getByRole("button", { name: "Create", exact: true }).click();
+
+    await expect(modal.getByText("Já existe um tenant com esse nome.")).toBeVisible();
+  });
+});
