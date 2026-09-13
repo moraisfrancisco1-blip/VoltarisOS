@@ -12,6 +12,7 @@ from optimization.asset_mapper import build_portfolio_from_vpp
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
 from optimization.persistence import persist_optimization_result
 from control.dispatch_executor import DispatchExecutor
+from forecasting.contracts import ProviderMetadata
 
 router = APIRouter(prefix="/api/vpp", tags=["vpp"])
 
@@ -225,6 +226,18 @@ async def _optimize_persisted_vpp(vpp_id: int, body: VPPOptimizeBody, db: Sessio
     prices = list(body.prices_eur_mwh or [])
     price_source = "request"
     if not prices:
+        # ENTSO-E only ever publishes real day-ahead prices for the next day
+        # (~24-48h out); a bare "1-168h" bound let this branch silently reuse
+        # whatever the client returned for a horizon it never actually has
+        # price data for. A caller that supplies its own prices_eur_mwh is
+        # vouching for that data itself and isn't bound by this cap.
+        entsoe_max_horizon = 48
+        if horizon > entsoe_max_horizon:
+            raise HTTPException(
+                400,
+                f"horizon_hours > {entsoe_max_horizon} requires an explicit prices_eur_mwh "
+                f"— ENTSO-E day-ahead prices don't cover horizons this long",
+            )
         from backend.market.entsoe import get_entsoe_client
         client = get_entsoe_client()
         if not client:
@@ -233,6 +246,16 @@ async def _optimize_persisted_vpp(vpp_id: int, body: VPPOptimizeBody, db: Sessio
         response = await client.get_day_ahead_prices(country_code=body.country_code, start=now, end=now + timedelta(hours=horizon))
         if not response.success or not response.data:
             raise HTTPException(502, f"ENTSO-E price feed failed: {response.error or 'no data'}")
+        # Fail closed on stale provider data — same policy already enforced for the
+        # background rolling-horizon task (forecasting/health.py), now also applied
+        # to this on-demand path, which previously optimized/dispatched on ENTSO-E
+        # prices of any age without checking.
+        if response.generated_at is None:
+            raise HTTPException(502, "ENTSO-E response is missing generated_at")
+        try:
+            ProviderMetadata("ENTSO-E", response.generated_at.isoformat(), response.max_age_minutes).validate()
+        except ValueError as exc:
+            raise HTTPException(502, f"ENTSO-E price feed is stale: {exc}")
         prices = [point.price_eur_mwh for point in response.data]
         price_source = "ENTSO-E day-ahead"
     if len(prices) < horizon:

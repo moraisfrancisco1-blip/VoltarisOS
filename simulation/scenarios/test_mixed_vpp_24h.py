@@ -1,3 +1,5 @@
+import pytest
+
 from simulation.scenarios.mixed_vpp_24h import build_mixed_vpp
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
 
@@ -16,11 +18,22 @@ def test_mixed_vpp_24h_is_optimizable_and_aggregates_dispatch():
     assert result.total_export_kwh >= 0
 
 
-def test_flexible_load_dispatch_is_energy_neutral():
+def test_flexible_load_dispatch_matches_physical_schedule():
+    """asset_dispatch (what control.dispatch_executor consumes) must equal the
+    absolute physical power already reported in `schedule` for every hour --
+    not net to zero over the day. This test used to assert the sum was ~0,
+    which held only because dispatch stored the bare flexibility delta
+    (trivially zero by the optimizer's own lpSum(delta)==0 constraint) instead
+    of the real baseline+delta power; see the energy-engineering audit and
+    test_mixed_vpp_physical_load_energy_totals_are_explicit below for the
+    actual (non-zero) physical totals dispatch now has to match.
+    """
     result = MultiAssetOptimizer().optimize(build_mixed_vpp())
 
-    for asset_id in ("ev-1", "factory-1", "hp-1"):
-        assert abs(sum(result.asset_dispatch[asset_id])) < 1e-6
+    for t, row in enumerate(result.schedule):
+        assert result.asset_dispatch["ev-1"][t] == pytest.approx(-row["ev_ev-1"]["charge_kw"])
+        assert result.asset_dispatch["hp-1"][t] == pytest.approx(-row["heat_pump_hp-1"]["power_kw"])
+        assert result.asset_dispatch["factory-1"][t] == pytest.approx(row["load_factory-1_kw"])
 
 
 def test_mixed_vpp_physical_load_energy_totals_are_explicit():

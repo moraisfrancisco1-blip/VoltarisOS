@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import warnings
 
+import pytest
+
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
 from simulation.scenarios.mixed_vpp_24h import build_mixed_vpp
 
@@ -58,6 +60,19 @@ def test_optimizer_numeric_invariants():
         else:
             assert abs(factory) < 0.01
 
+        # asset_dispatch (what control.dispatch_executor actually consumes) must
+        # be the same absolute physical power already reported in `schedule`,
+        # not a bare delta relative to each asset's baseline. See the
+        # energy-engineering audit: EV/heat-pump dispatch used to store only
+        # -delta (consuming/producing sign convention applied to the
+        # flexibility adjustment alone), and factory dispatch omitted its
+        # baseline entirely -- both silently wrong, or for curtailment below
+        # baseline, silently dropped by dispatch_executor's own >=0 clamp,
+        # whenever baseline != 0 (i.e. whenever these assets do anything).
+        assert result.asset_dispatch["ev-1"][t] == pytest.approx(-ev["charge_kw"])
+        assert result.asset_dispatch["hp-1"][t] == pytest.approx(-hp["power_kw"])
+        assert result.asset_dispatch["factory-1"][t] == pytest.approx(factory)
+
         # Per-hour power balance:
         # gi - ge == base_load + factory + ev_load + hp_load + (charge - discharge) - solar
         rhs = (
@@ -69,10 +84,6 @@ def test_optimizer_numeric_invariants():
             - solar
         )
         assert abs((gi - ge) - rhs) < 0.02
-
-    # EV and heat-pump flexibility are energy-neutral (hard sum(delta)==0).
-    for asset_id in ("ev-1", "hp-1"):
-        assert abs(sum(result.asset_dispatch[asset_id])) < 0.05
 
     # Factory must meet its total energy requirement (hard constraint).
     factory_energy = sum(row["load_factory-1_kw"] for row in result.schedule)

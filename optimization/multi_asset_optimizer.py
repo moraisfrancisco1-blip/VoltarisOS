@@ -117,26 +117,39 @@ class MultiAssetOptimizer:
             # infeasible whenever baseline heat exceeds storage capacity).
         prob.solve(COIN_CMD(msg=False)); status=LpStatus.get(prob.status,"unknown").lower()
         if status!="optimal": return MultiAssetOptimizationResult(status,[],0.0,0.0,0.0,solver_time_ms=(time.time()-started)*1000)
+        # Absolute physical power per asset/hour, recorded once here and reused
+        # for both `schedule` (human/API-readable) and `dispatch` (fed to
+        # control.dispatch_executor) below, so the two can never drift apart
+        # the way they used to: dispatch previously stored the bare flexibility
+        # delta for EV/heat-pump/industrial-load assets instead of this actual
+        # value, which is wrong whenever baseline != 0 — every case where the
+        # asset isn't already fully off — and, for curtailment below baseline,
+        # was silently dropped by dispatch_executor's own >=0 clamp before
+        # baseline was ever added back.
+        ev_actual={a.asset_id:[0.0]*n for a in evs}
+        flex_actual={a.asset_id:[0.0]*n for a in flex_loads}
+        hp_actual={a.asset_id:[0.0]*n for a in heat_pumps}
         schedule=[]
         for t in range(n):
             row={"hour":t,"price_eur_mwh":prices[t],"grid_import_kw":round(value(grid_import[t]) or 0.0,3),"grid_export_kw":round(value(grid_export[t]) or 0.0,3),"solar_kw":round(sum(self._series(a.forecast_kw,n)[t] for a in solar_assets),3)}
             for a in batteries:
                 v=battery_vars[a.asset_id]; row[f"battery_{a.asset_id}"]={"charge_kw":round(value(v["charge"][t]) or 0.0,3),"discharge_kw":round(value(v["discharge"][t]) or 0.0,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
             for a in evs:
-                v=ev_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; actual=v["baseline"][t]+d; row[f"ev_{a.asset_id}"]={"charge_kw":round(actual,3),"flex_kw":round(d,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
+                v=ev_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; actual=v["baseline"][t]+d; ev_actual[a.asset_id][t]=actual; row[f"ev_{a.asset_id}"]={"charge_kw":round(actual,3),"flex_kw":round(d,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
             for a in flex_loads:
-                actual=(a.baseline_kw+value(flex_vars[a.asset_id][t])) if isinstance(a,IndustrialLoadAsset) and a.start_hour<=t<min(a.end_hour,n) else (value(flex_vars[a.asset_id][t]) if not isinstance(a,IndustrialLoadAsset) else 0.0); row[f"load_{a.asset_id}_kw"]=round(actual or 0.0,3)
+                actual=((a.baseline_kw+value(flex_vars[a.asset_id][t])) if isinstance(a,IndustrialLoadAsset) and a.start_hour<=t<min(a.end_hour,n) else (value(flex_vars[a.asset_id][t]) if not isinstance(a,IndustrialLoadAsset) else 0.0)) or 0.0; flex_actual[a.asset_id][t]=actual; row[f"load_{a.asset_id}_kw"]=round(actual,3)
             for a in heat_pumps:
-                v=hp_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; row[f"heat_pump_{a.asset_id}"]={"power_kw":round(a.baseline_power_kw+d,3),"flex_kw":round(d,3),"thermal_kwh":round(value(v["thermal"][t]) or 0.0,3)}
+                v=hp_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; actual=a.baseline_power_kw+d; hp_actual[a.asset_id][t]=actual; row[f"heat_pump_{a.asset_id}"]={"power_kw":round(actual,3),"flex_kw":round(d,3),"thermal_kwh":round(value(v["thermal"][t]) or 0.0,3)}
             schedule.append(row)
         dispatch={}
         for a in batteries:
             v=battery_vars[a.asset_id]; dispatch[a.asset_id]=[round((value(v["discharge"][t]) or 0.0)-(value(v["charge"][t]) or 0.0),3) for t in range(n)]
         for a in evs:
-            v=ev_vars[a.asset_id]; dispatch[a.asset_id]=[round(-(value(v["delta"][t]) or 0.0),3) for t in range(n)]
-        for a in flex_loads: dispatch[a.asset_id]=[round(value(flex_vars[a.asset_id][t]) or 0.0,3) for t in range(n)]
+            dispatch[a.asset_id]=[round(-x,3) for x in ev_actual[a.asset_id]]
+        for a in flex_loads:
+            dispatch[a.asset_id]=[round(x,3) for x in flex_actual[a.asset_id]]
         for a in heat_pumps:
-            v=hp_vars[a.asset_id]; dispatch[a.asset_id]=[round(-(value(v["delta"][t]) or 0.0),3) for t in range(n)]
+            dispatch[a.asset_id]=[round(-x,3) for x in hp_actual[a.asset_id]]
         site_dispatch={}
         for a in batteries+evs+flex_loads+heat_pumps:
             key=str(a.site_id) if a.site_id is not None else "unassigned"; vals=dispatch[a.asset_id]; site_dispatch.setdefault(key,[0.0]*n); site_dispatch[key]=[round(x+y,3) for x,y in zip(site_dispatch[key],vals)]

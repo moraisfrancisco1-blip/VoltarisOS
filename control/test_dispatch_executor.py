@@ -35,3 +35,24 @@ def test_ev_can_only_charge():
 
     assert [sp.power_kw for sp in setpoints] == [0.0, -30.0]
     assert [sp.action for sp in setpoints] == ["hold", "charge"]
+
+
+def test_heat_pump_can_only_heat():
+    device = Device(9, 101, "heat_pump", {"max_power_kw": 20})
+    setpoints = DispatchExecutor().build_setpoints([device], {"device-9": [5, -12, -25]})
+
+    # Same convention as EV: never exports, clamped into [-max_power, 0].
+    assert [sp.power_kw for sp in setpoints] == [0.0, -12.0, -20.0]
+    assert [sp.action for sp in setpoints] == ["hold", "heat", "heat"]
+
+
+def test_flexible_load_curtailment_survives_to_setpoint():
+    """Regression test: a curtailed absolute power (>=0, below the device's
+    normal draw) must reach the executor as-is, not get clamped to 0. Before
+    the fix, the optimizer fed this branch a bare delta that went negative for
+    any curtailment below baseline, which this same >=0 clamp then discarded."""
+    device = Device(10, 101, "industrial_load", {"max_power_kw": 50})
+    setpoints = DispatchExecutor().build_setpoints([device], {"device-10": [50.0, 15.0, 0.0]})
+
+    assert [sp.power_kw for sp in setpoints] == [50.0, 15.0, 0.0]
+    assert [sp.action for sp in setpoints] == ["consume", "consume", "hold"]

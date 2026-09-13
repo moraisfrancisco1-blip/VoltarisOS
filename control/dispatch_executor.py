@@ -61,6 +61,10 @@ class DispatchExecutor:
                 elif kind in {"flexible_load", "load", "industrial_load"}:
                     value = max(0.0, min(max_power, value))
                     action = "consume" if value > 0 else "hold"
+                elif kind in {"heat_pump", "heatpump", "hp"}:
+                    # Same convention as EV: only ever consumes, never exports.
+                    value = max(-max_power, min(0.0, value))
+                    action = "heat" if value < 0 else "hold"
                 else:
                     continue
 
