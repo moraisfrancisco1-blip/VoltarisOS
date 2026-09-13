@@ -980,6 +980,7 @@ const T = {
   um_col_role:          { pt:"Role", en:"Role", fr:"Rôle", es:"Rol", nl:"Rol" },
   um_col_status:        { pt:"Estado", en:"Status", fr:"Statut", es:"Estado", nl:"Status" },
   um_col_lastlogin:     { pt:"Último Login", en:"Last Login", fr:"Dernière connexion", es:"Último inicio de sesión", nl:"Laatste login" },
+  um_col_lastseen:      { pt:"Última Atividade", en:"Last Active", fr:"Dernière activité", es:"Última actividad", nl:"Laatst actief" },
   um_active:            { pt:"Ativo", en:"Active", fr:"Actif", es:"Activo", nl:"Actief" },
   um_inactive:          { pt:"Inativo", en:"Inactive", fr:"Inactif", es:"Inactivo", nl:"Inactief" },
   um_deactivate:        { pt:"Desativar", en:"Deactivate", fr:"Désactiver", es:"Desactivar", nl:"Deactiveren" },

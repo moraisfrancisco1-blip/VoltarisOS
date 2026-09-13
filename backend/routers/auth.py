@@ -601,6 +601,7 @@ def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_adm
             "color": u.color,
             "active": u.active,
             "last_login": u.last_login.isoformat() if u.last_login else None,
+            "last_seen_at": u.last_seen_at.isoformat() if u.last_seen_at else None,
             "created_at": u.created_at.isoformat() if u.created_at else None,
         }
         for u in users

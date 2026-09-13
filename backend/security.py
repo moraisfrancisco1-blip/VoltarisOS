@@ -9,6 +9,7 @@ import hmac
 import json
 import os
 import sys
+from datetime import timedelta
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -19,6 +20,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy import text
+
+from backend.database import engine
+from backend.models import utcnow_naive
 
 
 def _require_secret(key: str) -> str:
@@ -118,6 +123,33 @@ def decode_token(token: str) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido ou expirado")
 
 
+_LAST_SEEN_THROTTLE_SECONDS = 60
+
+
+def _touch_last_seen(email) -> None:
+    """Best-effort activity tracking for authenticated requests, distinct from
+    last_login (set only at login time, in auth.py). A single indexed UPDATE,
+    no ORM object loaded — and the WHERE clause itself throttles writes to at
+    most once per _LAST_SEEN_THROTTLE_SECONDS per user, so the 15s frontend
+    poll doesn't turn into a write on every request. Never raises: a hiccup
+    here must not fail an otherwise-valid authenticated request."""
+    if not email:
+        return
+    try:
+        now = utcnow_naive()
+        threshold = now - timedelta(seconds=_LAST_SEEN_THROTTLE_SECONDS)
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    "UPDATE users SET last_seen_at = :now WHERE email = :email "
+                    "AND (last_seen_at IS NULL OR last_seen_at < :threshold)"
+                ),
+                {"now": now, "email": email, "threshold": threshold},
+            )
+    except Exception:
+        pass
+
+
 async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
     """FastAPI dependency — require a valid Bearer JWT. Raises 401 if missing/invalid.
 
@@ -130,6 +162,7 @@ async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer
     user = decode_token(creds.credentials)
     if user.get("role") is not None:
         user["role"] = normalize_role(user.get("role"))
+    _touch_last_seen(user.get("sub"))
     return user
 
 

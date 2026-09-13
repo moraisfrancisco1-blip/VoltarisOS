@@ -211,7 +211,7 @@ export default function UserManagement() {
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ color: "var(--sub)", borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-              {[t("um_col_user"), t("um_col_role"), t("um_col_status"), t("um_col_lastlogin"), ""].map(h => (
+              {[t("um_col_user"), t("um_col_role"), t("um_col_status"), t("um_col_lastlogin"), t("um_col_lastseen"), ""].map(h => (
                 <th key={h} style={{ padding: "8px 12px", textAlign: "left", fontWeight: 500 }}>{h}</th>
               ))}
             </tr>
@@ -248,6 +248,7 @@ export default function UserManagement() {
                     }}>{u.active ? t("um_active") : t("um_inactive")}</span>
                   </td>
                   <td style={{ padding: "12px", color: "var(--sub)" }}>{timeAgo(u.last_login, t)}</td>
+                  <td style={{ padding: "12px", color: "var(--sub)" }}>{timeAgo(u.last_seen_at, t)}</td>
                   <td style={{ padding: "12px" }}>
                     {isSuperadmin ? (
                       <span style={{ fontSize: 11, color: "var(--sub)" }}>{t("um_protected")}</span>

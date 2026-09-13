@@ -36,6 +36,7 @@ MIGRATIONS = [
     "add_site_timezone",
     "add_device_external_id",
     "add_must_change_password",
+    "add_last_seen_at",
 ]
 
 

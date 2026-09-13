@@ -41,6 +41,10 @@ class User(Base):
     # NULL/False for every account created before this flag existed.
     must_change_password = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
+    # Updated by get_current_user() on any authenticated request (throttled to
+    # once per 60s per user) — unlike last_login, this tracks the session
+    # actually being used, not just the moment of login.
+    last_seen_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=utcnow_naive)
     terms_accepted_at = Column(DateTime, nullable=True)
     totp_secret = Column(String, nullable=True)
