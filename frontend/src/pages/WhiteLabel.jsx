@@ -169,12 +169,14 @@ export default function whitelabel({ user }) {
   // Only the "domains" tab below is real (this tenant's own custom domain).
   // The rest of this page (Tenants/Brand Config/Feature Flags -- a reseller
   // console for managing OTHER tenants) was never built for real and stays
-  // behind simMode, same as before.
+  // behind simMode, same as before -- including its DemoNotice banner and
+  // stats row, which (like the original top-level gate this replaced) must
+  // only ever show together with simMode, not independently of it.
   const fakeReseller = tab !== "domains"
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
-      {fakeReseller && <DemoNotice />}
+      {fakeReseller && simMode && <DemoNotice />}
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>white-label & Multi-tenant</h1>
@@ -182,7 +184,7 @@ export default function whitelabel({ user }) {
       </div>
 
       {/* Stats row — part of the (still fake) reseller console */}
-      {fakeReseller && (
+      {fakeReseller && simMode && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
           {[
             { label: "Total Tenants", value: tenants.length, sub: "+1 this month" },
