@@ -2,7 +2,8 @@
 api_keys.py — User-facing API key management for external integrations.
 
 TENANT_ADMIN/SUPER_ADMIN only (matches the "apikeys" page gate in
-frontend/src/config/roleAccess.js). A generated key can then be used as
+frontend/src/config/roleAccess.js), and Enterprise-plan only (matches
+"admin_apikeys" in permissions.py). A generated key can then be used as
 `Authorization: Bearer vos_...` on any endpoint a normal user could call —
 see backend/security.py's get_current_user for how it's resolved, and the
 ApiKey model docstring in backend/models.py for why it's always
@@ -19,7 +20,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from backend.database import SessionLocal
-from backend.security import require_admin, generate_api_key
+from backend.security import require_admin, generate_api_key, check_module_access
 from backend.models import utcnow_naive
 from backend import models
 from backend.audit import log_audit_event
@@ -76,6 +77,7 @@ def create_api_key(
     request: Request,
     db=Depends(get_db),
     current_user: dict = Depends(require_admin),
+    _plan: dict = Depends(check_module_access("admin_apikeys")),
 ):
     if not req.name.strip():
         raise HTTPException(400, "Nome é obrigatório")
@@ -107,7 +109,11 @@ def create_api_key(
 
 
 @router.get("", response_model=list[ApiKeyOut])
-def list_api_keys(db=Depends(get_db), current_user: dict = Depends(require_admin)):
+def list_api_keys(
+    db=Depends(get_db),
+    current_user: dict = Depends(require_admin),
+    _plan: dict = Depends(check_module_access("admin_apikeys")),
+):
     q = db.query(models.ApiKey).filter(models.ApiKey.revoked_at.is_(None))
     if current_user.get("role") != "SUPER_ADMIN":
         q = q.filter(models.ApiKey.tenant_id == current_user.get("tenant_id"))
@@ -120,6 +126,7 @@ def revoke_api_key(
     request: Request,
     db=Depends(get_db),
     current_user: dict = Depends(require_admin),
+    _plan: dict = Depends(check_module_access("admin_apikeys")),
 ):
     row = _owned_key(db, key_id, current_user)
     actor = _creator_user(db, current_user)
@@ -139,6 +146,7 @@ def rotate_api_key(
     request: Request,
     db=Depends(get_db),
     current_user: dict = Depends(require_admin),
+    _plan: dict = Depends(check_module_access("admin_apikeys")),
 ):
     row = _owned_key(db, key_id, current_user)
     actor = _creator_user(db, current_user)

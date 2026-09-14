@@ -31,7 +31,7 @@ def _auth(tenant_id: int, role: str = "TENANT_ADMIN") -> dict:
 
 
 @pytest.fixture()
-def db_session():
+def db_session(monkeypatch):
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -39,6 +39,11 @@ def db_session():
     )
     Base.metadata.create_all(bind=engine)
     TestSession = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+    # check_module_access (backend/security.py) opens its own session via
+    # `from backend.database import SessionLocal` (not a FastAPI dependency,
+    # so dependency_overrides can't reach it) -- point that at the same
+    # in-memory engine so plan gating sees any tenant a test seeds.
+    monkeypatch.setattr("backend.database.SessionLocal", TestSession)
     session = TestSession()
     try:
         yield session
@@ -71,6 +76,17 @@ class TestAuditLogRoleGating:
     def test_tenant_member_is_forbidden(self, client, db_session):
         _seed_entry(db_session, TENANT_A)
         resp = client.get("/api/audit-log", headers=_auth(TENANT_A, role="TENANT_MEMBER"))
+        assert resp.status_code == 403
+
+    def test_non_enterprise_plan_is_forbidden(self, client, db_session):
+        # admin_audit is Enterprise-only (permissions.py); "pro" is the
+        # highest tier that still excludes it. Without a seeded Tenant row,
+        # get_tenant_plan falls back to "beta" ({"*"} full access), which is
+        # why every other test here doesn't need one.
+        db_session.add(models.Tenant(id=TENANT_A, name="T1", slug="t1", plan="pro"))
+        db_session.commit()
+        _seed_entry(db_session, TENANT_A)
+        resp = client.get("/api/audit-log", headers=_auth(TENANT_A, role="TENANT_ADMIN"))
         assert resp.status_code == 403
 
     def test_tenant_admin_allowed(self, client, db_session):

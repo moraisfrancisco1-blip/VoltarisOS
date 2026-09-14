@@ -1,7 +1,8 @@
 """
 audit_log.py — Read-only endpoint for the append-only audit_logs table.
 
-GET /api/audit-log — TENANT_ADMIN/SUPER_ADMIN only. Returns the caller's
+GET /api/audit-log — TENANT_ADMIN/SUPER_ADMIN only, and Enterprise-plan
+only (matches "admin_audit" in permissions.py). Returns the caller's
 tenant audit trail (SUPER_ADMIN sees every tenant), newest first.
 
 Writes to audit_logs go exclusively through backend/audit.py's
@@ -16,7 +17,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from backend.database import SessionLocal
-from backend.security import require_admin
+from backend.security import require_admin, check_module_access
 from backend import models
 
 router = APIRouter(prefix="/api/audit-log", tags=["audit"])
@@ -58,6 +59,7 @@ def list_audit_log(
     user_email: Optional[str] = None,
     db: Session = Depends(get_db),
     user: dict = Depends(require_admin),
+    _plan: dict = Depends(check_module_access("admin_audit")),
 ):
     """Return the tenant's audit trail, newest first.
 

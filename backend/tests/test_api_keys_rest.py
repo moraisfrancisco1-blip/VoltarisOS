@@ -81,6 +81,17 @@ class TestApiKeyRoleGating:
         resp = client.post("/api/api-keys", json={"name": "x"}, headers=_auth(TENANT_A, role="TENANT_MEMBER"))
         assert resp.status_code == 403
 
+    def test_non_enterprise_plan_is_forbidden(self, client, db_session):
+        # admin_apikeys is Enterprise-only (permissions.py); "pro" is the
+        # highest tier that still excludes it. Without a seeded Tenant row,
+        # get_tenant_plan falls back to "beta" ({"*"} full access), which is
+        # why every other test here doesn't need one.
+        db_session.add(models.Tenant(id=TENANT_A, name="T1", slug="t1", plan="pro"))
+        db_session.commit()
+        _seed_admin(db_session, TENANT_A)
+        resp = client.post("/api/api-keys", json={"name": "x"}, headers=_auth(TENANT_A))
+        assert resp.status_code == 403
+
     def test_tenant_admin_can_create(self, client, db_session):
         _seed_admin(db_session, TENANT_A)
         resp = client.post("/api/api-keys", json={"name": "CI script"}, headers=_auth(TENANT_A))
