@@ -12,6 +12,7 @@ const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", l
 const BLANK = {
   name: "", location: "", lat: "", lng: "",
   solar_kw: "", battery_kwh: "", ev_chargers: 0, owner: "", status: "active",
+  tilt_deg: "", azimuth_deg: "",
 };
 
 const STATUSES = ["active", "online", "offline", "warning", "maintenance", "commissioning"];
@@ -85,6 +86,8 @@ export default function Sites() {
         ev_chargers: form.ev_chargers !== "" ? Number(form.ev_chargers) : 0,
         owner: form.owner || null,
         status: form.status || "active",
+        tilt_deg: form.tilt_deg !== "" ? Number(form.tilt_deg) : null,
+        azimuth_deg: form.azimuth_deg !== "" ? Number(form.azimuth_deg) : null,
       };
       const res = await fetch(`${API}/api/sites`, {
         method: "POST",
@@ -232,10 +235,21 @@ export default function Sites() {
 
             {/* Solar & BESS */}
             <div style={{ fontSize: 11, color: amber, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Solar & BESS Configuration</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 16 }}>
               <InputField label="Solar Capacity" value={form.solar_kw} onChange={f("solar_kw")} type="number" unit="kW" />
               <InputField label="BESS Energy" value={form.battery_kwh} onChange={f("battery_kwh")} type="number" unit="kWh" />
               <InputField label="EV Chargers" value={form.ev_chargers} onChange={f("ev_chargers")} type="number" />
+            </div>
+
+            {/* Panel orientation */}
+            <div style={{ fontSize: 11, color: amber, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Panel Orientation</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 8 }}>
+              <InputField label="Tilt" value={form.tilt_deg} onChange={f("tilt_deg")} type="number" unit="° from flat" />
+              <InputField label="Azimuth" value={form.azimuth_deg} onChange={f("azimuth_deg")} type="number" unit="°" />
+            </div>
+            <div style={{ fontSize: 11, color: "var(--sub)", marginBottom: 24 }}>
+              Azimuth: 0° = South, -90° = East, 90° = West, ±180° = North. Leave both blank to use flat-horizontal
+              irradiance (less accurate) until you know the real panel orientation.
             </div>
 
             {formError && (

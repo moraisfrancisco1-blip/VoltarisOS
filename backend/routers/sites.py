@@ -38,6 +38,10 @@ class Site(BaseModel):
     ev_chargers: int
     owner: str
     status: str = "active"
+    # Panel orientation, Open-Meteo convention (see backend/models.py:Site) --
+    # unset means the solar forecast falls back to flat-horizontal (GHI).
+    tilt_deg: Optional[float] = None
+    azimuth_deg: Optional[float] = None
 
     @field_validator("timezone")
     @classmethod
@@ -49,6 +53,20 @@ class Site(BaseModel):
             ZoneInfo(v)
         except Exception:
             raise ValueError(f"Invalid IANA timezone: {v!r}")
+        return v
+
+    @field_validator("tilt_deg")
+    @classmethod
+    def validate_tilt(cls, v):
+        if v is not None and not (0 <= v <= 90):
+            raise ValueError("tilt_deg must be between 0 (flat) and 90 (vertical)")
+        return v
+
+    @field_validator("azimuth_deg")
+    @classmethod
+    def validate_azimuth(cls, v):
+        if v is not None and not (-180 <= v <= 180):
+            raise ValueError("azimuth_deg must be between -180 and 180 (0=South, -90=East, 90=West, +-180=North)")
         return v
 
 
@@ -141,6 +159,8 @@ class SiteUpdate(BaseModel):
     ev_chargers: Optional[int] = None
     owner: Optional[str] = None
     status: Optional[str] = None
+    tilt_deg: Optional[float] = None
+    azimuth_deg: Optional[float] = None
 
     @field_validator("timezone")
     @classmethod
@@ -152,6 +172,20 @@ class SiteUpdate(BaseModel):
             ZoneInfo(v)
         except Exception:
             raise ValueError(f"Invalid IANA timezone: {v!r}")
+        return v
+
+    @field_validator("tilt_deg")
+    @classmethod
+    def validate_tilt(cls, v):
+        if v is not None and not (0 <= v <= 90):
+            raise ValueError("tilt_deg must be between 0 (flat) and 90 (vertical)")
+        return v
+
+    @field_validator("azimuth_deg")
+    @classmethod
+    def validate_azimuth(cls, v):
+        if v is not None and not (-180 <= v <= 180):
+            raise ValueError("azimuth_deg must be between -180 and 180 (0=South, -90=East, 90=West, +-180=North)")
         return v
 
 

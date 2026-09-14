@@ -63,11 +63,14 @@ def solar_forecast(site_id: int, hours: int = 48, db: Session = Depends(get_db),
             lon=site.lng,
             solar_kw=site.solar_kw,
             hours=hours,
+            tilt_deg=site.tilt_deg,
+            azimuth_deg=site.azimuth_deg,
         )
         return {
             "site_id": site_id,
             "site_name": site.name,
             "solar_kw_installed": site.solar_kw,
+            "orientation_configured": site.tilt_deg is not None and site.azimuth_deg is not None,
             "forecast": data,
         }
     except Exception as e:
@@ -86,6 +89,8 @@ def combined_forecast(site_id: int, hours: int = 48, db: Session = Depends(get_d
             lon=site.lng,
             solar_kw=site.solar_kw,
             hours=hours,
+            tilt_deg=site.tilt_deg,
+            azimuth_deg=site.azimuth_deg,
         )
         return {
             "site_id": site_id,
@@ -93,6 +98,7 @@ def combined_forecast(site_id: int, hours: int = 48, db: Session = Depends(get_d
             "location": site.location,
             "solar_kw_installed": site.solar_kw,
             "battery_kwh": site.battery_kwh,
+            "orientation_configured": site.tilt_deg is not None and site.azimuth_deg is not None,
             "forecast": data,
         }
     except Exception as e:
@@ -115,6 +121,8 @@ def all_sites_forecast(hours: int = 24, db: Session = Depends(get_db), user: dic
                 lon=site.lng,
                 solar_kw=site.solar_kw,
                 hours=hours,
+                tilt_deg=site.tilt_deg,
+                azimuth_deg=site.azimuth_deg,
             )
             total_kwh = sum(e["estimated_kwh"] for e in data)
             results.append({

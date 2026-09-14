@@ -75,6 +75,14 @@ class Site(Base):
     ev_chargers = Column(Integer, default=0)
     owner = Column(String, nullable=True)
     status = Column(String, default="active")
+    # Panel orientation, in Open-Meteo's own convention (forecasting/weather_forecast.py
+    # passes these straight through to their global_tilted_irradiance API, no conversion):
+    #   tilt_deg: 0-90, 0 = flat/horizontal.
+    #   azimuth_deg: 0 = South, -90 = East, 90 = West, +-180 = North.
+    # NULL means "not configured yet" -- the solar forecast falls back to flat-horizontal
+    # (GHI) irradiance for that site until these are set.
+    tilt_deg = Column(Float, nullable=True)
+    azimuth_deg = Column(Float, nullable=True)
     created_at = Column(DateTime, default=utcnow_naive)
 
 

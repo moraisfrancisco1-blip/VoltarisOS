@@ -12,6 +12,9 @@ def get_full_forecast(
     lon: float,
     solar_kw: float,
     hours: int = 48,
+    *,
+    tilt_deg: float | None = None,
+    azimuth_deg: float | None = None,
 ) -> list[dict]:
     """
     Returns combined forecast with solar production + price per hour.
@@ -26,7 +29,7 @@ def get_full_forecast(
         - price_eur_mwh     : forecasted electricity price
         - recommendation    : 'charge' | 'discharge' | 'hold'
     """
-    solar = forecast_solar_production(lat, lon, solar_kw, hours=hours)
+    solar = forecast_solar_production(lat, lon, solar_kw, hours=hours, tilt_deg=tilt_deg, azimuth_deg=azimuth_deg)
     prices = forecast_prices()  # 24h prices
 
     # Extend prices to match forecast length by repeating daily pattern
