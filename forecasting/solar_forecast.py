@@ -14,10 +14,15 @@ GHI and says so via `orientation_applied: False` on every returned entry.
 from forecasting.weather_forecast import get_weather_forecast
 
 
-def forecast_solar_production(lat: float, lon: float, solar_kw: float, efficiency: float = 0.18,
+def forecast_solar_production(lat: float, lon: float, solar_kw: float,
                               performance_ratio: float = 0.80, hours: int = 48, *,
                               tilt_deg: float | None = None, azimuth_deg: float | None = None,
                               include_metadata: bool = False):
+    """`solar_kw` is nameplate capacity (kWp) -- module efficiency is already
+    baked into that rating, so there's no separate panel-efficiency knob here.
+    `performance_ratio` covers the rest of the real-world losses on top of
+    nameplate (inverter conversion, soiling, wiring, mismatch) as one combined
+    derate, the same way PVGIS/PVsyst-style tools typically expose it."""
     weather_response = get_weather_forecast(lat, lon, hours=hours, tilt_deg=tilt_deg, azimuth_deg=azimuth_deg,
                                              include_metadata=include_metadata)
     if include_metadata:
