@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore, THEMES } from "../store/appStore";
 import { useTranslation } from "../i18n/useTranslation";
 import { LANGUAGES } from "../i18n/translations";
@@ -116,7 +116,7 @@ const InfoRow = ({ label, value }) => (
   </div>
 );
 
-const Btn = ({ children, onClick, variant = "primary", accent, style: s }) => {
+const Btn = ({ children, onClick, variant = "primary", accent, style: s, disabled }) => {
   const styles = {
     primary:   { background: accent, color: "#000", border: "none" },
     secondary: { background: "#1f2937", color: "var(--sub)", border: "none" },
@@ -124,8 +124,9 @@ const Btn = ({ children, onClick, variant = "primary", accent, style: s }) => {
     outline:   { background: "transparent", color: accent, border: `1px solid ${accent}` },
   };
   return (
-    <button onClick={onClick} style={{
-      ...styles[variant], borderRadius: 8, padding: "9px 20px", cursor: "pointer", fontSize: 13, fontWeight: 500, ...s,
+    <button onClick={onClick} disabled={disabled} style={{
+      ...styles[variant], borderRadius: 8, padding: "9px 20px", cursor: disabled ? "not-allowed" : "pointer",
+      fontSize: 13, fontWeight: 500, opacity: disabled ? 0.55 : 1, ...s,
     }}>{children}</button>
   );
 };
@@ -362,6 +363,15 @@ export default function Settings() {
   const [saved, setSaved]   = useState(false);
   const [revealed, setRevealed] = useState({});
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [twoFAHasBackupCodes, setTwoFAHasBackupCodes] = useState(false);
+  const [twoFALoaded, setTwoFALoaded] = useState(false);
+  const [twoFAStep, setTwoFAStep] = useState("idle"); // idle | setup | backup_codes | disable
+  const [twoFASecret, setTwoFASecret] = useState("");
+  const [twoFACode, setTwoFACode] = useState("");
+  const [twoFABackupCodes, setTwoFABackupCodes] = useState([]);
+  const [twoFAError, setTwoFAError] = useState("");
+  const [twoFABusy, setTwoFABusy] = useState(false);
+  const [disableCode, setDisableCode] = useState("");
   const [sessionTimeout, setSessionTimeout] = useState(60);
   const [ipwhitelist, setIpwhitelist] = useState("91.122.45.0/24\n195.83.0.1");
   const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
@@ -377,6 +387,105 @@ export default function Settings() {
   const [planChanged, setPlanChanged] = useState(false);
 
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  const load2FAStatus = async () => {
+    try {
+      const res = await fetch("/api/2fa/status");
+      if (!res.ok) return;
+      const data = await res.json();
+      setTwoFAEnabled(!!data.enabled);
+      setTwoFAHasBackupCodes(!!data.has_backup_codes);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setTwoFALoaded(true);
+    }
+  };
+
+  useEffect(() => { load2FAStatus(); }, []);
+
+  const start2FASetup = async () => {
+    setTwoFAError("");
+    setTwoFABusy(true);
+    try {
+      const res = await fetch("/api/2fa/setup", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { setTwoFAError(data.detail || "Failed to start 2FA setup."); return; }
+      setTwoFASecret(data.secret);
+      setTwoFACode("");
+      setTwoFAStep("setup");
+    } catch (e) {
+      console.error(e);
+      setTwoFAError("Failed to start 2FA setup.");
+    } finally {
+      setTwoFABusy(false);
+    }
+  };
+
+  const verify2FASetup = async () => {
+    setTwoFAError("");
+    setTwoFABusy(true);
+    try {
+      const res = await fetch("/api/2fa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: twoFACode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) { setTwoFAError(data.detail || data.message || "Invalid code. Try again."); return; }
+      setTwoFAEnabled(true);
+      setTwoFAHasBackupCodes(true);
+      setTwoFABackupCodes(data.backup_codes || []);
+      setTwoFAStep("backup_codes");
+      setTwoFACode("");
+    } catch (e) {
+      console.error(e);
+      setTwoFAError("Verification failed.");
+    } finally {
+      setTwoFABusy(false);
+    }
+  };
+
+  const disable2FA = async () => {
+    setTwoFAError("");
+    setTwoFABusy(true);
+    try {
+      const res = await fetch("/api/2fa/disable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: disableCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setTwoFAError(data.detail || "Invalid code."); return; }
+      setTwoFAEnabled(false);
+      setTwoFAHasBackupCodes(false);
+      setTwoFAStep("idle");
+      setDisableCode("");
+    } catch (e) {
+      console.error(e);
+      setTwoFAError("Failed to disable 2FA.");
+    } finally {
+      setTwoFABusy(false);
+    }
+  };
+
+  const regenerateBackupCodes = async () => {
+    setTwoFAError("");
+    setTwoFABusy(true);
+    try {
+      const res = await fetch("/api/2fa/backup-codes", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { setTwoFAError(data.detail || "Failed to regenerate backup codes."); return; }
+      setTwoFABackupCodes(data.backup_codes || []);
+      setTwoFAHasBackupCodes(true);
+      setTwoFAStep("backup_codes");
+    } catch (e) {
+      console.error(e);
+      setTwoFAError("Failed to regenerate backup codes.");
+    } finally {
+      setTwoFABusy(false);
+    }
+  };
 
   const PLANS = [
     { id: "home", name: "Home", monthly: 99, yearly: 890, color: "#10b981", badge: null,
@@ -868,13 +977,78 @@ export default function Settings() {
           <div style={card}>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Two-Factor Authentication</h2>
             <p style={{ fontSize: 12, color: SUB, marginBottom: 20 }}>Protect your account with an authenticator app or hardware key.</p>
-            <Toggle value={twoFAEnabled} onChange={setTwoFAEnabled} label="2FA Enabled" desc="TOTP via Google Authenticator or Authy" accent={accent} />
-            {twoFAEnabled && (
+            <Toggle
+              value={twoFAEnabled}
+              onChange={(v) => {
+                if (v) { start2FASetup(); } else { setTwoFAError(""); setDisableCode(""); setTwoFAStep("disable"); }
+              }}
+              label="2FA Enabled"
+              desc="TOTP via Google Authenticator or Authy"
+              accent={accent}
+            />
+
+            {twoFAError && (
+              <div style={{ marginTop: 12, fontSize: 12, color: DANG }}>{twoFAError}</div>
+            )}
+
+            {twoFAStep === "setup" && (
               <div style={{ marginTop: 16, background: SURF2, borderRadius: 10, padding: 16 }}>
-                <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>Scan this QR code with your authenticator app:</div>
-                <div style={{ width: 120, height: 120, background: "#1f2937", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: SUB, marginBottom: 12 }}>QR Code</div>
-                <Input label="Verification Code" placeholder="123456" />
-                <Btn onClick={() => alert("2FA verification — feature coming soon")} accent={accent}>Verify & Activate</Btn>
+                <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>
+                  Enter this secret key manually in your authenticator app (Google Authenticator, Authy, 1Password, etc.):
+                </div>
+                <div style={{
+                  background: "#1f2937", borderRadius: 8, padding: "12px 14px", fontSize: 13,
+                  fontFamily: "monospace", letterSpacing: 1, color: "var(--text)", marginBottom: 12,
+                  wordBreak: "break-all",
+                }}>{twoFASecret}</div>
+                <Input label="Verification Code" placeholder="123456" value={twoFACode} onChange={setTwoFACode} />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <Btn onClick={verify2FASetup} accent={accent} disabled={twoFABusy || twoFACode.length < 6}>
+                    {twoFABusy ? "Verifying…" : "Verify & Activate"}
+                  </Btn>
+                  <Btn variant="secondary" accent={accent} onClick={() => { setTwoFAStep("idle"); setTwoFAError(""); }}>Cancel</Btn>
+                </div>
+              </div>
+            )}
+
+            {twoFAStep === "backup_codes" && (
+              <div style={{ marginTop: 16, background: SURF2, borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 12, color: accent, fontWeight: 600, marginBottom: 8 }}>
+                  Save these backup codes now — each can be used once, and they won't be shown again.
+                </div>
+                <div style={{
+                  display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 12,
+                  fontFamily: "monospace", fontSize: 13, background: "#1f2937", borderRadius: 8, padding: 12,
+                }}>
+                  {twoFABackupCodes.map((c, i) => <div key={i}>{c}</div>)}
+                </div>
+                <Btn onClick={() => setTwoFAStep("idle")} accent={accent}>Done</Btn>
+              </div>
+            )}
+
+            {twoFAStep === "disable" && (
+              <div style={{ marginTop: 16, background: SURF2, borderRadius: 10, padding: 16 }}>
+                <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>
+                  Enter a current code from your authenticator app to disable 2FA:
+                </div>
+                <Input label="Verification Code" placeholder="123456" value={disableCode} onChange={setDisableCode} />
+                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                  <Btn variant="danger" onClick={disable2FA} disabled={twoFABusy || disableCode.length < 6}>
+                    {twoFABusy ? "Disabling…" : "Disable 2FA"}
+                  </Btn>
+                  <Btn variant="secondary" accent={accent} onClick={() => { setTwoFAStep("idle"); setTwoFAError(""); setDisableCode(""); }}>Cancel</Btn>
+                </div>
+              </div>
+            )}
+
+            {twoFAEnabled && twoFAStep === "idle" && (
+              <div style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 12, color: SUB }}>
+                  {twoFAHasBackupCodes ? "Backup codes are set." : "No backup codes remaining."}
+                </span>
+                <Btn variant="outline" accent={accent} onClick={regenerateBackupCodes} disabled={twoFABusy}>
+                  Regenerate Backup Codes
+                </Btn>
               </div>
             )}
             <SectionTitle>Session</SectionTitle>

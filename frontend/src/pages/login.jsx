@@ -164,7 +164,7 @@ function LangSwitcher() {
 }
 
 // ─── Login mode wrapper (split is only for register) ──────────────────────
-function LoginForm({ form, setForm, focused, setFocused, showPass, setShowPass, error, loading, handleSubmit, handleKey, mode, setMode, setError, t }) {
+function LoginForm({ form, setForm, focused, setFocused, showPass, setShowPass, error, loading, handleSubmit, handleKey, mode, setMode, setError, t, requires2FA, setRequires2FA, totpCode, setTotpCode }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
 
@@ -208,33 +208,49 @@ function LoginForm({ form, setForm, focused, setFocused, showPass, setShowPass, 
         </div>
 
         <div style={{ padding: "24px 34px 28px" }}>
-          <div style={{ marginBottom: "18px" }}>
-            <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_email")}</label>
-            <input type="email" placeholder="admin@voltaris.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
-              style={{ ...inputDarkStyle(focused === "email"), paddingLeft: "14px" }} />
-          </div>
-
-          <div style={{ marginBottom: "24px" }}>
-            <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_password")}</label>
-            <div style={{ position: "relative" }}>
-              <input type={showPass ? "text" : "password"} placeholder="••••••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
-                style={{ ...inputDarkStyle(focused === "password"), paddingRight: "44px" }} />
-              <button type="button" onClick={() => setShowPass(!showPass)} tabIndex={-1}
-                style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: showPass ? "#f59e0b" : "var(--sub)", display: "flex", alignItems: "center", padding: "4px", borderRadius: "6px" }}>
-                {showPass ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                )}
+          {requires2FA ? (
+            <div style={{ marginBottom: "18px" }}>
+              <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_2fa_code") || "Authenticator Code"}</label>
+              <input type="text" inputMode="numeric" autoFocus placeholder="123456" value={totpCode}
+                onChange={e => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onFocus={() => setFocused("totp")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
+                style={{ ...inputDarkStyle(focused === "totp"), paddingLeft: "14px", letterSpacing: "4px", textAlign: "center", fontSize: "18px" }} />
+              <button type="button" onClick={() => { setRequires2FA(false); setTotpCode(""); setError("") }}
+                style={{ background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "12px", marginTop: "10px", textDecoration: "underline" }}>
+                {t("auth_back") || "Back"}
               </button>
             </div>
-          </div>
+          ) : (
+            <>
+              <div style={{ marginBottom: "18px" }}>
+                <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_email")}</label>
+                <input type="email" placeholder="admin@voltaris.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
+                  style={{ ...inputDarkStyle(focused === "email"), paddingLeft: "14px" }} />
+              </div>
+
+              <div style={{ marginBottom: "24px" }}>
+                <label style={{ color: "var(--sub)", fontSize: "11px", fontWeight: "600", display: "block", marginBottom: "8px", letterSpacing: "0.5px", textTransform: "uppercase" }}>{t("auth_password")}</label>
+                <div style={{ position: "relative" }}>
+                  <input type={showPass ? "text" : "password"} placeholder="••••••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} onKeyDown={handleKey}
+                    style={{ ...inputDarkStyle(focused === "password"), paddingRight: "44px" }} />
+                  <button type="button" onClick={() => setShowPass(!showPass)} tabIndex={-1}
+                    style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: showPass ? "#f59e0b" : "var(--sub)", display: "flex", alignItems: "center", padding: "4px", borderRadius: "6px" }}>
+                    {showPass ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           {error && (
             <div style={{ padding: "10px 14px", marginBottom: "16px", background: "#2d0a0a", border: "1px solid #7f1d1d", borderRadius: "8px", color: "#f87171", fontSize: "13px" }}>{error}</div>
           )}
 
-          <button onClick={handleSubmit} disabled={loading}
+          <button onClick={handleSubmit} disabled={loading || (requires2FA && totpCode.length < 6)}
             style={{
               width: "100%", padding: "13px",
               background: loading ? "#1f2937" : "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
@@ -243,17 +259,20 @@ function LoginForm({ form, setForm, focused, setFocused, showPass, setShowPass, 
               marginBottom: "18px", boxShadow: loading ? "none" : "0 4px 24px rgba(245,158,11,0.3)",
               transition: "all 0.2s", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
               letterSpacing: "0.3px",
+              opacity: (requires2FA && totpCode.length < 6) ? 0.55 : 1,
             }}
             onMouseEnter={e => { if (!loading) e.currentTarget.style.boxShadow = "0 6px 32px rgba(245,158,11,0.5)" }}
             onMouseLeave={e => { if (!loading) e.currentTarget.style.boxShadow = "0 4px 24px rgba(245,158,11,0.3)" }}
           >
-            {loading ? <><span style={{ width: "15px", height: "15px", border: "2px solid var(--sub)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />{t("auth_authenticating")}</> : t("auth_enter")}
+            {loading ? <><span style={{ width: "15px", height: "15px", border: "2px solid var(--sub)", borderTopColor: "#f59e0b", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />{t("auth_authenticating")}</> : (requires2FA ? (t("auth_verify") || "Verify") : t("auth_enter"))}
           </button>
 
-          <div style={{ textAlign: "center" }}>
-            <span style={{ color: "var(--sub)", fontSize: "12.5px" }}>{t("auth_no_account")} </span>
-            <button onClick={() => { setMode("register"); setError("") }} style={{ background: "none", border: "none", color: "#f59e0b", cursor: "pointer", fontSize: "12.5px", fontWeight: "600", textDecoration: "underline" }}>{t("auth_register_link")}</button>
-          </div>
+          {!requires2FA && (
+            <div style={{ textAlign: "center" }}>
+              <span style={{ color: "var(--sub)", fontSize: "12.5px" }}>{t("auth_no_account")} </span>
+              <button onClick={() => { setMode("register"); setError("") }} style={{ background: "none", border: "none", color: "#f59e0b", cursor: "pointer", fontSize: "12.5px", fontWeight: "600", textDecoration: "underline" }}>{t("auth_register_link")}</button>
+            </div>
+          )}
         </div>
 
         <div style={{ padding: "12px 34px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
@@ -285,6 +304,8 @@ export default function Login({ onLogin }) {
   const [inviteResult, setInviteResult] = useState(null) // { valid, tier, label, roles, max_sites, modules }
   const [inviteError, setInviteError] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [requires2FA, setRequires2FA] = useState(false)
+  const [totpCode, setTotpCode] = useState("")
 
   useEffect(() => { setTimeout(() => setMounted(true), 50) }, [])
 
@@ -293,7 +314,18 @@ export default function Login({ onLogin }) {
     setError("")
     try {
       if (mode === "login") {
-        const res = await axios.post("/api/auth/login", { email: form.email, password: form.password })
+        const res = await axios.post("/api/auth/login", {
+          email: form.email,
+          password: form.password,
+          ...(requires2FA ? { totp_code: totpCode } : {}),
+        })
+        if (res.data.requires_2fa) {
+          setRequires2FA(true)
+          setLoading(false)
+          return
+        }
+        setRequires2FA(false)
+        setTotpCode("")
         localStorage.setItem("token", res.data.token)
         localStorage.setItem("company", res.data.company)
         localStorage.setItem("color", res.data.color)
@@ -383,6 +415,8 @@ export default function Login({ onLogin }) {
         showPass={showPass} setShowPass={setShowPass} error={error} loading={loading}
         handleSubmit={handleSubmit} handleKey={handleKey} mode={mode} setMode={setMode}
         setError={setError} t={t}
+        requires2FA={requires2FA} setRequires2FA={setRequires2FA}
+        totpCode={totpCode} setTotpCode={setTotpCode}
       />
     )
   }

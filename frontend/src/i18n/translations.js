@@ -561,6 +561,9 @@ const T = {
   auth_invalid_creds:  { pt:"Credenciais inválidas",     en:"Invalid credentials",    fr:"Identifiants invalides", es:"Credenciales inválidas", nl:"Ongeldige inloggegevens" },
   auth_hide_pass:      { pt:"Ocultar password",          en:"Hide password",          fr:"Masquer le mot de passe",es:"Ocultar contraseña",     nl:"Wachtwoord verbergen" },
   auth_show_pass:      { pt:"Ver password",              en:"Show password",          fr:"Voir le mot de passe",   es:"Ver contraseña",         nl:"Wachtwoord tonen" },
+  auth_2fa_code:       { pt:"Código do autenticador",    en:"Authenticator Code",     fr:"Code d'authentification",es:"Código del autenticador",nl:"Authenticatiecode" },
+  auth_back:           { pt:"Voltar",                    en:"Back",                   fr:"Retour",                 es:"Volver",                 nl:"Terug" },
+  auth_verify:         { pt:"Verificar →",                en:"Verify →",               fr:"Vérifier →",             es:"Verificar →",            nl:"Verifiëren →" },
   auth_system_label:   { pt:"Sistema operacional",       en:"Operating system",       fr:"Système d'exploitation", es:"Sistema operativo",      nl:"Besturingssysteem" },
 
   // ─── COMMAND PALETTE ─────────────────────────────────────────────────────────
