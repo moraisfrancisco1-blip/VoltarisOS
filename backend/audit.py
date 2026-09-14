@@ -83,7 +83,38 @@ def log_audit_event(
     )
     db.add(audit_log)
     db.commit()
+    _dispatch_webhooks(db, tenant_id, action, {
+        "action": action,
+        "target_resource": target_resource,
+        "target_id": target_id,
+        "user_email": user_email,
+        "details": details,
+    })
     return audit_log
+
+
+def _dispatch_webhooks(db: Session, tenant_id: Optional[int], action: str, payload: dict) -> None:
+    """Fire-and-forget: enqueue one Celery delivery per active webhook this
+    tenant has subscribed to `action` (or "*"). Delivery itself runs entirely
+    off the request path -- see backend/tasks.py's deliver_webhook -- and
+    this function never raises: a webhook subsystem hiccup must never break
+    the action being audited, same discipline as _touch_last_seen in
+    backend/security.py."""
+    if tenant_id is None:
+        return
+    try:
+        from backend.models import Webhook
+        from backend.tasks import deliver_webhook
+
+        hooks = db.query(Webhook).filter(
+            Webhook.tenant_id == tenant_id, Webhook.active.is_(True)
+        ).all()
+        for hook in hooks:
+            event_types = hook.event_types or []
+            if "*" in event_types or action in event_types:
+                deliver_webhook.delay(hook.id, action, payload)
+    except Exception:
+        pass
 
 
 def log_user_login(

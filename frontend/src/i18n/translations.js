@@ -800,6 +800,7 @@ const T = {
   apikeys_docs_pre:     { pt:"Usa o header", en:"Use the header", fr:"Utilisez l'en-tête", es:"Usa el encabezado", nl:"Gebruik de header" },
   apikeys_docs_post:    { pt:"em todos os pedidos à API REST do VoltarisOS.", en:"in all requests to the VoltarisOS REST API.", fr:"dans toutes les requêtes vers l'API REST de VoltarisOS.", es:"en todas las solicitudes a la API REST de VoltarisOS.", nl:"in alle verzoeken naar de VoltarisOS REST API." },
   apikeys_never:        { pt:"Nunca", en:"Never", fr:"Jamais", es:"Nunca", nl:"Nooit" },
+  webhook_test_sent:    { pt:"Evento de teste enviado", en:"Test event sent", fr:"Événement de test envoyé", es:"Evento de prueba enviado", nl:"Testgebeurtenis verzonden" },
 
   // ─── EXPORT CENTER LABELS ────────────────────────────────────────────────────
   exp_label_dashboard:  { pt:"Visão Geral do Dashboard", en:"Dashboard Overview", fr:"Vue d'ensemble du tableau de bord", es:"Resumen del Panel", nl:"Dashboard-overzicht" },

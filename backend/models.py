@@ -315,6 +315,34 @@ class ApiKey(Base):
     revoked_at = Column(DateTime, nullable=True)
 
 
+# ─── Webhooks (outbound, user-configured) ─────────────────────────────────────
+
+class Webhook(Base):
+    """A tenant-configured HTTP endpoint that receives a signed POST whenever
+    one of `event_types` is audit-logged for this tenant (see backend/audit.py's
+    log_audit_event, which dispatches delivery -- backend/tasks.py's
+    deliver_webhook -- asynchronously via Celery so a slow/unreachable
+    receiver can never block the request that triggered the event."""
+    __tablename__ = "webhooks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    url = Column(String, nullable=False)
+    event_types = Column(JSON, nullable=False)  # list[str] of action values, or ["*"] for all
+    # HMAC-SHA256 signing secret, plaintext (unlike ApiKey.key_hash) -- the
+    # server needs it every delivery to sign the X-VoltarisOS-Signature header.
+    secret = Column(String, nullable=False)
+    active = Column(Boolean, default=True, nullable=False)
+
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
+    last_triggered_at = Column(DateTime, nullable=True)
+    last_status_code = Column(Integer, nullable=True)
+    last_error = Column(String, nullable=True)
+    failure_count = Column(Integer, default=0, nullable=False)
+
+
 class StripeEvent(Base):
     __tablename__ = "stripe_events"
     id = Column(Integer, primary_key=True, index=True)

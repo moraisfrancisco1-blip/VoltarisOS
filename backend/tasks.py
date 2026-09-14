@@ -217,3 +217,64 @@ def backtest_all_tenants():
         return [run_backtest(db, models, tenant.id) for tenant in tenants]
     finally:
         db.close()
+
+
+@celery_app.task(name="backend.tasks.deliver_webhook", bind=True, max_retries=3, default_retry_delay=30)
+def deliver_webhook(self, webhook_id: int, event: str, payload: dict):
+    """Deliver one webhook event. Runs entirely off the request path (enqueued
+    fire-and-forget by backend/audit.py's log_audit_event) so a slow or
+    unreachable receiver can never block the action that triggered it.
+    Retries with backoff on network errors or a non-2xx response."""
+    import hashlib
+    import hmac
+    import json
+    import time
+
+    import httpx
+
+    from backend.database import SessionLocal
+    from backend import models
+
+    db = SessionLocal()
+    try:
+        wh = db.query(models.Webhook).filter(
+            models.Webhook.id == webhook_id, models.Webhook.active.is_(True)
+        ).first()
+        if wh is None:
+            return {"status": "skipped", "reason": "not_found_or_inactive"}
+
+        body = json.dumps(
+            {"event": event, "data": payload, "timestamp": time.time()}, default=str
+        ).encode("utf-8")
+        signature = hmac.new(wh.secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+
+        try:
+            resp = httpx.post(
+                wh.url,
+                content=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-VoltarisOS-Event": event,
+                    "X-VoltarisOS-Signature": f"sha256={signature}",
+                },
+                timeout=10.0,
+            )
+            wh.last_triggered_at = models.utcnow_naive()
+            wh.last_status_code = resp.status_code
+            if resp.is_success:
+                wh.last_error = None
+                wh.failure_count = 0
+                db.commit()
+                return {"status": "delivered", "http_status": resp.status_code}
+            wh.last_error = f"HTTP {resp.status_code}"
+            wh.failure_count += 1
+            db.commit()
+            raise self.retry(countdown=30 * (2 ** self.request.retries))
+        except httpx.RequestError as exc:
+            wh.last_triggered_at = models.utcnow_naive()
+            wh.last_error = str(exc)[:500]
+            wh.failure_count += 1
+            db.commit()
+            raise self.retry(exc=exc, countdown=30 * (2 ** self.request.retries))
+    finally:
+        db.close()

@@ -342,6 +342,7 @@ export default function Settings({ setPage }) {
   const accent     = useAppStore(s => s.accentColor);
   const theme      = useAppStore(s => s.theme);
   const setTheme   = useAppStore(s => s.setTheme);
+  const addToast   = useAppStore(s => s.addToast);
   const accentColor  = useAppStore(s => s.accentColor);
   const setAccent  = useAppStore(s => s.setAccentColor);
   const density    = useAppStore(s => s.density);
@@ -372,6 +373,16 @@ export default function Settings({ setPage }) {
   const [twoFAError, setTwoFAError] = useState("");
   const [twoFABusy, setTwoFABusy] = useState(false);
   const [disableCode, setDisableCode] = useState("");
+  const [webhooks, setWebhooks] = useState([]);
+  const [webhookEventCatalog, setWebhookEventCatalog] = useState([]);
+  const [webhooksLoaded, setWebhooksLoaded] = useState(false);
+  const [webhookError, setWebhookError] = useState("");
+  const [showAddWebhook, setShowAddWebhook] = useState(false);
+  const [newWebhookUrl, setNewWebhookUrl] = useState("");
+  const [newWebhookEvents, setNewWebhookEvents] = useState([]);
+  const [webhookBusy, setWebhookBusy] = useState(false);
+  const [webhookBusyId, setWebhookBusyId] = useState(null);
+  const [revealedWebhookSecret, setRevealedWebhookSecret] = useState(null); // { url, secret }
   const [sessionTimeout, setSessionTimeout] = useState(60);
   const [ipwhitelist, setIpwhitelist] = useState("91.122.45.0/24\n195.83.0.1");
   const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
@@ -484,6 +495,103 @@ export default function Settings({ setPage }) {
       setTwoFAError("Failed to regenerate backup codes.");
     } finally {
       setTwoFABusy(false);
+    }
+  };
+
+  const loadWebhooks = async () => {
+    setWebhookError("");
+    try {
+      const [whRes, evRes] = await Promise.all([
+        fetch("/api/webhooks"),
+        fetch("/api/webhooks/event-types"),
+      ]);
+      const whData = await whRes.json();
+      const evData = await evRes.json();
+      if (!whRes.ok) { setWebhookError(whData.detail || "Failed to load webhooks."); return; }
+      setWebhooks(whData);
+      if (evRes.ok) setWebhookEventCatalog(evData);
+    } catch (e) {
+      console.error(e);
+      setWebhookError("Failed to load webhooks.");
+    } finally {
+      setWebhooksLoaded(true);
+    }
+  };
+
+  useEffect(() => { loadWebhooks(); }, []);
+
+  const toggleNewWebhookEvent = (evt) => {
+    setNewWebhookEvents(prev => prev.includes(evt) ? prev.filter(e => e !== evt) : [...prev, evt]);
+  };
+
+  const createWebhook = async () => {
+    if (!newWebhookUrl.trim() || newWebhookEvents.length === 0) return;
+    setWebhookBusy(true);
+    setWebhookError("");
+    try {
+      const res = await fetch("/api/webhooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: newWebhookUrl.trim(), event_types: newWebhookEvents }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setWebhookError(data.detail?.[0]?.msg || data.detail || "Failed to create webhook."); return; }
+      setRevealedWebhookSecret({ url: data.url, secret: data.secret });
+      setShowAddWebhook(false);
+      setNewWebhookUrl("");
+      setNewWebhookEvents([]);
+      loadWebhooks();
+    } catch (e) {
+      console.error(e);
+      setWebhookError("Failed to create webhook.");
+    } finally {
+      setWebhookBusy(false);
+    }
+  };
+
+  const toggleWebhookActive = async (wh) => {
+    setWebhookBusyId(wh.id);
+    try {
+      const res = await fetch(`/api/webhooks/${wh.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !wh.active }),
+      });
+      if (!res.ok) { setWebhookError("Failed to update webhook."); return; }
+      loadWebhooks();
+    } catch (e) {
+      console.error(e);
+      setWebhookError("Failed to update webhook.");
+    } finally {
+      setWebhookBusyId(null);
+    }
+  };
+
+  const deleteWebhook = async (wh) => {
+    setWebhookBusyId(wh.id);
+    try {
+      const res = await fetch(`/api/webhooks/${wh.id}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) { setWebhookError("Failed to delete webhook."); return; }
+      loadWebhooks();
+    } catch (e) {
+      console.error(e);
+      setWebhookError("Failed to delete webhook.");
+    } finally {
+      setWebhookBusyId(null);
+    }
+  };
+
+  const testWebhook = async (wh) => {
+    setWebhookBusyId(wh.id);
+    try {
+      const res = await fetch(`/api/webhooks/${wh.id}/test`, { method: "POST" });
+      if (!res.ok) { setWebhookError("Failed to send test event."); return; }
+      addToast(t("webhook_test_sent"), "success");
+    } catch (e) {
+      console.error(e);
+      setWebhookError("Failed to send test event.");
+    } finally {
+      setWebhookBusyId(null);
     }
   };
 
@@ -1350,22 +1458,89 @@ export default function Settings({ setPage }) {
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Webhook Endpoints</h2>
               <p style={{ fontSize: 12, color: SUB, marginBottom: 16 }}>Configure endpoints for real-time event delivery.</p>
-              {[
-                { event: "trade.executed", url: "https://erp.voltaris.com/webhook/trade", active: true },
-                { event: "alert.critical", url: "https://ops.voltaris.com/alerts", active: true },
-                { event: "device.offline", url: "", active: false },
-              ].map((wh, i) => (
-                <div key={i} style={{ marginBottom: 12, background: SURF2, borderRadius: 8, padding: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                    <code style={{ fontSize: 11, color: accent }}>{wh.event}</code>
-                    <span style={{ fontSize: 10, color: wh.active ? "#10b981" : SUB }}>{wh.active ? "Active" : "Inactive"}</span>
+
+              {webhookError && (
+                <div style={{ fontSize: 12, color: DANG, marginBottom: 12 }}>{webhookError}</div>
+              )}
+
+              {revealedWebhookSecret && (
+                <div style={{ marginBottom: 12, background: "#0d2818", border: "1px solid #14532d", borderRadius: 8, padding: 12 }}>
+                  <div style={{ fontSize: 11, color: "#4ade80", fontWeight: 700, marginBottom: 4 }}>
+                    Signing secret — copia agora, não voltará a ser mostrado
                   </div>
-                  <div style={{ fontSize: 11, fontFamily: "monospace", color: wh.url ? SUB : "var(--sub)" }}>
-                    {wh.url || "No URL configured"}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <code style={{ fontSize: 11, fontFamily: "monospace", color: "var(--text)", wordBreak: "break-all", flex: 1 }}>
+                      {revealedWebhookSecret.secret}
+                    </code>
+                    <button onClick={() => { navigator.clipboard.writeText(revealedWebhookSecret.secret); addToast(t("copied_clipboard") || "Copied", "success"); }} style={{
+                      background: "#4ade8020", border: "1px solid #4ade8040", borderRadius: 6, padding: "3px 10px", color: "#4ade80", cursor: "pointer", fontSize: 11,
+                    }}>{t("apikeys_copy") || "Copy"}</button>
+                    <button onClick={() => setRevealedWebhookSecret(null)} style={{ background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: 16 }}>×</button>
+                  </div>
+                </div>
+              )}
+
+              {webhooksLoaded && webhooks.length === 0 && !showAddWebhook && (
+                <div style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Nenhum webhook configurado.</div>
+              )}
+
+              {webhooks.map(wh => (
+                <div key={wh.id} style={{ marginBottom: 12, background: SURF2, borderRadius: 8, padding: 12 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {wh.event_types.map(ev => (
+                        <code key={ev} style={{ fontSize: 10, color: accent, background: `${accent}15`, borderRadius: 4, padding: "1px 6px" }}>{ev}</code>
+                      ))}
+                    </div>
+                    <button onClick={() => toggleWebhookActive(wh)} disabled={webhookBusyId === wh.id} style={{
+                      fontSize: 10, color: wh.active ? "#10b981" : SUB, background: "none", border: "none", cursor: "pointer",
+                    }}>{wh.active ? "Active" : "Inactive"}</button>
+                  </div>
+                  <div style={{ fontSize: 11, fontFamily: "monospace", color: SUB, marginBottom: 6, wordBreak: "break-all" }}>
+                    {wh.url}
+                  </div>
+                  <div style={{ fontSize: 10, color: SUB, marginBottom: 8 }}>
+                    {wh.last_triggered_at
+                      ? `Último disparo: ${new Date(wh.last_triggered_at).toLocaleString()} · ${wh.last_status_code ?? "?"}${wh.last_error ? " · " + wh.last_error : ""}`
+                      : "Ainda sem eventos entregues"}
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => testWebhook(wh)} disabled={webhookBusyId === wh.id} style={{
+                      background: "#1e3a5f", color: "#60a5fa", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 11,
+                      opacity: webhookBusyId === wh.id ? 0.6 : 1,
+                    }}>Test</button>
+                    <button onClick={() => deleteWebhook(wh)} disabled={webhookBusyId === wh.id} style={{
+                      background: "#2d0a0a", color: "#f87171", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 11,
+                      opacity: webhookBusyId === wh.id ? 0.6 : 1,
+                    }}>Delete</button>
                   </div>
                 </div>
               ))}
-              <Btn variant="outline" accent={accent} onClick={() => alert("Add Webhook — feature coming soon")}>+ Add Webhook</Btn>
+
+              {showAddWebhook && (
+                <div style={{ background: SURF2, borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                  <Input label="URL" placeholder="https://example.com/webhook" value={newWebhookUrl} onChange={setNewWebhookUrl} />
+                  <div style={{ fontSize: 11, color: SUB, marginBottom: 6 }}>Eventos</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: 140, overflowY: "auto", marginBottom: 10 }}>
+                    {webhookEventCatalog.map(ev => (
+                      <label key={ev} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text)", cursor: "pointer" }}>
+                        <input type="checkbox" checked={newWebhookEvents.includes(ev)} onChange={() => toggleNewWebhookEvent(ev)} />
+                        <code>{ev}</code>
+                      </label>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <Btn onClick={createWebhook} accent={accent} disabled={webhookBusy || !newWebhookUrl.trim() || newWebhookEvents.length === 0}>
+                      {webhookBusy ? "A criar…" : "Criar"}
+                    </Btn>
+                    <Btn variant="secondary" accent={accent} onClick={() => { setShowAddWebhook(false); setNewWebhookUrl(""); setNewWebhookEvents([]); }}>Cancelar</Btn>
+                  </div>
+                </div>
+              )}
+
+              {!showAddWebhook && (
+                <Btn variant="outline" accent={accent} onClick={() => setShowAddWebhook(true)}>+ Add Webhook</Btn>
+              )}
             </div>
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>API Rate Limits</h2>
