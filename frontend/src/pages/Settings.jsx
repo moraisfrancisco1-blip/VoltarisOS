@@ -1342,8 +1342,7 @@ export default function Settings({ setPage }) {
                 vos_sk_live_••••••••••••••••••••••••••••••••
               </div>
               <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-                <Btn onClick={() => alert("New API token generated — feature coming soon")} accent={accent}>Generate New Token</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => alert("View API Docs — feature coming soon")}>View Docs</Btn>
+                <Btn onClick={() => setPage ? setPage("apikeys") : alert("API Keys")} accent={accent}>Manage API Keys</Btn>
               </div>
             </div>
           </div>

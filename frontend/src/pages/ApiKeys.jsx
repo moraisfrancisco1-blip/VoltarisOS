@@ -1,43 +1,108 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 import { useTranslation } from "../i18n/useTranslation"
-import DemoNotice from "../components/DemoNotice"
-
-function generateKey() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  return "vos_" + Array.from({ length: 48 }, () => chars[Math.floor(Math.random() * chars.length)]).join("")
-}
 
 export default function ApiKeys({ user }) {
   const { t } = useTranslation()
-  const { addToast, addAuditEntry, simMode } = useAppStore()
+  const { addToast } = useAppStore()
   const color = user?.color || "#4ade80"
 
-  const [keys, setKeys] = useState([
-    { id: 1, nameKey: "apikeys_sample_scada", key: "vos_4aK9mPxQnBrLwTzYcEfHjVsGiUdOy3", scope: "read", created: "2026-01-15", lastUsedKey: "apikeys_today", active: true },
-    { id: 2, nameKey: "apikeys_sample_ext", key: "vos_7dRqNpWlKoAvBcXsSfTeGhIjUmZyE1", scope: "read,write", created: "2026-03-02", lastUsedKey: "apikeys_3d_ago", active: true },
-    { id: 3, nameKey: "apikeys_sample_hook", key: "vos_1xCvBnMqWerTyUiOpAsD2fGhJkLzX", scope: "alerts", created: "2026-04-10", lastUsedKey: "apikeys_never", active: false },
-  ])
+  const [keys, setKeys] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState("")
-  const [newScope, setNewScope] = useState("read")
-  const [revealed, setRevealed] = useState({})
-  const [newKey, setNewKey] = useState(null)
+  const [creating, setCreating] = useState(false)
+  const [busyId, setBusyId] = useState(null)
+  const [revealedKey, setRevealedKey] = useState(null) // { name, key } — shown once after create/rotate
 
-  const createKey = () => {
-    if (!newName.trim()) return
-    const k = { id: Date.now(), name: newName, key: generateKey(), scope: newScope, created: new Date().toISOString().split("T")[0], lastUsedKey: "apikeys_never", active: true }
-    setKeys(prev => [...prev, k])
-    setNewKey(k.key)
-    setShowCreate(false)
-    setNewName("")
-    addToast(`API Key "${newName}" ${t("created_success") || "created successfully"}`, "success")
-    addAuditEntry({ user: user?.email || "admin@voltaris.com", actionKey: "audit_action_api_key_created", resource: "API Keys" })
+  const load = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch("/api/api-keys")
+      const data = await res.json()
+      if (!res.ok) {
+        setError(res.status === 403 ? t("apikeys_forbidden") : (data.detail || t("apikeys_load_error")))
+        setKeys([])
+        return
+      }
+      setKeys(data)
+    } catch (e) {
+      console.error(e)
+      setError(t("apikeys_load_error"))
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const revokeKey = (id) => {
-    setKeys(prev => prev.map(k => k.id === id ? { ...k, active: false } : k))
-    addToast(t("api_key_revoked") || "API Key revoked", "warning")
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only (see AuditLog.jsx for why t() must not be a dep)
+  useEffect(() => { load() }, [])
+
+  const createKey = async () => {
+    if (!newName.trim()) return
+    setCreating(true)
+    try {
+      const res = await fetch("/api/api-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        addToast(data.detail || t("apikeys_load_error"), "error")
+        return
+      }
+      setRevealedKey({ name: data.name, key: data.key })
+      setShowCreate(false)
+      setNewName("")
+      addToast(`${t("apikeys_title")} "${data.name}" ${t("created_success") || "created successfully"}`, "success")
+      load()
+    } catch (e) {
+      console.error(e)
+      addToast(t("apikeys_load_error"), "error")
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const revokeKey = async (k) => {
+    setBusyId(k.id)
+    try {
+      const res = await fetch(`/api/api-keys/${k.id}`, { method: "DELETE" })
+      if (!res.ok && res.status !== 204) {
+        const data = await res.json().catch(() => ({}))
+        addToast(data.detail || t("apikeys_load_error"), "error")
+        return
+      }
+      addToast(t("api_key_revoked") || "API Key revoked", "warning")
+      load()
+    } catch (e) {
+      console.error(e)
+      addToast(t("apikeys_load_error"), "error")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const rotateKey = async (k) => {
+    setBusyId(k.id)
+    try {
+      const res = await fetch(`/api/api-keys/${k.id}/rotate`, { method: "POST" })
+      const data = await res.json()
+      if (!res.ok) {
+        addToast(data.detail || t("apikeys_load_error"), "error")
+        return
+      }
+      setRevealedKey({ name: data.name, key: data.key })
+      addToast(t("apikeys_rotated") || "API Key rotated", "success")
+      load()
+    } catch (e) {
+      console.error(e)
+      addToast(t("apikeys_load_error"), "error")
+    } finally {
+      setBusyId(null)
+    }
   }
 
   const copyKey = (key) => {
@@ -45,26 +110,15 @@ export default function ApiKeys({ user }) {
     addToast(t("copied_clipboard") || "Copied to clipboard", "success")
   }
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: "32px", maxWidth: "900px" }}>
-        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>API Keys</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_apikeys")}
-        </div>
-      </div>
-    )
-  }
+  const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString() : t("apikeys_never")
 
   return (
     <div style={{ padding: "32px", maxWidth: "900px" }}>
-      <DemoNotice />
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px" }}>
         <div>
           <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>{t("apikeys_title")}</h1>
-          <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("apikeys_sub") || "Access tokens to integrate external systems with VoltarisOS"}</p>
+          <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("apikeys_sub")}</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -81,8 +135,14 @@ export default function ApiKeys({ user }) {
         </button>
       </div>
 
-      {/* New key revealed */}
-      {newKey && (
+      {error && (
+        <div style={{ padding: "12px 16px", marginBottom: 20, background: "#2d0a0a", border: "1px solid #7f1d1d", borderRadius: 10, color: "#f87171", fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+
+      {/* Newly created/rotated key revealed — plaintext is never retrievable again after this */}
+      {revealedKey && (
         <div style={{
           background: "#0d2818", border: "1px solid #14532d",
           borderRadius: "12px", padding: "18px 20px", marginBottom: "24px",
@@ -93,13 +153,13 @@ export default function ApiKeys({ user }) {
             <div style={{ color: "#4ade80", fontWeight: "700", fontSize: "13px", marginBottom: "4px" }}>
               {t("apikeys_new_created")}
             </div>
-            <code style={{ color: "var(--text)", fontSize: "12px", fontFamily: "monospace", wordBreak: "break-all" }}>{newKey}</code>
+            <code style={{ color: "var(--text)", fontSize: "12px", fontFamily: "monospace", wordBreak: "break-all" }}>{revealedKey.key}</code>
           </div>
-          <button onClick={() => copyKey(newKey)} style={{
+          <button onClick={() => copyKey(revealedKey.key)} style={{
             padding: "8px 14px", background: "#4ade8020", border: "1px solid #4ade8040",
             borderRadius: "8px", color: "#4ade80", cursor: "pointer", fontSize: "12px", fontWeight: "600",
           }}>{t("apikeys_copy")}</button>
-          <button onClick={() => setNewKey(null)} style={{
+          <button onClick={() => setRevealedKey(null)} style={{
             background: "none", border: "none", color: "var(--sub)", cursor: "pointer", fontSize: "20px",
           }}>×</button>
         </div>
@@ -111,96 +171,72 @@ export default function ApiKeys({ user }) {
           background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: "14px", padding: "24px", marginBottom: "24px",
         }}>
-          <h3 style={{ color: "var(--text)", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>{t("apikeys_create_new") || "Create new API Key"}</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "16px", marginBottom: "20px" }}>
-            <div>
-              <label style={{ color: "var(--sub)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("name") || "Name"} / {t("description") || "Description"}</label>
-              <input
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-                placeholder={t("apikeys_placeholder")}
-                style={{
-                  width: "100%", padding: "10px 14px",
-                  background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: "8px", color: "var(--text)", fontSize: "14px",
-                  outline: "none", boxSizing: "border-box",
-                }}
-                onFocus={e => e.target.style.borderColor = color}
-                onBlur={e => e.target.style.borderColor = "#1e2d45"}
-              />
-            </div>
-            <div>
-              <label style={{ color: "var(--sub)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("permissions") || "Permissions"}</label>
-              <select
-                value={newScope}
-                onChange={e => setNewScope(e.target.value)}
-                style={{
-                  width: "100%", padding: "10px 14px",
-                  background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: "8px", color: "var(--text)", fontSize: "14px",
-                  outline: "none", boxSizing: "border-box",
-                }}
-              >
-                <option value="read">{t("scope_read")}</option>
-                <option value="read,write">{t("scope_read_write")}</option>
-                <option value="alerts">{t("perm_alerts_only") || "Alerts Only"}</option>
-                <option value="trading">{t("perm_trading_only") || "Trading Only"}</option>
-                <option value="full">{t("perm_full_access") || "Full Access"}</option>
-              </select>
-            </div>
+          <h3 style={{ color: "var(--text)", fontSize: "16px", fontWeight: "700", marginBottom: "20px" }}>{t("apikeys_create_new")}</h3>
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ color: "var(--sub)", fontSize: "12px", display: "block", marginBottom: "6px" }}>{t("name") || "Name"}</label>
+            <input
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              placeholder={t("apikeys_placeholder")}
+              style={{
+                width: "100%", padding: "10px 14px",
+                background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: "8px", color: "var(--text)", fontSize: "14px",
+                outline: "none", boxSizing: "border-box",
+              }}
+              onFocus={e => e.target.style.borderColor = color}
+              onBlur={e => e.target.style.borderColor = "#1e2d45"}
+            />
+            <div style={{ color: "var(--sub)", fontSize: "11px", marginTop: "6px" }}>{t("apikeys_scope_note")}</div>
           </div>
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
             <button onClick={() => setShowCreate(false)} style={{
               padding: "9px 18px", background: "#1f2937", border: "1px solid var(--sub)",
               borderRadius: "8px", color: "var(--sub)", cursor: "pointer",
             }}>{t("cancel") || "Cancel"}</button>
-            <button onClick={createKey} style={{
+            <button onClick={createKey} disabled={creating || !newName.trim()} style={{
               padding: "9px 18px", background: color, border: "none",
-              borderRadius: "8px", color: "var(--text)", cursor: "pointer", fontWeight: "700",
-            }}>{t("apikeys_create_btn") || "Create Key"}</button>
+              borderRadius: "8px", color: "var(--text)", cursor: creating ? "not-allowed" : "pointer",
+              fontWeight: "700", opacity: creating || !newName.trim() ? 0.6 : 1,
+            }}>{creating ? t("loading") : t("apikeys_create_btn")}</button>
           </div>
         </div>
       )}
 
       {/* Keys list */}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {loading && (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--sub)" }}>{t("loading")}</div>
+        )}
+        {!loading && keys.length === 0 && !error && (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--sub)", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+            {t("apikeys_empty") || "No API keys yet."}
+          </div>
+        )}
         {keys.map(k => (
           <div key={k.id} style={{
-            background: "var(--surface)", border: `1px solid ${k.active ? "#1a2234" : "#2d1515"}`,
+            background: "var(--surface)", border: "1px solid #1a2234",
             borderRadius: "14px", padding: "20px 24px",
-            opacity: k.active ? 1 : 0.6,
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{
                   width: "36px", height: "36px", borderRadius: "10px",
-                  background: k.active ? `${color}15` : "#2d151520",
-                  border: `1px solid ${k.active ? color + "30" : "#2d1515"}`,
+                  background: `${color}15`, border: `1px solid ${color}30`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "18px",
                 }}>🔑</div>
                 <div>
-                  <div style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{k.nameKey ? t(k.nameKey) : k.name}</div>
+                  <div style={{ color: "var(--text)", fontWeight: "600", fontSize: "14px" }}>{k.name}</div>
                   <div style={{ color: "var(--sub)", fontSize: "12px", marginTop: "2px" }}>
-                    {t("apikeys_created_on")} {k.created} · {t("apikeys_last_used")}: {t(k.lastUsedKey)}
+                    {t("apikeys_created_on")} {fmtDate(k.created_at)} · {t("apikeys_last_used")}: {fmtDate(k.last_used_at)}
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{
-                  padding: "3px 10px",
-                  background: k.active ? `${color}15` : "#2d151520",
-                  border: `1px solid ${k.active ? color + "30" : "#2d1515"}`,
-                  borderRadius: "20px",
-                  color: k.active ? color : "#f87171",
-                  fontSize: "11px", fontWeight: "600",
-                }}>{k.active ? t("apikeys_active") : t("apikeys_revoked")}</span>
-                <span style={{
-                  padding: "3px 10px", background: "#1e2d4520",
-                  border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px",
-                  color: "#60a5fa", fontSize: "11px",
-                }}>{k.scope}</span>
-              </div>
+              <span style={{
+                padding: "3px 10px", background: `${color}15`, border: `1px solid ${color}30`,
+                borderRadius: "20px", color: color, fontSize: "11px", fontWeight: "600",
+              }}>{t("apikeys_active")}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <code style={{
@@ -209,31 +245,26 @@ export default function ApiKeys({ user }) {
                 color: "var(--sub)", fontSize: "12px", fontFamily: "monospace",
                 overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
               }}>
-                {revealed[k.id] ? k.key : k.key.slice(0, 12) + "•".repeat(20)}
+                {k.key_prefix}{"•".repeat(20)}
               </code>
               <button
-                onClick={() => setRevealed(r => ({ ...r, [k.id]: !r[k.id] }))}
+                onClick={() => rotateKey(k)}
+                disabled={busyId === k.id}
                 style={{
                   padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: "8px", color: "var(--sub)", cursor: "pointer", fontSize: "12px",
+                  borderRadius: "8px", color: "var(--sub)", cursor: busyId === k.id ? "not-allowed" : "pointer", fontSize: "12px",
+                  opacity: busyId === k.id ? 0.6 : 1,
                 }}
-              >{revealed[k.id] ? t("apikeys_hide") : t("apikeys_reveal")}</button>
+              >{t("apikeys_rotate") || "Rotate"}</button>
               <button
-                onClick={() => copyKey(k.key)}
+                onClick={() => revokeKey(k)}
+                disabled={busyId === k.id}
                 style={{
-                  padding: "8px 12px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)",
-                  borderRadius: "8px", color: "var(--sub)", cursor: "pointer", fontSize: "12px",
+                  padding: "8px 12px", background: "#2d0a0a", border: "1px solid #7f1d1d",
+                  borderRadius: "8px", color: "#f87171", cursor: busyId === k.id ? "not-allowed" : "pointer", fontSize: "12px",
+                  opacity: busyId === k.id ? 0.6 : 1,
                 }}
-              >{t("apikeys_copy")}</button>
-              {k.active && (
-                <button
-                  onClick={() => revokeKey(k.id)}
-                  style={{
-                    padding: "8px 12px", background: "#2d0a0a", border: "1px solid #7f1d1d",
-                    borderRadius: "8px", color: "#f87171", cursor: "pointer", fontSize: "12px",
-                  }}
-                >{t("apikeys_revoke")}</button>
-              )}
+              >{t("apikeys_revoke")}</button>
             </div>
           </div>
         ))}

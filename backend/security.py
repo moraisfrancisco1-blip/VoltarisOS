@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import json
 import os
+import secrets
 import sys
 from datetime import timedelta
 
@@ -150,8 +151,57 @@ def _touch_last_seen(email) -> None:
         pass
 
 
+# ─── User-facing API keys (external integrations — backend/routers/api_keys.py) ─
+# Format: "vos_" + 43 url-safe chars (secrets.token_urlsafe(32)). Only the
+# SHA-256 hash is ever stored; API_KEY_LOOKUP_LEN chars of the prefix are kept
+# in the clear (indexed) so a matching row can be found without scanning/
+# hashing every key in the table, mirroring the key_prefix shown to the user
+# in the UI (e.g. "vos_AbCdEfGh…").
+API_KEY_PREFIX = "vos_"
+API_KEY_LOOKUP_LEN = 12  # len("vos_") + 8 chars of entropy — plenty to avoid collisions
+
+
+def hash_api_key(raw_key: str) -> str:
+    return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+
+
+def generate_api_key() -> tuple[str, str, str]:
+    """Return (full_key, lookup_prefix, sha256_hash). full_key is shown to the
+    user exactly once by the caller and never stored."""
+    full_key = API_KEY_PREFIX + secrets.token_urlsafe(32)
+    return full_key, full_key[:API_KEY_LOOKUP_LEN], hash_api_key(full_key)
+
+
+def _resolve_api_key(token: str) -> dict:
+    """Validate a user-facing API key and return an identity dict shaped like
+    a decoded JWT, so every existing Depends(get_current_user) route works
+    transparently with either credential. Deliberately always TENANT_MEMBER —
+    see ApiKey model docstring in backend/models.py."""
+    from backend.database import SessionLocal
+    from backend import models
+
+    db = SessionLocal()
+    try:
+        row = (
+            db.query(models.ApiKey)
+            .filter(
+                models.ApiKey.key_prefix == token[:API_KEY_LOOKUP_LEN],
+                models.ApiKey.revoked_at.is_(None),
+            )
+            .first()
+        )
+        if row is None or not hmac.compare_digest(row.key_hash, hash_api_key(token)):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Chave de API inválida")
+        row.last_used_at = utcnow_naive()
+        db.commit()
+        return {"sub": f"apikey:{row.id}", "tenant_id": row.tenant_id, "role": "TENANT_MEMBER", "api_key_id": row.id}
+    finally:
+        db.close()
+
+
 async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
-    """FastAPI dependency — require a valid Bearer JWT. Raises 401 if missing/invalid.
+    """FastAPI dependency — require a valid Bearer JWT or user-facing API key.
+    Raises 401 if missing/invalid.
 
     The decoded role is normalized to the canonical RBAC v2 value here, so every
     downstream guard (require_admin, require_super_admin, permissions, …) sees
@@ -159,7 +209,10 @@ async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer
     """
     if creds is None or not creds.credentials:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autenticação necessária")
-    user = decode_token(creds.credentials)
+    token = creds.credentials
+    if token.startswith(API_KEY_PREFIX):
+        return _resolve_api_key(token)
+    user = decode_token(token)
     if user.get("role") is not None:
         user["role"] = normalize_role(user.get("role"))
     _touch_last_seen(user.get("sub"))

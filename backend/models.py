@@ -290,6 +290,31 @@ class AuditLog(Base):
     )
 
 
+# ─── API Keys (user-facing, for external integrations) ───────────────────────
+
+class ApiKey(Base):
+    """A tenant-scoped credential a TENANT_ADMIN can generate to let external
+    scripts/systems call the VoltarisOS REST API as `Authorization: Bearer
+    vos_...`. Only the SHA-256 hash is stored -- the plaintext key is shown to
+    the user exactly once (at creation/rotation) and never persisted.
+    Deliberately grants TENANT_MEMBER-equivalent access regardless of the
+    creator's own role: least privilege for a credential that can leak in a
+    script or CI log. See backend/security.py's get_current_user."""
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+
+    key_prefix = Column(String, unique=True, index=True, nullable=False)
+    key_hash = Column(String, nullable=False)
+
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
+    last_used_at = Column(DateTime, nullable=True)
+    revoked_at = Column(DateTime, nullable=True)
+
+
 class StripeEvent(Base):
     __tablename__ = "stripe_events"
     id = Column(Integer, primary_key=True, index=True)
