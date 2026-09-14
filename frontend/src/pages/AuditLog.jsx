@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "../i18n/useTranslation"
 
 const ACTION_PREFIX_COLORS = {
@@ -37,7 +37,12 @@ export default function AuditLog({ user }) {
 
   const color = user?.color || "#4ade80"
 
-  const load = useCallback(async () => {
+  // NOTE: `load` is intentionally NOT a useCallback/useEffect dependency pair.
+  // useTranslation() returns a brand-new `t` function identity on every render,
+  // so depending on it here previously caused the effect to refire every
+  // render -> infinite refetch loop that hammered /api/audit-log and starved
+  // the backend's request pool (including unrelated endpoints like login).
+  const load = async () => {
     setLoading(true)
     setError("")
     try {
@@ -57,9 +62,10 @@ export default function AuditLog({ user }) {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }
 
-  useEffect(() => { load() }, [load])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+  useEffect(() => { load() }, [])
 
   const fmt = (iso) => {
     const d = new Date(iso)
