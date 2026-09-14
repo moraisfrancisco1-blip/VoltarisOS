@@ -122,7 +122,18 @@ def get_group(vpp_id: int, db: Session = Depends(get_db), user: dict = Depends(g
 
 @router.delete("/{vpp_id}", status_code=204)
 def delete_group(vpp_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    """Delete a VPP group. Postgres enforces the FK from every row that
+    references this group (or, for dispatch records, its optimization runs),
+    so those must be removed first, in dependency order, or the delete 500s
+    with an IntegrityError on any group that was ever actually optimized or
+    had a site attached -- i.e. any group that was ever really used."""
     g = _get_owned_vpp(db, vpp_id, user)
+    run_ids = [r.id for r in db.query(models.VPPOptimizationRun.id).filter(models.VPPOptimizationRun.vpp_id == vpp_id).all()]
+    if run_ids:
+        db.query(models.VPPDispatchRecord).filter(models.VPPDispatchRecord.optimization_run_id.in_(run_ids)).delete(synchronize_session=False)
+    db.query(models.VPPOptimizationRun).filter(models.VPPOptimizationRun.vpp_id == vpp_id).delete(synchronize_session=False)
+    db.query(models.VPPBid).filter(models.VPPBid.vpp_id == vpp_id).delete(synchronize_session=False)
+    db.query(models.VPPSiteMembership).filter(models.VPPSiteMembership.vpp_id == vpp_id).delete(synchronize_session=False)
     db.delete(g)
     db.commit()
 

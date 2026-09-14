@@ -121,6 +121,38 @@ class TestVppGetDelete:
         assert resp.status_code == 204
         assert db_session.query(models.VPPGroup).filter_by(id=vpp_id).count() == 0
 
+    def test_delete_vpp_that_was_actually_used(self, client, db_session):
+        """Regression test: a VPP that was ever optimized, bid on, or had a
+        site attached -- i.e. any group that was ever really used -- used to
+        500 on delete with a Postgres ForeignKeyViolation, because nothing
+        removed the dependent vpp_site_memberships/vpp_bids/
+        vpp_optimization_runs/vpp_dispatch_records rows first. The
+        no-dependents test above never exercised that path."""
+        vpp_id = _seed_vpp(db_session, TENANT_A)
+        site = models.Site(id=1, tenant_id=TENANT_A, name="Site 1", solar_kw=10, battery_kwh=20)
+        db_session.add(site)
+        db_session.commit()
+        client.post(f"/api/vpp/{vpp_id}/sites", json={"site_id": site.id}, headers=_auth(TENANT_A))
+        client.post(
+            f"/api/vpp/{vpp_id}/optimize",
+            json={"horizon_hours": 2, "prices_eur_mwh": [30.0, 40.0], "base_load_kw": [0.0, 0.0]},
+            headers=_auth(TENANT_A),
+        )
+        client.post(
+            f"/api/vpp/{vpp_id}/bid",
+            json={"quantity_kw": 200, "direction": "sell", "price_eur_mwh": 50.0},
+            headers=_auth(TENANT_A),
+        )
+        assert db_session.query(models.VPPOptimizationRun).filter_by(vpp_id=vpp_id).count() > 0
+
+        resp = client.delete(f"/api/vpp/{vpp_id}", headers=_auth(TENANT_A))
+        assert resp.status_code == 204, resp.text
+        assert db_session.query(models.VPPGroup).filter_by(id=vpp_id).count() == 0
+        assert db_session.query(models.VPPSiteMembership).filter_by(vpp_id=vpp_id).count() == 0
+        assert db_session.query(models.VPPBid).filter_by(vpp_id=vpp_id).count() == 0
+        assert db_session.query(models.VPPOptimizationRun).filter_by(vpp_id=vpp_id).count() == 0
+        assert db_session.query(models.VPPDispatchRecord).filter_by(vpp_id=vpp_id).count() == 0
+
 
 class TestVppAggregate:
     def test_aggregate_same_tenant(self, client, db_session):
