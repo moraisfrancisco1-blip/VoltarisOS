@@ -60,6 +60,7 @@ from backend.routers.reports import router as reports_router
 from backend.routers.alerts_ws import router as alerts_ws_router
 from backend.routers.payments import router as payments_router
 from backend.routers.twofa import router as twofa_router
+from backend.routers.audit_log import router as audit_log_router
 from backend.routers.websocket import router as websocket_router
 from backend.routers.operations import router as operations_router
 from backend.security import get_current_user, limiter, require_password_changed
@@ -243,6 +244,7 @@ app.include_router(reports_router, dependencies=_auth_dep)
 app.include_router(alerts_ws_router)  # websocket does its own token check on connect
 app.include_router(payments_router)  # Stripe payments - public endpoints
 app.include_router(twofa_router, prefix="/api", dependencies=_auth_dep)  # 2FA endpoints require auth
+app.include_router(audit_log_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
 app.include_router(websocket_router)  # WebSockets handle auth internally via token query param
 app.include_router(operations_router)  # /api/admin/production-readiness — admin-only (require_super_admin inside)
 

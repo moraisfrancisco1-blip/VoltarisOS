@@ -337,7 +337,7 @@ const TABS = [
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function Settings() {
+export default function Settings({ setPage }) {
   const { t } = useTranslation();
   const accent     = useAppStore(s => s.accentColor);
   const theme      = useAppStore(s => s.theme);
@@ -1111,7 +1111,7 @@ export default function Settings() {
               <p style={{ fontSize: 12, color: "var(--sub)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
               <div style={{ display: "flex", gap: 10 }}>
                 <Btn variant="outline" accent={accent} onClick={() => alert("Security scan initiated — results in ~2 minutes")}>Run Scan</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => alert("View Audit Log — feature coming soon")}>View Audit Log</Btn>
+                <Btn variant="secondary" accent={accent} onClick={() => setPage ? setPage("audit") : alert("Audit Log")}>View Audit Log</Btn>
               </div>
             </div>
           </div>

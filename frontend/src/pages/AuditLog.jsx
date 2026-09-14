@@ -1,73 +1,117 @@
-import { useState } from "react"
-import { useAppStore } from "../store/appStore"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslation } from "../i18n/useTranslation"
-import DemoNotice from "../components/DemoNotice"
 
-const ACTION_COLORS = {
-  audit_action_login: "#4ade80",
-  audit_action_logout: "#f87171",
-  audit_action_create_user: "#818cf8",
-  audit_action_export_report: "#22d3ee",
-  audit_action_whitelabel: "#f59e0b",
-  audit_action_trading_agent: "#a78bfa",
-  audit_action_settings: "var(--sub)",
-  audit_action_delete_site: "#f87171",
-  audit_action_create_site: "#4ade80",
-  audit_action_api_key: "#f59e0b",
-  audit_action_api_key_created: "#f59e0b",
-  audit_action_export_file: "#22d3ee",
-  audit_action_export_audit: "#22d3ee",
+const ACTION_PREFIX_COLORS = {
+  "2fa": "#f59e0b",
+  user: "#4ade80",
+  trade: "#a78bfa",
+  asset: "#22d3ee",
+  vpp: "#818cf8",
+  settings: "var(--sub)",
+  api_key: "#f59e0b",
+  export: "#22d3ee",
 }
 
 const LOCALES = { pt: "pt-PT", en: "en-GB", fr: "fr-FR", es: "es-ES", nl: "nl-NL" }
 
+const PAGE_SIZE = 50
+
+function actionColor(action) {
+  const prefix = (action || "").split(".")[0]
+  return ACTION_PREFIX_COLORS[prefix] || "var(--sub)"
+}
+
+function toCsv(entries) {
+  const header = ["timestamp", "user_email", "action", "target_resource", "target_id", "ip_address"]
+  const rows = entries.map(e => header.map(k => JSON.stringify(e[k] ?? "")).join(","))
+  return [header.join(","), ...rows].join("\n")
+}
+
 export default function AuditLog({ user }) {
-  const { auditLog, addAuditEntry, simMode } = useAppStore()
   const { t, lang } = useTranslation()
+  const [entries, setEntries] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [search, setSearch] = useState("")
-  const [filter, setFilter] = useState("all")
+
+  const color = user?.color || "#4ade80"
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/audit-log?limit=${PAGE_SIZE}&offset=0`)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(res.status === 403 ? t("audit_forbidden") : (data.detail || t("audit_load_error")))
+        setEntries([])
+        setTotal(0)
+        return
+      }
+      setEntries(data.entries || [])
+      setTotal(data.total || 0)
+    } catch (e) {
+      console.error(e)
+      setError(t("audit_load_error"))
+    } finally {
+      setLoading(false)
+    }
+  }, [t])
+
+  useEffect(() => { load() }, [load])
 
   const fmt = (iso) => {
     const d = new Date(iso)
     return d.toLocaleString(LOCALES[lang] || "en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
-  const filtered = auditLog.filter(e => {
+  const filtered = entries.filter(e => {
     const q = search.toLowerCase()
-    const match = !q || e.user.toLowerCase().includes(q) || t(e.actionKey).toLowerCase().includes(q) || e.resource.toLowerCase().includes(q)
-    return match
+    if (!q) return true
+    return (e.user_email || "").toLowerCase().includes(q)
+      || (e.action || "").toLowerCase().includes(q)
+      || (e.target_resource || "").toLowerCase().includes(q)
   })
 
-  const color = user?.color || "#4ade80"
+  const todayCount = entries.filter(e => new Date(e.timestamp).toDateString() === new Date().toDateString()).length
+  const userCount = new Set(entries.map(e => e.user_email).filter(Boolean)).size
+  const ipCount = new Set(entries.map(e => e.ip_address).filter(Boolean)).size
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: "32px", maxWidth: "1100px" }}>
-        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Audit Log</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_audit")}
-        </div>
-      </div>
-    )
+  const exportCsv = () => {
+    const csv = toCsv(filtered)
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
     <div style={{ padding: "32px", maxWidth: "1100px" }}>
-      <DemoNotice />
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>{t("audit_title")}</h1>
         <p style={{ color: "var(--sub)", fontSize: "14px" }}>{t("audit_sub")}</p>
       </div>
 
+      {error && (
+        <div style={{ padding: "12px 16px", marginBottom: 20, background: "#2d0a0a", border: "1px solid #7f1d1d", borderRadius: 10, color: "#f87171", fontSize: 13 }}>
+          {error}
+        </div>
+      )}
+
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "28px" }}>
         {[
-          { label: t("audit_stat_total"), value: auditLog.length, color: "#818cf8" },
-          { label: t("audit_stat_today"), value: auditLog.filter(e => new Date(e.time).toDateString() === new Date().toDateString()).length, color: color },
-          { label: t("audit_stat_users"), value: [...new Set(auditLog.map(e => e.user))].length, color: "#22d3ee" },
-          { label: t("audit_stat_ips"), value: [...new Set(auditLog.map(e => e.ip))].length, color: "#f59e0b" },
+          { label: t("audit_stat_total"), value: total, color: "#818cf8" },
+          { label: t("audit_stat_today"), value: todayCount, color: color },
+          { label: t("audit_stat_users"), value: userCount, color: "#22d3ee" },
+          { label: t("audit_stat_ips"), value: ipCount, color: "#f59e0b" },
         ].map(s => (
           <div key={s.label} style={{
             background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)",
@@ -101,11 +145,14 @@ export default function AuditLog({ user }) {
           />
         </div>
         <button
-          onClick={() => addAuditEntry({ user: user?.email || "admin@voltaris.com", actionKey: "audit_action_export_audit", resource: "Audit" })}
+          onClick={exportCsv}
+          disabled={filtered.length === 0}
           style={{
             padding: "10px 18px", background: `${color}15`,
             border: `1px solid ${color}30`, borderRadius: "10px",
-            color: color, cursor: "pointer", fontSize: "13px", fontWeight: "600",
+            color: color, cursor: filtered.length === 0 ? "not-allowed" : "pointer",
+            opacity: filtered.length === 0 ? 0.5 : 1,
+            fontSize: "13px", fontWeight: "600",
             display: "flex", alignItems: "center", gap: "8px",
           }}
         >
@@ -130,7 +177,7 @@ export default function AuditLog({ user }) {
           </thead>
           <tbody>
             {filtered.map((entry, i) => {
-              const ac = ACTION_COLORS[entry.actionKey] || "var(--sub)"
+              const ac = actionColor(entry.action)
               return (
                 <tr
                   key={entry.id}
@@ -142,7 +189,7 @@ export default function AuditLog({ user }) {
                   onMouseLeave={e => e.currentTarget.style.background = "none"}
                 >
                   <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                    {fmt(entry.time)}
+                    {fmt(entry.timestamp)}
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -151,8 +198,8 @@ export default function AuditLog({ user }) {
                         background: `${color}20`, border: `1px solid ${color}30`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: "10px", fontWeight: "700", color: color, flexShrink: 0,
-                      }}>{entry.user.charAt(0).toUpperCase()}</div>
-                      <span style={{ color: "var(--sub)", fontSize: "13px" }}>{entry.user}</span>
+                      }}>{(entry.user_email || "?").charAt(0).toUpperCase()}</div>
+                      <span style={{ color: "var(--sub)", fontSize: "13px" }}>{entry.user_email || "—"}</span>
                     </div>
                   </td>
                   <td style={{ padding: "12px 16px" }}>
@@ -160,21 +207,33 @@ export default function AuditLog({ user }) {
                       padding: "3px 10px",
                       background: `${ac}18`, border: `1px solid ${ac}30`,
                       borderRadius: "20px", color: ac, fontSize: "12px", fontWeight: "600",
-                    }}>{t(entry.actionKey)}</span>
+                    }}>{entry.action}</span>
                   </td>
-                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "13px" }}>{entry.resource}</td>
-                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace" }}>{entry.ip}</td>
+                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "13px" }}>
+                    {entry.target_resource ? `${entry.target_resource}${entry.target_id ? ` #${entry.target_id}` : ""}` : "—"}
+                  </td>
+                  <td style={{ padding: "12px 16px", color: "var(--sub)", fontSize: "12px", fontFamily: "monospace" }}>{entry.ip_address || "—"}</td>
                 </tr>
               )
             })}
           </tbody>
         </table>
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && !error && (
           <div style={{ padding: "40px", textAlign: "center", color: "var(--sub)" }}>
             {t("audit_empty")}
           </div>
         )}
+        {loading && (
+          <div style={{ padding: "40px", textAlign: "center", color: "var(--sub)" }}>
+            {t("loading")}
+          </div>
+        )}
       </div>
+      {!loading && total > entries.length && (
+        <div style={{ marginTop: 12, fontSize: 12, color: "var(--sub)" }}>
+          {t("audit_showing_subset").replace("{shown}", entries.length).replace("{total}", total)}
+        </div>
+      )}
     </div>
   )
 }
