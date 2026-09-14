@@ -383,6 +383,9 @@ export default function Settings({ setPage }) {
   const [webhookBusy, setWebhookBusy] = useState(false);
   const [webhookBusyId, setWebhookBusyId] = useState(null);
   const [revealedWebhookSecret, setRevealedWebhookSecret] = useState(null); // { url, secret }
+  const [connectedApps, setConnectedApps] = useState([]);
+  const [connectedAppsLoaded, setConnectedAppsLoaded] = useState(false);
+  const [oauthBusyProvider, setOauthBusyProvider] = useState(null);
   const [sessionTimeout, setSessionTimeout] = useState(60);
   const [ipwhitelist, setIpwhitelist] = useState("91.122.45.0/24\n195.83.0.1");
   const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
@@ -595,6 +598,72 @@ export default function Settings({ setPage }) {
     }
   };
 
+  const loadConnectedApps = async () => {
+    try {
+      const res = await fetch("/api/oauth/status");
+      if (!res.ok) return;
+      setConnectedApps(await res.json());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setConnectedAppsLoaded(true);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only (see AuditLog.jsx for why t() must not be a dep)
+  useEffect(() => { loadConnectedApps(); }, []);
+
+  // Land back on this tab after an OAuth redirect round-trip
+  // (backend/routers/oauth_connections.py's /callback), and surface the
+  // result once. App.jsx already routed here via the ?oauth= param; this
+  // just reads it, toasts, and strips it so a refresh doesn't re-show it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthResult = params.get("oauth");
+    if (!oauthResult) return;
+    const provider = params.get("provider") || "";
+    if (oauthResult === "success") {
+      addToast(`${provider} ${t("oauth_connected_toast") || "connected successfully"}`, "success");
+    } else {
+      addToast(`${t("oauth_connect_failed") || "Failed to connect"} ${provider}`, "error");
+    }
+    window.history.replaceState({}, "", window.location.pathname);
+    loadConnectedApps();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const connectApp = async (provider) => {
+    setOauthBusyProvider(provider);
+    try {
+      const res = await fetch(`/api/oauth/${provider}/start`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        addToast(data.detail || (t("oauth_not_configured") || "Not configured on this instance"), "error");
+        return;
+      }
+      window.location.href = data.authorize_url;
+    } catch (e) {
+      console.error(e);
+      addToast(t("oauth_connect_failed") || "Failed to connect", "error");
+    } finally {
+      setOauthBusyProvider(null);
+    }
+  };
+
+  const disconnectApp = async (provider) => {
+    setOauthBusyProvider(provider);
+    try {
+      const res = await fetch(`/api/oauth/${provider}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 204) { addToast("Failed to disconnect", "error"); return; }
+      loadConnectedApps();
+    } catch (e) {
+      console.error(e);
+      addToast("Failed to disconnect", "error");
+    } finally {
+      setOauthBusyProvider(null);
+    }
+  };
+
   const PLANS = [
     { id: "home", name: "Home", monthly: 99, yearly: 890, color: "#10b981", badge: null,
       features: ["1 site", "2 BESS units", "Basic monitoring", "Mobile app access", "Email alerts", "CSV exports"],
@@ -694,17 +763,29 @@ export default function Settings({ setPage }) {
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8 }}>Connected Apps</h2>
               <p style={{ fontSize: 12, color: SUB, marginBottom: 16 }}>OAuth and SSO integrations</p>
-              {[
-                { name: "Google Workspace", icon: "G", connected: true },
-                { name: "Microsoft 365", icon: "M", connected: false },
-                { name: "Slack", icon: "S", connected: true },
-              ].map(app => (
-                <div key={app.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${BORD}`, fontSize: 13 }}>
+              {!connectedAppsLoaded && <div style={{ fontSize: 12, color: SUB }}>{t("loading")}</div>}
+              {connectedApps.map(app => (
+                <div key={app.provider} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${BORD}`, fontSize: 13 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 6, background: "#1f2937", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: accent }}>{app.icon}</div>
-                    <span>{app.name}</span>
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: "#1f2937", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: accent }}>{app.label.charAt(0)}</div>
+                    <div>
+                      <div>{app.label}</div>
+                      {app.connected && app.account_label && (
+                        <div style={{ fontSize: 11, color: SUB }}>{app.account_label}</div>
+                      )}
+                      {!app.configured && (
+                        <div style={{ fontSize: 11, color: SUB }}>{t("oauth_not_configured") || "Not configured on this instance"}</div>
+                      )}
+                    </div>
                   </div>
-                  <button onClick={() => alert(`${app.connected ? "Disconnect" : "Connect"} ${app.name} — feature coming soon`)} style={{ background: app.connected ? "#064e3b" : "#1e3a5f", color: app.connected ? "#10b981" : "#60a5fa", border: "none", borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 11, fontWeight: 600 }}>
+                  <button
+                    onClick={() => app.connected ? disconnectApp(app.provider) : connectApp(app.provider)}
+                    disabled={!app.configured || oauthBusyProvider === app.provider}
+                    style={{
+                      background: app.connected ? "#064e3b" : "#1e3a5f", color: app.connected ? "#10b981" : "#60a5fa",
+                      border: "none", borderRadius: 6, padding: "4px 12px", cursor: (!app.configured || oauthBusyProvider === app.provider) ? "not-allowed" : "pointer",
+                      fontSize: 11, fontWeight: 600, opacity: (!app.configured || oauthBusyProvider === app.provider) ? 0.5 : 1,
+                    }}>
                     {app.connected ? "Connected" : "Connect"}
                   </button>
                 </div>

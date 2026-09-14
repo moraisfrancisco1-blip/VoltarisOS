@@ -279,35 +279,40 @@ async def require_password_changed(user: dict = Depends(get_current_user)) -> di
     return user
 
 
-async def check_module_access(module_name: str, user: dict = Depends(get_current_user)) -> dict:
-    """FastAPI dependency — validate that the user's active plan includes the requested module.
-
-    Usage:
-        @router.post("/trading/execute")
-        async def execute_trade(..., _: dict = Depends(lambda: check_module_access("markets_trading"))):
-            ...
-
+def check_module_access(module_name: str):
+    """Factory for a FastAPI dependency requiring the user's active plan to
+    include `module_name` (see permissions.py's PLAN_TIER_REQUIREMENTS).
     SUPER_ADMIN bypasses all module checks.
-    Module access is determined by the ALLOWED_MODULES per plan (see permissions.py).
+
+    Usage: Depends(check_module_access("admin_whitelabel"))
+
+    NOTE: previously this was itself an `async def` dependency taking
+    `module_name` as a plain (non-Depends) first argument -- which cannot
+    actually be wired into a route as `Depends(check_module_access("x"))`,
+    since FastAPI would treat the whole call's return value, not the
+    function, as the dependency. It had no real callers anywhere in the
+    codebase, so nothing depended on the broken shape; fixed into a proper
+    factory (same style as require_role above) so it's usable for real.
     """
-    from backend.permissions import can_access_module, get_tenant_plan
-    from backend.database import SessionLocal
+    async def _dep(user: dict = Depends(get_current_user)) -> dict:
+        from backend.permissions import can_access_module, get_tenant_plan
+        from backend.database import SessionLocal
 
-    role = user.get("role", "")
-    if role == "SUPER_ADMIN":
-        return user
+        if user.get("role") == "SUPER_ADMIN":
+            return user
 
-    db = SessionLocal()
-    try:
-        plan = get_tenant_plan(user, db)
-        if not can_access_module(plan, module_name):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"O módulo '{module_name}' não está disponível no teu plano ({plan}). Faz upgrade para desbloquear.",
-            )
-        return user
-    finally:
-        db.close()
+        db = SessionLocal()
+        try:
+            plan = get_tenant_plan(user, db)
+            if not can_access_module(plan, module_name):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"O módulo '{module_name}' não está disponível no teu plano ({plan}). Faz upgrade para desbloquear.",
+                )
+            return user
+        finally:
+            db.close()
+    return _dep
 
 
 # ─── Service-to-service auth (gateway/rules engine, not a logged-in user) ────

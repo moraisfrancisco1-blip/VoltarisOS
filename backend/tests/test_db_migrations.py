@@ -24,8 +24,11 @@ def _bind(monkeypatch, engine, Session):
     import backend.migrations.add_site_timezone as mtz
     import backend.migrations.add_device_external_id as mext
     import backend.migrations.add_must_change_password as mpwd
+    import backend.migrations.add_last_seen_at as mseen
+    import backend.migrations.add_site_tilt_azimuth as mtilt
+    import backend.migrations.add_tenant_custom_domain as mdomain
 
-    for mod in (runner, m2fa, maudit, mvpp, msites, mstripe, mread, mtz, mext, mpwd):
+    for mod in (runner, m2fa, maudit, mvpp, msites, mstripe, mread, mtz, mext, mpwd, mseen, mtilt, mdomain):
         monkeypatch.setattr(mod, "engine", engine)
     monkeypatch.setattr(msites, "SessionLocal", Session)
     return runner
@@ -142,6 +145,10 @@ def test_old_schema_upgraded(monkeypatch):
     user_cols = {c["name"] for c in inspector.get_columns("users")}
     assert "totp_secret" in user_cols
     assert "must_change_password" in user_cols
+
+    tenant_cols = {c["name"] for c in inspector.get_columns("tenants")}
+    assert "custom_domain" in tenant_cols
+    assert "custom_domain_status" in tenant_cols
 
 
 # ── E. Failure safety ────────────────────────────────────────────────────────

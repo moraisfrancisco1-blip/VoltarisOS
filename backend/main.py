@@ -63,6 +63,8 @@ from backend.routers.twofa import router as twofa_router
 from backend.routers.audit_log import router as audit_log_router
 from backend.routers.api_keys import router as api_keys_router
 from backend.routers.webhooks import router as webhooks_router
+from backend.routers.white_label import router as white_label_router
+from backend.routers.oauth_connections import router as oauth_connections_router
 from backend.routers.websocket import router as websocket_router
 from backend.routers.operations import router as operations_router
 from backend.security import get_current_user, limiter, require_password_changed
@@ -249,6 +251,13 @@ app.include_router(twofa_router, prefix="/api", dependencies=_auth_dep)  # 2FA e
 app.include_router(audit_log_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
 app.include_router(api_keys_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
 app.include_router(webhooks_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
+# No blanket dependencies on these two: white_label's /branding and oauth's
+# /callback must stay public (pre-login branding; the provider's own
+# redirect has no Authorization header). Each protected endpoint in both
+# routers declares get_current_user/require_admin/require_password_changed
+# itself instead.
+app.include_router(white_label_router)
+app.include_router(oauth_connections_router)
 app.include_router(websocket_router)  # WebSockets handle auth internally via token query param
 app.include_router(operations_router)  # /api/admin/production-readiness — admin-only (require_super_admin inside)
 

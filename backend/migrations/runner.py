@@ -23,14 +23,16 @@ from backend.models import utcnow_naive
 # extension and is run manually/opt-in).
 #
 # NOTE on ordering: `add_sites_table` seeds a `Tenant` through the current ORM
-# model, which now includes the Stripe columns. It therefore depends on
-# `add_stripe_subscription_fields` having already added those columns, so the
-# Stripe migration runs BEFORE the sites migration.
+# model, which reflects EVERY column on the Tenant class regardless of
+# migration order -- so any migration that adds Tenant columns (Stripe,
+# custom-domain white-label, ...) must run BEFORE add_sites_table, or its
+# ORM query 500s with "no such column" against the not-yet-migrated table.
 MIGRATIONS = [
     "add_2fa_fields",
     "add_audit_logs",
     "add_vpp_dispatch_fields",
     "add_stripe_subscription_fields",
+    "add_tenant_custom_domain",
     "add_sites_table",
     "add_device_reading_unique",
     "add_site_timezone",

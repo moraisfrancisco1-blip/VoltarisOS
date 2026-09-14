@@ -25,6 +25,20 @@ class Tenant(Base):
     subscription_status = Column(String, nullable=True)
     subscription_end = Column(DateTime, nullable=True)
 
+    # White-label custom domain (Enterprise plan — see permissions.py's
+    # "admin_whitelabel"). Provisioned for real via Railway's public API
+    # when RAILWAY_API_TOKEN is configured (backend/railway_client.py);
+    # otherwise stays "pending_manual_setup" rather than pretending to work.
+    # status: requested | pending_manual_setup | pending_dns | active | error
+    custom_domain = Column(String, nullable=True, unique=True)
+    custom_domain_status = Column(String, nullable=True)
+    custom_domain_railway_id = Column(String, nullable=True)
+    custom_domain_cname_target = Column(String, nullable=True)
+    custom_domain_verification_host = Column(String, nullable=True)
+    custom_domain_verification_value = Column(String, nullable=True)
+    custom_domain_requested_at = Column(DateTime, nullable=True)
+    custom_domain_error = Column(String, nullable=True)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -341,6 +355,34 @@ class Webhook(Base):
     last_status_code = Column(Integer, nullable=True)
     last_error = Column(String, nullable=True)
     failure_count = Column(Integer, default=0, nullable=False)
+
+
+# ─── Connected Apps (OAuth, tenant-wide) ──────────────────────────────────────
+
+class OAuthConnection(Base):
+    """One tenant-wide connection per external provider (Google Workspace,
+    Microsoft 365, Slack) -- Settings > Connected Apps. Tokens are stored
+    plaintext (same trust boundary as User.totp_secret elsewhere in this
+    file); the provider's own client_secret never leaves the backend (see
+    backend/routers/oauth_connections.py)."""
+    __tablename__ = "oauth_connections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    provider = Column(String, nullable=False)  # "google" | "microsoft" | "slack"
+    access_token = Column(String, nullable=False)
+    refresh_token = Column(String, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    scope = Column(String, nullable=True)
+    account_label = Column(String, nullable=True)  # email / workspace name, for display only
+
+    connected_at = Column(DateTime, default=utcnow_naive, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "provider", name="uq_oauth_tenant_provider"),
+    )
 
 
 class StripeEvent(Base):

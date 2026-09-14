@@ -110,7 +110,13 @@ function useIsMobile() {
 }
 
 function AppShell({ user, onLogout }) {
-  const [page, setPage] = useState("dashboard")
+  // A Connected Apps OAuth callback (backend/routers/oauth_connections.py)
+  // redirects the full page back here with ?oauth=success|error&provider=...
+  // -- land back on Settings instead of the default Dashboard so the result
+  // is visible where the user started. Settings.jsx reads/clears the param.
+  const [page, setPage] = useState(() => (
+    new URLSearchParams(window.location.search).get("oauth") ? "settings" : "dashboard"
+  ))
   const [mobileOpen, setMobileOpen] = useState(false)
   const isMobile = useIsMobile()
   const { theme, simMode, addToast } = useAppStore()

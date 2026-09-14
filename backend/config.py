@@ -48,6 +48,28 @@ class Settings:
     
     # Redis (optional — for sessions/cache; falls back to in-memory if not set)
     REDIS_URL: str = os.getenv("REDIS_URL", "")  # e.g., redis://localhost:6379/0
+
+    # OAuth "Connected Apps" (Settings > Connected Apps) — optional per provider;
+    # a provider with no client_id/secret configured returns 503 "not configured
+    # on this instance" from /api/oauth/{provider}/start rather than pretending
+    # to work. Each app must be registered with the provider using the exact
+    # redirect URI {OAUTH_REDIRECT_BASE_URL}/api/oauth/{provider}/callback.
+    OAUTH_REDIRECT_BASE_URL: str = os.getenv("OAUTH_REDIRECT_BASE_URL", "https://www.voltarisos.com")
+    GOOGLE_OAUTH_CLIENT_ID: str = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")
+    GOOGLE_OAUTH_CLIENT_SECRET: str = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+    MICROSOFT_OAUTH_CLIENT_ID: str = os.getenv("MICROSOFT_OAUTH_CLIENT_ID", "")
+    MICROSOFT_OAUTH_CLIENT_SECRET: str = os.getenv("MICROSOFT_OAUTH_CLIENT_SECRET", "")
+    SLACK_OAUTH_CLIENT_ID: str = os.getenv("SLACK_OAUTH_CLIENT_ID", "")
+    SLACK_OAUTH_CLIENT_SECRET: str = os.getenv("SLACK_OAUTH_CLIENT_SECRET", "")
+
+    # Railway API — optional; powers real custom-domain provisioning for
+    # White-label (backend/routers/white_label.py). Without it, a domain
+    # request is stored but stays "pending_manual_setup" instead of silently
+    # pretending to be provisioned.
+    RAILWAY_API_TOKEN: str = os.getenv("RAILWAY_API_TOKEN", "")
+    RAILWAY_PROJECT_ID: str = os.getenv("RAILWAY_PROJECT_ID", "")
+    RAILWAY_SERVICE_ID: str = os.getenv("RAILWAY_SERVICE_ID", "")
+    RAILWAY_ENVIRONMENT_ID: str = os.getenv("RAILWAY_ENVIRONMENT_ID", "")
     
     # 2FA / TOTP
     TOTP_ISSUER: str = os.getenv("TOTP_ISSUER", "VoltarisOS")

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DemoNotice from "../components/DemoNotice"
 import { useAppStore } from "../store/appStore"
 
@@ -35,6 +35,15 @@ const INPUT = {
   transition: "border-color 0.15s",
 }
 
+function FakeTabNotice({ t }) {
+  return (
+    <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
+      background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
+      {t("demo_whitelabel")}
+    </div>
+  )
+}
+
 const TENANTS = [
   { id: "t1", name: "Voltaris Energy", domain: "app.voltaris.io", color: "#4ade80", plan: "Enterprise", users: 24, status: "active" },
   { id: "t2", name: "SolarGrid PT", domain: "solargrid.voltaris.io", color: "#60a5fa", plan: "Pro", users: 8, status: "active" },
@@ -46,11 +55,80 @@ export default function whitelabel({ user }) {
   const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode)
   const color = user?.color || "#4ade80"
-  const [tab, setTab] = useState("tenants")
+  // "domains" is the one real, working tab (this tenant's own custom
+  // domain, provisioned for real via Railway -- see backend/routers/
+  // white_label.py). Tenants/Brand Config/Feature Flags below are a
+  // separate, much larger reseller-admin console for managing OTHER
+  // tenants that was never built for real and stays behind simMode.
+  const [tab, setTab] = useState("domains")
   const [tenants, setTenants] = useState(TENANTS)
   const [selectedTenant, setSelectedTenant] = useState(null)
   const [saved, setSaved] = useState(false)
   const [logoName, setLogoName] = useState(null)
+
+  const [domainInfo, setDomainInfo] = useState(null)
+  const [domainLoaded, setDomainLoaded] = useState(false)
+  const [domainError, setDomainError] = useState("")
+  const [newDomainInput, setNewDomainInput] = useState("")
+  const [domainBusy, setDomainBusy] = useState(false)
+
+  const loadDomain = async () => {
+    setDomainError("")
+    try {
+      const res = await fetch("/api/white-label/domain")
+      const data = await res.json()
+      if (!res.ok) {
+        if (res.status !== 403) setDomainError(data.detail || t("whitelabel_domain_load_error"))
+        return
+      }
+      setDomainInfo(data)
+    } catch (e) {
+      console.error(e)
+      setDomainError(t("whitelabel_domain_load_error"))
+    } finally {
+      setDomainLoaded(true)
+    }
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only (see AuditLog.jsx for why t() must not be a dep)
+  useEffect(() => { loadDomain() }, [])
+
+  const requestDomain = async () => {
+    if (!newDomainInput.trim()) return
+    setDomainBusy(true)
+    setDomainError("")
+    try {
+      const res = await fetch("/api/white-label/domain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: newDomainInput.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setDomainError(data.detail?.[0]?.msg || data.detail || t("whitelabel_domain_request_error")); return }
+      setDomainInfo(data)
+      setNewDomainInput("")
+    } catch (e) {
+      console.error(e)
+      setDomainError(t("whitelabel_domain_request_error"))
+    } finally {
+      setDomainBusy(false)
+    }
+  }
+
+  const removeDomain = async () => {
+    setDomainBusy(true)
+    setDomainError("")
+    try {
+      const res = await fetch("/api/white-label/domain", { method: "DELETE" })
+      if (!res.ok && res.status !== 204) { setDomainError(t("whitelabel_domain_remove_error")); return }
+      loadDomain()
+    } catch (e) {
+      console.error(e)
+      setDomainError(t("whitelabel_domain_remove_error"))
+    } finally {
+      setDomainBusy(false)
+    }
+  }
 
   const [brandForm, setBrandForm] = useState({
     tenantName: "",
@@ -88,41 +166,38 @@ export default function whitelabel({ user }) {
 
   const statusColor = (s) => s === "active" ? "#4ade80" : s === "pending" ? "#f59e0b" : "var(--sub)"
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_whitelabel")}
-        </div>
-      </div>
-    )
-  }
+  // Only the "domains" tab below is real (this tenant's own custom domain).
+  // The rest of this page (Tenants/Brand Config/Feature Flags -- a reseller
+  // console for managing OTHER tenants) was never built for real and stays
+  // behind simMode, same as before.
+  const fakeReseller = tab !== "domains"
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: "1100px" }}>
-      <DemoNotice />
+      {fakeReseller && <DemoNotice />}
       {/* Header */}
       <div style={{ marginBottom: "28px" }}>
         <h1 style={{ margin: 0, fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>white-label & Multi-tenant</h1>
         <p style={{ margin: "6px 0 0", color: "var(--sub)", fontSize: "14px" }}>Manage tenant brands, domains, and feature flags</p>
       </div>
 
-      {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
-        {[
-          { label: "Total Tenants", value: tenants.length, sub: "+1 this month" },
-          { label: "Active", value: tenants.filter(t => t.status === "active").length, sub: "running live" },
-          { label: "Total Users", value: tenants.reduce((a, t) => a + t.users, 0), sub: "across all tenants" },
-          { label: "Pending Setup", value: tenants.filter(t => t.status === "pending").length, sub: "needs action" },
-        ].map((s, i) => (
-          <div key={i} style={{ ...CARD, marginBottom: 0, textAlign: "center" }}>
-            <div style={{ fontSize: "28px", fontWeight: "700", color: i === 0 ? color : i === 1 ? "#4ade80" : i === 2 ? "#60a5fa" : "#f59e0b" }}>{s.value}</div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text)", margin: "4px 0 2px" }}>{s.label}</div>
-            <div style={{ fontSize: "11px", color: "var(--sub)" }}>{s.sub}</div>
-          </div>
-        ))}
-      </div>
+      {/* Stats row — part of the (still fake) reseller console */}
+      {fakeReseller && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
+          {[
+            { label: "Total Tenants", value: tenants.length, sub: "+1 this month" },
+            { label: "Active", value: tenants.filter(t => t.status === "active").length, sub: "running live" },
+            { label: "Total Users", value: tenants.reduce((a, t) => a + t.users, 0), sub: "across all tenants" },
+            { label: "Pending Setup", value: tenants.filter(t => t.status === "pending").length, sub: "needs action" },
+          ].map((s, i) => (
+            <div key={i} style={{ ...CARD, marginBottom: 0, textAlign: "center" }}>
+              <div style={{ fontSize: "28px", fontWeight: "700", color: i === 0 ? color : i === 1 ? "#4ade80" : i === 2 ? "#60a5fa" : "#f59e0b" }}>{s.value}</div>
+              <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text)", margin: "4px 0 2px" }}>{s.label}</div>
+              <div style={{ fontSize: "11px", color: "var(--sub)" }}>{s.sub}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "10px", padding: "4px", width: "fit-content" }}>
@@ -149,7 +224,7 @@ export default function whitelabel({ user }) {
       </div>
 
       {/* TENANTS TAB */}
-      {tab === "tenants" && (
+      {tab === "tenants" && (!simMode ? <FakeTabNotice t={t} /> : (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <h3 style={{ margin: 0, fontSize: "15px", color: "var(--text)" }}>All Tenants</h3>
@@ -197,10 +272,10 @@ export default function whitelabel({ user }) {
             ))}
           </div>
         </div>
-      )}
+      ))}
 
       {/* BRAND CONFIG TAB */}
-      {tab === "brand" && (
+      {tab === "brand" && (!simMode ? <FakeTabNotice t={t} /> : (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
           {/* Left col */}
           <div>
@@ -345,46 +420,90 @@ export default function whitelabel({ user }) {
             </button>
           </div>
         </div>
-      )}
+      ))}
 
-      {/* DOMAINS TAB */}
+      {/* DOMAINS TAB — real, single-tenant (this org's own custom domain) */}
       {tab === "domains" && (
-        <div>
-          <div style={CARD}>
-            <h3 style={{ margin: "0 0 20px", fontSize: "15px", color: "var(--text)" }}>Domain Configuration</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              {tenants.map(t => (
-                <div key={t.id} style={{ display: "flex", alignItems: "center", gap: "16px", padding: "14px 16px", background: "var(--surface)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
-                  <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: statusColor(t.status), flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text)" }}>{t.domain}</div>
-                    <div style={{ fontSize: "12px", color: "var(--sub)", marginTop: "2px" }}>{t.name}</div>
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", background: "#4ade8018", color: "#4ade80" }}>SSL Active</span>
-                    <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "20px", background: statusColor(t.status) + "18", color: statusColor(t.status), textTransform: "capitalize" }}>{t.status}</span>
+        <div style={CARD}>
+          <h3 style={{ margin: "0 0 4px", fontSize: "15px", color: "var(--text)" }}>{t("whitelabel_your_domain") || "Your Custom Domain"}</h3>
+          <p style={{ margin: "0 0 20px", fontSize: "13px", color: "var(--sub)" }}>{t("whitelabel_your_domain_sub") || "Serve VoltarisOS at your own domain instead of voltarisos.com."}</p>
+
+          {domainError && (
+            <div style={{ padding: "10px 14px", marginBottom: 16, background: "#2d0a0a", border: "1px solid #7f1d1d", borderRadius: 8, color: "#f87171", fontSize: 13 }}>
+              {domainError}
+            </div>
+          )}
+
+          {!domainLoaded && <div style={{ fontSize: 13, color: "var(--sub)" }}>{t("loading")}</div>}
+
+          {domainLoaded && !domainInfo?.domain && (
+            <div style={{ display: "flex", gap: "10px" }}>
+              <input style={{ ...INPUT, flex: 1 }} placeholder="app.suaempresa.com"
+                value={newDomainInput} onChange={e => setNewDomainInput(e.target.value)}
+                onFocus={e => e.target.style.borderColor = color}
+                onBlur={e => e.target.style.borderColor = "#1a2234"}
+              />
+              <button onClick={requestDomain} disabled={domainBusy || !newDomainInput.trim()} style={{
+                padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px",
+                color, cursor: domainBusy ? "not-allowed" : "pointer", fontSize: "13px", fontWeight: "600",
+                whiteSpace: "nowrap", opacity: domainBusy || !newDomainInput.trim() ? 0.6 : 1,
+              }}>
+                {domainBusy ? (t("loading")) : (t("whitelabel_add_domain") || "Add Domain")}
+              </button>
+            </div>
+          )}
+
+          {domainInfo?.domain && (
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px", padding: "14px 16px", background: "var(--surface)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)", marginBottom: 16 }}>
+                <div style={{
+                  width: "10px", height: "10px", borderRadius: "50%", flexShrink: 0,
+                  background: domainInfo.status === "active" ? "#4ade80" : domainInfo.status === "error" ? "#f87171" : "#f59e0b",
+                }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "14px", fontWeight: "600", color: "var(--text)" }}>{domainInfo.domain}</div>
+                  <div style={{ fontSize: "12px", color: "var(--sub)", marginTop: "2px", textTransform: "capitalize" }}>
+                    {(t(`whitelabel_status_${domainInfo.status}`) || domainInfo.status || "").replace(/_/g, " ")}
                   </div>
                 </div>
-              ))}
-            </div>
-            <div style={{ marginTop: "20px", padding: "16px", background: "var(--surface)", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.12)" }}>
-              <div style={{ fontSize: "13px", color: "var(--sub)", marginBottom: "12px", fontWeight: "600" }}>Add New Domain</div>
-              <div style={{ display: "flex", gap: "10px" }}>
-                <input style={{ ...INPUT, flex: 1 }} placeholder="custom.domain.com"
-                  onFocus={e => e.target.style.borderColor = color}
-                  onBlur={e => e.target.style.borderColor = "#1a2234"}
-                />
-                <button onClick={() => alert("Provision SSL — feature coming soon")} style={{ padding: "10px 20px", background: color + "22", border: `1px solid ${color}44`, borderRadius: "8px", color, cursor: "pointer", fontSize: "13px", fontWeight: "600", whiteSpace: "nowrap" }}>
-                  Provision SSL
-                </button>
+                <button onClick={loadDomain} disabled={domainBusy} style={{
+                  background: "#1f2937", color: "var(--sub)", border: "none", borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontSize: 12,
+                }}>{t("whitelabel_refresh") || "Refresh"}</button>
+                <button onClick={removeDomain} disabled={domainBusy} style={{
+                  background: "#2d0a0a", color: "#f87171", border: "none", borderRadius: 6, padding: "6px 12px", cursor: "pointer", fontSize: 12,
+                }}>{t("whitelabel_remove_domain") || "Remove"}</button>
               </div>
+
+              {domainInfo.status === "pending_manual_setup" && (
+                <div style={{ padding: "14px 16px", background: "var(--surface)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", fontSize: 13, color: "var(--sub)" }}>
+                  {t("whitelabel_manual_setup_note") || "This instance isn't connected to a domain provider yet — a platform admin needs to finish setting this up. You'll see DNS instructions here automatically once that's done."}
+                </div>
+              )}
+
+              {domainInfo.cname_target && (
+                <div style={{ padding: "14px 16px", background: "var(--surface)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)" }}>
+                  <div style={{ fontSize: "13px", color: "var(--sub)", marginBottom: 10, fontWeight: 600 }}>{t("whitelabel_dns_instructions") || "Add these DNS records at your domain provider:"}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "auto auto 1fr", gap: "6px 16px", fontSize: 12, fontFamily: "monospace" }}>
+                    <div style={{ color: "var(--sub)" }}>CNAME</div>
+                    <div style={{ color: "var(--text)" }}>{domainInfo.domain}</div>
+                    <div style={{ color: color, wordBreak: "break-all" }}>{domainInfo.cname_target}</div>
+                    {domainInfo.verification_host && (
+                      <>
+                        <div style={{ color: "var(--sub)" }}>TXT</div>
+                        <div style={{ color: "var(--text)" }}>{domainInfo.verification_host}</div>
+                        <div style={{ color: color, wordBreak: "break-all" }}>{domainInfo.verification_value}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       )}
 
       {/* FEATURES TAB */}
-      {tab === "features" && (
+      {tab === "features" && (!simMode ? <FakeTabNotice t={t} /> : (
         <div style={CARD}>
           <h3 style={{ margin: "0 0 4px", fontSize: "15px", color: "var(--text)" }}>Feature Flags per Tenant</h3>
           <p style={{ margin: "0 0 24px", fontSize: "13px", color: "var(--sub)" }}>Control which modules each tenant can access</p>
@@ -434,7 +553,7 @@ export default function whitelabel({ user }) {
             </table>
           </div>
         </div>
-      )}
+      ))}
     </div>
   )
 }
