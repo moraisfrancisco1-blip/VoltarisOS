@@ -46,6 +46,19 @@ def test_heat_pump_can_only_heat():
     assert [sp.action for sp in setpoints] == ["hold", "heat", "heat"]
 
 
+def test_ev_can_discharge_only_when_v2g_enabled():
+    v2g_device = Device(11, 101, "ev_charger", {"max_charge_kw": 50, "max_discharge_kw": 22, "v2g_enabled": True})
+    setpoints = DispatchExecutor().build_setpoints([v2g_device], {"device-11": [30, -40, 0]})
+    assert [sp.power_kw for sp in setpoints] == [22.0, -40.0, 0.0]
+    assert [sp.action for sp in setpoints] == ["discharge", "charge", "hold"]
+
+    # Same asset_dispatch values, but v2g_enabled missing/false: export must be clamped away.
+    plain_device = Device(12, 101, "ev_charger", {"max_charge_kw": 50, "max_discharge_kw": 22})
+    setpoints = DispatchExecutor().build_setpoints([plain_device], {"device-12": [30, -40, 0]})
+    assert [sp.power_kw for sp in setpoints] == [0.0, -40.0, 0.0]
+    assert [sp.action for sp in setpoints] == ["hold", "charge", "hold"]
+
+
 def test_flexible_load_curtailment_survives_to_setpoint():
     """Regression test: a curtailed absolute power (>=0, below the device's
     normal draw) must reach the executor as-is, not get clamped to 0. Before

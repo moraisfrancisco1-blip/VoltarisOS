@@ -49,9 +49,18 @@ class MultiAssetOptimizer:
         ev_vars={}
         for a in evs:
             baseline=self._ev_baseline_profile(a,n)
-            delta=[prob.add_variable(f"{a.asset_id}_flex_{t}",-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0,a.max_charge_kw-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0) for t in range(n)]
-            soc=[prob.add_variable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
-            ev_vars[a.asset_id]={"delta":delta,"soc":soc,"baseline":baseline}
+            if a.discharge_allowed:
+                # V2G: same charge/discharge/mode/SoC shape as a battery, gated to the
+                # plugged-in window via each variable's own upper bound (0 outside it).
+                charge=[prob.add_variable(f"{a.asset_id}_charge_{t}",0,a.max_charge_kw if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0) for t in range(n)]
+                discharge=[prob.add_variable(f"{a.asset_id}_discharge_{t}",0,a.max_discharge_kw if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0) for t in range(n)]
+                mode=[prob.add_variable(f"{a.asset_id}_v2g_mode_{t}",cat="Binary") for t in range(n)]
+                soc=[prob.add_variable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
+                ev_vars[a.asset_id]={"v2g":True,"charge":charge,"discharge":discharge,"mode":mode,"soc":soc,"baseline":baseline}
+            else:
+                delta=[prob.add_variable(f"{a.asset_id}_flex_{t}",-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0,a.max_charge_kw-baseline[t] if a.arrival_hour<=t<min(a.departure_hour,n) else 0.0) for t in range(n)]
+                soc=[prob.add_variable(f"{a.asset_id}_soc_{t}",a.min_soc*a.capacity_kwh,a.max_soc*a.capacity_kwh) for t in range(n)]
+                ev_vars[a.asset_id]={"v2g":False,"delta":delta,"soc":soc,"baseline":baseline}
         flex_vars,curtailment_vars,recovery_vars={},{},{}
         for a in flex_loads:
             baseline=a.baseline_kw if isinstance(a,IndustrialLoadAsset) else 0.0
@@ -75,6 +84,9 @@ class MultiAssetOptimizer:
         objective.append(peak_import*portfolio.peak_demand_cost_eur_per_kw)
         for a in batteries:
             v=battery_vars[a.asset_id]; objective += [(v["charge"][t]+v["discharge"][t])*a.degradation_cost_eur_kwh for t in range(n)]
+        for a in evs:
+            if a.discharge_allowed:
+                v=ev_vars[a.asset_id]; objective += [(v["charge"][t]+v["discharge"][t])*a.degradation_cost_eur_kwh for t in range(n)]
         for a in flex_loads: objective += [curtailment_vars[a.asset_id][t]*a.curtailment_cost_eur_kwh for t in range(n)]
         for a in heat_pumps: objective += [(a.baseline_power_kw+hp_vars[a.asset_id]["delta"][t])*a.operating_cost_eur_kwh for t in range(n)]
         prob+=lpSum(objective)
@@ -82,7 +94,7 @@ class MultiAssetOptimizer:
             prob+=grid_import[t]<=portfolio.max_import_kw*(1-export_mode[t]); prob+=grid_export[t]<=portfolio.max_export_kw*export_mode[t]; prob+=peak_import>=grid_import[t]
             generation=sum(self._series(a.forecast_kw,n)[t] for a in solar_assets)
             battery_net=sum(battery_vars[a.asset_id]["charge"][t]-battery_vars[a.asset_id]["discharge"][t] for a in batteries)
-            ev_load=sum(ev_vars[a.asset_id]["baseline"][t]+ev_vars[a.asset_id]["delta"][t] for a in evs)
+            ev_load=sum((ev_vars[a.asset_id]["charge"][t]-ev_vars[a.asset_id]["discharge"][t]) if a.discharge_allowed else (ev_vars[a.asset_id]["baseline"][t]+ev_vars[a.asset_id]["delta"][t]) for a in evs)
             flex_load=sum((a.baseline_kw+flex_vars[a.asset_id][t]) if isinstance(a,IndustrialLoadAsset) and a.start_hour<=t<min(a.end_hour,n) else (flex_vars[a.asset_id][t] if not isinstance(a,IndustrialLoadAsset) else 0.0) for a in flex_loads)
             hp_load=sum(a.baseline_power_kw+hp_vars[a.asset_id]["delta"][t] for a in heat_pumps)
             prob+=grid_import[t]-grid_export[t]==base_load[t]+flex_load+ev_load+hp_load+battery_net-generation
@@ -94,11 +106,19 @@ class MultiAssetOptimizer:
             prob+=v["soc"][n-1]==a.initial_soc*a.capacity_kwh
         for a in evs:
             v=ev_vars[a.asset_id]
-            for t in range(n):
-                actual=v["baseline"][t]+v["delta"][t]
-                if t<a.arrival_hour or t>=a.departure_hour: prob+=actual==0
-                prev=a.initial_soc*a.capacity_kwh if t==0 else v["soc"][t-1]; prob+=v["soc"][t]==prev+actual*a.charge_efficiency
-            departure=min(max(a.departure_hour-1,0),n-1); prob+=v["soc"][departure]>=a.target_soc*a.capacity_kwh; prob+=lpSum(v["delta"])==0
+            departure=min(max(a.departure_hour-1,0),n-1)
+            if a.discharge_allowed:
+                for t in range(n):
+                    prev=a.initial_soc*a.capacity_kwh if t==0 else v["soc"][t-1]
+                    prob+=v["soc"][t]==prev+v["charge"][t]*a.charge_efficiency-v["discharge"][t]/a.discharge_efficiency
+                    prob+=v["charge"][t]<=a.max_charge_kw*v["mode"][t]; prob+=v["discharge"][t]<=a.max_discharge_kw*(1-v["mode"][t])
+                prob+=v["soc"][departure]>=a.target_soc*a.capacity_kwh
+            else:
+                for t in range(n):
+                    actual=v["baseline"][t]+v["delta"][t]
+                    if t<a.arrival_hour or t>=a.departure_hour: prob+=actual==0
+                    prev=a.initial_soc*a.capacity_kwh if t==0 else v["soc"][t-1]; prob+=v["soc"][t]==prev+actual*a.charge_efficiency
+                prob+=v["soc"][departure]>=a.target_soc*a.capacity_kwh; prob+=lpSum(v["delta"])==0
         for a in flex_loads:
             if a.energy_required_kwh>0:
                 actual=[(a.baseline_kw+flex_vars[a.asset_id][t]) if isinstance(a,IndustrialLoadAsset) and a.start_hour<=t<min(a.end_hour,n) else (flex_vars[a.asset_id][t] if not isinstance(a,IndustrialLoadAsset) else 0.0) for t in range(n)]; prob+=sum(actual)>=a.energy_required_kwh
@@ -135,7 +155,13 @@ class MultiAssetOptimizer:
             for a in batteries:
                 v=battery_vars[a.asset_id]; row[f"battery_{a.asset_id}"]={"charge_kw":round(value(v["charge"][t]) or 0.0,3),"discharge_kw":round(value(v["discharge"][t]) or 0.0,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
             for a in evs:
-                v=ev_vars[a.asset_id]; d=value(v["delta"][t]) or 0.0; actual=v["baseline"][t]+d; ev_actual[a.asset_id][t]=actual; row[f"ev_{a.asset_id}"]={"charge_kw":round(actual,3),"flex_kw":round(d,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
+                v=ev_vars[a.asset_id]
+                if a.discharge_allowed:
+                    c=value(v["charge"][t]) or 0.0; dch=value(v["discharge"][t]) or 0.0
+                    ev_actual[a.asset_id][t]=c-dch  # net charging flow; negative = net export (V2G)
+                    row[f"ev_{a.asset_id}"]={"charge_kw":round(c,3),"discharge_kw":round(dch,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
+                else:
+                    d=value(v["delta"][t]) or 0.0; actual=v["baseline"][t]+d; ev_actual[a.asset_id][t]=actual; row[f"ev_{a.asset_id}"]={"charge_kw":round(actual,3),"flex_kw":round(d,3),"soc_pct":round((value(v["soc"][t]) or 0.0)/a.capacity_kwh*100,2)}
             for a in flex_loads:
                 actual=((a.baseline_kw+value(flex_vars[a.asset_id][t])) if isinstance(a,IndustrialLoadAsset) and a.start_hour<=t<min(a.end_hour,n) else (value(flex_vars[a.asset_id][t]) if not isinstance(a,IndustrialLoadAsset) else 0.0)) or 0.0; flex_actual[a.asset_id][t]=actual; row[f"load_{a.asset_id}_kw"]=round(actual,3)
             for a in heat_pumps:

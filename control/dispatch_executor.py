@@ -55,9 +55,18 @@ class DispatchExecutor:
                     value = max(-max_charge, min(max_discharge, value))
                     action = "discharge" if value > 0 else "charge" if value < 0 else "hold"
                 elif kind in {"ev", "ev_charger", "ev_charger_fleet"}:
-                    # EV dispatch is negative while charging.
-                    value = max(-max_charge, min(0.0, value))
-                    action = "charge" if value < 0 else "hold"
+                    # Optimizer convention here matches battery: positive = discharge
+                    # (V2G export), negative = charge. Only ever positive when the
+                    # device opted in via config.v2g_enabled (optimization/asset_mapper.py) --
+                    # a charge-only EV's dispatch is mathematically never positive anyway
+                    # (see optimization/test_ev_v2g.py), so this clamp is a second,
+                    # independent guard against ever exporting from a non-V2G charger.
+                    if bool(config.get("v2g_enabled")):
+                        value = max(-max_charge, min(max_discharge, value))
+                        action = "discharge" if value > 0 else "charge" if value < 0 else "hold"
+                    else:
+                        value = max(-max_charge, min(0.0, value))
+                        action = "charge" if value < 0 else "hold"
                 elif kind in {"flexible_load", "load", "industrial_load"}:
                     value = max(0.0, min(max_power, value))
                     action = "consume" if value > 0 else "hold"

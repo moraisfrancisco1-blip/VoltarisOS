@@ -43,8 +43,16 @@ class EVAsset(EnergyAsset):
     arrival_hour: int = 0
     departure_hour: int = 24
     charge_efficiency: float = 0.95
+    # V2G (vehicle-to-grid): defaults to charge-only, unchanged from before this
+    # existed. Set discharge_allowed=True (with a real max_discharge_kw) to let
+    # the optimizer also schedule grid export from the car's battery -- see
+    # MultiAssetOptimizer.optimize(), which branches into a battery-style
+    # charge/discharge/SoC formulation only for these, leaving every existing
+    # charge-only EV's constraints and results byte-for-byte unchanged.
     discharge_allowed: bool = False
     max_discharge_kw: float = 0.0
+    discharge_efficiency: float = 0.95
+    degradation_cost_eur_kwh: float = 0.02
 
 
 @dataclass

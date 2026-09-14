@@ -104,10 +104,16 @@ def build_portfolio_from_vpp(db: Session, vpp: models.VPPGroup, prices_eur_mwh: 
                     max_discharge_kw=_cfg_number(config, "max_discharge_kw", "discharge_kw", default=max(capacity / 2, 1.0)),
                     initial_soc=max(0.0, min(1.0, soc_pct / 100.0)), min_soc=_cfg_number(config, "min_soc", default=0.10), max_soc=_cfg_number(config, "max_soc", default=0.95)))
             elif kind == "ev":
+                v2g_enabled = bool(config.get("v2g_enabled"))
                 portfolio.add(EVAsset(asset_id, device.name, device.site_id, capacity_kwh=_cfg_number(config, "capacity_kwh", default=60.0),
                     max_charge_kw=_cfg_number(config, "max_charge_kw", "power_kw", default=11.0),
                     initial_soc=_cfg_number(config, "initial_soc", default=(reading.soc_pct / 100.0 if reading and reading.soc_pct is not None else 0.30)),
-                    target_soc=_cfg_number(config, "target_soc", default=0.80), arrival_hour=int(_cfg_number(config, "arrival_hour", default=0)), departure_hour=int(_cfg_number(config, "departure_hour", default=24))))
+                    target_soc=_cfg_number(config, "target_soc", default=0.80), arrival_hour=int(_cfg_number(config, "arrival_hour", default=0)), departure_hour=int(_cfg_number(config, "departure_hour", default=24)),
+                    # V2G opt-in: config.v2g_enabled must be explicitly true. Reuses the
+                    # same max_discharge_kw/discharge_kw keys batteries already use.
+                    discharge_allowed=v2g_enabled,
+                    max_discharge_kw=_cfg_number(config, "max_discharge_kw", "discharge_kw", default=0.0) if v2g_enabled else 0.0,
+                    discharge_efficiency=_cfg_number(config, "discharge_efficiency", default=0.95)))
             elif kind == "industrial_load":
                 portfolio.add(IndustrialLoadAsset(asset_id, device.name, device.site_id,
                     min_power_kw=_cfg_number(config, "min_power_kw", default=300.0), max_power_kw=_cfg_number(config, "baseline_kw", "max_power_kw", default=450.0),

@@ -12,7 +12,11 @@ const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", l
 const DEVICE_TYPES = ["inverter", "battery", "ev_charger", "solar", "meter", "heat_pump", "flexible_load", "industrial_load", "other"];
 const PROTOCOLS = ["solaredge", "fronius", "huawei", "sma", "modbus_tcp", "modbus_rtu", "opcua", "simulated"];
 
-const BLANK = { name: "", device_type: "inverter", protocol: "simulated", site_id: "", enabled: true };
+const BLANK = {
+  name: "", device_type: "inverter", protocol: "simulated", site_id: "", enabled: true,
+  // Only sent (as `config`) for device_type "ev_charger" -- see saveForm().
+  v2g_enabled: false, max_charge_kw: "", max_discharge_kw: "",
+};
 
 const statusColor = (s) => s === "online" ? green : s === "warning" ? amber : s === "error" ? red : "rgba(148,163,184,0.85)";
 const statusBg = (s) => `${statusColor(s)}20`;
@@ -92,12 +96,21 @@ export default function FleetManagement({ setPage }) {
     setSaving(true);
     setFormError(null);
     try {
+      const config = {};
+      if (form.device_type === "ev_charger") {
+        if (form.max_charge_kw !== "") config.max_charge_kw = Number(form.max_charge_kw);
+        if (form.v2g_enabled) {
+          config.v2g_enabled = true;
+          if (form.max_discharge_kw !== "") config.max_discharge_kw = Number(form.max_discharge_kw);
+        }
+      }
       const payload = {
         name: form.name,
         protocol: form.protocol,
         device_type: form.device_type,
         enabled: form.enabled,
         ...(form.site_id !== "" ? { site_id: Number(form.site_id) } : {}),
+        ...(Object.keys(config).length > 0 ? { config } : {}),
       };
       const res = await fetch(`${API}/api/devices`, {
         method: "POST",
@@ -302,6 +315,22 @@ export default function FleetManagement({ setPage }) {
               <InputField label="Device Type" value={form.device_type} onChange={f("device_type")} options={DEVICE_TYPES} />
               <InputField label="Site ID" value={form.site_id} onChange={f("site_id")} type="number" />
             </div>
+
+            {form.device_type === "ev_charger" && (
+              <div style={{ padding: 14, background: "var(--surface2)", borderRadius: 10, marginBottom: 16 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: form.v2g_enabled ? 14 : 0 }}>
+                  <InputField label="Max Charge Power" value={form.max_charge_kw} onChange={f("max_charge_kw")} type="number" unit="kW" />
+                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, paddingBottom: 8 }}>
+                    <input type="checkbox" checked={form.v2g_enabled} onChange={e => f("v2g_enabled")(e.target.checked)}
+                      style={{ width: 16, height: 16 }} />
+                    <span style={{ fontSize: 13, color: "var(--text)" }}>V2G capable (can export back to grid)</span>
+                  </div>
+                </div>
+                {form.v2g_enabled && (
+                  <InputField label="Max Discharge Power" value={form.max_discharge_kw} onChange={f("max_discharge_kw")} type="number" unit="kW" />
+                )}
+              </div>
+            )}
 
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
               <input type="checkbox" checked={form.enabled} onChange={e => f("enabled")(e.target.checked)}
