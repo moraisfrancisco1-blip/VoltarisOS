@@ -421,6 +421,8 @@ export default function Settings({ user, setUser, setPage }) {
   const [notificationsBusy, setNotificationsBusy] = useState(false);
   const [testMessageBusy, setTestMessageBusy] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [integrations, setIntegrations] = useState([]);
+  const [integrationsLoaded, setIntegrationsLoaded] = useState(false);
 
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
@@ -770,6 +772,21 @@ export default function Settings({ user, setUser, setPage }) {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadCompany(); }, []);
+
+  const loadIntegrations = async () => {
+    try {
+      const res = await fetch("/api/integrations/status");
+      if (!res.ok) return;
+      setIntegrations(await res.json());
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIntegrationsLoaded(true);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadIntegrations(); }, []);
 
   const saveCompany = async () => {
     setCompanyBusy(true);
@@ -1733,8 +1750,37 @@ export default function Settings({ user, setUser, setPage }) {
           <div style={card}>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{t("nav_apikeys")}</h2>
             <p style={{ fontSize: 12, color: SUB, marginBottom: 20 }}>
-              Managing third-party provider credentials (ENTSO-E, weather, OCPP, Modbus gateways) from this screen isn't available yet — those are currently configured as backend environment variables by a platform admin.
+              Market-data providers the backend connects to. Keys are set as environment variables by a platform admin — this shows whether each is actually configured, never the value itself.
             </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
+              {!integrationsLoaded && <div style={{ fontSize: 12, color: SUB }}>{t("loading")}</div>}
+              {integrations.map(i => (
+                <div key={i.key} style={{ background: SURF2, borderRadius: 10, padding: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{i.label}</div>
+                    <div style={{ fontSize: 11, color: "var(--sub)", fontFamily: "monospace" }}>{i.env_var}</div>
+                  </div>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, borderRadius: 6, padding: "4px 10px",
+                    background: i.configured ? "#064e3b" : "#1f2937",
+                    color: i.configured ? "#10b981" : SUB,
+                  }}>{i.configured ? "Configured" : "Not configured"}</span>
+                </div>
+              ))}
+            </div>
+            <SectionTitle>Weather Forecasting</SectionTitle>
+            <div style={{ background: SURF2, borderRadius: 10, padding: 16, marginBottom: 20 }}>
+              <div style={{ fontSize: 12, color: SUB }}>
+                Solar/weather forecasts run on Open-Meteo, a free service that needs no API key — nothing to configure here.
+              </div>
+            </div>
+            <SectionTitle>Device Connections (Modbus, OCPP)</SectionTitle>
+            <div style={{ background: SURF2, borderRadius: 10, padding: 16 }}>
+              <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>
+                Inverter/BESS/EV charger connection details (IP, protocol) are configured per-device, not tenant-wide — manage them on the Fleet page.
+              </div>
+              <Btn variant="secondary" accent={accent} onClick={() => setPage ? setPage("fleet") : undefined}>Go to Fleet</Btn>
+            </div>
             <SectionTitle>VoltarisOS API Access</SectionTitle>
             <div style={{ background: SURF2, borderRadius: 10, padding: 16 }}>
               <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>
