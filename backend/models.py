@@ -39,6 +39,15 @@ class Tenant(Base):
     custom_domain_requested_at = Column(DateTime, nullable=True)
     custom_domain_error = Column(String, nullable=True)
 
+    # Company profile (Settings > Company) — see backend/routers/company.py's
+    # PATCH /api/company. TENANT_ADMIN/SUPER_ADMIN only.
+    vat_number = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    country = Column(String, nullable=True)
+    website = Column(String, nullable=True)
+    support_email = Column(String, nullable=True)
+    billing_email = Column(String, nullable=True)
+
 
 class User(Base):
     __tablename__ = "users"
@@ -413,3 +422,29 @@ class Lead(Base):
     company = Column(String, nullable=True)
     source = Column(String, nullable=True)  # e.g. "landing_page"
     created_at = Column(DateTime, default=utcnow_naive, nullable=False)
+
+
+# ─── Tenant-wide operational preferences (Settings > Energy/Trading/Notifications) ─
+
+class TenantSettings(Base):
+    """One row per tenant, holding the operational preference blocks from
+    Settings.jsx's Energy, Trading, and Notifications tabs. These used to
+    live only in each browser's localStorage (via the Zustand store) --
+    real for that one browser, invisible to the backend, lost on another
+    device. See backend/routers/tenant_settings.py.
+
+    Each block is stored as an opaque JSON object; this router doesn't
+    validate its internal shape beyond what the frontend already sends,
+    matching the flexibility the previous localStorage-only version had.
+    Note the actual trading/optimization engine (backend/tasks.py,
+    trading_agent.py) does not yet read `trading`/`energy` here -- this
+    migration makes the values real and tenant-wide, not (yet) wired into
+    dispatch decisions. See KNOWN_LIMITATIONS in tenant_settings.py.
+    """
+    __tablename__ = "tenant_settings"
+
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), primary_key=True)
+    energy = Column(JSON, nullable=True)
+    trading = Column(JSON, nullable=True)
+    notifications = Column(JSON, nullable=True)
+    updated_at = Column(DateTime, default=utcnow_naive, onupdate=utcnow_naive, nullable=False)

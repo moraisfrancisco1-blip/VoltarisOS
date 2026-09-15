@@ -173,6 +173,39 @@ async def create_checkout_session(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/create-portal-session")
+async def create_portal_session(
+    request: Request,
+    user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a Stripe Billing Portal session -- the tenant manages their
+    payment methods, invoices, and subscription on Stripe's own hosted page.
+    Settings > Billing's "Update Card"/"Add Method"/"Change Plan" all link
+    here instead of collecting card data in our own UI (no PCI scope)."""
+    tenant_id = user.get("tenant_id")
+    tenant = db.query(models.Tenant).filter(models.Tenant.id == tenant_id).first() if tenant_id is not None else None
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+
+    if not tenant.stripe_customer_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Ainda não tens uma subscrição paga associada — escolhe um plano primeiro.",
+        )
+
+    base = str(request.base_url).rstrip("/")
+    try:
+        session = stripe.billing_portal.Session.create(
+            customer=tenant.stripe_customer_id,
+            return_url=f"{base}/",
+        )
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {"url": session.url}
+
+
 @router.get("/session/{session_id}")
 async def get_session(session_id: str):
     """Get checkout session details"""

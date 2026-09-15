@@ -33,6 +33,7 @@ MIGRATIONS = [
     "add_vpp_dispatch_fields",
     "add_stripe_subscription_fields",
     "add_tenant_custom_domain",
+    "add_tenant_company_fields",
     "add_sites_table",
     "add_device_reading_unique",
     "add_site_timezone",

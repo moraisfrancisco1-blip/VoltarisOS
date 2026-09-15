@@ -56,6 +56,8 @@ KNOWN_EVENT_TYPES = [
     "user.avatar_updated",
     "user.avatar_removed",
     "user.profile_updated",
+    "company.updated",
+    "tenant_settings.updated",
 ]
 
 

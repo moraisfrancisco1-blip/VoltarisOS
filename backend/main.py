@@ -67,6 +67,8 @@ from backend.routers.white_label import router as white_label_router
 from backend.routers.oauth_connections import router as oauth_connections_router
 from backend.routers.websocket import router as websocket_router
 from backend.routers.operations import router as operations_router
+from backend.routers.company import router as company_router
+from backend.routers.tenant_settings import router as tenant_settings_router
 from backend.security import get_current_user, limiter, require_password_changed
 from backend.startup import validate_startup_config
 from fastapi import Depends, HTTPException, Request
@@ -260,6 +262,8 @@ app.include_router(white_label_router)
 app.include_router(oauth_connections_router)
 app.include_router(websocket_router)  # WebSockets handle auth internally via token query param
 app.include_router(operations_router)  # /api/admin/production-readiness — admin-only (require_super_admin inside)
+app.include_router(company_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
+app.include_router(tenant_settings_router, dependencies=_auth_dep)  # PATCH/test require_admin inside; GET any member
 
 
 @app.get("/ai_decision")

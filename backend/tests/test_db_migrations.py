@@ -27,10 +27,11 @@ def _bind(monkeypatch, engine, Session):
     import backend.migrations.add_last_seen_at as mseen
     import backend.migrations.add_site_tilt_azimuth as mtilt
     import backend.migrations.add_tenant_custom_domain as mdomain
+    import backend.migrations.add_tenant_company_fields as mcompany
     import backend.migrations.add_user_avatar as mavatar
     import backend.migrations.add_user_profile_fields as mprofile
 
-    for mod in (runner, m2fa, maudit, mvpp, msites, mstripe, mread, mtz, mext, mpwd, mseen, mtilt, mdomain, mavatar, mprofile):
+    for mod in (runner, m2fa, maudit, mvpp, msites, mstripe, mread, mtz, mext, mpwd, mseen, mtilt, mdomain, mcompany, mavatar, mprofile):
         monkeypatch.setattr(mod, "engine", engine)
     monkeypatch.setattr(msites, "SessionLocal", Session)
     return runner
@@ -154,6 +155,8 @@ def test_old_schema_upgraded(monkeypatch):
     tenant_cols = {c["name"] for c in inspector.get_columns("tenants")}
     assert "custom_domain" in tenant_cols
     assert "custom_domain_status" in tenant_cols
+    assert "vat_number" in tenant_cols
+    assert "billing_email" in tenant_cols
 
 
 # ── E. Failure safety ────────────────────────────────────────────────────────

@@ -79,12 +79,13 @@ const Toggle = ({ value, onChange, label, desc, accent }) => (
   </div>
 );
 
-const Select = ({ label, value, onChange, options }) => (
+const Select = ({ label, value, onChange, options, disabled }) => (
   <div style={{ marginBottom: 16 }}>
     {label && <label style={{ fontSize: 12, color: SUB, display: "block", marginBottom: 6 }}>{label}</label>}
-    <select value={value} onChange={e => onChange(e.target.value)} style={{
+    <select value={value} disabled={disabled} onChange={e => onChange(e.target.value)} style={{
       background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8,
-      padding: "9px 12px", color: "var(--text)", fontSize: 13, width: "100%", cursor: "pointer",
+      padding: "9px 12px", color: disabled ? SUB : "var(--text)", fontSize: 13, width: "100%",
+      cursor: disabled ? "not-allowed" : "pointer", opacity: disabled ? 0.6 : 1,
     }}>
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
     </select>
@@ -410,6 +411,16 @@ export default function Settings({ user, setUser, setPage }) {
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [planChanged, setPlanChanged] = useState(false);
+  const [companyForm, setCompanyForm] = useState({
+    name: "", vat_number: "", address: "", country: "", website: "", support_email: "", billing_email: "",
+  });
+  const [companyLoaded, setCompanyLoaded] = useState(false);
+  const [companyBusy, setCompanyBusy] = useState(false);
+  const [energyBusy, setEnergyBusy] = useState(false);
+  const [tradingBusy, setTradingBusy] = useState(false);
+  const [notificationsBusy, setNotificationsBusy] = useState(false);
+  const [testMessageBusy, setTestMessageBusy] = useState(false);
+  const [portalBusy, setPortalBusy] = useState(false);
 
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
 
@@ -740,6 +751,136 @@ export default function Settings({ user, setUser, setPage }) {
     }
   };
 
+  const loadCompany = async () => {
+    try {
+      const res = await fetch("/api/company");
+      if (!res.ok) return;
+      const data = await res.json();
+      setCompanyForm({
+        name: data.name || "", vat_number: data.vat_number || "", address: data.address || "",
+        country: data.country || "", website: data.website || "", support_email: data.support_email || "",
+        billing_email: data.billing_email || "",
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCompanyLoaded(true);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadCompany(); }, []);
+
+  const saveCompany = async () => {
+    setCompanyBusy(true);
+    try {
+      const res = await fetch("/api/company", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(companyForm),
+      });
+      const data = await res.json();
+      if (!res.ok) { addToast(data.detail || t("profile_save_error"), "error"); return; }
+      setCompanyForm({
+        name: data.name || "", vat_number: data.vat_number || "", address: data.address || "",
+        country: data.country || "", website: data.website || "", support_email: data.support_email || "",
+        billing_email: data.billing_email || "",
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+      addToast(t("profile_save_error"), "error");
+    } finally {
+      setCompanyBusy(false);
+    }
+  };
+
+  // Energy/Trading/Notifications used to live only in this browser's
+  // localStorage (useAppStore) -- real for this browser, invisible to the
+  // backend, lost on another device. Pull the tenant-wide row on mount and
+  // let it win over local defaults if it has data.
+  const loadTenantSettings = async () => {
+    try {
+      const res = await fetch("/api/tenant-settings");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.energy) setEnergySettings(data.energy);
+      if (data.trading) setTradingSettings(data.trading);
+      if (data.notifications) setAlertSettings(data.notifications);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadTenantSettings(); }, []);
+
+  const saveTenantSettingsBlock = async (block, value, setBusy) => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/tenant-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [block]: value }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        addToast(data.detail || t("profile_save_error"), "error");
+        return;
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+      addToast(t("profile_save_error"), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveEnergySettings = () => saveTenantSettingsBlock("energy", energySettings, setEnergyBusy);
+  const saveTradingSettings = () => saveTenantSettingsBlock("trading", tradingSettings, setTradingBusy);
+  const saveNotificationSettings = () => saveTenantSettingsBlock("notifications", alertSettings, setNotificationsBusy);
+
+  const sendTestSlackMessage = async () => {
+    setTestMessageBusy(true);
+    try {
+      // Save first so the test hits the URL currently in the input, not a stale one.
+      const saveRes = await fetch("/api/tenant-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notifications: alertSettings }),
+      });
+      if (!saveRes.ok) { addToast(t("profile_save_error"), "error"); return; }
+
+      const res = await fetch("/api/tenant-settings/notifications/test", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { addToast(data.detail || "Failed to send test message", "error"); return; }
+      addToast(data.message || "Test message sent", "success");
+    } catch (e) {
+      console.error(e);
+      addToast("Failed to send test message", "error");
+    } finally {
+      setTestMessageBusy(false);
+    }
+  };
+
+  const openBillingPortal = async () => {
+    setPortalBusy(true);
+    try {
+      const res = await fetch("/api/payments/create-portal-session", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) { addToast(data.detail || "Failed to open billing portal", "error"); return; }
+      window.location.href = data.url;
+    } catch (e) {
+      console.error(e);
+      addToast("Failed to open billing portal", "error");
+    } finally {
+      setPortalBusy(false);
+    }
+  };
+
   const uploadAvatar = async (file) => {
     if (!file) return;
     setAvatarBusy(true);
@@ -932,15 +1073,15 @@ export default function Settings({ user, setUser, setPage }) {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <div style={card}>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>{t("settings_company")}</h2>
-            <Input label="Company Name" value="Voltaris Energy B.V." />
-            <Input label="VAT Number" value="NL123456789B01" />
-            <Input label="Registered Address" value="Coolsingel 1, 3012 AA Rotterdam" />
-            <Input label="Country" value="Netherlands" />
-            <Input label="Website" value="https://voltaris.energy" />
-            <Input label="Support Email" value="support@voltaris.energy" />
-            <Input label="Billing Email" value="billing@voltaris.energy" />
+            <Input label="Company Name" value={companyForm.name} onChange={v => setCompanyForm(f => ({ ...f, name: v }))} />
+            <Input label="VAT Number" value={companyForm.vat_number} onChange={v => setCompanyForm(f => ({ ...f, vat_number: v }))} />
+            <Input label="Registered Address" value={companyForm.address} onChange={v => setCompanyForm(f => ({ ...f, address: v }))} />
+            <Input label="Country" value={companyForm.country} onChange={v => setCompanyForm(f => ({ ...f, country: v }))} />
+            <Input label="Website" value={companyForm.website} onChange={v => setCompanyForm(f => ({ ...f, website: v }))} />
+            <Input label="Support Email" value={companyForm.support_email} onChange={v => setCompanyForm(f => ({ ...f, support_email: v }))} />
+            <Input label="Billing Email" value={companyForm.billing_email} onChange={v => setCompanyForm(f => ({ ...f, billing_email: v }))} />
             <div style={{ marginTop: 4 }}>
-              <Btn onClick={save} accent={accent}>{saved ? t("saved") : t("save")}</Btn>
+              <Btn onClick={saveCompany} accent={accent} disabled={companyBusy || !companyLoaded}>{companyBusy ? t("loading") : (saved ? t("saved") : t("save"))}</Btn>
             </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -1196,7 +1337,7 @@ export default function Settings({ user, setUser, setPage }) {
                 { value: "Europe/Amsterdam", label: "Europe/Amsterdam" },
                 { value: "UTC", label: "UTC" },
               ]} />
-              <Btn onClick={save} accent={accent} style={{ marginTop: 4 }}>{saved ? t("saved") : t("save")}</Btn>
+              <Btn onClick={saveEnergySettings} accent={accent} disabled={energyBusy} style={{ marginTop: 4 }}>{energyBusy ? t("loading") : (saved ? t("saved") : t("save"))}</Btn>
             </div>
           </div>
         </div>
@@ -1247,11 +1388,15 @@ export default function Settings({ user, setUser, setPage }) {
                 label="Intraday Market" desc="Continuous intraday trading" accent={accent} />
               <Toggle value={tradingSettings.balancingMarket} onChange={v => setTradingSettings({ balancingMarket: v })}
                 label="Balancing Market" desc="TSO balancing bids" accent={accent} />
+              <Btn onClick={saveTradingSettings} accent={accent} disabled={tradingBusy} style={{ marginTop: 4 }}>{tradingBusy ? t("loading") : (saved ? t("saved") : t("save"))}</Btn>
             </div>
             <div style={{ ...card, background: "#1a0a0a", border: "1px solid #7f1d1d" }}>
               <h3 style={{ fontSize: 13, fontWeight: 600, color: DANG, marginBottom: 8 }}>⚠ Live Trading Warning</h3>
               <p style={{ fontSize: 12, color: "#f87171", lineHeight: 1.5 }}>
                 Enabling auto-trading will allow the AI agent to execute real energy market orders. Ensure your regulatory compliance and risk limits are correctly configured before enabling.
+              </p>
+              <p style={{ fontSize: 11, color: "#f87171", lineHeight: 1.5, marginTop: 8, opacity: 0.8 }}>
+                Note: these settings are saved and visible to your whole team, but are not yet consulted by the automated trading engine — auto-trading still requires manual review before any real order is placed.
               </p>
             </div>
           </div>
@@ -1269,7 +1414,7 @@ export default function Settings({ user, setUser, setPage }) {
             <Toggle value={alertSettings.pushAlerts} onChange={v => setAlertSettings({ pushAlerts: v })} label="Push Notifications" desc="In-app and browser push" accent={accent} />
             <SectionTitle>Slack Integration</SectionTitle>
             <Input label="Slack Webhook URL" value={alertSettings.slackWebhook} onChange={v => setAlertSettings({ slackWebhook: v })} placeholder="https://hooks.slack.com/services/..." />
-            <Btn variant="secondary" accent={accent} onClick={() => alert("Test Slack message sent successfully")}>Send Test Message</Btn>
+            <Btn variant="secondary" accent={accent} onClick={sendTestSlackMessage} disabled={testMessageBusy || !alertSettings.slackWebhook}>{testMessageBusy ? t("loading") : "Send Test Message"}</Btn>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={card}>
@@ -1287,6 +1432,7 @@ export default function Settings({ user, setUser, setPage }) {
               <Toggle value={alertSettings.maintenanceReminder} onChange={v => setAlertSettings({ maintenanceReminder: v })} label="Maintenance Reminders" desc="Battery cycles and inverter checks" accent={accent} />
               <Toggle value={alertSettings.tradeAlerts} onChange={v => setAlertSettings({ tradeAlerts: v })} label="Trade Execution Alerts" desc="Notify on every trade" accent={accent} />
               <Toggle value={alertSettings.offlineAlert} onChange={v => setAlertSettings({ offlineAlert: v })} label="Device Offline Alerts" desc="Alert when a node goes offline" accent={accent} />
+              <Btn onClick={saveNotificationSettings} accent={accent} disabled={notificationsBusy} style={{ marginTop: 4 }}>{notificationsBusy ? t("loading") : (saved ? t("saved") : t("save"))}</Btn>
             </div>
           </div>
         </div>
@@ -1373,45 +1519,18 @@ export default function Settings({ user, setUser, setPage }) {
               </div>
             )}
             <SectionTitle>Session</SectionTitle>
-            <Select label="Session Timeout" value={String(sessionTimeout)} onChange={v => setSessionTimeout(Number(v))} options={[
-              { value: "15", label: "15 minutes" },
-              { value: "30", label: "30 minutes" },
-              { value: "60", label: "1 hour" },
-              { value: "240", label: "4 hours" },
-              { value: "480", label: "8 hours" },
-              { value: "0", label: "Never (not recommended)" },
-            ]} />
+            <div style={{ fontSize: 12, color: SUB, padding: "8px 0" }}>
+              Sessions expire automatically after 72 hours. Per-account configurable timeouts aren't available yet.
+            </div>
             <SectionTitle>Active Sessions</SectionTitle>
-            {[
-              { device: "Chrome / macOS", ip: "91.122.45.1", location: "Rotterdam, NL", active: true, time: "Now" },
-              { device: "Safari / iPhone 15", ip: "91.122.45.2", location: "Rotterdam, NL", active: false, time: "3h ago" },
-              { device: "Chrome / Windows", ip: "195.83.0.1", location: "Amsterdam, NL", active: false, time: "2d ago" },
-            ].map((s, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${BORD}`, fontSize: 12 }}>
-                <div>
-                  <div style={{ fontWeight: 500 }}>{s.device}</div>
-                  <div style={{ color: SUB }}>{s.ip} · {s.location} · {s.time}</div>
-                </div>
-                {s.active
-                  ? <span style={{ color: accent, fontSize: 11, fontWeight: 600 }}>Current</span>
-                  : <button onClick={() => alert(`Session revoked for ${s.device}`)} style={{ background: "transparent", color: DANG, border: `1px solid ${DANG}33`, borderRadius: 6, padding: "3px 10px", cursor: "pointer", fontSize: 11 }}>Revoke</button>}
-              </div>
-            ))}
+            <div style={{ fontSize: 12, color: SUB, padding: "8px 0" }}>
+              Viewing and revoking individual device sessions isn't available yet. To force a sign-out everywhere, change your password in Settings &gt; Profile.
+            </div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>IP whitelist</h2>
-              <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Restrict API access to specific IP ranges (CIDR notation).</p>
-              <textarea
-                value={ipwhitelist} onChange={e => setIpwhitelist(e.target.value)}
-                rows={4} placeholder="192.168.1.0/24&#10;10.0.0.1"
-                style={{
-                  background: SURF2, border: `1px solid ${BORD}`, borderRadius: 8,
-                  padding: 12, color: "var(--text)", fontSize: 13, width: "100%",
-                  boxSizing: "border-box", resize: "vertical", fontFamily: "monospace",
-                }}
-              />
-              <Btn onClick={save} accent={accent} style={{ marginTop: 8 }}>{saved ? t("saved") : t("save")}</Btn>
+              <p style={{ fontSize: 12, color: SUB }}>Restricting API access to specific IP ranges isn't available yet.</p>
             </div>
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Password Policy</h2>
@@ -1429,10 +1548,9 @@ export default function Settings({ user, setUser, setPage }) {
             </div>
             <div style={{ ...card, background: "#0a1a0a", border: `1px solid #14532d` }}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, color: accent }}>Security Audit</h2>
-              <p style={{ fontSize: 12, color: "var(--sub)", marginBottom: 12 }}>Last full security scan: {new Date(Date.now() - 86400000 * 3).toLocaleDateString()}</p>
+              <p style={{ fontSize: 12, color: "var(--sub)", marginBottom: 12 }}>Automated security scans aren't available yet — every meaningful account/tenant action is recorded in the Audit Log below.</p>
               <div style={{ display: "flex", gap: 10 }}>
-                <Btn variant="outline" accent={accent} onClick={() => alert("Security scan initiated — results in ~2 minutes")}>Run Scan</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => setPage ? setPage("audit") : alert("Audit Log")}>View Audit Log</Btn>
+                <Btn variant="secondary" accent={accent} onClick={() => setPage ? setPage("audit") : undefined}>View Audit Log</Btn>
               </div>
             </div>
           </div>
@@ -1491,16 +1609,11 @@ export default function Settings({ user, setUser, setPage }) {
             </div>
             <div style={card}>
               <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Payment Method</h2>
-              <div style={{ background: SURF2, borderRadius: 10, padding: 14, marginBottom: 16 }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8 }}>
-                  <div style={{ width: 36, height: 24, background: "#1f3a8f", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color: "#fff" }}>VISA</div>
-                  <span style={{ fontSize: 13, fontFamily: "monospace" }}>•••• •••• •••• 4242</span>
-                </div>
-                <div style={{ fontSize: 11, color: SUB }}>Expires 12/2027 · Francisco Morais</div>
-              </div>
+              <p style={{ fontSize: 12, color: SUB, marginBottom: 16 }}>
+                Card details are managed securely by Stripe, not stored here. Open the billing portal to view your current payment method, update it, or add a new one.
+              </p>
               <div style={{ display: "flex", gap: 10 }}>
-                <Btn variant="secondary" accent={accent} onClick={() => setPaymentModal("update")}>Update Card</Btn>
-                <Btn variant="secondary" accent={accent} onClick={() => setPaymentModal("add")}>Add Method</Btn>
+                <Btn variant="secondary" accent={accent} onClick={openBillingPortal} disabled={portalBusy}>{portalBusy ? t("loading") : "Manage Payment Methods"}</Btn>
               </div>
             </div>
           </div>
@@ -1578,23 +1691,16 @@ export default function Settings({ user, setUser, setPage }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={card}>
-              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Data Retention</h2>
-              <Select label="Raw Readings Retention" value="365" onChange={() => {}} options={[
-                { value: "90", label: "90 days" },
-                { value: "180", label: "180 days" },
+              <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Data Retention</h2>
+              <p style={{ fontSize: 12, color: SUB, marginBottom: 12 }}>Configurable retention periods aren't available yet — shown values are the current fixed defaults.</p>
+              <Select label="Raw Readings Retention" value="365" disabled onChange={() => {}} options={[
                 { value: "365", label: "1 year" },
-                { value: "730", label: "2 years" },
-                { value: "0", label: "Forever" },
               ]} />
-              <Select label="Audit Log Retention" value="730" onChange={() => {}} options={[
-                { value: "365", label: "1 year" },
+              <Select label="Audit Log Retention" value="730" disabled onChange={() => {}} options={[
                 { value: "730", label: "2 years" },
-                { value: "0", label: "Forever (recommended)" },
               ]} />
-              <Select label="Notification History" value="90" onChange={() => {}} options={[
-                { value: "30", label: "30 days" },
+              <Select label="Notification History" value="90" disabled onChange={() => {}} options={[
                 { value: "90", label: "90 days" },
-                { value: "180", label: "180 days" },
               ]} />
             </div>
             <div style={card}>
@@ -1626,44 +1732,16 @@ export default function Settings({ user, setUser, setPage }) {
         <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20 }}>
           <div style={card}>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>{t("nav_apikeys")}</h2>
-            <p style={{ fontSize: 12, color: SUB, marginBottom: 20 }}>Third-party API credentials. Keys are masked — click reveal to view.</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {API_KEYS.map(k => (
-                <div key={k.key} style={{ background: SURF2, borderRadius: 10, padding: 16 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{k.label}</div>
-                      <div style={{ fontSize: 11, color: "var(--sub)" }}>{k.scope}</div>
-                    </div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button onClick={() => setRevealed(r => ({ ...r, [k.key]: !r[k.key] }))} style={{
-                        background: "#1f2937", color: "var(--sub)", border: "none",
-                        borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12,
-                      }}>{revealed[k.key] ? "Hide" : "Reveal"}</button>
-                      <button onClick={() => alert(`Rotate API key ${k.label} — feature coming soon`)} style={{
-                        background: "#1e3a5f", color: "#60a5fa", border: "none",
-                        borderRadius: 6, padding: "4px 12px", cursor: "pointer", fontSize: 12,
-                      }}>Rotate</button>
-                    </div>
-                  </div>
-                  <div style={{
-                    fontFamily: "monospace", fontSize: 13,
-                    background: SURF, borderRadius: 6, padding: "8px 12px",
-                    color: revealed[k.key] ? "var(--text)" : "var(--sub)",
-                  }}>
-                    {revealed[k.key] ? k.value : "•".repeat(36)}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p style={{ fontSize: 12, color: SUB, marginBottom: 20 }}>
+              Managing third-party provider credentials (ENTSO-E, weather, OCPP, Modbus gateways) from this screen isn't available yet — those are currently configured as backend environment variables by a platform admin.
+            </p>
             <SectionTitle>VoltarisOS API Access</SectionTitle>
             <div style={{ background: SURF2, borderRadius: 10, padding: 16 }}>
-              <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>Your personal API token (read-only)</div>
-              <div style={{ fontFamily: "monospace", fontSize: 12, background: SURF, borderRadius: 6, padding: "8px 12px", color: SUB }}>
-                vos_sk_live_••••••••••••••••••••••••••••••••
+              <div style={{ fontSize: 12, color: SUB, marginBottom: 8 }}>
+                Keys your integrations use to call the VoltarisOS API are generated and managed on the API Keys page.
               </div>
-              <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
-                <Btn onClick={() => setPage ? setPage("apikeys") : alert("API Keys")} accent={accent}>Manage API Keys</Btn>
+              <div style={{ marginTop: 4, display: "flex", gap: 10 }}>
+                <Btn onClick={() => setPage ? setPage("apikeys") : undefined} accent={accent}>Manage API Keys</Btn>
               </div>
             </div>
           </div>
