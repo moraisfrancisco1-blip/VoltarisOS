@@ -396,3 +396,20 @@ class StripeEvent(Base):
     id = Column(Integer, primary_key=True, index=True)
     event_id = Column(String, unique=True, nullable=False, index=True)
     processed_at = Column(DateTime, default=utcnow_naive, nullable=False)
+
+
+# ─── Marketing leads (public landing page, no tenant/auth) ───────────────────
+
+class Lead(Base):
+    """Early-access sign-ups submitted from the public landing page's lead
+    capture form (landing/src/components/lead-capture.tsx), via the public
+    POST /api/leads endpoint. Not tied to any tenant -- these people don't
+    have accounts yet."""
+    __tablename__ = "leads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False, index=True)
+    company = Column(String, nullable=True)
+    source = Column(String, nullable=True)  # e.g. "landing_page"
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
