@@ -389,6 +389,14 @@ export default function Settings({ user, setPage }) {
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null);
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [nameInput, setNameInput] = useState(user?.name || "");
+  const [emailInput, setEmailInput] = useState(user?.email || "");
+  const [phoneInput, setPhoneInput] = useState(user?.phone || "");
+  const [jobTitleInput, setJobTitleInput] = useState(user?.job_title || "");
+  const [currentPasswordInput, setCurrentPasswordInput] = useState("");
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileError, setProfileError] = useState("");
   const [sessionTimeout, setSessionTimeout] = useState(60);
   const [ipwhitelist, setIpwhitelist] = useState("91.122.45.0/24\n195.83.0.1");
   const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
@@ -601,6 +609,64 @@ export default function Settings({ user, setPage }) {
     }
   };
 
+  // App.jsx's user object starts with just {token, company, color, role,
+  // plan, allowed_modules} from localStorage and only gains name/email/
+  // phone/job_title/avatar_url a moment later once its /auth/me sync
+  // effect resolves -- if Settings mounts before that finishes, re-sync
+  // these editable fields once the real values arrive (but only while
+  // untouched, so it never clobbers an in-progress edit).
+  const [profileTouched, setProfileTouched] = useState(false);
+  useEffect(() => {
+    if (profileTouched) return;
+    setNameInput(user?.name || "");
+    setEmailInput(user?.email || "");
+    setPhoneInput(user?.phone || "");
+    setJobTitleInput(user?.job_title || "");
+  }, [user?.name, user?.email, user?.phone, user?.job_title, profileTouched]);
+
+  const saveProfile = async () => {
+    setProfileBusy(true);
+    setProfileError("");
+    try {
+      const res = await fetch("/api/auth/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nameInput, email: emailInput, phone: phoneInput, job_title: jobTitleInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setProfileError(data.detail || t("profile_save_error")); return; }
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+      setProfileTouched(false);
+
+      if (currentPasswordInput || newPasswordInput) {
+        if (!currentPasswordInput || !newPasswordInput) {
+          setProfileError(t("profile_password_both_required"));
+          return;
+        }
+        const pwRes = await fetch("/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ current_password: currentPasswordInput, new_password: newPasswordInput }),
+        });
+        const pwData = await pwRes.json();
+        if (!pwRes.ok) { setProfileError(pwData.detail || t("profile_password_error")); return; }
+        if (pwData.token) localStorage.setItem("token", pwData.token);
+        setCurrentPasswordInput("");
+        setNewPasswordInput("");
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error(e);
+      setProfileError(t("profile_save_error"));
+    } finally {
+      setProfileBusy(false);
+    }
+  };
+
   const loadConnectedApps = async () => {
     try {
       const res = await fetch("/api/oauth/status");
@@ -787,13 +853,18 @@ export default function Settings({ user, setPage }) {
                 {avatarError && <div style={{ fontSize: 11, color: DANG, marginTop: 4 }}>{avatarError}</div>}
               </div>
             </div>
-            <Input label="Full Name" value={user?.name || ""} readOnly />
-            <Input label="Email Address" value={user?.email || ""} type="email" readOnly />
-            <Input label="Phone" value="+351 912 345 678" type="tel" />
-            <Input label="Job Title" value="Energy Systems Engineer" />
-            <Input label="Current Password" type="password" placeholder="••••••••" />
-            <Input label="New Password" type="password" placeholder="••••••••" />
-            <Btn onClick={save} accent={accent}>{saved ? t("saved") : t("save")}</Btn>
+            {profileError && (
+              <div style={{ padding: "8px 12px", marginBottom: 12, background: "#2d0a0a", border: "1px solid #7f1d1d", borderRadius: 8, color: DANG, fontSize: 12 }}>
+                {profileError}
+              </div>
+            )}
+            <Input label="Full Name" value={nameInput} onChange={v => { setNameInput(v); setProfileTouched(true); }} />
+            <Input label="Email Address" value={emailInput} onChange={v => { setEmailInput(v); setProfileTouched(true); }} type="email" />
+            <Input label="Phone" value={phoneInput} onChange={v => { setPhoneInput(v); setProfileTouched(true); }} type="tel" />
+            <Input label="Job Title" value={jobTitleInput} onChange={v => { setJobTitleInput(v); setProfileTouched(true); }} />
+            <Input label="Current Password" type="password" placeholder="••••••••" value={currentPasswordInput} onChange={setCurrentPasswordInput} />
+            <Input label="New Password" type="password" placeholder="••••••••" value={newPasswordInput} onChange={setNewPasswordInput} />
+            <Btn onClick={saveProfile} accent={accent} disabled={profileBusy}>{profileBusy ? t("loading") : (saved ? t("saved") : t("save"))}</Btn>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             <div style={card}>

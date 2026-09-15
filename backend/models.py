@@ -68,6 +68,8 @@ class User(Base):
     # needing a provisioned volume/object store for what's typically a
     # small (<=300KB) image. See backend/routers/auth.py's avatar endpoints.
     avatar_data_url = Column(Text, nullable=True)
+    phone = Column(String, nullable=True)
+    job_title = Column(String, nullable=True)
 
 
 class BatteryState(Base):

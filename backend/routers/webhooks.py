@@ -55,6 +55,7 @@ KNOWN_EVENT_TYPES = [
     "oauth.disconnected",
     "user.avatar_updated",
     "user.avatar_removed",
+    "user.profile_updated",
 ]
 
 

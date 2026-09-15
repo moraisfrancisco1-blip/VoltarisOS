@@ -505,7 +505,97 @@ def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_us
         "last_login": user.last_login.isoformat() if user.last_login else None,
         "created_at": user.created_at.isoformat() if user.created_at else None,
         "avatar_url": user.avatar_data_url,
+        "phone": user.phone,
+        "job_title": user.job_title,
     }
+
+
+class UpdateProfileRequest(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    job_title: str | None = None
+
+
+@router.patch("/auth/me")
+def update_me(
+    req: UpdateProfileRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current: dict = Depends(get_current_user),
+):
+    """Update the current user's own profile fields. Name/phone/job_title
+    are free text; changing email re-checks uniqueness and issues a fresh
+    token (its `sub` claim is the email, same as /auth/change-password
+    already does when must_change_password flips)."""
+    user = db.query(models.User).filter(models.User.email == current.get("sub")).first()
+    if not user:
+        raise HTTPException(404, "Utilizador não encontrado")
+
+    changed = {}
+    if req.name is not None:
+        name = req.name.strip()
+        if not name:
+            raise HTTPException(400, "O nome não pode ficar vazio")
+        if name != user.name:
+            user.name = name
+            changed["name"] = name
+
+    new_email = None
+    if req.email is not None:
+        email = req.email.strip().lower()
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+            raise HTTPException(400, "Email inválido")
+        if email != user.email:
+            taken = db.query(models.User).filter(models.User.email == email, models.User.id != user.id).first()
+            if taken:
+                raise HTTPException(409, "Este email já está em uso")
+            user.email = email
+            new_email = email
+            changed["email"] = email
+
+    if req.phone is not None:
+        phone = req.phone.strip()
+        if phone != (user.phone or ""):
+            user.phone = phone or None
+            changed["phone"] = phone
+
+    if req.job_title is not None:
+        job_title = req.job_title.strip()
+        if job_title != (user.job_title or ""):
+            user.job_title = job_title or None
+            changed["job_title"] = job_title
+
+    db.commit()
+
+    if changed:
+        log_audit_event(
+            db=db, action="user.profile_updated", tenant_id=user.tenant_id, user_id=user.id,
+            user_email=user.email, target_resource="user", target_id=user.id,
+            ip_address=request.client.host if request.client else None,
+            details={"fields": list(changed.keys())},
+        )
+
+    result = {
+        "name": user.name,
+        "email": user.email,
+        "phone": user.phone,
+        "job_title": user.job_title,
+    }
+    # A changed email invalidates the old token's `sub` claim -- issue a
+    # fresh one, same pattern /auth/change-password already uses.
+    if new_email:
+        tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
+        plan = str(tenant.plan) if tenant and tenant.plan else "beta"
+        result["token"] = create_token({
+            "sub": user.email,
+            "company": tenant.name if tenant else user.name,
+            "color": user.color,
+            "role": normalize_role(user.role),
+            "tenant_id": user.tenant_id,
+            "plan": plan,
+        })
+    return result
 
 
 # ─── Profile picture (data: URL on the row -- see models.py's User.avatar_data_url) ─
