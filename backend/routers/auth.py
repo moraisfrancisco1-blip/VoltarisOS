@@ -4,7 +4,7 @@ Users stored in SQLite (energy.db) via SQLAlchemy — persistent across deploys.
 Refactored with RBAC v2: SUPER_ADMIN / TENANT_ADMIN / TENANT_MEMBER roles,
 plus Subscription Plan matrix (beta/home/smart/starter/pro/enterprise).
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from pydantic import BaseModel
 from jose import jwt
 from datetime import datetime, timedelta
@@ -14,11 +14,12 @@ from backend.database import SessionLocal
 from backend import models
 from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role, require_password_changed
 from fastapi import Request
+import base64
 import os
 import re
 import secrets
 import sys
-from backend.audit import log_user_login
+from backend.audit import log_user_login, log_audit_event
 from backend.twofa import verify_totp_code
 from backend.permissions import (
     PlanTier, TIER_ORDER, PLAN_MAX_SITES, PLAN_ROLE_CEILING,
@@ -503,7 +504,65 @@ def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_us
         "must_change_password": bool(user.must_change_password),
         "last_login": user.last_login.isoformat() if user.last_login else None,
         "created_at": user.created_at.isoformat() if user.created_at else None,
+        "avatar_url": user.avatar_data_url,
     }
+
+
+# ─── Profile picture (data: URL on the row -- see models.py's User.avatar_data_url) ─
+AVATAR_MAX_BYTES = 300 * 1024  # 300KB raw; ~400KB once base64-encoded
+AVATAR_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
+
+
+@router.post("/auth/me/avatar")
+async def upload_avatar(
+    request: Request,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current: dict = Depends(get_current_user),
+):
+    if file.content_type not in AVATAR_ALLOWED_TYPES:
+        raise HTTPException(400, "Formato inválido. Usa PNG, JPEG, WebP ou GIF.")
+
+    data = await file.read()
+    if len(data) > AVATAR_MAX_BYTES:
+        raise HTTPException(400, f"Imagem demasiado grande. Máximo {AVATAR_MAX_BYTES // 1024}KB.")
+    if not data:
+        raise HTTPException(400, "Ficheiro vazio.")
+
+    user = db.query(models.User).filter(models.User.email == current.get("sub")).first()
+    if not user:
+        raise HTTPException(404, "Utilizador não encontrado")
+
+    data_url = f"data:{file.content_type};base64,{base64.b64encode(data).decode('ascii')}"
+    user.avatar_data_url = data_url
+    db.commit()
+
+    log_audit_event(
+        db=db, action="user.avatar_updated", tenant_id=user.tenant_id, user_id=user.id,
+        user_email=user.email, target_resource="user", target_id=user.id,
+        ip_address=request.client.host if request.client else None,
+    )
+    return {"avatar_url": data_url}
+
+
+@router.delete("/auth/me/avatar")
+def remove_avatar(
+    request: Request,
+    db: Session = Depends(get_db),
+    current: dict = Depends(get_current_user),
+):
+    user = db.query(models.User).filter(models.User.email == current.get("sub")).first()
+    if not user:
+        raise HTTPException(404, "Utilizador não encontrado")
+    user.avatar_data_url = None
+    db.commit()
+
+    log_audit_event(
+        db=db, action="user.avatar_removed", tenant_id=user.tenant_id, user_id=user.id,
+        user_email=user.email, target_resource="user", target_id=user.id,
+        ip_address=request.client.host if request.client else None,
+    )
+    return {"message": "Avatar removido"}
 
 
 @router.post("/auth/change-password")

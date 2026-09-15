@@ -40,6 +40,7 @@ MIGRATIONS = [
     "add_must_change_password",
     "add_last_seen_at",
     "add_site_tilt_azimuth",
+    "add_user_avatar",
 ]
 
 

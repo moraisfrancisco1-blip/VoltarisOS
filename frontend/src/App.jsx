@@ -313,20 +313,29 @@ export default function App() {
     setUser(null)
   }
 
-  // Reconcile the session role with the backend on load. Existing sessions may
+  // Reconcile the session with the backend on load. Existing sessions may
   // still carry a legacy role spelling in localStorage/JWT; /auth/me returns the
   // canonical RBAC v2 role, which we persist so the whole UI (including the
-  // admin navigation) recognises the account consistently.
+  // admin navigation) recognises the account consistently. It's also the only
+  // place the frontend ever learns the user's real name/email/avatar -- the
+  // login response and localStorage never carried those, which is why pages
+  // like Settings used to just hardcode placeholder identity text.
   useEffect(() => {
     if (!user?.token) return
     let cancelled = false
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((me) => {
-        if (!me || cancelled || !me.role) return
-        const canonical = normalizeRole(me.role)
-        localStorage.setItem("role", canonical)
-        setUser((u) => (u && u.role !== canonical ? { ...u, role: canonical } : u))
+        if (!me || cancelled) return
+        const canonical = me.role ? normalizeRole(me.role) : null
+        if (canonical) localStorage.setItem("role", canonical)
+        setUser((u) => u ? {
+          ...u,
+          ...(canonical ? { role: canonical } : {}),
+          name: me.name,
+          email: me.email,
+          avatar_url: me.avatar_url,
+        } : u)
       })
       .catch(() => {})
     return () => { cancelled = true }

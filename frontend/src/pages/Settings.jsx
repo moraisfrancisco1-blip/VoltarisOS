@@ -337,7 +337,7 @@ const TABS = [
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function Settings({ setPage }) {
+export default function Settings({ user, setPage }) {
   const { t } = useTranslation();
   const accent     = useAppStore(s => s.accentColor);
   const theme      = useAppStore(s => s.theme);
@@ -386,6 +386,9 @@ export default function Settings({ setPage }) {
   const [connectedApps, setConnectedApps] = useState([]);
   const [connectedAppsLoaded, setConnectedAppsLoaded] = useState(false);
   const [oauthBusyProvider, setOauthBusyProvider] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
   const [sessionTimeout, setSessionTimeout] = useState(60);
   const [ipwhitelist, setIpwhitelist] = useState("91.122.45.0/24\n195.83.0.1");
   const [paymentModal, setPaymentModal] = useState(null); // "update" | "add" | null
@@ -664,6 +667,42 @@ export default function Settings({ setPage }) {
     }
   };
 
+  const uploadAvatar = async (file) => {
+    if (!file) return;
+    setAvatarBusy(true);
+    setAvatarError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/auth/me/avatar", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) { setAvatarError(data.detail || t("avatar_upload_error")); return; }
+      setAvatarUrl(data.avatar_url);
+      addToast(t("avatar_updated"), "success");
+    } catch (e) {
+      console.error(e);
+      setAvatarError(t("avatar_upload_error"));
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const removeAvatar = async () => {
+    setAvatarBusy(true);
+    setAvatarError("");
+    try {
+      const res = await fetch("/api/auth/me/avatar", { method: "DELETE" });
+      if (!res.ok) { setAvatarError(t("avatar_upload_error")); return; }
+      setAvatarUrl(null);
+      addToast(t("avatar_removed"), "success");
+    } catch (e) {
+      console.error(e);
+      setAvatarError(t("avatar_upload_error"));
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
   const PLANS = [
     { id: "home", name: "Home", monthly: 99, yearly: 890, color: "#10b981", badge: null,
       features: ["1 site", "2 BESS units", "Basic monitoring", "Mobile app access", "Email alerts", "CSV exports"],
@@ -720,21 +759,36 @@ export default function Settings({ setPage }) {
           <div style={card}>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 20 }}>{t("settings_profile")}</h2>
             <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-              <div style={{
-                width: 60, height: 60, borderRadius: "50%", background: `${accent}33`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 22, fontWeight: 700, color: accent, flexShrink: 0,
-              }}>FM</div>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{
+                  width: 60, height: 60, borderRadius: "50%", background: `${accent}33`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 22, fontWeight: 700, color: accent, flexShrink: 0,
+                }}>{(user?.name || user?.email || "?").trim().charAt(0).toUpperCase()}</div>
+              )}
               <div>
-                <div style={{ fontWeight: 600 }}>Francisco Morais</div>
-                <div style={{ fontSize: 12, color: SUB }}>admin@voltaris.com</div>
-                <button onClick={() => alert("Change avatar — feature coming soon")} style={{ fontSize: 11, color: accent, background: "none", border: "none", cursor: "pointer", padding: 0, marginTop: 4 }}>
-                  Change avatar
-                </button>
+                <div style={{ fontWeight: 600 }}>{user?.name || "—"}</div>
+                <div style={{ fontSize: 12, color: SUB }}>{user?.email || "—"}</div>
+                <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+                  <label style={{ fontSize: 11, color: accent, cursor: avatarBusy ? "not-allowed" : "pointer", opacity: avatarBusy ? 0.6 : 1 }}>
+                    {avatarBusy ? t("loading") : t("change_avatar")}
+                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" style={{ display: "none" }}
+                      disabled={avatarBusy}
+                      onChange={e => { uploadAvatar(e.target.files?.[0]); e.target.value = ""; }} />
+                  </label>
+                  {avatarUrl && (
+                    <button onClick={removeAvatar} disabled={avatarBusy} style={{ fontSize: 11, color: DANG, background: "none", border: "none", cursor: avatarBusy ? "not-allowed" : "pointer", padding: 0 }}>
+                      {t("remove_avatar")}
+                    </button>
+                  )}
+                </div>
+                {avatarError && <div style={{ fontSize: 11, color: DANG, marginTop: 4 }}>{avatarError}</div>}
               </div>
             </div>
-            <Input label="Full Name" value="Francisco Morais" />
-            <Input label="Email Address" value="admin@voltaris.com" type="email" />
+            <Input label="Full Name" value={user?.name || ""} readOnly />
+            <Input label="Email Address" value={user?.email || ""} type="email" readOnly />
             <Input label="Phone" value="+351 912 345 678" type="tel" />
             <Input label="Job Title" value="Energy Systems Engineer" />
             <Input label="Current Password" type="password" placeholder="••••••••" />

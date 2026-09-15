@@ -49,6 +49,12 @@ KNOWN_EVENT_TYPES = [
     "webhook.created",
     "webhook.updated",
     "webhook.deleted",
+    "white_label.domain_requested",
+    "white_label.domain_removed",
+    "oauth.connected",
+    "oauth.disconnected",
+    "user.avatar_updated",
+    "user.avatar_removed",
 ]
 
 

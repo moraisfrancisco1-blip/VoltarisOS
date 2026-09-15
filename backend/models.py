@@ -64,6 +64,10 @@ class User(Base):
     totp_secret = Column(String, nullable=True)
     totp_enabled = Column(Boolean, default=False)
     totp_backup_codes = Column(JSON, nullable=True)
+    # Profile picture as a data: URL (base64), not a file path -- avoids
+    # needing a provisioned volume/object store for what's typically a
+    # small (<=300KB) image. See backend/routers/auth.py's avatar endpoints.
+    avatar_data_url = Column(Text, nullable=True)
 
 
 class BatteryState(Base):
