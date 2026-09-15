@@ -337,7 +337,7 @@ const TABS = [
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function Settings({ user, setPage }) {
+export default function Settings({ user, setUser, setPage }) {
   const { t } = useTranslation();
   const accent     = useAppStore(s => s.accentColor);
   const theme      = useAppStore(s => s.theme);
@@ -638,6 +638,13 @@ export default function Settings({ user, setPage }) {
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
+      setUser?.((u) => u ? {
+        ...u,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        job_title: data.job_title,
+      } : u);
       setProfileTouched(false);
 
       if (currentPasswordInput || newPasswordInput) {

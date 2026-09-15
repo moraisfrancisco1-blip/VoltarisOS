@@ -109,7 +109,7 @@ function useIsMobile() {
   return isMobile
 }
 
-function AppShell({ user, onLogout }) {
+function AppShell({ user, setUser, onLogout }) {
   // A Connected Apps OAuth callback (backend/routers/oauth_connections.py)
   // redirects the full page back here with ?oauth=success|error&provider=...
   // -- land back on Settings instead of the default Dashboard so the result
@@ -271,7 +271,7 @@ function AppShell({ user, onLogout }) {
           setPage={handleSetPage}
         />
         <main style={{ flex: 1, overflow: "auto" }}>
-          <PageComponent user={user} setPage={handleSetPage} />
+          <PageComponent user={user} setUser={setUser} setPage={handleSetPage} />
         </main>
       </div>
 
@@ -335,6 +335,8 @@ export default function App() {
           name: me.name,
           email: me.email,
           avatar_url: me.avatar_url,
+          phone: me.phone,
+          job_title: me.job_title,
         } : u)
       })
       .catch(() => {})
@@ -379,7 +381,7 @@ export default function App() {
               onCancel={handleLogout}
             />
           ) : (
-            <AppShell user={user} onLogout={handleLogout} />
+            <AppShell user={user} setUser={setUser} onLogout={handleLogout} />
           )
         } />
       </Routes>
