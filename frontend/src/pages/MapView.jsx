@@ -6,18 +6,7 @@ import { useTranslation } from "../i18n/useTranslation";
 
 const accent = "#6366f1";
 
-const sites = [
-  {
-    id: 1, name: "Rotterdam", lat: 51.9225, lng: 4.4792, country: "Netherlands",
-    status: "Online", solar: 420, battery: 72, ev: 3, power: 318, revenue: "€1,240",
-    type: "Solar + BESS + EV", capacity: "500 kW / 1000 kWh",
-  },
-  {
-    id: 2, name: "Rebordelo", lat: 41.8028, lng: -7.2042, country: "Portugal",
-    status: "Online", solar: 310, battery: 45, ev: 1, power: 210, revenue: "€890",
-    type: "Solar + BESS", capacity: "250 kW / 500 kWh",
-  },
-];
+const isOnline = (status) => status === "active" || status === "online";
 
 export default function MapView() {
   const { t } = useTranslation();
@@ -26,9 +15,23 @@ export default function MapView() {
   const mapInstanceRef = useRef(null);
   const [selected, setSelected] = useState(null);
   const [mapReady, setMapReady] = useState(false);
+  const [sites, setSites] = useState([]);
+  const [sitesLoaded, setSitesLoaded] = useState(false);
+
+  // This used to be a hardcoded 2-site array (coincidentally matching this
+  // tenant's real seeded sites) instead of the tenant's actual configured
+  // sites -- fetch the real list, same endpoint Dashboard/Sites/Fleet use.
+  useEffect(() => {
+    fetch("/api/sites")
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setSites(Array.isArray(data) ? data.filter(s => s.lat != null && s.lng != null) : []))
+      .catch(() => setSites([]))
+      .finally(() => setSitesLoaded(true));
+  }, []);
 
   useEffect(() => {
     if (mapInstanceRef.current) return;
+    if (!sitesLoaded || sites.length === 0) return;
 
     if (!document.querySelector("#leaflet-css")) {
       const link = document.createElement("link");
@@ -99,8 +102,8 @@ export default function MapView() {
       }).addTo(map);
 
       sites.forEach(site => {
-        const color = site.status === "Online" ? "#10b981" : "#ef4444";
-        const ring = site.status === "Online" ? "#34d399" : "#f87171";
+        const online = isOnline(site.status);
+        const color = online ? "#10b981" : "#ef4444";
 
         // Premium pulsing marker
         const icon = L.divIcon({
@@ -139,32 +142,31 @@ export default function MapView() {
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
               <div>
                 <div style="font-size:15px; font-weight:700; color:var(--text,var(--text));">${site.name}</div>
-                <div style="font-size:11px; color:var(--sub,var(--sub)); margin-top:1px;">${site.country}</div>
+                <div style="font-size:11px; color:var(--sub,var(--sub)); margin-top:1px;">${site.location || ""}</div>
               </div>
               <span style="
                 font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px;
                 background:${color}20; color:${color}; border:1px solid ${color}40;
-              ">${site.status}</span>
+              ">${online ? "Active" : (site.status || "unknown")}</span>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-                <div style="font-size:10px; color:var(--sub,var(--sub));">Power</div>
-                <div style="font-size:14px; font-weight:700; color:#60a5fa;">${site.power} kW</div>
+                <div style="font-size:10px; color:var(--sub,var(--sub));">Solar</div>
+                <div style="font-size:14px; font-weight:700; color:#fbbf24;">${site.solar_kw ?? 0} kW</div>
               </div>
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
                 <div style="font-size:10px; color:var(--sub,var(--sub));">Battery</div>
-                <div style="font-size:14px; font-weight:700; color:${color};">${site.battery}%</div>
+                <div style="font-size:14px; font-weight:700; color:${color};">${site.battery_kwh ?? 0} kWh</div>
               </div>
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-                <div style="font-size:10px; color:var(--sub,var(--sub));">Solar</div>
-                <div style="font-size:14px; font-weight:700; color:#fbbf24;">${site.solar} kW</div>
+                <div style="font-size:10px; color:var(--sub,var(--sub));">EV Chargers</div>
+                <div style="font-size:14px; font-weight:700; color:#60a5fa;">${site.ev_chargers ?? 0}</div>
               </div>
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
-                <div style="font-size:10px; color:var(--sub,var(--sub));">Revenue</div>
-                <div style="font-size:14px; font-weight:700; color:#34d399;">${site.revenue}</div>
+                <div style="font-size:10px; color:var(--sub,var(--sub));">Timezone</div>
+                <div style="font-size:14px; font-weight:700; color:#34d399;">${site.timezone || "—"}</div>
               </div>
             </div>
-            <div style="margin-top:10px; font-size:11px; color:var(--sub,var(--sub));">${site.type} · ${site.capacity}</div>
           </div>
         `);
       });
@@ -180,7 +182,8 @@ export default function MapView() {
         mapInstanceRef.current = null;
       }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sitesLoaded]);
 
   const cardStyle = {
     background: "var(--surface)",
@@ -211,9 +214,9 @@ export default function MapView() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
         {[
           { label: "Total Sites",  value: sites.length },
-          { label: "Online",       value: sites.filter(s => s.status === "Online").length, color: "#10b981" },
-          { label: "Total Power",  value: `${sites.reduce((a, s) => a + s.power, 0)} kW`,  color: accent },
-          { label: "Countries",    value: 2 },
+          { label: "Online",       value: sites.filter(s => isOnline(s.status)).length, color: "#10b981" },
+          { label: "Total Solar",  value: `${sites.reduce((a, s) => a + (s.solar_kw || 0), 0)} kW`,  color: accent },
+          { label: "Total Battery", value: `${sites.reduce((a, s) => a + (s.battery_kwh || 0), 0)} kWh` },
         ].map(k => (
           <div key={k.label} style={cardStyle}>
             <div style={{ color: "var(--sub)", fontSize: 12, marginBottom: 4 }}>{k.label}</div>
@@ -234,7 +237,7 @@ export default function MapView() {
             <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
               color: "var(--sub)", fontSize: 13, background: "var(--surface)", padding: "12px 20px",
               borderRadius: 10, border: "1px solid var(--border)" }}>
-              Loading map...
+              {!sitesLoaded ? "Loading map..." : sites.length === 0 ? "No sites with coordinates yet — add one on the Sites page." : "Loading map..."}
             </div>
           )}
         </div>
@@ -242,7 +245,8 @@ export default function MapView() {
         {/* Site list + detail */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {sites.map(s => {
-            const sc = s.status === "Online" ? "#10b981" : "#ef4444";
+            const online = isOnline(s.status);
+            const sc = online ? "#10b981" : "#ef4444";
             return (
               <div key={s.id}
                 onClick={() => {
@@ -261,20 +265,19 @@ export default function MapView() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 15, color: "var(--text)" }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: "var(--sub)" }}>{s.country}</div>
+                    <div style={{ fontSize: 12, color: "var(--sub)" }}>{s.location || ""}</div>
                   </div>
                   <span style={{
                     fontSize: 11, padding: "2px 8px", borderRadius: 99,
                     background: `${sc}20`, color: sc, border: `1px solid ${sc}40`,
-                  }}>{s.status}</span>
+                  }}>{online ? "Active" : (s.status || "unknown")}</span>
                 </div>
-                <div style={{ fontSize: 12, color: "var(--sub)", marginBottom: 8 }}>{s.type}</div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                   {[
-                    { label: "Power",   val: `${s.power} kW`,  color: "#60a5fa" },
-                    { label: "Battery", val: `${s.battery}%`,  color: sc },
-                    { label: "Solar",   val: `${s.solar} kW`,  color: "#fbbf24" },
-                    { label: "Revenue", val: s.revenue,         color: "#34d399" },
+                    { label: "Solar",   val: `${s.solar_kw ?? 0} kW`,  color: "#fbbf24" },
+                    { label: "Battery", val: `${s.battery_kwh ?? 0} kWh`,  color: sc },
+                    { label: "EV Chargers", val: `${s.ev_chargers ?? 0}`, color: "#60a5fa" },
+                    { label: "Timezone", val: s.timezone || "—", color: "#34d399" },
                   ].map(m => (
                     <div key={m.label} style={{ background: "var(--surface2)", padding: "6px 10px", borderRadius: 6 }}>
                       <div style={{ fontSize: 10, color: "var(--sub)" }}>{m.label}</div>
@@ -292,7 +295,7 @@ export default function MapView() {
               <div style={{ fontSize: 12, color: "var(--sub)", lineHeight: 1.8 }}>
                 <span style={{ color: "var(--text)", fontWeight: 600 }}>Lat:</span> {selected.lat.toFixed(4)}<br />
                 <span style={{ color: "var(--text)", fontWeight: 600 }}>Lng:</span> {selected.lng.toFixed(4)}<br />
-                <span style={{ color: "var(--text)", fontWeight: 600 }}>Capacity:</span> {selected.capacity}
+                <span style={{ color: "var(--text)", fontWeight: 600 }}>Capacity:</span> {selected.solar_kw ?? 0} kW / {selected.battery_kwh ?? 0} kWh
               </div>
             </div>
           )}

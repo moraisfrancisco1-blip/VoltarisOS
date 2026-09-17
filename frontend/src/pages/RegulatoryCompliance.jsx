@@ -217,7 +217,7 @@ export default function RegulatoryCompliance() {
                 </span>
                 <div style={{ display: "flex", gap: 6 }}>
                   {d.status !== "done" && (
-                    <button onClick={() => alert(`"${d.title}" marked as done`)} style={{ padding: "4px 10px", background: "#10b98120", border: "1px solid #10b981", borderRadius: 6, color: green, fontSize: 10, cursor: "pointer" }}>
+                    <button onClick={() => alert(`Mark "${d.title}" as done — feature coming soon`)} style={{ padding: "4px 10px", background: "#10b98120", border: "1px solid #10b981", borderRadius: 6, color: green, fontSize: 10, cursor: "pointer" }}>
                       Mark Done
                     </button>
                   )}
@@ -261,7 +261,7 @@ export default function RegulatoryCompliance() {
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 20 }}>
               <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: "none", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--sub)", fontSize: 12, cursor: "pointer" }}>Cancel</button>
-              <button onClick={() => setShowModal(false)} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
+              <button onClick={() => { alert("Adding new compliance deadlines isn't available yet — feature coming soon"); setShowModal(false) }} style={{ padding: "8px 18px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Save</button>
             </div>
           </div>
         </div>

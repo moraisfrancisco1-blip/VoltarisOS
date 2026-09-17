@@ -57,7 +57,10 @@ export default function RevenueOptimization() {
   const [forecast] = useState(genForecast());
   const [selectedScenario, setSelectedScenario] = useState("Balanced");
   const [metrics, setMetrics] = useState({ todayRev: 5840, projectedRev: 8420, bestArb: 1420, aiUplift: 620 });
-  const [autoDispatch, setAutoDispatch] = useState(true);
+  // Display-only in this demo -- toggling it doesn't enable/disable any real
+  // dispatch on the fleet (no backend call exists for it). Defaults to off
+  // rather than claiming "Active" for a mode nothing actually runs.
+  const [autoDispatch, setAutoDispatch] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => {
@@ -103,7 +106,7 @@ export default function RevenueOptimization() {
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ fontSize: 12, color: "var(--sub)" }}>Auto-Dispatch</span>
-          <div onClick={() => setAutoDispatch(!autoDispatch)} style={{
+          <div onClick={() => setAutoDispatch(!autoDispatch)} title="Demo display only — not connected to real fleet dispatch" style={{
             width: 40, height: 22, borderRadius: 11, cursor: "pointer",
             background: autoDispatch ? green : "var(--surface2)", position: "relative"
           }}>

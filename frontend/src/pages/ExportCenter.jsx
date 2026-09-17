@@ -30,19 +30,21 @@ export default function ExportCenter({ user }) {
 
   const toggle = (id) => setSelected(s => ({ ...s, [id]: !s[id] }))
 
+  // No backend endpoint exists for these bundled exports -- this previously
+  // faked an 1800ms "generating" delay and a success toast claiming a file
+  // was produced, when nothing was ever generated or downloaded. The real,
+  // working export flow lives on the Reports page (GET /api/reports/{id}/download).
   const doExport = async (item) => {
     setExporting(item.id)
-    await new Promise(r => setTimeout(r, 1800))
+    await new Promise(r => setTimeout(r, 400))
     setExporting(null)
-    addToast(`${t(item.labelKey)} ${t("exported_as") || "exported as"} ${format}`, "success")
-    addAuditEntry({ user: user?.email || "admin@voltaris.com", actionKey: "audit_action_export_report", resource: item.labelKey ? t(item.labelKey) : item.label })
+    addToast(`${t(item.labelKey)} export isn't available yet — use the Reports page for real report exports`, "warning")
   }
 
   const exportAll = async () => {
     const sel = EXPORT_ITEMS.filter(i => selected[i.id])
     if (!sel.length) { addToast(t("exp_select_one") || "Select at least one report", "warning"); return }
-    for (const item of sel) await doExport(item)
-    addToast(`${sel.length} ${t("exp_files_exported") || "files exported successfully"}`, "success")
+    addToast("Bundled export isn't available yet — use the Reports page for real report exports", "warning")
   }
 
   const grouped = {}

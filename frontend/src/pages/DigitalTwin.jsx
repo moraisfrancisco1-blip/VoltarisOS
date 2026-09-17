@@ -87,16 +87,25 @@ const CT = ({ active, payload, label }) => {
 export default function DigitalTwin({ user }) {
   const { t } = useTranslation()
   const simMode = useAppStore(s => s.simMode)
+  const SITES = {
+    rotterdam: { name: "Rotterdam 🇳🇱", capacity: "2.4 MWh", panels: 320, baseline: { solar: 156, load: 89, grid: 12, soc: 78, temp: 28, voltage: 48.2, current: 142 } },
+    rebordelo: { name: "Rebordelo 🇵🇹", capacity: "1.5 MWh", panels: 280, baseline: { solar: 118, load: 64, grid: 6, soc: 85, temp: 31, voltage: 47.6, current: 98 } },
+  }
+
   const [site, setSite] = useState("rotterdam")
-  const [data, setData] = useState({ solar: 156, load: 89, grid: 12, soc: 78, temp: 28, voltage: 48.2, current: 142 })
+  const [data, setData] = useState(SITES.rotterdam.baseline)
   const [ts, setTs] = useState(generateTwinData())
   const [tick, setTick] = useState(0)
   const color = user?.color || "#4ade80"
 
-  const SITES = {
-    rotterdam: { name: "Rotterdam 🇳🇱", capacity: "2.4 MWh", panels: 320 },
-    rebordelo: { name: "Rebordelo 🇵🇹", capacity: "2.4 MWh", panels: 280 },
-  }
+  // Switching sites previously only changed the label/capacity/panel-count --
+  // the live-looking metrics kept drifting from whichever values were on
+  // screen already, so "Rebordelo" silently showed Rotterdam's numbers.
+  // Reseed from that site's own baseline so switching is visibly real.
+  useEffect(() => {
+    setData(SITES[site].baseline)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [site])
 
   useEffect(() => {
     const iv = setInterval(() => {

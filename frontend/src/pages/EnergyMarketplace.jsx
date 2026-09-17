@@ -79,17 +79,11 @@ export default function EnergyMarketplace() {
 
   function submitOrder() {
     if (!tradeForm.volume || !tradeForm.price) return
-    const newTrade = {
-      buyer: tradeForm.side === "buy" ? "Voltaris Lisboa" : selectedTenant?.name || "GreenGrid",
-      seller: tradeForm.side === "sell" ? "Voltaris Lisboa" : selectedTenant?.name || "GreenGrid",
-      mwh: parseFloat(tradeForm.volume),
-      price: parseFloat(tradeForm.price),
-      time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-      status: "pending",
-    }
-    setTrades(prev => [newTrade, ...prev.slice(0, 9)])
-    setTradeForm({ volume: "", price: "", side: "buy" })
-    setToast(`Order placed: ${tradeForm.side === "buy" ? "BUY" : "SELL"} ${tradeForm.volume} MWh @ €${tradeForm.price}`)
+    // No P2P energy trading backend exists yet -- placing an order here would
+    // previously fake a "✓ Order placed" success and insert a fabricated
+    // trade into the ledger. Be honest instead of pretending a real
+    // counterparty trade with instant settlement just happened.
+    setToast("Peer-to-peer order matching isn't available yet — coming soon")
     setTimeout(() => setToast(null), 3000)
   }
 
@@ -116,10 +110,10 @@ export default function EnergyMarketplace() {
         <div style={{
           position: "fixed", top: "20px", right: "20px", zIndex: 999,
           padding: "12px 20px", borderRadius: "10px",
-          background: "#10b981", color: "#fff", fontSize: "13px", fontWeight: "600",
+          background: "#374151", color: "#fff", fontSize: "13px", fontWeight: "600",
           boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
         }}>
-          ✓ {toast}
+          {toast}
         </div>
       )}
 

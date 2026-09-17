@@ -393,7 +393,7 @@ export default function PredictiveMaintenance({ setPage }) {
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => alert(`Create Work Order for ${a.asset} — feature coming soon`)} style={{ fontSize: 11, padding: "4px 10px", background: accent, color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Create WO</button>
-                  <button onClick={() => alert(`Anomaly dismissed for ${a.asset}`)} style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "var(--sub)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
+                  <button onClick={() => alert(`Dismiss anomaly for ${a.asset} — feature coming soon`)} style={{ fontSize: 11, padding: "4px 10px", background: "var(--surface2)", color: "var(--sub)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, cursor: "pointer" }}>Dismiss</button>
                 </div>
               </div>
             ))}

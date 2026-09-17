@@ -663,7 +663,7 @@ export default function BatteryManagement() {
                       <span style={{ fontSize: 12, color: "var(--sub)" }}>{p.l}</span>
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         <span style={{ fontSize: 12, fontWeight: 600 }}>{p.v}</span>
-                        {p.editable && <button onClick={() => alert(`Edit ${p.l} — currently: ${p.v}`)} style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "var(--surface2)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}
+                        {p.editable && <button onClick={() => alert(`Editing ${p.l} isn't available yet — feature coming soon`)} style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, background: "var(--surface2)", border: `1px solid ${accent}`, color: accent, cursor: "pointer" }}>Edit</button>}
                       </div>
                     </div>
                   ))}

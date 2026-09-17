@@ -56,7 +56,7 @@ export default function CarbonCredit() {
   const { t } = useTranslation();
   const { color, simMode } = useAppStore()
   const [tab, setTab] = useState("overview")
-  const [mintingLive, setMintingLive] = useState(false)
+  const [toast, setToast] = useState(null)
   const [liveCredits, setLiveCredits] = useState(133.5)
   const [liveKwh, setLiveKwh] = useState(445000)
   const [etsPrice, setEtsPrice] = useState(ETS_PRICE)
@@ -72,11 +72,11 @@ export default function CarbonCredit() {
   }, [])
 
   function handleMint() {
-    setMintingLive(true)
-    setTimeout(() => {
-      setMintingLive(false)
-      setLiveCredits(prev => +(prev + 0.42).toFixed(3))
-    }, 2500)
+    // No blockchain/registry integration exists yet -- this previously faked
+    // a 2.5s "minting" spinner and incremented the live counter as if a real
+    // on-chain mint had happened. Be honest instead.
+    setToast("Carbon credit minting isn't available yet — coming soon")
+    setTimeout(() => setToast(null), 3000)
   }
 
   const totalRevenue = SITE_TOTALS.reduce((a, s) => a + s.ytdRevenue, 0)
@@ -102,26 +102,30 @@ export default function CarbonCredit() {
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "4px" }}>
             <h1 style={{ fontSize: "22px", fontWeight: "700", color: "var(--text)", margin: 0 }}>Carbon Credit Ledger</h1>
             <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", background: "#10b98118", color: "#10b981", fontWeight: "700", letterSpacing: "1px" }}>EU ETS COMPLIANT</span>
-            <span style={{ fontSize: "10px", padding: "2px 8px", borderRadius: "12px", background: `${color}18`, color, fontWeight: "700", letterSpacing: "1px" }}>LIVE MINTING</span>
           </div>
           <p style={{ margin: 0, fontSize: "13px", color: "var(--sub)" }}>
-            Real-time carbon credit minting per kWh discharged. Tokenized ERC-20 ledger, exportable for EU ETS compliance.
+            Carbon credit tracking per kWh discharged, exportable for EU ETS compliance. On-chain minting is a planned feature, not yet connected.
           </p>
         </div>
-        <button onClick={handleMint} disabled={mintingLive} style={{
+        <button onClick={handleMint} style={{
           padding: "9px 20px", borderRadius: "8px", border: "none",
-          background: mintingLive ? "var(--border)" : "#10b981",
-          color: mintingLive ? "var(--sub)" : "#fff",
-          cursor: mintingLive ? "default" : "pointer", fontSize: "13px", fontWeight: "600",
+          background: "#10b981", color: "#fff",
+          cursor: "pointer", fontSize: "13px", fontWeight: "600",
           display: "flex", alignItems: "center", gap: "8px"
         }}>
-          {mintingLive ? (
-            <><span style={{ display: "inline-block", animation: "spin 1s linear infinite", fontSize: "14px" }}>⟳</span> Minting...</>
-          ) : (
-            <>⬡ Mint Credits</>
-          )}
+          ⬡ Mint Credits
         </button>
       </div>
+      {toast && (
+        <div style={{
+          position: "fixed", top: "20px", right: "20px", zIndex: 999,
+          padding: "12px 20px", borderRadius: "10px",
+          background: "#374151", color: "#fff", fontSize: "13px", fontWeight: "600",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+        }}>
+          {toast}
+        </div>
+      )}
 
       {/* Live stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(155px, 1fr))", gap: "12px", marginBottom: "20px" }}>
@@ -271,11 +275,8 @@ export default function CarbonCredit() {
               display: "grid", gridTemplateColumns: "1fr 1.2fr 1fr 0.8fr 0.8fr auto",
               padding: "11px 20px", borderBottom: "1px solid var(--border)", alignItems: "center"
             }}>
-              <div style={{ fontSize: "12px", fontFamily: "monospace", color }}>
-                <a href={`https://etherscan.io/tx/${entry.txHash}`} target="_blank" rel="noreferrer"
-                  style={{ color, textDecoration: "none" }} title={`TX: ${entry.txHash}`}>
-                  {entry.id}
-                </a>
+              <div style={{ fontSize: "12px", fontFamily: "monospace", color }} title="Not yet linked to a real on-chain transaction">
+                {entry.id}
               </div>
               <div style={{ fontSize: "12px", color: "var(--text)" }}>{entry.site}</div>
               <div style={{ fontSize: "12px", color: "var(--sub)" }}>{entry.kwh.toLocaleString()}</div>
