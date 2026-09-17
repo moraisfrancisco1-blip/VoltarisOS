@@ -311,7 +311,52 @@ export default function App() {
     localStorage.clear()
     if (lang) localStorage.setItem(LANG_STORAGE_KEY, lang)
     setUser(null)
+    // Clears the httpOnly vos_session cookie server-side too -- otherwise a
+    // page reload right after logout would self-heal straight back in via
+    // the bootstrap effect below. Fire-and-forget: local logout must not
+    // wait on or fail because of this.
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {})
   }
+
+  // Bootstrap: recover a session localStorage lost (a privacy-focused
+  // browser clearing site data -- see the vos_session cookie set by
+  // backend/security.py's set_auth_cookie) instead of forcing a fresh
+  // login whenever the httpOnly cookie is still valid. Runs once, only
+  // when there's nothing in local state to begin with.
+  const [bootstrapping, setBootstrapping] = useState(() => !localStorage.getItem("token"))
+  useEffect(() => {
+    if (localStorage.getItem("token")) { setBootstrapping(false); return }
+    let cancelled = false
+    // Never block the first paint indefinitely on a stalled network request
+    // -- fall through to the normal login screen if this takes too long.
+    const giveUp = setTimeout(() => { if (!cancelled) setBootstrapping(false) }, 6000)
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (!me || cancelled) return
+        const role = normalizeRole(me.role)
+        localStorage.setItem("token", me.token)
+        localStorage.setItem("role", role)
+        localStorage.setItem("company", me.company || "")
+        localStorage.setItem("color", me.color || "")
+        localStorage.setItem("plan", me.plan || "beta")
+        if (me.allowed_modules) localStorage.setItem("allowed_modules", JSON.stringify(me.allowed_modules))
+        if (me.must_change_password) {
+          localStorage.setItem("must_change_password", "1")
+          setMustChangePassword(true)
+        }
+        setUser({
+          token: me.token, company: me.company, color: me.color, role,
+          plan: me.plan || "beta", allowed_modules: me.allowed_modules || [],
+          name: me.name, email: me.email, avatar_url: me.avatar_url,
+          phone: me.phone, job_title: me.job_title,
+        })
+      })
+      .catch(() => {})
+      .finally(() => { clearTimeout(giveUp); if (!cancelled) setBootstrapping(false) })
+    return () => { cancelled = true; clearTimeout(giveUp) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Reconcile the session with the backend on load. Existing sessions may
   // still carry a legacy role spelling in localStorage/JWT; /auth/me returns the
@@ -352,7 +397,13 @@ export default function App() {
         
         {/* Main app routes */}
         <Route path="/*" element={
-          !user ? (
+          !user && bootstrapping ? (
+            // Give the vos_session cookie self-heal (see the bootstrap effect
+            // above) a chance to resolve before flashing the login screen --
+            // this only ever blocks the very first paint, and only when
+            // localStorage had no token to begin with.
+            null
+          ) : !user ? (
             <Login onLogin={(u) => {
               const role = normalizeRole(u.role)
               localStorage.setItem("role", role)

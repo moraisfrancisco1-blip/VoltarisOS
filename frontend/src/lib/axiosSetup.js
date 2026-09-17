@@ -2,6 +2,13 @@
 // and redirects to login on 401 (expired/invalid token).
 import axios from "axios"
 
+// Always send the httpOnly vos_session cookie (backend/security.py's
+// set_auth_cookie) alongside the Authorization header below. The header
+// stays primary; the cookie is a resilience fallback get_current_user()
+// checks when localStorage lost its token (a privacy browser clearing
+// site data, a fresh tab in a browser that never persisted it, etc).
+axios.defaults.withCredentials = true
+
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem("token")
   if (token) {
@@ -46,6 +53,7 @@ axios.interceptors.response.use(
 const _origFetch = window.fetch.bind(window)
 window.fetch = (input, init = {}) => {
   const token = localStorage.getItem("token")
+  init = { ...init, credentials: init.credentials || "include" }
   if (token) {
     init = { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${token}` } }
   }

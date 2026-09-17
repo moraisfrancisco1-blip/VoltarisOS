@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import bcrypt
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from slowapi import Limiter
@@ -89,6 +89,31 @@ def normalize_role(role) -> str:
     return _ROLE_ALIASES.get(key, str(role).strip())
 
 _bearer = HTTPBearer(auto_error=False)
+
+# ─── Session cookie (resilience fallback for the Bearer-header/localStorage flow) ─
+# The frontend's primary auth path is still the JWT in localStorage, sent as an
+# `Authorization: Bearer` header (see frontend/src/lib/axiosSetup.js). This
+# mirrors the same JWT into an httpOnly cookie on every token issuance, and
+# get_current_user() falls back to it when no header is present -- so a
+# session survives a privacy-focused browser (or extension) clearing
+# localStorage/site data, without changing anything about how normal
+# requests are authenticated. httpOnly means frontend JS never touches the
+# cookie value directly; the browser attaches it automatically.
+AUTH_COOKIE_NAME = "vos_session"
+_AUTH_COOKIE_MAX_AGE = 72 * 3600  # matches create_token()'s 72h JWT exp
+_COOKIE_SECURE = os.getenv("ENVIRONMENT", "development") == "production"
+
+
+def set_auth_cookie(response: Response, token: str) -> None:
+    response.set_cookie(
+        AUTH_COOKIE_NAME, token, max_age=_AUTH_COOKIE_MAX_AGE,
+        httponly=True, secure=_COOKIE_SECURE, samesite="lax", path="/",
+    )
+
+
+def clear_auth_cookie(response: Response) -> None:
+    response.delete_cookie(AUTH_COOKIE_NAME, path="/", secure=_COOKIE_SECURE, samesite="lax")
+
 
 # Shared limiter instance — must be the SAME object used in app.state.limiter (main.py)
 # and in @limiter.limit(...) decorators across routers, otherwise slowapi can't track state.
@@ -199,17 +224,24 @@ def _resolve_api_key(token: str) -> dict:
         db.close()
 
 
-async def get_current_user(creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
+async def get_current_user(request: Request, creds: HTTPAuthorizationCredentials = Depends(_bearer)) -> dict:
     """FastAPI dependency — require a valid Bearer JWT or user-facing API key.
     Raises 401 if missing/invalid.
 
     The decoded role is normalized to the canonical RBAC v2 value here, so every
     downstream guard (require_admin, require_super_admin, permissions, …) sees
     the same role regardless of how it was spelled when the token was issued.
+
+    Falls back to the `vos_session` httpOnly cookie (see set_auth_cookie) when
+    no Authorization header is present -- the header stays the primary path,
+    this only keeps a session alive if localStorage was cleared out from
+    under it.
     """
-    if creds is None or not creds.credentials:
+    token = creds.credentials if creds is not None else None
+    if not token:
+        token = request.cookies.get(AUTH_COOKIE_NAME)
+    if not token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autenticação necessária")
-    token = creds.credentials
     if token.startswith(API_KEY_PREFIX):
         return _resolve_api_key(token)
     user = decode_token(token)
@@ -477,7 +509,7 @@ async def get_current_user_or_service(
     change in behavior."""
     if _is_volt_core_service_request(request):
         return VOLT_CORE_SERVICE_IDENTITY
-    return await get_current_user(creds)
+    return await get_current_user(request, creds)
 
 
 async def require_super_admin_or_service(
@@ -487,7 +519,7 @@ async def require_super_admin_or_service(
     SUPER_ADMIN-only GET endpoints the Volt Core key may read."""
     if _is_volt_core_service_request(request):
         return VOLT_CORE_SERVICE_IDENTITY
-    user = await get_current_user(creds)
+    user = await get_current_user(request, creds)
     if user.get("role") != "SUPER_ADMIN":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito ao Super Admin da plataforma")
     return user

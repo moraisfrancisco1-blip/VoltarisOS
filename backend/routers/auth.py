@@ -4,7 +4,7 @@ Users stored in SQLite (energy.db) via SQLAlchemy — persistent across deploys.
 Refactored with RBAC v2: SUPER_ADMIN / TENANT_ADMIN / TENANT_MEMBER roles,
 plus Subscription Plan matrix (beta/home/smart/starter/pro/enterprise).
 """
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response
 from pydantic import BaseModel
 from jose import jwt
 from datetime import datetime, timedelta
@@ -12,7 +12,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role, require_password_changed
+from backend.security import hash_pw, verify_pw, SECRET_KEY, ALGORITHM, get_current_user, require_admin, require_super_admin, require_super_admin_or_service, limiter, normalize_role, require_password_changed, set_auth_cookie, clear_auth_cookie
 from fastapi import Request
 import base64
 import os
@@ -389,7 +389,7 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
 
 @router.post("/auth/login")
 @limiter.limit("10/minute")
-def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
+def login(request: Request, response: Response, req: LoginRequest, db: Session = Depends(get_db)):
     seed_admin(db)
     user = db.query(models.User).filter(models.User.email == req.email).first()
     if not user or not verify_pw(req.password, user.password_hash):
@@ -447,7 +447,8 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
         "plan": plan,
         "must_change_password": must_change_password,
     })
-    
+    set_auth_cookie(response, token)
+
     # Log successful login
     log_user_login(
         db=db,
@@ -473,27 +474,55 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/auth/logout")
+def logout(response: Response):
+    """Clear the vos_session cookie (see set_auth_cookie). No auth required --
+    idempotent, and a stale/expired/missing token shouldn't block logging out.
+    The frontend also clears its own localStorage; this covers the fallback
+    cookie so a 'logged out' state is actually fully logged out."""
+    clear_auth_cookie(response)
+    return {"message": "Sessão terminada"}
+
+
 @router.get("/auth/me")
-def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
+def get_me(response: Response, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
     """Return the current user's profile with plan info and allowed modules.
-    Used by the frontend to inject user context (role, plan, allowed_modules)."""
+    Used by the frontend to inject user context (role, plan, allowed_modules).
+
+    Also reissues a fresh token (and refreshes the vos_session cookie) on
+    every call -- App.jsx's bootstrap effect calls this to self-heal a
+    session when localStorage lost its token but the httpOnly cookie
+    (set_auth_cookie) is still valid, and a normal poll gets a rolling
+    72h expiry as a side effect rather than a hard cutoff."""
     user = db.query(models.User).filter(models.User.email == current.get("sub")).first()
     if not user:
         raise HTTPException(404, "Utilizador não encontrado")
-    
+
     tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
     plan = str(tenant.plan) if tenant and tenant.plan else "beta"
-    
+
     allowed_modules = get_allowed_modules_for_plan(plan)
     if user.role == "SUPER_ADMIN":
         from backend.permissions import ALL_MODULES
         allowed_modules = set(ALL_MODULES)
-    
+
+    canonical_role = normalize_role(user.role)
+    token = create_token({
+        "sub": user.email,
+        "company": tenant.name if tenant else user.name,
+        "color": user.color,
+        "role": canonical_role,
+        "tenant_id": user.tenant_id,
+        "plan": plan,
+        "must_change_password": bool(user.must_change_password),
+    })
+    set_auth_cookie(response, token)
+
     return {
         "id": user.id,
         "email": user.email,
         "name": user.name,
-        "role": normalize_role(user.role),
+        "role": canonical_role,
         "color": user.color,
         "company": tenant.name if tenant else user.name,
         "plan": plan,
@@ -507,6 +536,7 @@ def get_me(db: Session = Depends(get_db), current: dict = Depends(get_current_us
         "avatar_url": user.avatar_data_url,
         "phone": user.phone,
         "job_title": user.job_title,
+        "token": token,
     }
 
 
@@ -521,6 +551,7 @@ class UpdateProfileRequest(BaseModel):
 def update_me(
     req: UpdateProfileRequest,
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     current: dict = Depends(get_current_user),
 ):
@@ -595,6 +626,7 @@ def update_me(
             "tenant_id": user.tenant_id,
             "plan": plan,
         })
+        set_auth_cookie(response, result["token"])
     return result
 
 
@@ -656,7 +688,7 @@ def remove_avatar(
 
 
 @router.post("/auth/change-password")
-def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
+def change_password(req: ChangePasswordRequest, response: Response, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
     """Any logged-in user can change their own password.
 
     Also completes the forced first-login change: the flag is cleared and a
@@ -687,6 +719,7 @@ def change_password(req: ChangePasswordRequest, db: Session = Depends(get_db), c
         "plan": plan,
         "must_change_password": False,
     })
+    set_auth_cookie(response, token)
     return {
         "message": "Password alterada com sucesso",
         "token": token,
