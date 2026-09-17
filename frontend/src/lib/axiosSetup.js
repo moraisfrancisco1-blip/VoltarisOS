@@ -36,8 +36,16 @@ function _handleUnauthorized() {
 axios.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response && err.response.status === 401) {
-      // Token missing/expired/invalid — clear session and force re-login
+    // Only a *previously-authenticated* request going bad means the session
+    // itself died (expired/invalidated) -- reload-to-login is the right
+    // move there. A 401 on a request that carried no Bearer token to begin
+    // with (e.g. App.jsx's bootstrap self-heal probing /auth/me with no
+    // localStorage token, hoping the vos_session cookie still works) is an
+    // expected, normal outcome, not a reason to nuke storage and reload --
+    // doing so before caused an infinite reload loop for any visitor with
+    // no session at all.
+    const hadToken = !!err.config?.headers?.Authorization
+    if (err.response && err.response.status === 401 && hadToken) {
       _handleUnauthorized()
     }
     return Promise.reject(err)
@@ -46,10 +54,11 @@ axios.interceptors.response.use(
 
 // Several older pages use raw fetch() instead of axios — patch global fetch
 // so every request (relative or absolute URL) also carries the Bearer token,
-// and — like the axios interceptor above — a 401 response clears the stale
-// session and forces re-login instead of leaving the page stuck on
-// "failed to load" forever. Only inspects res.status; the body is left
-// untouched for the caller to read.
+// and — like the axios interceptor above — a 401 on a request that DID carry
+// a token clears the stale session and forces re-login instead of leaving
+// the page stuck on "failed to load" forever. A 401 on a tokenless request
+// (see the comment above) is left alone. Only inspects res.status; the body
+// is left untouched for the caller to read.
 const _origFetch = window.fetch.bind(window)
 window.fetch = (input, init = {}) => {
   const token = localStorage.getItem("token")
@@ -58,7 +67,7 @@ window.fetch = (input, init = {}) => {
     init = { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${token}` } }
   }
   return _origFetch(input, init).then((res) => {
-    if (res.status === 401) {
+    if (res.status === 401 && token) {
       _handleUnauthorized()
     }
     return res
