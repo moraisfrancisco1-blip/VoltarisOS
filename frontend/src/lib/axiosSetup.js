@@ -23,15 +23,7 @@ axios.interceptors.request.use((config) => {
 // Guarded so a burst of parallel 401s (several widgets fetching at once)
 // only clears storage and reloads once, not once per request.
 let _handledUnauthorized = false
-function _handleUnauthorized(source) {
-  // TEMP DIAGNOSTIC (remove once the reload-loop root cause is confirmed):
-  // record every call, even ones the guards below end up skipping, so we
-  // can see the full sequence from sessionStorage after the fact.
-  try {
-    const log = JSON.parse(sessionStorage.getItem("__debug_401_log") || "[]")
-    log.push({ t: Date.now(), source, pathname: window.location.pathname, alreadyHandled: _handledUnauthorized })
-    sessionStorage.setItem("__debug_401_log", JSON.stringify(log.slice(-30)))
-  } catch {}
+function _handleUnauthorized() {
   if (_handledUnauthorized) return
   if (window.location.pathname.includes("login")) return
   _handledUnauthorized = true
@@ -54,7 +46,7 @@ axios.interceptors.response.use(
     // no session at all.
     const hadToken = !!err.config?.headers?.Authorization
     if (err.response && err.response.status === 401 && hadToken) {
-      _handleUnauthorized("axios:" + (err.config?.url || "?"))
+      _handleUnauthorized()
     }
     return Promise.reject(err)
   }
@@ -76,7 +68,7 @@ window.fetch = (input, init = {}) => {
   }
   return _origFetch(input, init).then((res) => {
     if (res.status === 401 && token) {
-      _handleUnauthorized("fetch:" + (typeof input === "string" ? input : input?.url || "?"))
+      _handleUnauthorized()
     }
     return res
   })
