@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import axios from "axios"
 import { useTranslation } from "../i18n/useTranslation"
+import { useAppStore, resolveAccent } from "../store/appStore"
 
 const SUGGESTIONS = [
   "copilot_sug_1",
@@ -32,7 +33,9 @@ export default function AICopilot({ user }) {
   const [loading, setLoading] = useState(false)
   const messagesEnd = useRef()
   const inputRef = useRef()
-  const color = user?.color || "#4ade80"
+  useAppStore(s => s.accentColor) // re-render when the accent changes in Settings
+  const theme = useAppStore(s => s.theme)
+  const color = resolveAccent(user?.color, theme)
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: "smooth" })

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "../i18n/useTranslation"
-import { useAppStore } from "../store/appStore"
+import { useAppStore, resolveAccent } from "../store/appStore"
 import { canAccessPage, isSuperAdmin, isAdminRole, SUPER_ADMIN_ONLY_PAGES } from "../config/roleAccess"
 import { canAccessPlanFeature, getPaywallInfo, PLAN_NAMES } from "../config/planFeatureGates"
-import logoFull from "../logo_full.png"
+import logoMark from "../logo_mark.png"
 
 // ─── Paywall Modal ─────────────────────────────────────────────────────────
 function PaywallModal({ pageId, userPlan, onClose }) {
@@ -162,34 +162,23 @@ function LockBadge() {
 }
 
 
-// V dourado component for collapsed state
-function GoldenV({ size = 34 }) {
-  return (
-    <div style={{
-      width: size, height: size,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      position: "relative",
-    }}>
-      <span style={{
-        fontSize: size * 0.75,
-        fontWeight: 900,
-        fontFamily: "serif",
-        color: "#f59e0b",
-        textShadow: "0 0 10px rgba(245,158,11,0.6), 0 0 20px rgba(245,158,11,0.3)",
-        lineHeight: 1,
-      }}>V</span>
-    </div>
-  )
-}
-
 function VoltarisLogo({ collapsed }) {
-  return collapsed ? (
-    <GoldenV size={34} />
-  ) : (
-    <img src={logoFull} alt="VoltarisOS" style={{
-      height: "32px", objectFit: "contain", maxWidth: "160px",
-      filter: "drop-shadow(0 0 8px rgba(245,158,11,0.8)) drop-shadow(0 0 16px rgba(245,158,11,0.4)) brightness(1.25)",
-    }} />
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "11px", minWidth: 0 }}>
+      <img src={logoMark} alt="VoltarisOS" style={{
+        height: collapsed ? "30px" : "34px", width: "auto", flexShrink: 0,
+        filter: "drop-shadow(0 0 10px rgba(245,158,11,0.40))",
+      }} />
+      {!collapsed && (
+        <span style={{
+          display: "flex", alignItems: "baseline", gap: "3px", whiteSpace: "nowrap",
+          color: "var(--sidebar-text)", fontSize: "15px", fontWeight: 500, letterSpacing: "0.32em", paddingLeft: "1px",
+        }}>
+          VOLTARIS
+          <sup style={{ color: "var(--accent)", fontSize: "8px", fontWeight: 700, letterSpacing: "0.12em", position: "relative", top: "-7px" }}>OS</sup>
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -205,8 +194,9 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
   const { t } = useTranslation()
   const { sidebarDefaultCollapsed, navSimplified, setNavSimplified } = useAppStore()
   const [collapsed, setCollapsed] = useState(sidebarDefaultCollapsed)
-  const accentStore = useAppStore(s => s.accentColor)
-  const color = user?.color || accentStore || "#4ade80"
+  useAppStore(s => s.accentColor) // re-render when the accent changes in Settings
+  const theme = useAppStore(s => s.theme)
+  const color = resolveAccent(user?.color, theme)
 
   // Paywall modal state
   const [paywallPage, setPaywallPage] = useState(null)
@@ -331,7 +321,6 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
     transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
     transition: "transform 0.25s cubic-bezier(.4,0,.2,1)",
     background: "var(--sidebar)",
-    borderRight: "1px solid var(--border)",
     display: "flex",
     flexDirection: "column",
     overflowY: "auto",
@@ -339,7 +328,6 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
     width: `${w}px`,
     minWidth: `${w}px`,
     background: "var(--sidebar)",
-    borderRight: "1px solid var(--border)",
     display: "flex",
     flexDirection: "column",
     transition: "width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1)",
@@ -355,7 +343,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
 
   return (
     <>
-      <aside style={sidebarStyle}>
+      <aside className="vos-sidebar" style={sidebarStyle}>
         {/* Header */}
         <div style={{
           padding: "0 12px",
@@ -404,28 +392,27 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
         {/* Company + role + plan strip */}
         {!showCollapsed && (
           <div style={{
-            margin: "10px 12px 2px", padding: "8px 12px",
-            background: "var(--surface2)", borderRadius: "8px", border: "1px solid var(--border)",
-            flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "space-between",
+            margin: "12px 12px 4px", padding: "10px 12px",
+            background: "linear-gradient(135deg, color-mix(in srgb, var(--accent) 13%, rgba(255,255,255,0.04)), rgba(255,255,255,0.03))",
+            borderRadius: "10px", border: "1px solid var(--border)", flexShrink: 0,
           }}>
-            <div style={{ color: "var(--sidebar-sub)", fontSize: "12px", fontWeight: "500", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ color: "var(--sidebar-text)", fontSize: "13px", fontWeight: 650, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {user?.company || "Voltaris"}
             </div>
-            <div style={{ display: "flex", gap: "4px", flexShrink: 0, marginLeft: "6px" }}>
-              {/* Plan badge */}
+            <div style={{ display: "flex", gap: "5px", marginTop: "6px", flexWrap: "wrap" }}>
               <div style={{
-                fontSize: "8px", padding: "2px 6px", borderRadius: "20px",
-                background: "rgba(245,158,11,0.12)", color: "#f59e0b",
-                textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700",
+                fontSize: "8.5px", padding: "2px 7px", borderRadius: "20px",
+                background: "rgba(245,158,11,0.14)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)",
+                textTransform: "uppercase", letterSpacing: "0.6px", fontWeight: "700",
               }}>
                 {PLAN_NAMES[plan] || plan}
               </div>
-              {/* Role badge */}
               <div style={{
-                fontSize: "8px", padding: "2px 6px", borderRadius: "20px",
-                background: superAdmin ? "rgba(239,68,68,0.15)" : admin ? "rgba(16,185,129,0.12)" : "rgba(139,92,246,0.12)",
-                color: superAdmin ? "#ef4444" : admin ? "#10b981" : "#8b5cf6",
-                textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: "700",
+                fontSize: "8.5px", padding: "2px 7px", borderRadius: "20px",
+                background: superAdmin ? "rgba(239,68,68,0.14)" : admin ? "rgba(16,185,129,0.14)" : "rgba(139,92,246,0.14)",
+                color: superAdmin ? "#f87171" : admin ? "#34d399" : "#a78bfa",
+                border: `1px solid ${superAdmin ? "rgba(239,68,68,0.28)" : admin ? "rgba(16,185,129,0.28)" : "rgba(139,92,246,0.28)"}`,
+                textTransform: "uppercase", letterSpacing: "0.6px", fontWeight: "700",
               }}>
                 {role === "SUPER_ADMIN" ? t("role_super_admin") : role === "TENANT_ADMIN" ? "ADMIN" : role}
               </div>
@@ -442,10 +429,10 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
             <div key={gi} style={{ marginBottom: "4px" }}>
               {!showCollapsed && (
                 <div style={{
-                  padding: "8px 16px 4px", fontSize: "10px", fontWeight: "600",
+                  padding: "14px 20px 5px", fontSize: "10px", fontWeight: "700",
                   color: isDevGroup ? "#ef4444" : "var(--sidebar-sub)",
-                  opacity: isDevGroup ? 1 : 0.6,
-                  textTransform: "uppercase", letterSpacing: "1px", whiteSpace: "nowrap",
+                  opacity: isDevGroup ? 1 : 0.55,
+                  textTransform: "uppercase", letterSpacing: "1.6px", whiteSpace: "nowrap",
                 }}>
                   {t(group.labelKey)}
                 </div>
@@ -473,37 +460,12 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
                       setPage(item.id)
                     }}
                     title={showCollapsed ? t(item.labelKey) : ""}
-                    style={{
-                      width: "100%", display: "flex", alignItems: "center", gap: "10px",
-                      padding: showCollapsed ? "10px 0" : "9px 12px",
-                      justifyContent: showCollapsed ? "center" : "flex-start",
-                      background: active ? `${isDevItem ? "#ef4444" : color}14` : "none",
-                      border: "none",
-                      borderLeft: active ? `2px solid ${isDevItem ? "#ef4444" : color}` : "2px solid transparent",
-                      color: active ? (isDevItem ? "#ef4444" : color) : (isDevItem ? "rgba(239,68,68,0.6)" : "var(--sidebar-sub)"),
-                      cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
-                      textAlign: "left", transition: "all 0.12s",
-                      opacity: hasAccess ? 1 : 0.55,
-                    }}
-                    onMouseEnter={e => {
-                      if (!active) {
-                        e.currentTarget.style.background = isDevItem ? "rgba(239,68,68,0.08)" : "rgba(255,255,255,0.06)"
-                        e.currentTarget.style.color = isDevItem ? "#ef4444" : "var(--sidebar-text)"
-                      }
-                    }}
-                    onMouseLeave={e => {
-                      if (!active) {
-                        e.currentTarget.style.background = "none"
-                        e.currentTarget.style.color = isDevItem ? "rgba(239,68,68,0.6)" : "var(--sidebar-sub)"
-                      }
-                    }}
+                    className={`vos-nav-item${active ? " active" : ""}${showCollapsed ? " collapsed" : ""}${isDevItem ? " dev" : ""}`}
+                    style={{ "--item": isDevItem ? "#ef4444" : color, opacity: hasAccess ? 1 : 0.5 }}
                   >
-                    <span style={{ flexShrink: 0, display: "flex" }}>{item.icon}</span>
+                    <span className="vos-nav-icon">{item.icon}</span>
                     {!showCollapsed && <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t(item.labelKey)}</span>}
                     {!showCollapsed && !hasAccess && <LockBadge />}
-                    {active && !showCollapsed && (
-                      <span style={{ marginLeft: "auto", width: "6px", height: "6px", borderRadius: "50%", background: isDevItem ? "#ef4444" : color, flexShrink: 0 }} />
-                    )}
                   </button>
                 )
               })}

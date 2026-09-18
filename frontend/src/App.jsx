@@ -222,16 +222,21 @@ function AppShell({ user, setUser, onLogout }) {
     r.setProperty("--grid-line", themeVars.gridLine)
     r.setProperty("--tooltip-bg", themeVars.tooltipBg)
     r.setProperty("--gradient", themeVars.gradient)
-    document.body.style.background = themeVars.bg
+    r.setProperty("--accent", themeVars.accent)
+    r.setProperty("--accent2", themeVars.accent2)
+    document.documentElement.dataset.mode = themeVars.mode
+    // The colour lives on <html> (not <body>) so the fixed ambient layer at z-index -1 paints above it.
+    document.documentElement.style.background = themeVars.bg
+    document.body.style.background = "transparent"
   }, [themeVars])
 
   return (
     <div style={{
       display: "flex", minHeight: "100vh",
-      background: themeVars.bg,
       color: themeVars.text,
       position: "relative",
     }}>
+      <div className="vos-ambient" aria-hidden="true" />
       <SimBanner />
 
       {isMobile && mobileOpen && (

@@ -1133,10 +1133,7 @@ export default function Settings({ user, setUser, setPage }) {
               {Object.values(THEMES).map(th => {
                 const active = theme === th.name;
                 // Premium preview colors for each theme
-                const previewAccent = {
-                  dark: "#4ade80", light: "#3b82f6", midnight: "#a78bfa",
-                  forest: "#4ade80", ocean: "#60a5fa", ember: "#f97316",
-                }[th.name] || accent;
+                const previewAccent = th.accent || accent;
                 return (
                   <div key={th.name} onClick={() => setTheme(th.name)} style={{
                     border: `2px solid ${active ? accent : "transparent"}`,
