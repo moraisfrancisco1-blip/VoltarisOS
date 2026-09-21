@@ -22,6 +22,7 @@
   --gradient:     linear-gradient(135deg, #0d1424 0%, #080c18 100%);
   --accent:       #f59e0b;
   --accent2:      #f97316;
+  --sim-h:        0px;
 }
 
 /* ── Base ── */

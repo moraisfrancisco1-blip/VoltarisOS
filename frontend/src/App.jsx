@@ -202,6 +202,12 @@ function AppShell({ user, setUser, onLogout }) {
     return () => window.removeEventListener("keydown", handler)
   }, [])
 
+  // Space the fixed simulation banner occupies; the shell, sidebar and top bar all
+  // offset by it (var(--sim-h)) so the banner never covers the logo or the top bar.
+  useEffect(() => {
+    document.documentElement.style.setProperty("--sim-h", simMode ? "38px" : "0px")
+  }, [simMode])
+
   const PageComponent = PAGES[page] || Dashboard
   const themeVars = THEMES[theme] || THEMES.dark
 
@@ -235,6 +241,7 @@ function AppShell({ user, setUser, onLogout }) {
       display: "flex", minHeight: "100vh",
       color: themeVars.text,
       position: "relative",
+      paddingTop: "var(--sim-h)",
     }}>
       <div className="vos-ambient" aria-hidden="true" />
       <SimBanner />
@@ -265,7 +272,6 @@ function AppShell({ user, setUser, onLogout }) {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        marginTop: simMode ? "38px" : 0,
         marginLeft: isMobile ? 0 : undefined,
       }}>
         <TopBar

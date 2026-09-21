@@ -10,7 +10,7 @@ export default function SimBanner() {
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 9000,
       background: "linear-gradient(90deg, #78350f, #92400e)",
       borderBottom: "1px solid #f59e0b44",
-      padding: "7px 24px",
+      height: "38px", boxSizing: "border-box", padding: "0 24px",
       display: "flex", alignItems: "center", justifyContent: "center", gap: "12px",
     }}>
       <span style={{ fontSize: "13px" }}>🧪</span>

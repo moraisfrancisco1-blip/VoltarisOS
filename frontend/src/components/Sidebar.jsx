@@ -313,7 +313,7 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
 
   const sidebarStyle = isMobile ? {
     position: "fixed",
-    top: 0,
+    top: "var(--sim-h)",
     left: 0,
     bottom: 0,
     width: "240px",
@@ -331,9 +331,9 @@ export default function Sidebar({ page, setPage, user, onLogout, isMobile, mobil
     display: "flex",
     flexDirection: "column",
     transition: "width 0.25s cubic-bezier(.4,0,.2,1), min-width 0.25s cubic-bezier(.4,0,.2,1)",
-    height: "100vh",
+    height: "calc(100vh - var(--sim-h))",
     position: "sticky",
-    top: 0,
+    top: "var(--sim-h)",
     overflowY: "auto",
     overflowX: "hidden",
     zIndex: 100,
