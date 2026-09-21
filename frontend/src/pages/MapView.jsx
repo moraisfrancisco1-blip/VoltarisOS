@@ -77,6 +77,10 @@ export default function MapView() {
           font-size: 9px !important;
         }
         .leaflet-control-attribution a { color: rgba(148,163,184,0.6) !important; }
+        [data-mode="dark"] .leaflet-container { background: #0b1020 !important; }
+        [data-mode="dark"] .vos-map-tiles {
+          filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.92) saturate(0.55);
+        }
       `;
       document.head.appendChild(style);
     }
@@ -88,11 +92,13 @@ export default function MapView() {
         zoomControl: true,
       });
 
-      // Voyager tiles — colorful, light, premium
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
+      // CARTO's public raster endpoints now stamp "API KEY REQUIRED" over every tile, so use
+      // OpenStreetMap's standard tiles (no key, attribution required). In dark themes the tile
+      // pane is inverted (see .vos-map-tiles) so the map matches the interface.
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        className: "vos-map-tiles",
       }).addTo(map);
 
       sites.forEach(site => {
