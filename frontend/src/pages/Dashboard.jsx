@@ -193,7 +193,7 @@ export default function Dashboard({ setPage }) {
       )}
 
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14 }}>
         {kpis.map(k => (
           <div key={k.label} style={glassCard(k.color)}>
             <div style={label}>{k.label}</div>
