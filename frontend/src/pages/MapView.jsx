@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import DemoNotice from "../components/DemoNotice";
 import { useAppStore } from "../store/appStore";
 
@@ -7,6 +9,9 @@ import { useTranslation } from "../i18n/useTranslation";
 const accent = "#6366f1";
 
 const isOnline = (status) => status === "active" || status === "online";
+
+// Site fields are tenant-controlled and end up in popup HTML -- never inject them raw.
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export default function MapView() {
   const { t } = useTranslation();
@@ -31,15 +36,7 @@ export default function MapView() {
 
   useEffect(() => {
     if (mapInstanceRef.current) return;
-    if (!sitesLoaded || sites.length === 0) return;
-
-    if (!document.querySelector("#leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
+    if (!simMode || !sitesLoaded || sites.length === 0 || !mapRef.current) return;
 
     // Leaflet popup premium styling injection
     if (!document.querySelector("#leaflet-premium-css")) {
@@ -84,10 +81,7 @@ export default function MapView() {
       document.head.appendChild(style);
     }
 
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => {
-      const L = window.L;
+    {
       const map = L.map(mapRef.current, {
         center: [48.0, 0.0],
         zoom: 4,
@@ -141,13 +135,13 @@ export default function MapView() {
           <div style="font-family: system-ui, sans-serif; padding: 14px 16px; min-width: 200px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
               <div>
-                <div style="font-size:15px; font-weight:700; color:var(--text,var(--text));">${site.name}</div>
-                <div style="font-size:11px; color:var(--sub,var(--sub)); margin-top:1px;">${site.location || ""}</div>
+                <div style="font-size:15px; font-weight:700; color:var(--text,var(--text));">${esc(site.name)}</div>
+                <div style="font-size:11px; color:var(--sub,var(--sub)); margin-top:1px;">${esc(site.location || "")}</div>
               </div>
               <span style="
                 font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px;
                 background:${color}20; color:${color}; border:1px solid ${color}40;
-              ">${online ? "Active" : (site.status || "unknown")}</span>
+              ">${online ? "Active" : esc(site.status || "unknown")}</span>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
@@ -164,7 +158,7 @@ export default function MapView() {
               </div>
               <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 10px;">
                 <div style="font-size:10px; color:var(--sub,var(--sub));">Timezone</div>
-                <div style="font-size:14px; font-weight:700; color:#34d399;">${site.timezone || "—"}</div>
+                <div style="font-size:14px; font-weight:700; color:#34d399;">${esc(site.timezone || "—")}</div>
               </div>
             </div>
           </div>
@@ -173,8 +167,7 @@ export default function MapView() {
 
       mapInstanceRef.current = map;
       setMapReady(true);
-    };
-    document.head.appendChild(script);
+    }
 
     return () => {
       if (mapInstanceRef.current) {
@@ -183,7 +176,7 @@ export default function MapView() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sitesLoaded]);
+  }, [sitesLoaded, simMode, sites]);
 
   const cardStyle = {
     background: "var(--surface)",
