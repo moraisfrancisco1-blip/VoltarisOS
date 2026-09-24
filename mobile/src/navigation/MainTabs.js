@@ -1,5 +1,6 @@
 import { View, Text, Platform } from "react-native"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { useAuth } from "../auth/AuthContext"
 import { isAdminRole } from "../lib/roles"
@@ -46,13 +47,16 @@ function MainTabs() {
   const auth = useAuth()
   const role = auth.user?.role || "TENANT_MEMBER"
   const isAdmin = isAdminRole(role)
+  // Edge-to-edge (Android 15+ / SDK 56): the system nav bar overlaps the app,
+  // so the tab bar must grow by the bottom inset to stay visible.
+  const insets = useSafeAreaInsets()
 
   const tabBarStyle = {
     backgroundColor: C.card,
     borderTopWidth: 1,
     borderTopColor: C.border,
-    height: Platform.OS === "ios" ? 90 : 72,
-    paddingBottom: Platform.OS === "ios" ? 24 : 14,
+    height: Platform.OS === "ios" ? 90 : 72 + insets.bottom,
+    paddingBottom: Platform.OS === "ios" ? 24 : 14 + insets.bottom,
     paddingTop: 10,
   }
 
