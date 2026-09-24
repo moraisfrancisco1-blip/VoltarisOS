@@ -1,0 +1,42 @@
+{
+  "common": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "retry": "Opnieuw",
+    "loading": "Laden…",
+    "viewAll": "Alles bekijken",
+    "manage": "Beheren"
+  },
+  "login": {
+    "title": "VoltarisOS",
+    "subtitle": "Energie-intelligentieplatform",
+    "badgeVersion": "v4.2",
+    "badgeTier": "ENTERPRISE",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Wachtwoord",
+    "emailPlaceholder": "jij@bedrijf.nl",
+    "passwordPlaceholder": "••••••••",
+    "errorEmpty": "Vul je gegevens in",
+    "errorInvalid": "Ongeldige inloggegevens",
+    "signIn": "Inloggen",
+    "loadingTitle": "Gegevens laden…"
+  },
+  "home": {
+    "greetingMorning": "Goedemorgen",
+    "greetingAfternoon": "Goedemiddag",
+    "greetingEvening": "Goedenavond",
+    "livePortfolio": "Live portfolio",
+    "avgSoc": "Gem. SOC {{pct}}% · {{count}} apparaten",
+    "waitingLive": "Wachten op live data…",
+    "live": "LIVE",
+    "offline": "OFFLINE",
+    "gridPrice": "Netprijs",
+    "activeAlerts": "Actieve meldingen",
+    "sites": "Locaties",
+    "sitesSubtitle": "{{active}} actief · {{other}} overig",
+    "noSitesTitle": "Nog geen locaties",
+    "noSitesSub": "Locaties die je toevoegt in VoltarisOS verschijnen hier.",
+    "mostRecent": "Meest recent",
+    "noAlerts": "Geen actieve meldingen 🎉"
+  }
+}

@@ -25,6 +25,9 @@
     },
     "extra": {
       "apiUrl": "https://voltarisos-production.up.railway.app"
-    }
+    },
+    "plugins": [
+      "expo-localization"
+    ]
   }
 }

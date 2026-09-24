@@ -1,0 +1,42 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "loading": "Loading…",
+    "viewAll": "View all",
+    "manage": "Manage"
+  },
+  "login": {
+    "title": "VoltarisOS",
+    "subtitle": "Energy Intelligence Platform",
+    "badgeVersion": "v4.2",
+    "badgeTier": "ENTERPRISE",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "emailPlaceholder": "you@company.com",
+    "passwordPlaceholder": "••••••••",
+    "errorEmpty": "Please enter credentials",
+    "errorInvalid": "Invalid credentials",
+    "signIn": "Sign In",
+    "loadingTitle": "Loading intelligence…"
+  },
+  "home": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "livePortfolio": "Live Portfolio",
+    "avgSoc": "Avg SOC {{pct}}% · {{count}} devices",
+    "waitingLive": "Waiting for live data…",
+    "live": "LIVE",
+    "offline": "OFFLINE",
+    "gridPrice": "Grid Price",
+    "activeAlerts": "Active Alerts",
+    "sites": "Sites",
+    "sitesSubtitle": "{{active}} active · {{other}} other",
+    "noSitesTitle": "No sites yet",
+    "noSitesSub": "Sites you add in VoltarisOS will show up here.",
+    "mostRecent": "Most recent",
+    "noAlerts": "No active alerts 🎉"
+  }
+}

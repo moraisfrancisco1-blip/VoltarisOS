@@ -11,6 +11,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL, API_TIMEOUT } from './config';
+import { Sentry } from './src/lib/sentry';
 
 // Token storage keys
 const TOKEN_KEY = 'voltaris_auth_token';
@@ -72,6 +73,9 @@ apiClient.interceptors.response.use(
       }
     }
 
+    Sentry.captureException(error, {
+      contexts: { request: { url: originalRequest?.url, method: originalRequest?.method } },
+    });
     return Promise.reject(error);
   }
 );

@@ -12,8 +12,8 @@
  *   const { lastMessage, connectionStatus, sendMessage } = useWebSocket('/ws/dashboard');
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { WS_BASE_URL, WS_RECONNECT_INTERVAL, WS_MAX_RECONNECT_ATTEMPTS } from '../config';
-import { getStoredToken } from '../api';
+import { WS_BASE_URL, WS_RECONNECT_INTERVAL, WS_MAX_RECONNECT_ATTEMPTS } from '../../config';
+import { getStoredToken } from '../../api';
 
 // Connection states
 export const CONNECTION_STATUS = {

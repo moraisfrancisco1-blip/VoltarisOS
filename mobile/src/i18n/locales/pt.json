@@ -1,0 +1,42 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "retry": "Tentar novamente",
+    "loading": "A carregar…",
+    "viewAll": "Ver tudo",
+    "manage": "Gerir"
+  },
+  "login": {
+    "title": "VoltarisOS",
+    "subtitle": "Plataforma de Inteligência Energética",
+    "badgeVersion": "v4.2",
+    "badgeTier": "ENTERPRISE",
+    "emailLabel": "Email",
+    "passwordLabel": "Palavra-passe",
+    "emailPlaceholder": "tu@empresa.com",
+    "passwordPlaceholder": "••••••••",
+    "errorEmpty": "Introduz as tuas credenciais",
+    "errorInvalid": "Credenciais inválidas",
+    "signIn": "Entrar",
+    "loadingTitle": "A carregar dados…"
+  },
+  "home": {
+    "greetingMorning": "Bom dia",
+    "greetingAfternoon": "Boa tarde",
+    "greetingEvening": "Boa noite",
+    "livePortfolio": "Portfólio em tempo real",
+    "avgSoc": "SOC médio {{pct}}% · {{count}} dispositivos",
+    "waitingLive": "A aguardar dados em tempo real…",
+    "live": "AO VIVO",
+    "offline": "OFFLINE",
+    "gridPrice": "Preço da rede",
+    "activeAlerts": "Alertas ativos",
+    "sites": "Locais",
+    "sitesSubtitle": "{{active}} ativos · {{other}} outros",
+    "noSitesTitle": "Ainda sem locais",
+    "noSitesSub": "Os locais que adicionares no VoltarisOS aparecem aqui.",
+    "mostRecent": "Mais recente",
+    "noAlerts": "Sem alertas ativos 🎉"
+  }
+}
