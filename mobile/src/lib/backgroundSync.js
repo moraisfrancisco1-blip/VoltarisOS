@@ -85,5 +85,5 @@ export async function unregisterBackgroundSync() {
 // Called on logout so a different tenant logging in on the same device never
 // briefly sees the previous tenant's numbers in the widget/notification.
 export function clearCachedSnapshot() {
-  storage.delete(SNAPSHOT_CACHE_KEY)
+  storage.remove(SNAPSHOT_CACHE_KEY)
 }
