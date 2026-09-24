@@ -180,7 +180,14 @@ export async function optimizeVpp(vppId, body = {}) {
 
 export async function getDayAheadPrices() {
   const response = await apiClient.get('/prices/day-ahead');
-  return response.data;
+  const data = response.data;
+  // The backend returns EUR/kWh for its simulated fallback but raw EUR/MWh
+  // from ENTSO-E (same normalization as backend/routers/savings.py). The app
+  // displays EUR/kWh everywhere, so convert real ENTSO-E prices here.
+  if (data?.source !== 'simulated' && Array.isArray(data?.prices)) {
+    return { ...data, prices: data.prices.map(p => ({ ...p, price: p.price / 1000 })) };
+  }
+  return data;
 }
 
 export async function getVppAggregate(vppId) {
