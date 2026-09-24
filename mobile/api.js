@@ -163,6 +163,16 @@ export async function getDeviceReadings(deviceId) {
   return response.data;
 }
 
+export async function getSavingsToday() {
+  const response = await apiClient.get('/savings/today');
+  return response.data;
+}
+
+export async function optimizeVpp(vppId, body = {}) {
+  const response = await apiClient.post(`/vpp/${vppId}/optimize`, body);
+  return response.data;
+}
+
 export async function getDayAheadPrices() {
   const response = await apiClient.get('/prices/day-ahead');
   return response.data;

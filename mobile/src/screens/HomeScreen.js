@@ -5,9 +5,9 @@ import { useTranslation } from "react-i18next"
 
 import { useAuth } from "../auth/AuthContext"
 import { useWebSocket } from "../hooks/useWebSocket"
-import { useSites, useAlerts, useDayAheadPrices } from "../api/queries"
+import { useSites, useAlerts, useDayAheadPrices, useSavingsToday, useVppGroups, useOptimizerPlan } from "../api/queries"
 import { C, FONT, ss } from "../theme/tokens"
-import { KPI, SectionHeader, Badge, ComingSoon, StatusDot, PulseIndicator, Card, SkeletonCard } from "../ui"
+import { KPI, SectionHeader, Badge, ComingSoon, StatusDot, PulseIndicator, Card, SkeletonCard, EnergyFlow, PriceScrubber } from "../ui"
 import { isAdminRole, displayRole } from "../lib/roles"
 import { timeAgo } from "../lib/format"
 
@@ -23,10 +23,14 @@ function HomeScreen({ navigation }) {
   const sitesQ = useSites()
   const alertsQ = useAlerts(3)
   const pricesQ = useDayAheadPrices()
+  const savingsQ = useSavingsToday()
+  const vppGroupsQ = useVppGroups()
+  const selectedVppId = vppGroupsQ.data?.[0]?.id
+  const planQ = useOptimizerPlan(selectedVppId)
 
   const loading = sitesQ.isPending || alertsQ.isPending || pricesQ.isPending
   const refreshing = sitesQ.isFetching || alertsQ.isFetching || pricesQ.isFetching
-  const onRefresh = () => { sitesQ.refetch(); alertsQ.refetch(); pricesQ.refetch() }
+  const onRefresh = () => { sitesQ.refetch(); alertsQ.refetch(); pricesQ.refetch(); savingsQ.refetch() }
 
   const sites = sitesQ.data || []
   const alerts = alertsQ.data || []
@@ -55,27 +59,50 @@ function HomeScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Live power widget — glass surface */}
+          {/* Savings headline + animated energy flow — glass surface */}
           <Card variant="glass">
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-              <View>
-                <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>{t("home.livePortfolio")}</Text>
-                <Text style={{ color: C.accent, fontSize: 38, fontWeight: "900", letterSpacing: -1, marginTop: 4 }}>
-                  {live?.total_power_kw != null ? live.total_power_kw.toFixed(0) : "—"}<Text style={{ fontSize: FONT.lg, color: C.sub }}> kW</Text>
-                </Text>
-                <Text style={{ color: C.sub, fontSize: FONT.sm, marginTop: 3 }}>
-                  {live?.avg_soc_pct != null
-                    ? t("home.avgSoc", { pct: live.avg_soc_pct.toFixed(0), count: live.device_count ?? 0 })
-                    : t("home.waitingLive")}
-                </Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>{t("home.savingsTitle")}</Text>
+                {savingsQ.isPending ? (
+                  <SkeletonCard height={44} style={{ marginTop: 6, backgroundColor: "transparent", borderWidth: 0 }} />
+                ) : (
+                  <>
+                    <Text style={{ color: C.accent, fontSize: 34, fontWeight: "900", letterSpacing: -1, marginTop: 4 }}>
+                      €{(savingsQ.data?.total_eur ?? 0).toFixed(2)}
+                    </Text>
+                    <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 3 }}>
+                      {savingsQ.data
+                        ? t("home.savingsBreakdown", {
+                            solar: savingsQ.data.solar_value_eur != null ? `€${savingsQ.data.solar_value_eur.toFixed(2)}` : "—",
+                            trading: `€${savingsQ.data.trading_pnl_eur.toFixed(2)}`,
+                          })
+                        : ""}
+                    </Text>
+                  </>
+                )}
               </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Badge label={isConnected ? t("home.live") : t("home.offline")} color={isConnected ? C.accent : C.muted} />
-                <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 8 }}>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
-              </View>
+              <Badge label={isConnected ? t("home.live") : t("home.offline")} color={isConnected ? C.accent : C.muted} />
             </View>
+            {savingsQ.data?.solar_value_is_estimate && (
+              <Text style={{ color: C.muted, fontSize: FONT.xs, marginBottom: 8 }}>{t("home.savingsEstimateNote")}</Text>
+            )}
+
+            <EnergyFlow solarKw={live?.solar_kw ?? 0} batteryKw={live?.battery_kw ?? 0} />
           </Card>
         </LinearGradient>
+
+        {/* Day-ahead price scrubber */}
+        <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+          <SectionHeader title={t("home.priceScrubberTitle")} subtitle={t("home.priceScrubberSub")} />
+          {pricesQ.isPending ? (
+            <SkeletonCard height={110} />
+          ) : (
+            <View style={ss.card}>
+              <PriceScrubber prices={pricesQ.data?.prices || []} plan={planQ.data} />
+            </View>
+          )}
+        </View>
 
         {/* KPIs */}
         <View style={{ paddingHorizontal: 16, paddingTop: 4 }}>

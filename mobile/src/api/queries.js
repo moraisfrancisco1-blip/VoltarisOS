@@ -28,3 +28,32 @@ export function useDayAheadPrices() {
     staleTime: 10 * 60 * 1000, // day-ahead prices are set once per day
   })
 }
+
+export function useVppGroups() {
+  return useQuery({
+    queryKey: ["vpp-groups"],
+    queryFn: api.getVPPGroups,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useSavingsToday() {
+  return useQuery({
+    queryKey: ["savings", "today"],
+    queryFn: api.getSavingsToday,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Runs the real MILP optimizer for a VPP group (POST, but idempotent-ish
+// against the same day's prices) — staleTime kept long so scrubbing the
+// price chart doesn't re-trigger the solver on every render.
+export function useOptimizerPlan(vppId) {
+  return useQuery({
+    queryKey: ["vpp", vppId, "optimize"],
+    queryFn: () => api.optimizeVpp(vppId),
+    enabled: !!vppId,
+    staleTime: 15 * 60 * 1000,
+    retry: 1,
+  })
+}

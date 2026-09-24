@@ -18,6 +18,7 @@ from backend.database import SessionLocal
 from backend import models
 from backend.security import get_current_user
 from backend.config import settings
+from backend.energy_metrics import SOLAR_TYPES, solar_energy_kwh as _solar_energy_kwh
 
 router = APIRouter()
 
@@ -29,10 +30,9 @@ _KG_CO2_PER_TREE_YEAR = 21.0     # kg CO2 sequestered per tree per year (estimat
 _KG_CO2_PER_CAR_KM = 0.12        # kg CO2 per car-km avoided (estimate)
 _KG_CO2_PER_FLIGHT_KM = 0.255    # kg CO2 per passenger flight-km (estimate)
 
-# Solar-capable device types: readings from these devices are treated as solar
-# production. Battery/EV storage devices are excluded so discharge is not
-# counted as production.
-SOLAR_TYPES = ("solar", "pv", "inverter")
+# SOLAR_TYPES and the energy-aggregation logic now live in backend/energy_metrics.py
+# (shared with backend/routers/savings.py) -- re-exported/aliased here so nothing
+# else in this file (or anything importing SOLAR_TYPES from here) has to change.
 
 _MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
            "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -51,53 +51,6 @@ def _effective_tenant(user: dict):
     if user.get("role") == "SUPER_ADMIN":
         return None
     return user.get("tenant_id")
-
-
-def _solar_energy_kwh(db: Session, tenant, start, end, site_id=None) -> float:
-    """Real produced solar energy (kWh) in the [start, end) window.
-
-    Primary source: SUM(DeviceReading.energy_kwh) for solar-capable devices of
-    the effective tenant. Only if no `energy_kwh` was ever recorded in the window
-    do we fall back to a conservative `power_kw` integration (gaps clamped to 1h).
-    """
-    base = (
-        db.query(models.DeviceReading)
-        .join(models.Device, models.Device.id == models.DeviceReading.device_id)
-        .filter(models.DeviceReading.timestamp >= start)
-        .filter(models.DeviceReading.timestamp < end)
-        .filter(func.lower(models.Device.device_type).in_(SOLAR_TYPES))
-    )
-    if site_id is not None:
-        base = base.filter(models.Device.site_id == site_id)
-    if tenant is not None:
-        base = base.filter(models.Device.tenant_id == tenant)
-
-    energy = base.with_entities(
-        func.coalesce(func.sum(models.DeviceReading.energy_kwh), 0.0)
-    ).scalar() or 0.0
-    if energy and energy > 0:
-        return round(float(energy), 2)
-
-    has_energy = base.with_entities(func.count(models.DeviceReading.id)).filter(
-        models.DeviceReading.energy_kwh.isnot(None)
-    ).scalar() or 0
-    if has_energy:
-        return 0.0  # energy_kwh present but genuinely zero in window
-
-    rows = base.with_entities(
-        models.DeviceReading.timestamp, models.DeviceReading.power_kw
-    ).order_by(models.DeviceReading.timestamp.asc()).all()
-    if not rows:
-        return 0.0
-    total = 0.0
-    for i, (ts, pw) in enumerate(rows):
-        if pw is None:
-            continue
-        nxt = rows[i + 1][0] if i + 1 < len(rows) else end
-        dt = (nxt - ts).total_seconds()
-        dt = min(max(dt, 0.0), 3600.0)  # clamp gaps to 1h
-        total += pw * dt / 3600.0
-    return round(total, 2)
 
 
 def _score_for_capacity_factor(perf):

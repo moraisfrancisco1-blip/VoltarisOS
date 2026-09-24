@@ -22,6 +22,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
 from sqlalchemy.orm import joinedload
 from backend.security import decode_token
 from backend.models import utcnow_naive
+from backend.dashboard_metrics import compute_dashboard_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -118,20 +119,18 @@ async def websocket_dashboard(
             
             db = SessionLocal()
             try:
-                # Get latest metrics
-                total_power = 0.0
-                avg_soc = 0.5
-                device_count = 0
-                
                 # Get devices with latest readings in one optimized query
                 from sqlalchemy import and_, desc
-                
-                # Get all device IDs for this tenant first
-                device_ids = [d.id for d in db.query(models.Device.id).filter(
+
+                # Get all device IDs (+ type, for the solar/battery breakdown) for this tenant first
+                devices = db.query(models.Device.id, models.Device.device_type).filter(
                     models.Device.tenant_id == tenant_id,
                     models.Device.enabled == True,
-                ).all()]
-                
+                ).all()
+                device_ids = [d.id for d in devices]
+                device_type_by_id = {d.id: d.device_type for d in devices}
+
+                readings_for_metrics = []
                 if device_ids:
                     # Get latest reading for each device using a correlated subquery
                     from sqlalchemy import select, func
@@ -144,7 +143,7 @@ async def websocket_dashboard(
                         .group_by(models.DeviceReading.device_id)
                         .subquery()
                     )
-                    
+
                     latest_readings = db.query(models.DeviceReading).join(
                         subq,
                         and_(
@@ -152,30 +151,25 @@ async def websocket_dashboard(
                             models.DeviceReading.timestamp == subq.c.max_ts
                         )
                     ).all()
-                    
-                    for reading in latest_readings:
-                        if reading.power_kw:
-                            total_power += reading.power_kw
-                            device_count += 1
-                        if reading.soc_pct:
-                            avg_soc += reading.soc_pct
-                
-                if device_count > 0:
-                    avg_soc = avg_soc / device_count / 100  # Convert to 0-1
-                
+
+                    readings_for_metrics = [
+                        (device_type_by_id.get(reading.device_id), reading.power_kw, reading.soc_pct)
+                        for reading in latest_readings
+                    ]
+
+                metrics = compute_dashboard_metrics(readings_for_metrics)
+
                 # Get latest VPP bid status
                 latest_bid = db.query(models.VPPBid).filter(
                     models.VPPBid.tenant_id == tenant_id
                 ).order_by(models.VPPBid.submitted_at.desc()).first()
-                
+
                 # Build update message
                 update = {
                     "type": "dashboard_update",
                     "timestamp": utcnow_naive().isoformat(),
                     "data": {
-                        "total_power_kw": round(total_power, 2),
-                        "avg_soc_pct": round(avg_soc * 100, 1),
-                        "device_count": device_count,
+                        **metrics,
                         "active_bids": 1 if latest_bid and latest_bid.status == "pending" else 0,
                         "last_bid_status": latest_bid.status if latest_bid else None,
                     }
