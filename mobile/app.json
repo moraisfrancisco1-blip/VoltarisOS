@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "VoltarisOS",
-    "slug": "voltarisos",
+    "slug": "voltaris-os",
+    "owner": "voltarisos",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,7 +25,10 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiUrl": "https://voltarisos-production.up.railway.app"
+      "apiUrl": "https://voltarisos-production.up.railway.app",
+      "eas": {
+        "projectId": "d1374115-d221-4a74-8e04-cd729b2f339a"
+      }
     },
     "plugins": [
       "expo-localization",
