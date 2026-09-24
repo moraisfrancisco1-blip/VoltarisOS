@@ -52,5 +52,10 @@
     "planCharge": "Carregar",
     "planDischarge": "Descarregar",
     "planHold": "Manter"
+  },
+  "widget": {
+    "channelName": "Estado ao vivo VoltarisOS",
+    "notificationTitle": "Poupaste {{total}} hoje",
+    "notificationBody": "Solar {{solar}}kW · Bateria {{battery}}kW"
   }
 }

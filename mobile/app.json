@@ -27,7 +27,34 @@
       "apiUrl": "https://voltarisos-production.up.railway.app"
     },
     "plugins": [
-      "expo-localization"
+      "expo-localization",
+      "expo-background-task",
+      "expo-dev-client",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-foreground.png",
+          "color": "#0a0f1a"
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Savings",
+              "label": "VoltarisOS -- Poupanca",
+              "description": "Solar, bateria e poupanca de hoje em tempo real.",
+              "minWidth": "220dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ]
   }
 }

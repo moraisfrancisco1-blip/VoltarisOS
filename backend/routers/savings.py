@@ -56,8 +56,10 @@ def compute_savings(solar_kwh: float, avg_price_eur_kwh: float | None, trading_p
     }
 
 
-@router.get("/api/savings/today")
-async def savings_today(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+async def compute_savings_today(db: Session, user: dict) -> dict:
+    """Shared by GET /api/savings/today and GET /api/dashboard/snapshot (the
+    latter is polled by the Android widget/live-notification background task,
+    which needs the same real numbers in one call)."""
     tenant = _effective_tenant(user)
     now = models.utcnow_naive()
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -97,3 +99,8 @@ async def savings_today(db: Session = Depends(get_db), user: dict = Depends(get_
         "solar_value_is_estimate": True,
         **result,
     }
+
+
+@router.get("/api/savings/today")
+async def savings_today(db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+    return await compute_savings_today(db, user)

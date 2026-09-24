@@ -52,5 +52,10 @@
     "planCharge": "Charge",
     "planDischarge": "Discharge",
     "planHold": "Hold"
+  },
+  "widget": {
+    "channelName": "VoltarisOS live status",
+    "notificationTitle": "You saved {{total}} today",
+    "notificationBody": "Solar {{solar}}kW · Battery {{battery}}kW"
   }
 }

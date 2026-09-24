@@ -52,5 +52,10 @@
     "planCharge": "Opladen",
     "planDischarge": "Ontladen",
     "planHold": "Vasthouden"
+  },
+  "widget": {
+    "channelName": "VoltarisOS livestatus",
+    "notificationTitle": "Vandaag {{total}} bespaard",
+    "notificationBody": "Zon {{solar}}kW · Batterij {{battery}}kW"
   }
 }

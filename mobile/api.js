@@ -168,6 +168,11 @@ export async function getSavingsToday() {
   return response.data;
 }
 
+export async function getDashboardSnapshot() {
+  const response = await apiClient.get('/dashboard/snapshot');
+  return response.data;
+}
+
 export async function optimizeVpp(vppId, body = {}) {
   const response = await apiClient.post(`/vpp/${vppId}/optimize`, body);
   return response.data;

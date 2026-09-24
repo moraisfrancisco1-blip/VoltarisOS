@@ -53,6 +53,7 @@ from backend.routers.copilot import router as copilot_router
 from backend.routers.trading_agent import router as trading_agent_router
 from backend.routers.carbon import router as carbon_router
 from backend.routers.savings import router as savings_router
+from backend.routers.dashboard_snapshot_api import router as dashboard_snapshot_router
 from backend.routers.maintenance import router as maintenance_router
 from backend.routers.devices import router as devices_router
 from backend.routers.devices import ingest_router as devices_ingest_router
@@ -239,6 +240,7 @@ app.include_router(copilot_router, dependencies=_auth_dep)
 app.include_router(trading_agent_router, dependencies=_auth_dep)
 app.include_router(carbon_router, dependencies=_auth_dep)
 app.include_router(savings_router, dependencies=_auth_dep)
+app.include_router(dashboard_snapshot_router, dependencies=_auth_dep)
 app.include_router(maintenance_router, dependencies=_auth_dep)
 app.include_router(devices_router, dependencies=_auth_dep)
 # Ingestion accepts either a user JWT or a tenant-scoped gateway key — its own
