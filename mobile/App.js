@@ -11,6 +11,9 @@ import {
   TextInput, Alert, ActivityIndicator, RefreshControl, Animated,
   Dimensions, Platform, Pressable, Modal, Switch,
 } from "react-native"
+import * as api from "./api"
+import { useWebSocket } from "./hooks/useWebSocket"
+import { APP_VERSION } from "./config"
 
 const { width: SW, height: SH } = Dimensions.get("window")
 
@@ -51,27 +54,27 @@ const FONT = {
 const AuthCtx = createContext(null)
 const useAuth = () => useContext(AuthCtx)
 
-// ─── API ──────────────────────────────────────────────────────────
-const API_BASE = "https://voltarisos-production.up.railway.app/api"
-
-async function apiFetch(path, opts = {}, token) {
-  const headers = { "Content-Type": "application/json" }
-  if (token) headers["Authorization"] = `Bearer ${token}`
-  try {
-    const r = await fetch(`${API_BASE}${path}`, { ...opts, headers })
-    if (!r.ok) throw new Error(`HTTP ${r.status}`)
-    return r.json()
-  } catch (e) {
-    throw e
-  }
+// ─── Role permissions ───────────────────────────────────────────────
+// The backend's only real roles are SUPER_ADMIN / TENANT_ADMIN / TENANT_MEMBER
+// (backend/security.py CANONICAL_ROLES) — legacy names like "operator"/"viewer"
+// are normalized server-side into TENANT_MEMBER. Map to that reality here.
+function isAdminRole(role) {
+  return role === "SUPER_ADMIN" || role === "TENANT_ADMIN"
 }
-
-// ─── Role permissions ─────────────────────────────────────────────
-const ROLE_TABS = {
-  admin:    ["home", "energy", "trading", "ops", "admin"],
-  operator: ["home", "energy", "trading", "ops"],
-  viewer:   ["home", "energy", "viewer"],
-  investor: ["home", "investor"],
+function displayRole(role) {
+  if (role === "SUPER_ADMIN") return "super admin"
+  if (role === "TENANT_ADMIN") return "admin"
+  return "member"
+}
+function timeAgo(iso) {
+  if (!iso) return "—"
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
 }
 
 // ─── Shared Components ────────────────────────────────────────────
@@ -112,6 +115,16 @@ function Badge({ label, color = C.accent }) {
   return (
     <View style={{ backgroundColor: color + "22", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: color + "44" }}>
       <Text style={{ color: color, fontSize: FONT.xs, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</Text>
+    </View>
+  )
+}
+
+function ComingSoon({ icon = "🚧", label, sub }) {
+  return (
+    <View style={[ss.card, { padding: 28, alignItems: "center" }]}>
+      <Text style={{ fontSize: 30, marginBottom: 10 }}>{icon}</Text>
+      <Text style={{ color: C.text, fontWeight: "800", fontSize: FONT.md, textAlign: "center" }}>{label}</Text>
+      {sub && <Text style={{ color: C.sub, fontSize: FONT.sm, marginTop: 6, textAlign: "center" }}>{sub}</Text>}
     </View>
   )
 }
@@ -211,27 +224,13 @@ function LoginScreen() {
     if (!email || !pass) { setError("Please enter credentials"); return }
     setLoading(true); setError("")
     try {
-      const data = await apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password: pass }),
-      })
+      const data = await api.login(email, pass)
       auth.login(data)
     } catch (e) {
-      setError("Invalid credentials. Try admin@voltaris.com / admin123")
+      setError("Invalid credentials")
     } finally {
       setLoading(false)
     }
-  }
-
-  const quickLogin = (role) => {
-    const creds = {
-      admin: ["admin@voltaris.com", "admin123"],
-      operator: ["operator@voltaris.com", "op123"],
-      viewer: ["viewer@voltaris.com", "view123"],
-      investor: ["investor@voltaris.com", "inv123"],
-    }
-    const [e, p] = creds[role]
-    setEmail(e); setPass(p)
   }
 
   return (
@@ -286,19 +285,6 @@ function LoginScreen() {
                   : <Text style={{ color: "#000", fontWeight: "800", fontSize: FONT.base, letterSpacing: 0.3 }}>Sign In</Text>}
               </LinearGradient>
             </TouchableOpacity>
-
-            {/* Quick access */}
-            <View style={[ss.card, { padding: 16 }]}>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 12, textAlign: "center" }}>Quick Access</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {["admin", "operator", "viewer", "investor"].map(r => (
-                  <TouchableOpacity key={r} onPress={() => quickLogin(r)}
-                    style={{ flex: 1, minWidth: "40%", backgroundColor: C.card2, borderRadius: 10, borderWidth: 1, borderColor: C.border, paddingVertical: 10, alignItems: "center" }}>
-                    <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "700", textTransform: "capitalize" }}>{r}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
@@ -309,32 +295,43 @@ function LoginScreen() {
 // ─── HOME / DASHBOARD ─────────────────────────────────────────────
 function HomeScreen({ navigation }) {
   const auth = useAuth()
-  const [data, setData] = useState(null)
+  const [sites, setSites] = useState([])
+  const [alerts, setAlerts] = useState([])
+  const [gridPrice, setGridPrice] = useState(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
   const greetingHour = new Date().getHours()
   const greeting = greetingHour < 12 ? "Good morning" : greetingHour < 17 ? "Good afternoon" : "Good evening"
 
+  const { lastMessage: live, isConnected } = useWebSocket("/ws/dashboard")
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
     try {
-      const d = await apiFetch("/dashboard/summary", {}, auth.token)
-      setData(d)
-    } catch {
-      setData(mockDashboard())
+      const [sitesData, alertsData, priceData] = await Promise.all([
+        api.getSites(),
+        api.getAlerts(3),
+        api.getDayAheadPrices(),
+      ])
+      setSites(sitesData || [])
+      setAlerts(alertsData || [])
+      const hourKey = `${String(new Date().getHours()).padStart(2, "0")}:00`
+      const nowPrice = priceData?.prices?.find(p => p.hour === hourKey)
+      setGridPrice(nowPrice ? nowPrice.price : null)
+    } catch (e) {
+      Alert.alert("Couldn't load dashboard", e.message || "Check your connection")
     } finally {
       setLoading(false); setRefreshing(false)
     }
-  }, [auth.token])
+  }, [])
 
   useEffect(() => { load() }, [load])
 
   if (loading) return <LoadingScreen />
 
-  const d = data || mockDashboard()
-  const powerData = [42, 38, 45, 55, 60, 58, 72, 80, 75, 68, 70, 65, 58, 52, 60, 68, 75, 80, 72, 65, 55, 48, 42, 38]
-  const now = new Date().getHours()
+  const online = sites.filter(s => s.status === "active").length
+  const offline = sites.length - online
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }}
@@ -351,7 +348,7 @@ function HomeScreen({ navigation }) {
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <PulseIndicator color={C.accent} />
-              <Badge label={auth.user?.role || "operator"} color={auth.user?.role === "admin" ? C.purple : C.blue} />
+              <Badge label={displayRole(auth.user?.role)} color={isAdminRole(auth.user?.role) ? C.purple : C.blue} />
             </View>
           </View>
 
@@ -362,58 +359,59 @@ function HomeScreen({ navigation }) {
               <View>
                 <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>Live Portfolio</Text>
                 <Text style={{ color: C.accent, fontSize: 38, fontWeight: "900", letterSpacing: -1, marginTop: 4 }}>
-                  {d.total_power_kw?.toFixed(0) || "1,847"}<Text style={{ fontSize: FONT.lg, color: C.sub }}> kW</Text>
+                  {live?.total_power_kw != null ? live.total_power_kw.toFixed(0) : "—"}<Text style={{ fontSize: FONT.lg, color: C.sub }}> kW</Text>
                 </Text>
-                <Text style={{ color: C.accent + "99", fontSize: FONT.sm, marginTop: 3 }}>▲ 12.4% vs yesterday</Text>
+                <Text style={{ color: C.sub, fontSize: FONT.sm, marginTop: 3 }}>
+                  {live?.avg_soc_pct != null ? `Avg SOC ${live.avg_soc_pct.toFixed(0)}% · ${live.device_count ?? 0} devices` : "Waiting for live data…"}
+                </Text>
               </View>
               <View style={{ alignItems: "flex-end" }}>
-                <Badge label="LIVE" color={C.accent} />
+                <Badge label={isConnected ? "LIVE" : "OFFLINE"} color={isConnected ? C.accent : C.muted} />
                 <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 8 }}>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
               </View>
             </View>
-            <Sparkline data={powerData.slice(Math.max(0, now - 11), now + 1)} color={C.accent} height={52} />
           </LinearGradient>
         </LinearGradient>
 
         {/* KPIs */}
         <View style={{ paddingHorizontal: 16, paddingTop: 4 }}>
           <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
-            <KPI label="Revenue" value={`€${d.revenue_today?.toFixed(0) || "8,240"}`} unit="" color={C.accent} delta={8} />
-            <KPI label="SOC" value={d.battery_soc?.toFixed(0) || "74"} unit="%" color={C.blue} delta={3} />
-          </View>
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
-            <KPI label="Grid Price" value={`€${d.grid_price?.toFixed(0) || "68"}`} unit="/MWh" color={C.amber} />
-            <KPI label="CO₂ Saved" value={d.co2_saved?.toFixed(1) || "4.2"} unit="t" color={C.accent} delta={5} />
+            <KPI label="Grid Price" value={gridPrice != null ? gridPrice.toFixed(2) : "—"} unit="€/kWh" color={C.amber} />
+            <KPI label="Active Alerts" value={alerts.length.toString()} unit="" color={alerts.length ? C.red : C.accent} />
           </View>
 
           {/* Sites overview */}
-          <SectionHeader title="Sites" subtitle={`${d.sites_online || 12} online · ${d.sites_offline || 2} offline`} action="View all" />
-          {mockSites().map(site => (
-            <View key={site.id} style={[ss.card, { marginBottom: 10, flexDirection: "row", alignItems: "center" }]}>
-              <StatusDot status={site.status} />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{site.name}</Text>
-                <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{site.location} · {site.type}</Text>
-                <MiniBar value={site.power} max={site.capacity} color={site.status === "online" ? C.accent : C.amber} height={5} />
+          <SectionHeader title="Sites" subtitle={`${online} active · ${offline} other`} action="View all" onAction={() => navigation.navigate("Energy")} />
+          {sites.length === 0
+            ? <ComingSoon icon="📍" label="No sites yet" sub="Sites you add in VoltarisOS will show up here." />
+            : sites.map(site => (
+              <View key={site.id} style={[ss.card, { marginBottom: 10, flexDirection: "row", alignItems: "center" }]}>
+                <StatusDot status={site.status === "active" ? "online" : "warning"} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{site.name}</Text>
+                  <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>
+                    {site.location || "—"} · {site.solar_kw ? `${site.solar_kw}kW solar` : ""}{site.battery_kwh ? ` · ${site.battery_kwh}kWh battery` : ""}
+                  </Text>
+                </View>
+                <Badge label={site.status} color={site.status === "active" ? C.accent : C.amber} />
               </View>
-              <View style={{ alignItems: "flex-end", marginLeft: 12 }}>
-                <Text style={{ color: site.status === "online" ? C.accent : C.amber, fontWeight: "800", fontSize: FONT.md }}>{site.power} kW</Text>
-                <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{Math.round(site.power / site.capacity * 100)}%</Text>
-              </View>
-            </View>
-          ))}
+            ))}
 
           {/* Alerts preview */}
-          <SectionHeader title="Active Alerts" subtitle="Last 24 hours" action="Manage" />
-          {mockAlerts().slice(0, 3).map(a => (
-            <View key={a.id} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 12 }]}>
-              <Text style={{ fontSize: 16 }}>{a.level === "critical" ? "🔴" : a.level === "warning" ? "🟡" : "🔵"}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.sm }}>{a.title}</Text>
-                <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{a.site} · {a.time}</Text>
+          <SectionHeader title="Active Alerts" subtitle="Most recent" action="Manage" onAction={() => navigation.navigate("Ops")} />
+          {alerts.length === 0
+            ? <View style={[ss.card, { alignItems: "center", padding: 20 }]}>
+                <Text style={{ color: C.sub, fontSize: FONT.sm }}>No active alerts 🎉</Text>
               </View>
-            </View>
-          ))}
+            : alerts.map(a => (
+              <View key={a.id} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center", gap: 12 }]}>
+                <Text style={{ fontSize: 16 }}>{a.severity === "critical" ? "🔴" : a.severity === "warning" ? "🟡" : "🔵"}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.sm }}>{a.title}</Text>
+                  <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{a.device_name || "—"} · {timeAgo(a.fired_at)}</Text>
+                </View>
+              </View>
+            ))}
         </View>
         <View style={{ height: 32 }} />
       </SafeAreaView>
@@ -464,8 +462,36 @@ function EnergyScreen() {
 }
 
 function BatteryTab() {
-  const batteries = mockBatteries()
-  const totalSOC = batteries.reduce((a, b) => a + b.soc, 0) / batteries.length
+  const [batteries, setBatteries] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const devices = await api.getDevices()
+        const batteryDevices = (devices || []).filter(d => d.device_type === "battery")
+        const withReadings = await Promise.all(batteryDevices.map(async d => {
+          const readings = await api.getDeviceReadings(d.id).catch(() => [])
+          const latest = readings?.[0] || {}
+          return { ...d, soc: latest.soc_pct, power: latest.power_kw, temp: latest.temp_c }
+        }))
+        setBatteries(withReadings)
+      } catch {
+        setBatteries([])
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [])
+
+  if (loading) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+  if (!batteries.length) return <ComingSoon icon="🔋" label="No battery devices yet" sub="Batteries registered in VoltarisOS will show live SOC here." />
+
+  const withSoc = batteries.filter(b => b.soc != null)
+  const totalSOC = withSoc.length ? withSoc.reduce((a, b) => a + b.soc, 0) / withSoc.length : null
+  const charging = batteries.filter(b => b.power != null && b.power < 0).length
+  const discharging = batteries.filter(b => b.power != null && b.power > 0).length
+  const idle = batteries.length - charging - discharging
 
   return (
     <View>
@@ -474,16 +500,16 @@ function BatteryTab() {
         style={{ borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.blue + "30", marginBottom: 16 }}>
         <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8 }}>Fleet Average SOC</Text>
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 12, marginBottom: 12 }}>
-          <Text style={{ color: C.blue, fontSize: 44, fontWeight: "900", letterSpacing: -1 }}>{totalSOC.toFixed(0)}%</Text>
+          <Text style={{ color: C.blue, fontSize: 44, fontWeight: "900", letterSpacing: -1 }}>{totalSOC != null ? totalSOC.toFixed(0) : "—"}%</Text>
           <Text style={{ color: C.sub, fontSize: FONT.sm, marginBottom: 10 }}>avg across {batteries.length} units</Text>
         </View>
-        <MiniBar value={totalSOC} max={100} color={C.blue} height={10} />
+        <MiniBar value={totalSOC || 0} max={100} color={C.blue} height={10} />
       </LinearGradient>
 
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-        <KPI label="Charging" value="4" unit="units" color={C.accent} />
-        <KPI label="Discharging" value="3" unit="units" color={C.amber} />
-        <KPI label="Idle" value="2" unit="units" color={C.muted} />
+        <KPI label="Charging" value={charging.toString()} unit="units" color={C.accent} />
+        <KPI label="Discharging" value={discharging.toString()} unit="units" color={C.amber} />
+        <KPI label="Idle" value={idle.toString()} unit="units" color={C.muted} />
       </View>
 
       {batteries.map(b => (
@@ -491,20 +517,19 @@ function BatteryTab() {
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{b.name}</Text>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{b.site} · {b.capacity} kWh</Text>
+              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{b.status}</Text>
             </View>
-            <Badge label={b.mode} color={b.mode === "charging" ? C.accent : b.mode === "discharging" ? C.amber : C.muted} />
+            <Badge label={b.power > 0 ? "discharging" : b.power < 0 ? "charging" : "idle"}
+              color={b.power > 0 ? C.amber : b.power < 0 ? C.accent : C.muted} />
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-            <Text style={{ color: C.accent, fontWeight: "800", fontSize: FONT.xl }}>{b.soc}%</Text>
-            <Text style={{ color: C.sub, fontSize: FONT.sm }}>{b.power > 0 ? "+" : ""}{b.power} kW</Text>
+            <Text style={{ color: C.accent, fontWeight: "800", fontSize: FONT.xl }}>{b.soc != null ? `${b.soc.toFixed(0)}%` : "—"}</Text>
+            <Text style={{ color: C.sub, fontSize: FONT.sm }}>{b.power != null ? `${b.power > 0 ? "+" : ""}${b.power.toFixed(1)} kW` : "—"}</Text>
           </View>
-          <MiniBar value={b.soc} max={100} color={b.soc > 60 ? C.accent : b.soc > 30 ? C.amber : C.red} height={7} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
-            <Text style={{ color: C.sub, fontSize: FONT.xs }}>Temp: {b.temp}°C</Text>
-            <Text style={{ color: C.sub, fontSize: FONT.xs }}>Health: {b.health}%</Text>
-            <Text style={{ color: C.sub, fontSize: FONT.xs }}>{b.cycles} cycles</Text>
-          </View>
+          <MiniBar value={b.soc || 0} max={100} color={b.soc > 60 ? C.accent : b.soc > 30 ? C.amber : C.red} height={7} />
+          {b.temp != null && (
+            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 8 }}>Temp: {b.temp.toFixed(1)}°C</Text>
+          )}
         </View>
       ))}
     </View>
@@ -512,118 +537,111 @@ function BatteryTab() {
 }
 
 function EVTab() {
-  const evs = mockEVs()
+  const [sites, setSites] = useState(null)
+
+  useEffect(() => {
+    api.getSites().then(setSites).catch(() => setSites([]))
+  }, [])
+
+  if (!sites) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+
+  const totalChargers = sites.reduce((a, s) => a + (s.ev_chargers || 0), 0)
+  const sitesWithChargers = sites.filter(s => s.ev_chargers > 0)
+
   return (
     <View>
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-        <KPI label="Charging" value="18" unit="EVs" color={C.accent} />
-        <KPI label="Total V2G" value="142" unit="kW" color={C.blue} />
+        <KPI label="EV Chargers" value={totalChargers.toString()} unit="installed" color={C.accent} />
+        <KPI label="Sites" value={sitesWithChargers.length.toString()} unit="with EV" color={C.blue} />
       </View>
-      {evs.map(ev => (
-        <View key={ev.id} style={[ss.card, { marginBottom: 10 }]}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{ev.plate}</Text>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{ev.model} · Bay {ev.bay}</Text>
-            </View>
-            <Badge label={ev.status} color={ev.status === "charging" ? C.accent : ev.status === "v2g" ? C.blue : C.muted} />
+      {sitesWithChargers.length > 0 && sitesWithChargers.map(s => (
+        <View key={s.id} style={[ss.card, { marginBottom: 10, flexDirection: "row", alignItems: "center" }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{s.name}</Text>
+            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{s.location || "—"}</Text>
           </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-            <Text style={{ color: C.accent, fontWeight: "800", fontSize: FONT.xl }}>{ev.soc}%</Text>
-            <Text style={{ color: C.sub, fontSize: FONT.sm }}>ETA: {ev.eta}</Text>
-          </View>
-          <MiniBar value={ev.soc} max={100} color={ev.soc > 60 ? C.accent : C.amber} height={7} />
+          <Text style={{ color: C.accent, fontWeight: "800", fontSize: FONT.md }}>{s.ev_chargers} bays</Text>
         </View>
       ))}
+      <View style={{ marginTop: 8 }}>
+        <ComingSoon icon="🔌" label="Per-vehicle EV telemetry — coming soon"
+          sub="Plate, live SOC, V2G status and ETA require a charger integration that isn't built yet." />
+      </View>
     </View>
   )
 }
 
 function GridTab() {
-  const data = [68, 72, 65, 80, 88, 75, 62, 58, 54, 60, 72, 85]
+  const [prices, setPrices] = useState(null)
+  const [source, setSource] = useState(null)
+
+  useEffect(() => {
+    api.getDayAheadPrices().then(d => { setPrices(d?.prices || []); setSource(d?.source) }).catch(() => setPrices([]))
+  }, [])
+
+  if (!prices) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+
+  const values = prices.map(p => p.price)
+  const nowHour = `${String(new Date().getHours()).padStart(2, "0")}:00`
+  const nowIdx = prices.findIndex(p => p.hour === nowHour)
+  const current = nowIdx >= 0 ? prices[nowIdx].price : null
+
   return (
     <View>
       <LinearGradient colors={["rgba(245,158,11,0.12)", "rgba(245,158,11,0.02)"]}
         style={{ borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.amber + "30", marginBottom: 16 }}>
         <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8 }}>Day-Ahead Price</Text>
-        <Text style={{ color: C.amber, fontSize: 44, fontWeight: "900", letterSpacing: -1 }}>€68<Text style={{ fontSize: FONT.lg, color: C.sub }}>/MWh</Text></Text>
-        <Text style={{ color: C.amber + "99", fontSize: FONT.sm, marginTop: 6 }}>▼ 8.2% vs yesterday · EPEX SPOT</Text>
-        <View style={{ marginTop: 14 }}>
-          <Sparkline data={data} color={C.amber} height={56} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>00:00</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>12:00</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>23:00</Text>
+        <Text style={{ color: C.amber, fontSize: 44, fontWeight: "900", letterSpacing: -1 }}>
+          {current != null ? current.toFixed(2) : "—"}<Text style={{ fontSize: FONT.lg, color: C.sub }}> €/kWh</Text>
+        </Text>
+        <Text style={{ color: C.amber + "99", fontSize: FONT.sm, marginTop: 6 }}>
+          {source === "entsoe" ? "ENTSO-E live" : source === "simulated" ? "Simulated (no ENTSO-E token configured)" : ""}
+        </Text>
+        {values.length > 0 && (
+          <View style={{ marginTop: 14 }}>
+            <Sparkline data={values} color={C.amber} height={56} />
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
+              <Text style={{ color: C.muted, fontSize: FONT.xs }}>{prices[0]?.hour}</Text>
+              <Text style={{ color: C.muted, fontSize: FONT.xs }}>{prices[Math.floor(prices.length / 2)]?.hour}</Text>
+              <Text style={{ color: C.muted, fontSize: FONT.xs }}>{prices[prices.length - 1]?.hour}</Text>
+            </View>
           </View>
-        </View>
+        )}
       </LinearGradient>
-      <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-        <KPI label="Frequency" value="50.02" unit="Hz" color={C.accent} />
-        <KPI label="Voltage" value="232" unit="V" color={C.blue} />
-      </View>
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        <KPI label="Export" value="284" unit="kW" color={C.accent} />
-        <KPI label="Import" value="0" unit="kW" color={C.muted} />
-      </View>
+      <ComingSoon icon="⚡" label="Frequency / voltage / import-export — coming soon"
+        sub="No grid-meter telemetry is wired into the backend yet." />
     </View>
   )
 }
 
 function ForecastTab() {
-  const forecast = [
-    { hour: "Now", load: 1847, solar: 620, wind: 340 },
-    { hour: "01:00", load: 1620, solar: 0, wind: 380 },
-    { hour: "02:00", load: 1480, solar: 0, wind: 420 },
-    { hour: "06:00", load: 1800, solar: 180, wind: 310 },
-    { hour: "12:00", load: 2100, solar: 890, wind: 280 },
-    { hour: "18:00", load: 2350, solar: 340, wind: 350 },
-    { hour: "22:00", load: 1950, solar: 0, wind: 400 },
-  ]
   return (
-    <View>
-      <SectionHeader title="48h Load Forecast" subtitle="AI-generated · 94.2% accuracy" />
-      {forecast.map((f, i) => (
-        <View key={i} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center" }]}>
-          <Text style={{ color: C.sub, fontSize: FONT.xs, width: 48, fontWeight: "600" }}>{f.hour}</Text>
-          <View style={{ flex: 1, marginLeft: 12, gap: 5 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ color: C.muted, fontSize: FONT.xs, width: 40 }}>Load</Text>
-              <View style={{ flex: 1 }}>
-                <MiniBar value={f.load} max={2500} color={C.blue} height={5} />
-              </View>
-              <Text style={{ color: C.blue, fontSize: FONT.xs, width: 44, textAlign: "right" }}>{f.load}kW</Text>
-            </View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ color: C.muted, fontSize: FONT.xs, width: 40 }}>Solar</Text>
-              <View style={{ flex: 1 }}>
-                <MiniBar value={f.solar} max={1000} color={C.amber} height={5} />
-              </View>
-              <Text style={{ color: C.amber, fontSize: FONT.xs, width: 44, textAlign: "right" }}>{f.solar}kW</Text>
-            </View>
-          </View>
-        </View>
-      ))}
-    </View>
+    <ComingSoon icon="📈" label="Load forecast — coming soon"
+      sub="A forecasting endpoint isn't available in the backend yet." />
   )
 }
 
 // ─── TRADING SCREEN ───────────────────────────────────────────────
 function TradingScreen() {
   const [tab, setTab] = useState("market")
-  const prices = [42, 38, 35, 51, 68, 85, 72, 62, 58, 71, 88, 95, 82, 67, 54, 48, 62, 78, 91, 84, 69, 58, 47, 39]
-  const currentHour = new Date().getHours()
-  const currentPrice = prices[currentHour]
+  const [groups, setGroups] = useState(null)
+
+  useEffect(() => {
+    api.getVPPGroups().then(setGroups).catch(() => setGroups([]))
+  }, [])
+
+  const selectedVppId = groups?.[0]?.id
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 }}>
           <Text style={ss.pageTitle}>Trading</Text>
-          <Text style={ss.pageSubtitle}>EPEX SPOT · Day-ahead & intraday</Text>
+          <Text style={ss.pageSubtitle}>Day-ahead market · VPP bidding</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8, gap: 8 }}>
-          {[{ id: "market", label: "Market" }, { id: "vpp", label: "VPP" }, { id: "positions", label: "Positions" }, { id: "pnl", label: "P&L" }].map(t => (
+          {[{ id: "market", label: "Market" }, { id: "vpp", label: "VPP" }, { id: "bids", label: "Bids" }, { id: "pnl", label: "P&L" }].map(t => (
             <TouchableOpacity key={t.id} onPress={() => setTab(t.id)}
               style={[ss.tabPill, tab === t.id && ss.tabPillActive]}>
               <Text style={[ss.tabPillText, tab === t.id && ss.tabPillTextActive]}>{t.label}</Text>
@@ -631,19 +649,35 @@ function TradingScreen() {
           ))}
         </ScrollView>
         <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {tab === "market" && <MarketTab prices={prices} currentPrice={currentPrice} currentHour={currentHour} />}
-          {tab === "vpp" && <VPPTab />}
-          {tab === "positions" && <PositionsTab />}
-          {tab === "pnl" && <PnLTab />}
+          {tab === "market" && <MarketTab vppId={selectedVppId} />}
+          {tab === "vpp" && <VPPTab groups={groups} />}
+          {tab === "bids" && <BidsTab vppId={selectedVppId} />}
+          {tab === "pnl" && <PnLTab vppId={selectedVppId} />}
         </ScrollView>
       </SafeAreaView>
     </View>
   )
 }
 
-function MarketTab({ prices, currentPrice, currentHour }) {
-  const [mode, setMode] = useState("auto")
-  const maxP = Math.max(...prices), minP = Math.min(...prices)
+function MarketTab({ vppId }) {
+  const [prices, setPrices] = useState(null)
+  const [perf, setPerf] = useState(null)
+
+  useEffect(() => {
+    api.getDayAheadPrices().then(d => setPrices(d?.prices || [])).catch(() => setPrices([]))
+  }, [])
+  useEffect(() => {
+    if (vppId) api.getVppPerformance(vppId).then(setPerf).catch(() => setPerf(null))
+  }, [vppId])
+
+  if (!prices) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+
+  const values = prices.map(p => p.price)
+  const maxP = values.length ? Math.max(...values) : 0
+  const minP = values.length ? Math.min(...values) : 0
+  const nowHour = `${String(new Date().getHours()).padStart(2, "0")}:00`
+  const nowIdx = prices.findIndex(p => p.hour === nowHour)
+  const currentPrice = nowIdx >= 0 ? prices[nowIdx].price : null
 
   return (
     <View>
@@ -651,103 +685,116 @@ function MarketTab({ prices, currentPrice, currentHour }) {
         style={{ borderRadius: 18, padding: 20, borderWidth: 1, borderColor: C.amber + "30", marginBottom: 16 }}>
         <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8 }}>Current Spot Price</Text>
         <Text style={{ color: C.amber, fontSize: 52, fontWeight: "900", letterSpacing: -2, marginTop: 6 }}>
-          €{currentPrice}<Text style={{ fontSize: FONT.lg, color: C.sub }}>/MWh</Text>
+          {currentPrice != null ? currentPrice.toFixed(2) : "—"}<Text style={{ fontSize: FONT.lg, color: C.sub }}> €/kWh</Text>
         </Text>
-        <Text style={{ color: C.amber + "99", fontSize: FONT.sm, marginTop: 4 }}>Hour {currentHour}:00 · EPEX SPOT DE/AT/LU</Text>
+        <Text style={{ color: C.amber + "99", fontSize: FONT.sm, marginTop: 4 }}>{nowHour} · day-ahead</Text>
 
-        <View style={{ marginTop: 16 }}>
-          <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 2, height: 72 }}>
-            {prices.map((p, i) => {
-              const h = ((p - minP) / (maxP - minP)) * 56 + 8
-              const isNow = i === currentHour
-              const isHigh = p > 80
-              return (
-                <View key={i} style={{
-                  flex: 1, height: h,
-                  backgroundColor: isNow ? C.accent : isHigh ? C.red + "aa" : C.amber + "66",
-                  borderRadius: 2,
-                }} />
-              )
-            })}
+        {values.length > 0 && (
+          <View style={{ marginTop: 16 }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 2, height: 72 }}>
+              {prices.map((p, i) => {
+                const h = maxP > minP ? ((p.price - minP) / (maxP - minP)) * 56 + 8 : 30
+                const isNow = i === nowIdx
+                return (
+                  <View key={i} style={{
+                    flex: 1, height: h,
+                    backgroundColor: isNow ? C.accent : C.amber + "66",
+                    borderRadius: 2,
+                  }} />
+                )
+              })}
+            </View>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
+              <Text style={{ color: C.muted, fontSize: FONT.xs }}>{prices[0]?.hour}</Text>
+              <Text style={{ color: C.accent, fontSize: FONT.xs }}>NOW</Text>
+              <Text style={{ color: C.muted, fontSize: FONT.xs }}>{prices[prices.length - 1]?.hour}</Text>
+            </View>
           </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>00:00</Text>
-            <Text style={{ color: C.accent, fontSize: FONT.xs }}>NOW</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>23:00</Text>
-          </View>
-        </View>
+        )}
       </LinearGradient>
 
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
-        {["auto", "manual"].map(m => (
-          <TouchableOpacity key={m} onPress={() => setMode(m)}
-            style={[ss.btn, { flex: 1, backgroundColor: mode === m ? C.accentL : C.card, borderColor: mode === m ? C.accent + "44" : C.border }]}>
-            <Text style={{ color: mode === m ? C.accent : C.muted, fontWeight: "700", textTransform: "capitalize" }}>
-              {m === "auto" ? "🤖 Auto" : "✋ Manual"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
       <View style={{ flexDirection: "row", gap: 10 }}>
-        <KPI label="Today P&L" value="€3,840" unit="" color={C.accent} delta={18} />
-        <KPI label="Open Bids" value="12" unit="" color={C.blue} />
-        <KPI label="Filled" value="87%" unit="" color={C.accent} />
+        <KPI label={`P&L (${perf?.period_days ?? 30}d)`} value={perf ? `€${perf.total_pnl_eur.toFixed(0)}` : "—"} unit="" color={C.accent} />
+        <KPI label="Total Bids" value={perf ? perf.total_bids.toString() : "—"} unit="" color={C.blue} />
+        <KPI label="Accepted" value={perf ? `${perf.acceptance_rate_pct}%` : "—"} unit="" color={C.accent} />
       </View>
     </View>
   )
 }
 
-function VPPTab() {
-  const groups = mockVPPGroups()
+function VPPTab({ groups }) {
+  const [aggregates, setAggregates] = useState({})
+
+  useEffect(() => {
+    if (!groups?.length) return
+    groups.forEach(g => {
+      api.getVppAggregate(g.id).then(a => setAggregates(prev => ({ ...prev, [g.id]: a }))).catch(() => {})
+    })
+  }, [groups])
+
+  if (!groups) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+  if (!groups.length) return <ComingSoon icon="🔗" label="No VPP groups yet" sub="Create a Virtual Power Plant group in VoltarisOS to see it here." />
+
   return (
     <View>
       <SectionHeader title="VPP Groups" subtitle="Virtual Power Plant aggregation" />
-      {groups.map(g => (
-        <View key={g.id} style={[ss.card, { marginBottom: 10 }]}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{g.name}</Text>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{g.assets} assets · {g.region}</Text>
+      {groups.map(g => {
+        const agg = aggregates[g.id]
+        return (
+          <View key={g.id} style={[ss.card, { marginBottom: 10 }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{g.name}</Text>
+                <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{agg?.site_count ?? 0} sites · {g.market}</Text>
+              </View>
+              <Badge label={g.active ? "active" : "inactive"} color={g.active ? C.accent : C.muted} />
             </View>
-            <Badge label={g.status} color={g.status === "active" ? C.accent : C.muted} />
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.muted, fontSize: FONT.xs }}>Power</Text>
+                <Text style={{ color: C.accent, fontWeight: "800", fontSize: FONT.lg }}>{agg?.total_power_kw != null ? `${agg.total_power_kw} kW` : "—"}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.muted, fontSize: FONT.xs }}>Min bid</Text>
+                <Text style={{ color: C.blue, fontWeight: "800", fontSize: FONT.lg }}>{g.min_bid_kw} kW</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.muted, fontSize: FONT.xs }}>Can bid</Text>
+                <Text style={{ color: agg?.can_bid ? C.accent : C.muted, fontWeight: "800", fontSize: FONT.lg }}>{agg ? (agg.can_bid ? "Yes" : "No") : "—"}</Text>
+              </View>
+            </View>
           </View>
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.muted, fontSize: FONT.xs }}>Available</Text>
-              <Text style={{ color: C.accent, fontWeight: "800", fontSize: FONT.lg }}>{g.capacity} MW</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.muted, fontSize: FONT.xs }}>Dispatched</Text>
-              <Text style={{ color: C.blue, fontWeight: "800", fontSize: FONT.lg }}>{g.dispatched} MW</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.muted, fontSize: FONT.xs }}>Revenue</Text>
-              <Text style={{ color: C.amber, fontWeight: "800", fontSize: FONT.lg }}>€{g.revenue}K</Text>
-            </View>
-          </View>
-        </View>
-      ))}
+        )
+      })}
     </View>
   )
 }
 
-function PositionsTab() {
-  const positions = mockPositions()
+function BidsTab({ vppId }) {
+  const [bids, setBids] = useState(null)
+
+  useEffect(() => {
+    if (!vppId) { setBids([]); return }
+    api.getVppBids(vppId).then(setBids).catch(() => setBids([]))
+  }, [vppId])
+
+  if (!bids) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+  if (!bids.length) return <ComingSoon icon="📋" label="No bids yet" sub="Bids submitted for this VPP group will show up here." />
+
   return (
     <View>
-      <SectionHeader title="Open Positions" subtitle={`${positions.length} active`} />
-      {positions.map(p => (
-        <View key={p.id} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center" }]}>
+      <SectionHeader title="Bids" subtitle={`${bids.length} total`} />
+      {bids.map(b => (
+        <View key={b.id} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center" }]}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{p.product}</Text>
-            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{p.type} · {p.hour}</Text>
+            <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md, textTransform: "capitalize" }}>{b.direction} · {b.market}</Text>
+            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{b.status} · {new Date(b.submitted_at).toLocaleDateString()}</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
-            <Text style={{ color: p.pnl >= 0 ? C.accent : C.red, fontWeight: "800", fontSize: FONT.md }}>
-              {p.pnl >= 0 ? "+" : ""}€{p.pnl}
+            <Text style={{ color: (b.pnl_eur ?? 0) >= 0 ? C.accent : C.red, fontWeight: "800", fontSize: FONT.md }}>
+              {b.pnl_eur != null ? `${b.pnl_eur >= 0 ? "+" : ""}€${b.pnl_eur.toFixed(0)}` : "—"}
             </Text>
-            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{p.volume} MWh @ €{p.price}</Text>
+            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{b.quantity_kw} kW{b.price_eur_mwh != null ? ` @ €${b.price_eur_mwh}/MWh` : ""}</Text>
           </View>
         </View>
       ))}
@@ -755,28 +802,29 @@ function PositionsTab() {
   )
 }
 
-function PnLTab() {
-  const weekData = [1240, 2100, 1880, 3200, 2840, 3840, 4200]
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-  const total = weekData.reduce((a, b) => a + b, 0)
+function PnLTab({ vppId }) {
+  const [perf, setPerf] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!vppId) { setLoading(false); return }
+    api.getVppPerformance(vppId).then(setPerf).catch(() => {}).finally(() => setLoading(false))
+  }, [vppId])
+
+  if (loading) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+  if (!perf) return <ComingSoon icon="💹" label="No P&L data yet" sub="Once this VPP group has accepted bids, P&L shows here." />
 
   return (
     <View>
       <LinearGradient colors={["rgba(0,229,160,0.10)", "rgba(0,229,160,0.02)"]}
         style={{ borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.accent + "25", marginBottom: 16 }}>
-        <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>Week P&L</Text>
-        <Text style={{ color: C.accent, fontSize: 42, fontWeight: "900", letterSpacing: -1 }}>€{(total / 1000).toFixed(1)}K</Text>
-        <Text style={{ color: C.accent + "99", fontSize: FONT.sm, marginTop: 4 }}>▲ 32% vs last week</Text>
-        <View style={{ marginTop: 16 }}>
-          <Sparkline data={weekData} color={C.accent} height={60} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-            {days.map(d => <Text key={d} style={{ color: C.muted, fontSize: 10 }}>{d}</Text>)}
-          </View>
-        </View>
+        <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 6 }}>P&L — last {perf.period_days} days</Text>
+        <Text style={{ color: C.accent, fontSize: 42, fontWeight: "900", letterSpacing: -1 }}>€{(perf.total_pnl_eur / 1000).toFixed(1)}K</Text>
+        <Text style={{ color: C.sub, fontSize: FONT.sm, marginTop: 4 }}>{perf.accepted} of {perf.total_bids} bids accepted · avg €{perf.avg_pnl_per_bid_eur.toFixed(0)}/bid</Text>
       </LinearGradient>
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
-        <KPI label="Best Day" value="€4,200" unit="" color={C.accent} />
-        <KPI label="Avg/Day" value={`€${(total / 7 / 1000).toFixed(1)}K`} unit="" color={C.blue} />
+        <KPI label="Total kWh" value={perf.total_kwh.toFixed(0)} unit="kWh" color={C.blue} />
+        <KPI label="Acceptance" value={`${perf.acceptance_rate_pct}%`} unit="" color={C.accent} />
       </View>
     </View>
   )
@@ -820,8 +868,25 @@ function OpsScreen() {
 
 function AlertsTab() {
   const [filter, setFilter] = useState("all")
-  const alerts = mockAlerts()
-  const filtered = filter === "all" ? alerts : alerts.filter(a => a.level === filter)
+  const [alerts, setAlerts] = useState(null)
+
+  const load = useCallback(() => {
+    api.getAlerts(50).then(setAlerts).catch(() => setAlerts([]))
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const ack = async (id) => {
+    try {
+      await api.ackAlert(id)
+      load()
+    } catch (e) {
+      Alert.alert("Couldn't acknowledge alert", e.message || "")
+    }
+  }
+
+  if (!alerts) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+
+  const filtered = filter === "all" ? alerts : alerts.filter(a => a.severity === filter)
 
   return (
     <View>
@@ -834,49 +899,68 @@ function AlertsTab() {
         ))}
       </View>
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-        <KPI label="Critical" value={alerts.filter(a => a.level === "critical").length.toString()} unit="" color={C.red} />
-        <KPI label="Warning" value={alerts.filter(a => a.level === "warning").length.toString()} unit="" color={C.amber} />
-        <KPI label="Info" value={alerts.filter(a => a.level === "info").length.toString()} unit="" color={C.blue} />
+        <KPI label="Critical" value={alerts.filter(a => a.severity === "critical").length.toString()} unit="" color={C.red} />
+        <KPI label="Warning" value={alerts.filter(a => a.severity === "warning").length.toString()} unit="" color={C.amber} />
+        <KPI label="Info" value={alerts.filter(a => a.severity === "info").length.toString()} unit="" color={C.blue} />
       </View>
-      {filtered.map(a => (
-        <View key={a.id} style={[ss.card, { marginBottom: 8, borderLeftWidth: 3, borderLeftColor: a.level === "critical" ? C.red : a.level === "warning" ? C.amber : C.blue }]}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
-            <Text style={{ fontSize: 14, marginRight: 8 }}>{a.level === "critical" ? "🔴" : a.level === "warning" ? "🟡" : "🔵"}</Text>
-            <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md, flex: 1 }}>{a.title}</Text>
-            <Badge label={a.level} color={a.level === "critical" ? C.red : a.level === "warning" ? C.amber : C.blue} />
-          </View>
-          <Text style={{ color: C.sub, fontSize: FONT.xs }}>{a.message}</Text>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>{a.site}</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>{a.time}</Text>
-          </View>
+      {filtered.length === 0 && (
+        <View style={[ss.card, { alignItems: "center", padding: 20 }]}>
+          <Text style={{ color: C.sub, fontSize: FONT.sm }}>No alerts 🎉</Text>
         </View>
+      )}
+      {filtered.map(a => (
+        <TouchableOpacity key={a.id} disabled={a.acknowledged} onPress={() => ack(a.id)}
+          style={[ss.card, { marginBottom: 8, borderLeftWidth: 3, borderLeftColor: a.severity === "critical" ? C.red : a.severity === "warning" ? C.amber : C.blue, opacity: a.acknowledged ? 0.5 : 1 }]}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+            <Text style={{ fontSize: 14, marginRight: 8 }}>{a.severity === "critical" ? "🔴" : a.severity === "warning" ? "🟡" : "🔵"}</Text>
+            <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md, flex: 1 }}>{a.title}</Text>
+            <Badge label={a.acknowledged ? "acked" : a.severity} color={a.acknowledged ? C.muted : a.severity === "critical" ? C.red : a.severity === "warning" ? C.amber : C.blue} />
+          </View>
+          {a.message && <Text style={{ color: C.sub, fontSize: FONT.xs }}>{a.message}</Text>}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 8 }}>
+            <Text style={{ color: C.muted, fontSize: FONT.xs }}>{a.device_name || "—"}</Text>
+            <Text style={{ color: C.muted, fontSize: FONT.xs }}>{timeAgo(a.fired_at)}</Text>
+          </View>
+        </TouchableOpacity>
       ))}
     </View>
   )
 }
 
 function MaintenanceTab() {
-  const tasks = mockMaintenance()
+  const [schedule, setSchedule] = useState(null)
+
+  useEffect(() => {
+    api.getMaintenanceSchedule().then(d => setSchedule(d?.schedule || [])).catch(() => setSchedule([]))
+  }, [])
+
+  if (!schedule) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+
+  const corrective = schedule.filter(t => t.type === "corrective").length
+  const inspection = schedule.filter(t => t.type === "inspection").length
+  const scheduled = schedule.filter(t => t.type === "scheduled").length
+
+  if (!schedule.length) return <ComingSoon icon="🛠️" label="Nothing due" sub="No maintenance items right now — great sign." />
+
   return (
     <View>
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-        <KPI label="Scheduled" value="8" unit="" color={C.blue} />
-        <KPI label="Overdue" value="2" unit="" color={C.red} />
-        <KPI label="Done" value="14" unit="" color={C.accent} />
+        <KPI label="Corrective" value={corrective.toString()} unit="" color={C.red} />
+        <KPI label="Inspection" value={inspection.toString()} unit="" color={C.amber} />
+        <KPI label="Scheduled" value={scheduled.toString()} unit="" color={C.blue} />
       </View>
-      {tasks.map(t => (
+      {schedule.map(t => (
         <View key={t.id} style={[ss.card, { marginBottom: 10 }]}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{t.title}</Text>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{t.asset} · {t.site}</Text>
+              <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{t.asset_name || "Unknown asset"}</Text>
+              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{t.site || "—"} · {t.type}</Text>
             </View>
-            <Badge label={t.priority} color={t.priority === "high" ? C.red : t.priority === "medium" ? C.amber : C.muted} />
+            <Badge label={t.severity} color={t.severity === "critical" ? C.red : t.severity === "warning" ? C.amber : C.muted} />
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ color: C.sub, fontSize: FONT.xs }}>Due: {t.due}</Text>
-            <Text style={{ color: t.status === "overdue" ? C.red : C.blue, fontSize: FONT.xs, fontWeight: "600" }}>{t.status}</Text>
+            <Text style={{ color: C.sub, fontSize: FONT.xs }}>Due: {t.due_date}</Text>
+            <Text style={{ color: t.days_remaining <= 0 ? C.red : C.blue, fontSize: FONT.xs, fontWeight: "600" }}>{t.days_remaining}d remaining</Text>
           </View>
         </View>
       ))}
@@ -885,132 +969,31 @@ function MaintenanceTab() {
 }
 
 function AnomalyTab() {
-  const anomalies = mockAnomalies()
   return (
-    <View>
-      <SectionHeader title="ML Anomaly Detection" subtitle="AI-powered · Real-time" />
-      {anomalies.map(a => (
-        <View key={a.id} style={[ss.card, { marginBottom: 10, borderLeftWidth: 3, borderLeftColor: a.severity > 7 ? C.red : a.severity > 4 ? C.amber : C.blue }]}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{a.type}</Text>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{a.device} · {a.site}</Text>
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={{ color: a.severity > 7 ? C.red : a.severity > 4 ? C.amber : C.blue, fontWeight: "900", fontSize: FONT.xl }}>{a.severity}</Text>
-              <Text style={{ color: C.muted, fontSize: FONT.xs }}>/10</Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>Confidence:</Text>
-            <View style={{ flex: 1 }}>
-              <MiniBar value={a.confidence} max={100} color={C.purple} height={4} />
-            </View>
-            <Text style={{ color: C.purple, fontSize: FONT.xs, fontWeight: "700" }}>{a.confidence}%</Text>
-          </View>
-          <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 8 }}>{a.recommendation}</Text>
-        </View>
-      ))}
-    </View>
+    <ComingSoon icon="🧠" label="ML anomaly detection — coming soon"
+      sub="No anomaly-detection model is wired into the backend yet." />
   )
 }
 
 function ReportsTab() {
-  const reports = [
-    { id: 1, title: "Monthly Energy Summary", type: "PDF", date: "2025-05-01", size: "2.4 MB" },
-    { id: 2, title: "Trading Performance Q1", type: "Excel", date: "2025-04-01", size: "1.8 MB" },
-    { id: 3, title: "Carbon Emissions Report", type: "PDF", date: "2025-04-15", size: "3.1 MB" },
-    { id: 4, title: "Regulatory Compliance", type: "PDF", date: "2025-03-31", size: "5.2 MB" },
-  ]
   return (
-    <View>
-      <SectionHeader title="Reports" subtitle="Generated & scheduled" />
-      {reports.map(r => (
-        <TouchableOpacity key={r.id} style={[ss.card, { marginBottom: 10, flexDirection: "row", alignItems: "center" }]}>
-          <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: r.type === "PDF" ? C.red + "22" : C.accent + "22", borderWidth: 1, borderColor: r.type === "PDF" ? C.red + "44" : C.accent + "44", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-            <Text style={{ fontSize: 18 }}>{r.type === "PDF" ? "📄" : "📊"}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{r.title}</Text>
-            <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 3 }}>{r.date} · {r.size}</Text>
-          </View>
-          <Text style={{ color: C.sub, fontSize: FONT.xl }}>›</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
+    <ComingSoon icon="📄" label="Reports — coming soon"
+      sub="Report generation isn't available in the backend yet." />
   )
 }
 
 // ─── INVESTOR SCREEN ──────────────────────────────────────────────
 function InvestorScreen() {
-  const kpis = [
-    { label: "Portfolio Value", value: "€42.8M", color: C.accent, delta: 12 },
-    { label: "Monthly Revenue", value: "€284K", color: C.blue, delta: 8 },
-    { label: "IRR", value: "18.4%", color: C.purple, delta: 2 },
-    { label: "EBITDA Margin", value: "42%", color: C.amber, delta: -1 },
-  ]
-  const weekRevenue = [38, 42, 35, 55, 62, 68, 80]
-  const days = ["M", "T", "W", "T", "F", "S", "S"]
-
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <ScrollView contentContainerStyle={{ padding: 20, flexGrow: 1, justifyContent: "center" }}>
           <View style={{ marginBottom: 24 }}>
             <Text style={ss.pageTitle}>Investor Dashboard</Text>
-            <Text style={ss.pageSubtitle}>Portfolio performance · Real-time</Text>
+            <Text style={ss.pageSubtitle}>Portfolio performance</Text>
           </View>
-
-          {/* Revenue chart */}
-          <LinearGradient colors={["rgba(0,229,160,0.10)", "rgba(0,229,160,0.02)"]}
-            style={{ borderRadius: 20, padding: 20, borderWidth: 1, borderColor: C.accent + "25", marginBottom: 20 }}>
-            <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 8 }}>Weekly Revenue</Text>
-            <Text style={{ color: C.accent, fontSize: 44, fontWeight: "900", letterSpacing: -1 }}>€284K</Text>
-            <Text style={{ color: C.accent + "99", fontSize: FONT.sm, marginTop: 4 }}>▲ 18% vs last week</Text>
-            <View style={{ marginTop: 16 }}>
-              <Sparkline data={weekRevenue} color={C.accent} height={64} />
-              <View style={{ flexDirection: "row", justifyContent: "space-around", marginTop: 8 }}>
-                {days.map((d, i) => <Text key={i} style={{ color: C.muted, fontSize: FONT.xs }}>{d}</Text>)}
-              </View>
-            </View>
-          </LinearGradient>
-
-          {/* KPIs grid */}
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
-            {kpis.map((k, i) => (
-              <View key={i} style={[ss.card, { width: "47%", padding: 16 }]}>
-                <Text style={{ color: C.sub, fontSize: FONT.xs, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 8 }}>{k.label}</Text>
-                <Text style={{ color: k.color, fontSize: FONT.xl, fontWeight: "900" }}>{k.value}</Text>
-                {k.delta != null && (
-                  <Text style={{ color: k.delta >= 0 ? C.accent : C.red, fontSize: FONT.xs, marginTop: 4, fontWeight: "700" }}>
-                    {k.delta >= 0 ? "▲" : "▼"} {Math.abs(k.delta)}%
-                  </Text>
-                )}
-              </View>
-            ))}
-          </View>
-
-          {/* Assets */}
-          <SectionHeader title="Asset Breakdown" subtitle="By technology type" />
-          {[
-            { name: "Battery Storage", pct: 45, value: "€19.3M", color: C.blue },
-            { name: "Solar PV", pct: 30, value: "€12.8M", color: C.amber },
-            { name: "Wind", pct: 15, value: "€6.4M", color: C.accent },
-            { name: "EV Charging", pct: 10, value: "€4.3M", color: C.purple },
-          ].map((a, i) => (
-            <View key={i} style={[ss.card, { marginBottom: 10 }]}>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md, flex: 1 }}>{a.name}</Text>
-                <Text style={{ color: a.color, fontWeight: "800", fontSize: FONT.md }}>{a.value}</Text>
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <View style={{ flex: 1 }}>
-                  <MiniBar value={a.pct} max={100} color={a.color} height={7} />
-                </View>
-                <Text style={{ color: C.sub, fontSize: FONT.xs, width: 30, textAlign: "right" }}>{a.pct}%</Text>
-              </View>
-            </View>
-          ))}
+          <ComingSoon icon="💼" label="Investor reporting is in development"
+            sub="Portfolio value, IRR and asset-breakdown metrics need real financial data behind them — nothing is shown until that's built." />
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -1055,28 +1038,23 @@ function AdminScreen({ navigation }) {
 }
 
 function UsersAdminTab() {
-  const auth = useAuth()
   const [users, setUsers] = useState(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiFetch("/users", {}, auth.token)
-      .then(data => setUsers(data?.users || data || mockUsers()))
-      .catch(() => setUsers(mockUsers()))
-      .finally(() => setLoading(false))
+    api.getUsers().then(data => setUsers(data?.users || data || [])).catch(() => setUsers([]))
   }, [])
 
-  const roleColor = (r) => ({ admin: C.purple, operator: C.blue, viewer: C.muted, investor: C.amber }[r] || C.muted)
+  const roleColor = (r) => (r === "SUPER_ADMIN" ? C.purple : r === "TENANT_ADMIN" ? C.blue : C.muted)
 
-  if (loading) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+  if (!users) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
 
   return (
     <View>
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-        <KPI label="Total Users" value={(users?.length || 0).toString()} unit="" color={C.accent} />
-        <KPI label="Active" value={(users?.filter(u => u.active !== false).length || 0).toString()} unit="" color={C.blue} />
+        <KPI label="Total Users" value={users.length.toString()} unit="" color={C.accent} />
+        <KPI label="Active" value={users.filter(u => u.active !== false).length.toString()} unit="" color={C.blue} />
       </View>
-      {(users || []).map((u, i) => (
+      {users.map((u, i) => (
         <View key={u.id || i} style={[ss.card, { marginBottom: 10, flexDirection: "row", alignItems: "center" }]}>
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: roleColor(u.role) + "22", borderWidth: 1, borderColor: roleColor(u.role) + "44", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
             <Text style={{ color: roleColor(u.role), fontWeight: "800", fontSize: FONT.md }}>{(u.name || u.email || "?")[0].toUpperCase()}</Text>
@@ -1085,7 +1063,7 @@ function UsersAdminTab() {
             <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{u.name || u.email}</Text>
             <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2 }}>{u.email}</Text>
           </View>
-          <Badge label={u.role} color={roleColor(u.role)} />
+          <Badge label={displayRole(u.role)} color={roleColor(u.role)} />
         </View>
       ))}
     </View>
@@ -1093,19 +1071,36 @@ function UsersAdminTab() {
 }
 
 function SystemTab() {
-  const [notifications, setNotifications] = useState(true)
-  const [autoTrading, setAutoTrading] = useState(true)
-  const [maintenanceMode, setMaintenanceMode] = useState(false)
+  const [settingsData, setSettingsData] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api.getTenantSettings().then(setSettingsData).catch(() => setSettingsData({}))
+  }, [])
+
+  const toggle = async (block, key, value) => {
+    const next = { ...settingsData, [block]: { ...(settingsData[block] || {}), [key]: value } }
+    setSettingsData(next)
+    setSaving(true)
+    try {
+      await api.updateTenantSettings({ [block]: next[block] })
+    } catch (e) {
+      Alert.alert("Couldn't save setting", e.message || "")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!settingsData) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
 
   const settings = [
-    { label: "Push Notifications", sub: "Real-time alerts on mobile", value: notifications, onChange: setNotifications, color: C.accent },
-    { label: "Autonomous Trading", sub: "AI-driven market execution", value: autoTrading, onChange: setAutoTrading, color: C.blue },
-    { label: "Maintenance Mode", sub: "Suspend all operations", value: maintenanceMode, onChange: setMaintenanceMode, color: C.red },
+    { label: "Push Notifications", sub: "Real-time alerts on mobile", value: !!settingsData.notifications?.pushAlerts, onChange: (v) => toggle("notifications", "pushAlerts", v), color: C.accent },
+    { label: "Autonomous Trading", sub: "AI-driven market execution", value: !!settingsData.trading?.autoTradingEnabled, onChange: (v) => toggle("trading", "autoTradingEnabled", v), color: C.blue },
   ]
 
   return (
     <View>
-      <SectionHeader title="System Settings" subtitle="Platform configuration" />
+      <SectionHeader title="System Settings" subtitle={saving ? "Saving…" : "Platform configuration"} />
       {settings.map((s, i) => (
         <View key={i} style={[ss.card, { marginBottom: 10, flexDirection: "row", alignItems: "center" }]}>
           <View style={{ flex: 1 }}>
@@ -1118,11 +1113,8 @@ function SystemTab() {
 
       <SectionHeader title="Platform Info" />
       {[
-        { label: "Version", value: "VoltarisOS v4.2.1" },
-        { label: "Build", value: "#20250604" },
-        { label: "DB", value: "SQLite · energy.db" },
+        { label: "App Version", value: APP_VERSION },
         { label: "API", value: "Railway · production" },
-        { label: "Uptime", value: "99.94%" },
       ].map((item, i) => (
         <View key={i} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center" }]}>
           <Text style={{ color: C.sub, fontSize: FONT.md, flex: 1 }}>{item.label}</Text>
@@ -1134,97 +1126,113 @@ function SystemTab() {
 }
 
 function APIKeysTab() {
-  const keys = [
-    { id: 1, name: "Production API", key: "vos_prod_••••••••4a2f", scope: "read:write", created: "2025-01-15", active: true },
-    { id: 2, name: "Dashboard Integration", key: "vos_dash_••••••••9b1c", scope: "read", created: "2025-02-20", active: true },
-    { id: 3, name: "Trading Bot", key: "vos_trad_••••••••3e7d", scope: "trading", created: "2025-03-01", active: false },
-  ]
+  const [keys, setKeys] = useState(null)
+  const [newName, setNewName] = useState("")
+  const [creating, setCreating] = useState(false)
+  const [justCreated, setJustCreated] = useState(null)
+
+  const load = useCallback(() => {
+    api.getApiKeys().then(setKeys).catch(() => setKeys([]))
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const create = async () => {
+    if (!newName.trim()) return
+    setCreating(true)
+    try {
+      const created = await api.createApiKey({ name: newName.trim() })
+      setJustCreated(created.key)
+      setNewName("")
+      load()
+    } catch (e) {
+      Alert.alert("Couldn't create key", e.message || "")
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const revoke = (id) => {
+    Alert.alert("Revoke key?", "This cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Revoke", style: "destructive", onPress: async () => {
+        try { await api.revokeApiKey(id); load() }
+        catch (e) { Alert.alert("Couldn't revoke key", e.message || "") }
+      }},
+    ])
+  }
+
+  if (!keys) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+
   return (
     <View>
       <SectionHeader title="API Keys" subtitle="Manage access tokens" />
+      {justCreated && (
+        <View style={[ss.card, { marginBottom: 12, borderColor: C.accent + "44" }]}>
+          <Text style={{ color: C.accent, fontWeight: "700", fontSize: FONT.sm, marginBottom: 6 }}>New key — copy it now, it won't be shown again</Text>
+          <Text style={{ color: C.text, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", fontSize: FONT.xs }}>{justCreated}</Text>
+        </View>
+      )}
+      {keys.length === 0 && (
+        <View style={[ss.card, { alignItems: "center", padding: 20, marginBottom: 12 }]}>
+          <Text style={{ color: C.sub, fontSize: FONT.sm }}>No API keys yet</Text>
+        </View>
+      )}
       {keys.map(k => (
         <View key={k.id} style={[ss.card, { marginBottom: 10 }]}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md }}>{k.name}</Text>
-              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }}>{k.key}</Text>
+              <Text style={{ color: C.sub, fontSize: FONT.xs, marginTop: 2, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }}>{k.key_prefix}••••••••</Text>
             </View>
-            <Badge label={k.active ? "active" : "revoked"} color={k.active ? C.accent : C.red} />
+            <TouchableOpacity onPress={() => revoke(k.id)}>
+              <Text style={{ color: C.red, fontWeight: "700", fontSize: FONT.xs }}>Revoke</Text>
+            </TouchableOpacity>
           </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Badge label={k.scope} color={C.blue} />
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>Created {k.created}</Text>
-          </View>
+          <Text style={{ color: C.muted, fontSize: FONT.xs }}>
+            Created {new Date(k.created_at).toLocaleDateString()}{k.last_used_at ? ` · last used ${timeAgo(k.last_used_at)}` : " · never used"}
+          </Text>
         </View>
       ))}
-      <TouchableOpacity style={[ss.btn, { backgroundColor: C.accentL, borderColor: C.accent + "44", marginTop: 8 }]}>
-        <Text style={{ color: C.accent, fontWeight: "700" }}>+ Generate New Key</Text>
-      </TouchableOpacity>
+      <View style={[ss.card, { marginTop: 8, flexDirection: "row", gap: 8, alignItems: "center" }]}>
+        <TextInput style={[ss.input, { flex: 1, paddingVertical: 10 }]} value={newName} onChangeText={setNewName}
+          placeholder="Key name" placeholderTextColor={C.muted} />
+        <TouchableOpacity onPress={create} disabled={creating || !newName.trim()}
+          style={[ss.btn, { backgroundColor: C.accentL, borderColor: C.accent + "44" }]}>
+          {creating ? <ActivityIndicator color={C.accent} size="small" /> : <Text style={{ color: C.accent, fontWeight: "700" }}>Create</Text>}
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }
 
 function AuditTab() {
-  const logs = [
-    { id: 1, action: "User login", user: "admin@voltaris.com", time: "2m ago", ip: "192.168.1.1", result: "success" },
-    { id: 2, action: "Battery dispatch", user: "operator@voltaris.com", time: "15m ago", ip: "10.0.0.5", result: "success" },
-    { id: 3, action: "API key created", user: "admin@voltaris.com", time: "1h ago", ip: "192.168.1.1", result: "success" },
-    { id: 4, action: "Login attempt", user: "unknown@hack.com", time: "3h ago", ip: "45.12.34.56", result: "failed" },
-    { id: 5, action: "Trade executed", user: "bot@voltaris.com", time: "4h ago", ip: "internal", result: "success" },
-  ]
+  const [entries, setEntries] = useState(null)
+
+  useEffect(() => {
+    api.getAuditLog({ limit: 50 }).then(d => setEntries(d?.entries || [])).catch(() => setEntries([]))
+  }, [])
+
+  if (!entries) return <ActivityIndicator color={C.accent} style={{ marginTop: 40 }} />
+  if (!entries.length) return <ComingSoon icon="📜" label="No audit entries yet" />
+
   return (
     <View>
       <SectionHeader title="Audit Log" subtitle="Security & compliance trail" />
-      {logs.map(l => (
-        <View key={l.id} style={[ss.card, { marginBottom: 8, borderLeftWidth: 3, borderLeftColor: l.result === "failed" ? C.red : C.accent }]}>
+      {entries.map(l => (
+        <View key={l.id} style={[ss.card, { marginBottom: 8, borderLeftWidth: 3, borderLeftColor: C.accent }]}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
             <Text style={{ color: C.text, fontWeight: "700", fontSize: FONT.md, flex: 1 }}>{l.action}</Text>
-            <Badge label={l.result} color={l.result === "failed" ? C.red : C.accent} />
+            {l.target_resource && <Badge label={l.target_resource} color={C.blue} />}
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text style={{ color: C.sub, fontSize: FONT.xs }}>{l.user}</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>{l.time}</Text>
+            <Text style={{ color: C.sub, fontSize: FONT.xs }}>{l.user_email || "—"}</Text>
+            <Text style={{ color: C.muted, fontSize: FONT.xs }}>{timeAgo(l.timestamp)}</Text>
           </View>
-          <Text style={{ color: C.muted, fontSize: FONT.xs, marginTop: 4, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }}>{l.ip}</Text>
+          {l.ip_address && (
+            <Text style={{ color: C.muted, fontSize: FONT.xs, marginTop: 4, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }}>{l.ip_address}</Text>
+          )}
         </View>
       ))}
-    </View>
-  )
-}
-
-// ─── VIEWER SCREEN ────────────────────────────────────────────────
-function ViewerScreen() {
-  return (
-    <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <SafeAreaView edges={["top", "left", "right"]} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <View style={{ marginBottom: 24 }}>
-            <Text style={ss.pageTitle}>Energy Overview</Text>
-            <Text style={ss.pageSubtitle}>Read-only · Live monitoring</Text>
-          </View>
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 10 }}>
-            <KPI label="Total Power" value="1,847" unit="kW" color={C.accent} delta={12} />
-            <KPI label="Revenue" value="€8.2K" unit="/day" color={C.blue} />
-          </View>
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
-            <KPI label="SOC Avg" value="74" unit="%" color={C.amber} />
-            <KPI label="CO₂ Saved" value="4.2" unit="t" color={C.accent} />
-          </View>
-          <Sparkline data={[42, 55, 68, 72, 80, 75, 68, 62, 70, 80, 88, 72]} color={C.accent} height={80} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6, marginBottom: 24 }}>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>00:00</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>12:00</Text>
-            <Text style={{ color: C.muted, fontSize: FONT.xs }}>23:00</Text>
-          </View>
-          <SectionHeader title="Read-only Access" />
-          <View style={[ss.card, { padding: 20, alignItems: "center" }]}>
-            <Text style={{ fontSize: 32, marginBottom: 12 }}>👁️</Text>
-            <Text style={{ color: C.sub, textAlign: "center", fontSize: FONT.md }}>
-              You have view-only access. Contact your administrator to request elevated permissions.
-            </Text>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
     </View>
   )
 }
@@ -1250,17 +1258,16 @@ function ProfileScreen() {
             <Text style={{ color: C.text, fontSize: FONT.xl, fontWeight: "800" }}>{u?.name || "User"}</Text>
             <Text style={{ color: C.sub, fontSize: FONT.sm, marginTop: 4 }}>{u?.email}</Text>
             <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
-              <Badge label={u?.role || "operator"} color={u?.role === "admin" ? C.purple : C.blue} />
+              <Badge label={displayRole(u?.role)} color={isAdminRole(u?.role) ? C.purple : C.blue} />
               <Badge label="Active" color={C.accent} />
             </View>
           </View>
 
           {/* Info cards */}
           {[
-            { label: "Role", value: u?.role || "operator" },
-            { label: "Tenant", value: "Voltaris Energy Ltd" },
-            { label: "Last Login", value: new Date().toLocaleDateString() },
-            { label: "Timezone", value: "Europe/Lisbon" },
+            { label: "Role", value: displayRole(u?.role) },
+            ...(u?.company ? [{ label: "Company", value: u.company }] : []),
+            ...(u?.plan ? [{ label: "Plan", value: u.plan }] : []),
           ].map((item, i) => (
             <View key={i} style={[ss.card, { marginBottom: 8, flexDirection: "row", alignItems: "center" }]}>
               <Text style={{ color: C.sub, fontSize: FONT.md, flex: 1 }}>{item.label}</Text>
@@ -1287,7 +1294,6 @@ function TabIcon({ name, focused }) {
     Ops:      { active: "🛠️", inactive: "🛠️" },
     Admin:    { active: "👑", inactive: "👑" },
     Investor: { active: "💰", inactive: "💰" },
-    Viewer:   { active: "👁️", inactive: "👁️" },
     Profile:  { active: "👤", inactive: "👤" },
   }
   const icon = icons[name] || { active: "•", inactive: "•" }
@@ -1312,7 +1318,8 @@ function tabOptions(name) {
 
 function MainApp() {
   const auth = useAuth()
-  const role = auth.user?.role || "operator"
+  const role = auth.user?.role || "TENANT_MEMBER"
+  const isAdmin = isAdminRole(role)
 
   const tabBarStyle = {
     backgroundColor: C.card,
@@ -1336,33 +1343,18 @@ function MainApp() {
 
   return (
     <Tab.Navigator screenOptions={screenOptions}>
-      {/* All roles get Home */}
+      {/* Every authenticated user (only real roles are SUPER_ADMIN/TENANT_ADMIN/TENANT_MEMBER) */}
       <Tab.Screen name="Home" component={HomeScreen} options={tabOptions("Home")} />
+      <Tab.Screen name="Energy" component={EnergyScreen} options={tabOptions("Energy")} />
+      <Tab.Screen name="Trading" component={TradingScreen} options={tabOptions("Trading")} />
+      <Tab.Screen name="Ops" component={OpsScreen} options={tabOptions("Ops")} />
 
-      {/* Admin & Operator get Energy + Trading + Ops */}
-      {(role === "admin" || role === "operator") && (
-        <Tab.Screen name="Energy" component={EnergyScreen} options={tabOptions("Energy")} />
-      )}
-      {(role === "admin" || role === "operator") && (
-        <Tab.Screen name="Trading" component={TradingScreen} options={tabOptions("Trading")} />
-      )}
-      {(role === "admin" || role === "operator") && (
-        <Tab.Screen name="Ops" component={OpsScreen} options={tabOptions("Ops")} />
-      )}
-
-      {/* Admin only */}
-      {role === "admin" && (
+      {/* Admin-only (SUPER_ADMIN / TENANT_ADMIN) */}
+      {isAdmin && (
         <Tab.Screen name="Admin" component={AdminScreen} options={tabOptions("Admin")} />
       )}
-
-      {/* Investor role */}
-      {role === "investor" && (
+      {isAdmin && (
         <Tab.Screen name="Investor" component={InvestorScreen} options={tabOptions("Investor")} />
-      )}
-
-      {/* Viewer role */}
-      {role === "viewer" && (
-        <Tab.Screen name="Viewer" component={ViewerScreen} options={tabOptions("Viewer")} />
       )}
 
       {/* Profile always last */}
@@ -1374,13 +1366,28 @@ function MainApp() {
 // ─── ROOT ─────────────────────────────────────────────────────────
 export default function App() {
   const [auth, setAuth] = useState(null)
+  const [restoring, setRestoring] = useState(true)
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = await api.getStoredToken()
+        const user = await api.getStoredUser()
+        if (token && user) setAuth({ token, ...user })
+      } finally {
+        setRestoring(false)
+      }
+    })()
+  }, [])
 
   const authValue = {
     token: auth?.token,
     user: auth,
     login: (data) => setAuth(data),
-    logout: () => setAuth(null),
+    logout: () => { api.logout(); setAuth(null) },
   }
+
+  if (restoring) return <LoadingScreen />
 
   return (
     <SafeAreaProvider>
@@ -1404,98 +1411,6 @@ export default function App() {
       </AuthCtx.Provider>
     </SafeAreaProvider>
   )
-}
-
-// ─── MOCK DATA ────────────────────────────────────────────────────
-function mockDashboard() {
-  return {
-    total_power_kw: 1847,
-    revenue_today: 8240,
-    battery_soc: 74,
-    grid_price: 68,
-    co2_saved: 4.2,
-    sites_online: 12,
-    sites_offline: 2,
-  }
-}
-
-function mockSites() {
-  return [
-    { id: 1, name: "Lisboa Norte", location: "Lisboa", type: "Solar+Storage", status: "online", power: 420, capacity: 500 },
-    { id: 2, name: "Porto Sul", location: "Porto", type: "Wind+Battery", status: "online", power: 280, capacity: 350 },
-    { id: 3, name: "Setúbal Industrial", location: "Setúbal", type: "Storage", status: "warning", power: 180, capacity: 400 },
-    { id: 4, name: "Faro Logistics", location: "Faro", type: "Solar+EV", status: "online", power: 95, capacity: 120 },
-  ]
-}
-
-function mockAlerts() {
-  return [
-    { id: 1, title: "Battery Cell Overtemp", message: "Cell block 3A exceeded 42°C threshold. Cooling activated.", site: "Lisboa Norte", level: "critical", time: "2m ago" },
-    { id: 2, title: "Grid Frequency Deviation", message: "Frequency dropped to 49.8 Hz. Auto-correction engaged.", site: "Porto Sul", level: "warning", time: "8m ago" },
-    { id: 3, title: "EV Charger Offline", message: "Bay 7 charger lost comms. Manual inspection required.", site: "Faro Logistics", level: "warning", time: "22m ago" },
-    { id: 4, title: "Scheduled Report Ready", message: "May 2025 performance report is available.", site: "Platform", level: "info", time: "1h ago" },
-    { id: 5, title: "High Price Spike Detected", message: "EPEX spot price exceeded €95/MWh. Discharge initiated.", site: "Setúbal Industrial", level: "info", time: "2h ago" },
-  ]
-}
-
-function mockBatteries() {
-  return [
-    { id: 1, name: "BESS-LIS-01", site: "Lisboa Norte", capacity: 2000, soc: 82, power: 120, mode: "discharging", temp: 28, health: 96, cycles: 342 },
-    { id: 2, name: "BESS-LIS-02", site: "Lisboa Norte", capacity: 1500, soc: 45, power: -80, mode: "charging", temp: 26, health: 98, cycles: 218 },
-    { id: 3, name: "BESS-POR-01", site: "Porto Sul", capacity: 3000, soc: 67, power: 0, mode: "idle", temp: 24, health: 94, cycles: 512 },
-    { id: 4, name: "BESS-SET-01", site: "Setúbal", capacity: 1000, soc: 31, power: -60, mode: "charging", temp: 30, health: 89, cycles: 680 },
-  ]
-}
-
-function mockEVs() {
-  return [
-    { id: 1, plate: "51-AB-23", model: "Tesla Model 3", bay: 2, status: "charging", soc: 68, eta: "45min" },
-    { id: 2, plate: "AA-42-BC", model: "Nissan Leaf", bay: 5, status: "v2g", soc: 85, eta: "—" },
-    { id: 3, plate: "98-XY-12", model: "VW ID.4", bay: 8, status: "charging", soc: 42, eta: "1h 20m" },
-    { id: 4, plate: "67-MN-89", model: "BMW iX3", bay: 11, status: "idle", soc: 100, eta: "—" },
-  ]
-}
-
-function mockVPPGroups() {
-  return [
-    { id: 1, name: "Iberia-South VPP", assets: 12, region: "PT/ES", status: "active", capacity: "8.4", dispatched: "5.2", revenue: "18.4" },
-    { id: 2, name: "Industrial Flex", assets: 8, region: "PT Central", status: "active", capacity: "4.2", dispatched: "3.1", revenue: "9.8" },
-    { id: 3, name: "Residential Pool", assets: 340, region: "Nationwide", status: "standby", capacity: "2.1", dispatched: "0", revenue: "4.2" },
-  ]
-}
-
-function mockPositions() {
-  return [
-    { id: 1, product: "DE Day-Ahead", type: "Sell", hour: "16:00-17:00", volume: 2.5, price: 91, pnl: 840 },
-    { id: 2, product: "FR Intraday", type: "Buy", hour: "14:00-15:00", volume: 1.8, price: 65, pnl: 210 },
-    { id: 3, product: "PT Balancing", type: "Sell", hour: "Now", volume: 3.2, price: 78, pnl: -120 },
-  ]
-}
-
-function mockMaintenance() {
-  return [
-    { id: 1, title: "Battery Cell Inspection", asset: "BESS-LIS-01", site: "Lisboa Norte", priority: "high", due: "Today", status: "pending" },
-    { id: 2, title: "Inverter Calibration", asset: "INV-POR-03", site: "Porto Sul", priority: "medium", due: "Jun 7", status: "scheduled" },
-    { id: 3, title: "EV Charger Firmware", asset: "EVCS-FAR-07", site: "Faro", priority: "low", due: "Jun 1", status: "overdue" },
-    { id: 4, title: "Grid Meter Audit", asset: "MTR-SET-01", site: "Setúbal", priority: "high", due: "Jun 10", status: "scheduled" },
-  ]
-}
-
-function mockAnomalies() {
-  return [
-    { id: 1, type: "Thermal Runaway Risk", device: "BESS-LIS-01 Cell-3A", site: "Lisboa Norte", severity: 8, confidence: 92, recommendation: "Inspect cooling system. Consider partial isolation of affected cell block." },
-    { id: 2, type: "Unusual Consumption Pattern", device: "EVCS-SET-Bay5", site: "Setúbal", severity: 5, confidence: 78, recommendation: "Possible charger malfunction. Schedule diagnostic within 48h." },
-    { id: 3, type: "Grid Harmonic Distortion", device: "INV-POR-02", site: "Porto Sul", severity: 3, confidence: 85, recommendation: "Monitor and apply filter adjustment if distortion increases." },
-  ]
-}
-
-function mockUsers() {
-  return [
-    { id: 1, name: "Francisco Morais", email: "admin@voltaris.com", role: "admin", active: true },
-    { id: 2, name: "Sofia Oliveira", email: "operator@voltaris.com", role: "operator", active: true },
-    { id: 3, name: "Pedro Santos", email: "viewer@voltaris.com", role: "viewer", active: true },
-    { id: 4, name: "Ana Lima", email: "investor@voltaris.com", role: "investor", active: true },
-  ]
 }
 
 // ─── Shared Styles ────────────────────────────────────────────────

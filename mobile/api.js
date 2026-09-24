@@ -144,6 +144,91 @@ export async function getAlerts(limit = 50) {
   return response.data;
 }
 
+export async function ackAlert(alertId) {
+  const response = await apiClient.post(`/alerts/${alertId}/ack`);
+  return response.data;
+}
+
+export async function getSites() {
+  const response = await apiClient.get('/sites');
+  return response.data;
+}
+
+export async function getDeviceReadings(deviceId) {
+  const response = await apiClient.get(`/devices/${deviceId}/readings`);
+  return response.data;
+}
+
+export async function getDayAheadPrices() {
+  const response = await apiClient.get('/prices/day-ahead');
+  return response.data;
+}
+
+export async function getVppAggregate(vppId) {
+  const response = await apiClient.get(`/vpp/${vppId}/aggregate`);
+  return response.data;
+}
+
+export async function getVppBids(vppId) {
+  const response = await apiClient.get(`/vpp/${vppId}/bids`);
+  return response.data;
+}
+
+export async function getVppPerformance(vppId) {
+  const response = await apiClient.get(`/vpp/${vppId}/performance`);
+  return response.data;
+}
+
+export async function getUsers() {
+  const response = await apiClient.get('/auth/users');
+  return response.data;
+}
+
+export async function getAuditLog(params = {}) {
+  const response = await apiClient.get('/audit-log', { params });
+  return response.data;
+}
+
+export async function getMaintenanceAssets() {
+  const response = await apiClient.get('/maintenance/assets');
+  return response.data;
+}
+
+export async function getMaintenanceSchedule() {
+  const response = await apiClient.get('/maintenance/schedule');
+  return response.data;
+}
+
+export async function getTenantSettings() {
+  const response = await apiClient.get('/tenant-settings');
+  return response.data;
+}
+
+export async function updateTenantSettings(data) {
+  const response = await apiClient.patch('/tenant-settings', data);
+  return response.data;
+}
+
+export async function getApiKeys() {
+  const response = await apiClient.get('/api-keys');
+  return response.data;
+}
+
+export async function createApiKey(data) {
+  const response = await apiClient.post('/api-keys', data);
+  return response.data;
+}
+
+export async function revokeApiKey(keyId) {
+  const response = await apiClient.delete(`/api-keys/${keyId}`);
+  return response.data;
+}
+
+export async function rotateApiKey(keyId) {
+  const response = await apiClient.post(`/api-keys/${keyId}/rotate`);
+  return response.data;
+}
+
 // ─── Export ──────────────────────────────────────────────────────────────────
 
 export default apiClient;
