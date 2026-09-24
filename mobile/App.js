@@ -5,7 +5,7 @@ initSentry()
 import { useEffect } from "react"
 import { Platform } from "react-native"
 import * as Notifications from "expo-notifications"
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, DarkTheme } from "@react-navigation/native"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import { StatusBar } from "expo-status-bar"
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
@@ -20,9 +20,12 @@ import MainTabs from "./src/navigation/MainTabs"
 import { registerBackgroundSync, unregisterBackgroundSync, clearCachedSnapshot } from "./src/lib/backgroundSync"
 import { ensureLiveNotificationChannel, dismissLiveNotification } from "./src/lib/liveNotification"
 
+// Extend DarkTheme so `fonts` (required by React Navigation 7) is present.
 const navigationTheme = {
+  ...DarkTheme,
   dark: true,
   colors: {
+    ...DarkTheme.colors,
     primary: C.accent,
     background: C.bg,
     card: C.card,
