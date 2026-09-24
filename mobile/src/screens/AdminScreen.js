@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Swi
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import * as api from "../../api"
+import { useAuth } from "../auth/AuthContext"
 import { APP_VERSION } from "../../config"
 import { C, FONT, ss } from "../theme/tokens"
 import { KPI, SectionHeader, Badge, ComingSoon } from "../ui"

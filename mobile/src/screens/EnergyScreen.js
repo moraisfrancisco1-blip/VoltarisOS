@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { LinearGradient } from "expo-linear-gradient"
 
 import * as api from "../../api"
+import { useAuth } from "../auth/AuthContext"
 import { C, FONT, ss } from "../theme/tokens"
 import { KPI, SectionHeader, Badge, ComingSoon, MiniBar, Sparkline } from "../ui"
 
