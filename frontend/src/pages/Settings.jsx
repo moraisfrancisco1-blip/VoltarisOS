@@ -3,6 +3,12 @@ import { useAppStore, THEMES } from "../store/appStore";
 import { useTranslation } from "../i18n/useTranslation";
 import { LANGUAGES } from "../i18n/translations";
 
+// Tabs that expose platform-billing / subscription-management data — the
+// company's contract with Voltaris, its invoices and payment method. This is
+// superadmin-only: a tenant "admin" manages their own sites, users and API
+// keys, but never the account's billing relationship with us.
+const SUPERADMIN_ONLY_TABS = ["billing"];
+
 // ─── Mini design tokens ────────────────────────────────────────────────────────
 const BG    = "var(--surface)";
 const SURF  = "var(--surface)";
@@ -339,6 +345,9 @@ const TABS = [
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Settings({ user, setUser, setPage }) {
+  const role = user?.role || "operator";
+  const isSuperadmin = role === "superadmin";
+  const visibleTabs = TABS.filter(t => isSuperadmin || !SUPERADMIN_ONLY_TABS.includes(t.id));
   const { t } = useTranslation();
   const accent     = useAppStore(s => s.accentColor);
   const theme      = useAppStore(s => s.theme);
@@ -971,7 +980,7 @@ export default function Settings({ user, setUser, setPage }) {
 
       {/* Tab bar — wrapping */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 28, background: SURF, borderRadius: 12, padding: 6, border: `1px solid ${BORD}` }}>
-        {TABS.map(({ id, icon }) => (
+        {visibleTabs.map(({ id, icon }) => (
           <button key={id} onClick={() => setTab(id)} style={{
             background: tab === id ? accent : "transparent",
             color: tab === id ? "#000" : SUB,
@@ -1572,7 +1581,8 @@ export default function Settings({ user, setUser, setPage }) {
       )}
 
       {/* ─── BILLING ─────────────────────────────────────────────────────────── */}
-      {tab === "billing" && (
+      {/* superadmin-only: see SUPERADMIN_ONLY_TABS above. */}
+      {tab === "billing" && isSuperadmin && (
         <div data-billing-section>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {/* Current plan */}
