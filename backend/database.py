@@ -9,6 +9,11 @@ _raw_url = os.environ.get("DATABASE_URL", "sqlite:///./energy.db")
 # Railway gives postgres:// but SQLAlchemy 1.4+ requires postgresql://
 DATABASE_URL = _raw_url.replace("postgres://", "postgresql://", 1)
 
+# SQLAlchemy 2.1 made psycopg (v3) the default driver for plain postgresql://
+# URLs; this project ships psycopg2-binary, so pin the driver explicitly.
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
