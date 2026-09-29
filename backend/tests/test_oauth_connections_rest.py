@@ -103,7 +103,7 @@ class TestStatusAndRoleGating:
         assert resp.status_code == 200
         body = resp.json()
         providers = {p["provider"] for p in body}
-        assert providers == {"google", "microsoft", "slack"}
+        assert providers == {"google", "microsoft", "slack", "solaredge"}
         assert all(p["configured"] is False for p in body)
         assert all(p["connected"] is False for p in body)
 
@@ -248,3 +248,86 @@ class TestDisconnect:
         assert db_session.query(models.OAuthConnection).filter(
             models.OAuthConnection.tenant_id == TENANT_A
         ).count() == 1
+
+
+# ── SolarEdge (API V2) ───────────────────────────────────────────────────────
+
+@pytest.fixture()
+def configured_solaredge(monkeypatch):
+    s = config_module.settings
+    monkeypatch.setattr(s, "SOLAREDGE_OAUTH_CLIENT_ID", "se-id")
+    monkeypatch.setattr(s, "SOLAREDGE_OAUTH_CLIENT_SECRET", "se-secret")
+
+
+class TestSolarEdge:
+    def test_unconfigured_without_credentials(self, client, db_session, monkeypatch):
+        monkeypatch.setattr(config_module.settings, "SOLAREDGE_OAUTH_CLIENT_ID", "")
+        monkeypatch.setattr(config_module.settings, "SOLAREDGE_OAUTH_CLIENT_SECRET", "")
+        resp = client.post("/api/oauth/solaredge/start", headers=_auth(TENANT_A))
+        assert resp.status_code == 503
+
+    def test_start_points_to_solaredge_connect_with_state_as_external_id(self, client, db_session, configured_solaredge):
+        resp = client.post("/api/oauth/solaredge/start", headers=_auth(TENANT_A))
+        assert resp.status_code == 200
+        url = resp.json()["authorize_url"]
+        assert url.startswith("https://connect.solaredge.com/authorize?client_id=se-id&external_id=")
+        assert "redirect_uri" not in url and "state=" not in url
+
+    def test_auth_callback_round_trip(self, client, db_session, monkeypatch, configured_solaredge):
+        _seed_user(db_session, TENANT_A)
+        state = _make_state(TENANT_A, "admin-a@x.com", "solaredge")
+
+        def fake_post(url, **kwargs):
+            assert url == "https://monitoringapi.solaredge.com/v2/oauth2/token"
+            assert kwargs["json"] == {"grant_type": "authorization_code", "code": "abc",
+                                      "client_id": "se-id", "client_secret": "se-secret"}
+            return FakeResponse({"access_token": "se-tok", "refresh_token": "se-rt", "expires_in": 7200})
+
+        monkeypatch.setattr(httpx, "post", fake_post)
+        resp = client.get(f"/auth/callback?site_id=2951500&code=abc&external_id={state}", follow_redirects=False)
+        assert resp.status_code in (302, 307)
+        assert "oauth=success" in resp.headers["location"]
+        conn = db_session.query(models.OAuthConnection).filter(
+            models.OAuthConnection.tenant_id == TENANT_A, models.OAuthConnection.provider == "solaredge"
+        ).first()
+        assert conn.access_token == "se-tok" and conn.refresh_token == "se-rt"
+        assert conn.account_label == "Site 2951500"
+
+    def test_callback_without_external_id_is_rejected(self, client, db_session, configured_solaredge):
+        resp = client.get("/auth/callback?site_id=1&code=abc", follow_redirects=False)
+        assert "oauth=error" in resp.headers["location"]
+
+    def test_failed_exchange_redirects_with_reason(self, client, db_session, monkeypatch, configured_solaredge):
+        _seed_user(db_session, TENANT_A)
+        state = _make_state(TENANT_A, "admin-a@x.com", "solaredge")
+        monkeypatch.setattr(httpx, "post", lambda *a, **kw: FakeResponse(
+            {"error": "invalid_request", "error_description": "Invalid code"}, status_code=400))
+        resp = client.get(f"/auth/callback?site_id=1&code=abc&external_id={state}", follow_redirects=False)
+        assert "oauth=error" in resp.headers["location"]
+        assert "reason=invalid_request" in resp.headers["location"]
+
+    def test_expired_token_is_refreshed_and_rotated_before_api_call(self, client, db_session, monkeypatch, configured_solaredge):
+        user = _seed_user(db_session, TENANT_A)
+        db_session.add(models.OAuthConnection(
+            tenant_id=TENANT_A, user_id=user.id, provider="solaredge", account_label="Site 2951500",
+            access_token="old", refresh_token="rt", expires_at=datetime.utcnow() - timedelta(minutes=5),
+        ))
+        db_session.commit()
+
+        def fake_post(url, **kwargs):
+            assert kwargs["json"]["grant_type"] == "refresh_token"
+            assert kwargs["json"]["refresh_token"] == "rt"
+            return FakeResponse({"access_token": "new", "refresh_token": "rt2", "expires_in": 7200})
+
+        def fake_get(url, **kwargs):
+            assert url == "https://monitoringapi.solaredge.com/v2/sites/2951500/overview"
+            assert kwargs["headers"]["Authorization"] == "Bearer new"
+            return FakeResponse({"currentPower": 1234})
+
+        monkeypatch.setattr(httpx, "post", fake_post)
+        monkeypatch.setattr(httpx, "get", fake_get)
+        resp = client.get("/api/oauth/solaredge/overview", headers=_auth(TENANT_A))
+        assert resp.status_code == 200
+        assert resp.json() == {"site_id": "2951500", "overview": {"currentPower": 1234}}
+        conn = db_session.query(models.OAuthConnection).filter(models.OAuthConnection.provider == "solaredge").first()
+        assert conn.access_token == "new" and conn.refresh_token == "rt2"

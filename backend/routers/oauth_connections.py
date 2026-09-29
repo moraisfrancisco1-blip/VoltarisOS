@@ -32,6 +32,10 @@ from backend.models import utcnow_naive
 from backend import models
 from backend.audit import log_audit_event
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/api/oauth", tags=["oauth"])
 
 STATE_TTL_MINUTES = 10
@@ -54,6 +58,16 @@ PROVIDER_META = {
         "userinfo_url": "https://graph.microsoft.com/v1.0/me",
         "userinfo_label_field": "userPrincipalName",
         "scope": "openid email profile offline_access",
+        "extra_authorize_params": {},
+    },
+    "solaredge": {
+        # URLs/scope are filled from settings at call time (see _require_known_provider)
+        "label": "SolarEdge",
+        "authorize_url": "",
+        "token_url": "",
+        "userinfo_url": None,
+        "userinfo_label_field": None,
+        "scope": "",
         "extra_authorize_params": {},
     },
     "slack": {
@@ -84,19 +98,74 @@ def _client_secret(provider: str) -> str:
     return getattr(settings, f"{provider.upper()}_OAUTH_CLIENT_SECRET", "")
 
 
+def _resolved_meta(provider: str) -> dict | None:
+    meta = PROVIDER_META.get(provider)
+    if meta and provider == "solaredge":
+        meta = {
+            **meta,
+            "authorize_url": settings.SOLAREDGE_AUTHORIZE_URL,
+            "token_url": settings.SOLAREDGE_TOKEN_URL,
+            "scope": settings.SOLAREDGE_SCOPES,
+        }
+    return meta
+
+
 def _is_configured(provider: str) -> bool:
-    return bool(_client_id(provider) and _client_secret(provider))
+    meta = _resolved_meta(provider) or {}
+    return bool(
+        _client_id(provider) and _client_secret(provider)
+        and meta.get("authorize_url") and meta.get("token_url")
+    )
 
 
 def _redirect_uri(provider: str) -> str:
+    if provider == "solaredge":
+        # Registered in the SolarEdge developer console as-is; served by
+        # callback_alias_router below.
+        return settings.SOLAREDGE_REDIRECT_URI
     return f"{settings.OAUTH_REDIRECT_BASE_URL}/api/oauth/{provider}/callback"
 
 
 def _require_known_provider(provider: str) -> dict:
-    meta = PROVIDER_META.get(provider)
+    meta = _resolved_meta(provider)
     if not meta:
         raise HTTPException(404, f"Fornecedor desconhecido: {provider}")
     return meta
+
+
+def _post_token(provider: str, data: dict):
+    """POST to the provider's token endpoint. Sends the client secret in the
+    body (client_secret_post); if the provider answers invalid_client /
+    401, retries once with HTTP Basic (client_secret_basic)."""
+    meta = _require_known_provider(provider)
+    if provider == "solaredge":
+        # SolarEdge ONE: JSON body, credentials in the body (docs: Authentication, step 4/6)
+        return httpx.post(
+            meta["token_url"],
+            json={**data, "client_id": _client_id(provider), "client_secret": _client_secret(provider)},
+            headers={"Accept": "application/json"},
+            timeout=15.0,
+        )
+    resp = httpx.post(
+        meta["token_url"],
+        data={**data, "client_id": _client_id(provider), "client_secret": _client_secret(provider)},
+        headers={"Accept": "application/json"},
+        timeout=15.0,
+    )
+    if resp.status_code in (400, 401):
+        try:
+            err = (resp.json() or {}).get("error")
+        except Exception:
+            err = None
+        if resp.status_code == 401 or err == "invalid_client":
+            resp = httpx.post(
+                meta["token_url"],
+                data=data,
+                auth=(_client_id(provider), _client_secret(provider)),
+                headers={"Accept": "application/json"},
+                timeout=15.0,
+            )
+    return resp
 
 
 def _make_state(tenant_id: int, email: str, provider: str) -> str:
@@ -164,6 +233,12 @@ def oauth_start(provider: str, user: dict = Depends(require_admin)):
         raise HTTPException(503, f"{meta['label']} não está configurado nesta instância")
 
     state = _make_state(user.get("tenant_id"), user.get("sub"), provider)
+    if provider == "solaredge":
+        # SolarEdge Connect has no `state`/`redirect_uri` params: the redirect is
+        # fixed on the app, and `external_id` is echoed back to the callback --
+        # so the signed state travels as external_id.
+        params = {"client_id": _client_id(provider), "external_id": state}
+        return StartResponse(authorize_url=f"{meta['authorize_url']}?{urlencode(params)}")
     params = {
         "client_id": _client_id(provider),
         "redirect_uri": _redirect_uri(provider),
@@ -172,6 +247,8 @@ def oauth_start(provider: str, user: dict = Depends(require_admin)):
         "response_type": "code",
         **meta["extra_authorize_params"],
     }
+    if not params["scope"]:
+        del params["scope"]
     return StartResponse(authorize_url=f"{meta['authorize_url']}?{urlencode(params)}")
 
 
@@ -182,6 +259,8 @@ def oauth_callback(
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
+    site_id: str | None = None,
+    external_id: str | None = None,
     db=Depends(get_db),
 ):
     """PUBLIC — the provider redirects the user's browser here with no
@@ -189,6 +268,8 @@ def oauth_callback(
     is the only thing proving which tenant/user initiated this."""
     meta = _require_known_provider(provider)
     base = settings.OAUTH_REDIRECT_BASE_URL
+    if provider == "solaredge" and not state:
+        state = external_id  # see oauth_start
 
     if error or not code or not state:
         return RedirectResponse(f"{base}/?oauth=error&provider={provider}")
@@ -197,25 +278,25 @@ def oauth_callback(
     tenant_id = payload["tenant_id"]
 
     try:
-        token_resp = httpx.post(
-            meta["token_url"],
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": _redirect_uri(provider),
-                "client_id": _client_id(provider),
-                "client_secret": _client_secret(provider),
-            },
-            headers={"Accept": "application/json"},
-            timeout=15.0,
-        )
-        token_data = token_resp.json()
+        token_body = {"grant_type": "authorization_code", "code": code}
+        if provider != "solaredge":
+            token_body["redirect_uri"] = _redirect_uri(provider)
+        token_resp = _post_token(provider, token_body)
+        try:
+            token_data = token_resp.json()
+        except ValueError:
+            token_data = {}
         access_token = token_data.get("access_token")
         if not token_resp.is_success or not access_token:
-            return RedirectResponse(f"{base}/?oauth=error&provider={provider}")
+            reason = token_data.get("error") or f"http_{token_resp.status_code}"
+            logger.warning("OAuth token exchange failed for %s: %s %s", provider, token_resp.status_code, token_data)
+            return RedirectResponse(f"{base}/?oauth=error&provider={provider}&reason={reason}")
 
         account_label = None
-        if provider == "slack":
+        if provider == "solaredge":
+            # SolarEdge grants are per site; the callback tells us which one.
+            account_label = f"Site {site_id}" if site_id else None
+        elif provider == "slack":
             account_label = (token_data.get("team") or {}).get("name")
         elif meta["userinfo_url"]:
             try:
@@ -278,6 +359,11 @@ def oauth_disconnect(
     ).first()
     if not conn:
         return
+    if provider == "solaredge" and settings.SOLAREDGE_REVOKE_URL:
+        try:
+            httpx.post(settings.SOLAREDGE_REVOKE_URL, json={"token": conn.access_token}, timeout=10.0)
+        except httpx.RequestError:
+            logger.warning("SolarEdge token revoke failed for tenant %s", user.get("tenant_id"))
     db.delete(conn)
     db.commit()
 
@@ -286,4 +372,99 @@ def oauth_disconnect(
         user_email=user.get("sub"), target_resource="oauth_connection",
         ip_address=request.client.host if request.client else None,
         details={"provider": provider},
+    )
+
+
+# ── Token refresh + SolarEdge helpers ────────────────────────────────────────
+
+def get_valid_access_token(db, tenant_id: int, provider: str) -> str:
+    """Return a usable access token for the tenant's connection, refreshing it
+    when it is (about to be) expired. Raises 409 when a reconnect is needed.
+    Use this from pollers before every provider API call."""
+    conn = db.query(models.OAuthConnection).filter(
+        models.OAuthConnection.tenant_id == tenant_id,
+        models.OAuthConnection.provider == provider,
+    ).first()
+    if not conn:
+        raise HTTPException(409, f"{provider} não está ligado")
+
+    if not conn.expires_at or conn.expires_at > utcnow_naive() + timedelta(seconds=60):
+        return conn.access_token
+
+    if not conn.refresh_token:
+        raise HTTPException(409, f"Autorização {provider} expirou — é preciso voltar a ligar")
+
+    try:
+        resp = _post_token(provider, {"grant_type": "refresh_token", "refresh_token": conn.refresh_token})
+        data = resp.json()
+    except (httpx.RequestError, ValueError):
+        raise HTTPException(502, f"Falha a renovar o token {provider}")
+    if not resp.is_success or not data.get("access_token"):
+        logger.warning("OAuth refresh failed for %s tenant %s: %s", provider, tenant_id, data)
+        raise HTTPException(409, f"Autorização {provider} expirou — é preciso voltar a ligar")
+
+    conn.access_token = data["access_token"]
+    if data.get("refresh_token"):
+        conn.refresh_token = data["refresh_token"]
+    if data.get("expires_in"):
+        conn.expires_at = utcnow_naive() + timedelta(seconds=int(data["expires_in"]))
+    db.commit()
+    return conn.access_token
+
+
+def solaredge_site_id(db, tenant_id: int) -> str | None:
+    conn = db.query(models.OAuthConnection).filter(
+        models.OAuthConnection.tenant_id == tenant_id,
+        models.OAuthConnection.provider == "solaredge",
+    ).first()
+    if conn and conn.account_label and conn.account_label.startswith("Site "):
+        return conn.account_label[len("Site "):]
+    return None
+
+
+@router.get("/solaredge/overview")
+def solaredge_overview(db=Depends(get_db), user: dict = Depends(require_admin)):
+    """Smoke test for the SolarEdge connection: GET /v2/sites/{site_id}/overview
+    with the stored (auto-refreshed) bearer token."""
+    tenant_id = user.get("tenant_id")
+    token = get_valid_access_token(db, tenant_id, "solaredge")
+    site_id = solaredge_site_id(db, tenant_id)
+    if not site_id:
+        raise HTTPException(409, "Site ID da SolarEdge desconhecido — volta a ligar")
+    try:
+        resp = httpx.get(
+            f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}/overview",
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+            timeout=20.0,
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(502, f"SolarEdge inacessível: {e}")
+    try:
+        body = resp.json()
+    except ValueError:
+        body = {"raw": resp.text[:500]}
+    if not resp.is_success:
+        raise HTTPException(502, {"solaredge_status": resp.status_code, "body": body})
+    return {"site_id": site_id, "overview": body}
+
+
+# SolarEdge's registered redirect is https://www.voltarisos.com/auth/callback
+# (not /api/oauth/solaredge/callback), so expose that exact path too. Must be
+# included in main.py before the SPA catch-all route.
+callback_alias_router = APIRouter(tags=["oauth"])
+
+
+@callback_alias_router.get("/auth/callback")
+def solaredge_callback_alias(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+    site_id: str | None = None,
+    external_id: str | None = None,
+    db=Depends(get_db),
+):
+    return oauth_callback(
+        "solaredge", request, code=code, state=state, error=error,
+        site_id=site_id, external_id=external_id, db=db,
     )

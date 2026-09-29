@@ -67,6 +67,7 @@ from backend.routers.api_keys import router as api_keys_router
 from backend.routers.webhooks import router as webhooks_router
 from backend.routers.white_label import router as white_label_router
 from backend.routers.oauth_connections import router as oauth_connections_router
+from backend.routers.oauth_connections import callback_alias_router as oauth_callback_alias_router
 from backend.routers.websocket import router as websocket_router
 from backend.routers.operations import router as operations_router
 from backend.routers.company import router as company_router
@@ -265,6 +266,7 @@ app.include_router(webhooks_router, dependencies=_auth_dep)  # require_admin ins
 # itself instead.
 app.include_router(white_label_router)
 app.include_router(oauth_connections_router)
+app.include_router(oauth_callback_alias_router)  # PUBLIC GET /auth/callback (SolarEdge redirect URI)
 app.include_router(websocket_router)  # WebSockets handle auth internally via token query param
 app.include_router(operations_router)  # /api/admin/production-readiness — admin-only (require_super_admin inside)
 app.include_router(company_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN

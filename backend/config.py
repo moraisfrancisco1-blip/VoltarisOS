@@ -62,6 +62,21 @@ class Settings:
     SLACK_OAUTH_CLIENT_ID: str = os.getenv("SLACK_OAUTH_CLIENT_ID", "")
     SLACK_OAUTH_CLIENT_SECRET: str = os.getenv("SLACK_OAUTH_CLIENT_SECRET", "")
 
+    # SolarEdge API V2 (SolarEdge ONE developer platform) — tenant-wide OAuth
+    # connection used to read the customer's site data. The authorize/token
+    # URLs, API base and scopes come from the SolarEdge developer console docs.
+    # The redirect registered with SolarEdge is SOLAREDGE_REDIRECT_URI (served
+    # by backend/routers/oauth_connections.py -> GET /auth/callback).
+    SOLAREDGE_OAUTH_CLIENT_ID: str = os.getenv("SOLAREDGE_OAUTH_CLIENT_ID") or os.getenv("SOLAREDGE_CLIENT_ID", "")
+    SOLAREDGE_OAUTH_CLIENT_SECRET: str = os.getenv("SOLAREDGE_OAUTH_CLIENT_SECRET") or os.getenv("SOLAREDGE_CLIENT_SECRET", "")
+    # Defaults from the SolarEdge ONE "Authentication" docs (Site Access / OAuth 2.0).
+    SOLAREDGE_AUTHORIZE_URL: str = os.getenv("SOLAREDGE_AUTHORIZE_URL", "https://connect.solaredge.com/authorize")
+    SOLAREDGE_TOKEN_URL: str = os.getenv("SOLAREDGE_TOKEN_URL", "https://monitoringapi.solaredge.com/v2/oauth2/token")
+    SOLAREDGE_REVOKE_URL: str = os.getenv("SOLAREDGE_REVOKE_URL", "https://monitoringapi.solaredge.com/v2/oauth2/revoke-token")
+    SOLAREDGE_API_BASE: str = os.getenv("SOLAREDGE_API_BASE", "https://monitoringapi.solaredge.com")
+    SOLAREDGE_SCOPES: str = os.getenv("SOLAREDGE_SCOPES", "")  # scopes are set on the app, not sent
+    SOLAREDGE_REDIRECT_URI: str = os.getenv("SOLAREDGE_REDIRECT_URI", "https://www.voltarisos.com/auth/callback")
+
     # Railway API — optional; powers real custom-domain provisioning for
     # White-label (backend/routers/white_label.py). Without it, a domain
     # request is stored but stays "pending_manual_setup" instead of silently
