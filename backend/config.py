@@ -125,26 +125,26 @@ class Settings:
     STRIPE_PLANS = {
         "home": {
             "name": "Home",
-            "price_monthly": 6900,  # €69
-            "price_yearly": 6624,   # €66.24 (20% off)
+            "price_monthly": 6900,
+            "price_yearly": 6624,
             "description": "1 site · até 50 kWh"
         },
         "starter": {
             "name": "Starter",
-            "price_monthly": 27900,  # €279
-            "price_yearly": 26784,   # €267.84 (20% off)
+            "price_monthly": 27900,
+            "price_yearly": 26784,
             "description": "5 sites · até 500 kWh"
         },
         "pro": {
             "name": "Pro",
-            "price_monthly": 109900,  # €1,099
-            "price_yearly": 105504,   # €1,055.04 (20% off)
+            "price_monthly": 109900,
+            "price_yearly": 105504,
             "description": "20 sites · AI avançada"
         },
         "enterprise": {
             "name": "Enterprise",
-            "price_monthly": 399900,  # €3,999
-            "price_yearly": 383904,   # €3,839.04 (20% off)
+            "price_monthly": 399900,
+            "price_yearly": 383904,
             "description": "Ilimitado · white-label"
         }
     }

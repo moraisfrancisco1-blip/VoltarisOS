@@ -20,5 +20,6 @@ bcrypt
 slowapi
 stripe
 pyotp
+# Production cache and background worker
 redis
 celery

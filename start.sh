@@ -1,6 +1,5 @@
 #!/bin/sh
 echo "=== VoltarisOS starting ==="
-# Seed admin account on every boot (idempotent — safe to run repeatedly)
 python -c "
 from backend.database import SessionLocal, engine
 from backend import models
