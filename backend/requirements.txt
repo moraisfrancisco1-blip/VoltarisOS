@@ -12,7 +12,7 @@ aiofiles
 weasyprint
 python-jose[cryptography]
 reportlab
-pymodbus
+pymodbus>=3.5.0
 asyncua
 python-dotenv
 passlib[bcrypt]
