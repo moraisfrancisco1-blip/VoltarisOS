@@ -61,6 +61,7 @@ from backend.routers.alerts_ws import router as alerts_ws_router
 from backend.routers.payments import router as payments_router
 from backend.routers.twofa import router as twofa_router
 from backend.routers.websocket import router as websocket_router
+from backend.routers.ev_charger import router as ev_charger_router
 from backend.security import get_current_user, limiter
 from fastapi import Depends, Request
 from slowapi import _rate_limit_exceeded_handler
@@ -195,6 +196,7 @@ app.include_router(alerts_ws_router)  # websocket does its own token check on co
 app.include_router(payments_router)  # Stripe payments - public endpoints
 app.include_router(twofa_router, prefix="/api", dependencies=_auth_dep)  # 2FA endpoints require auth
 app.include_router(websocket_router)  # WebSockets handle auth internally via token query param
+app.include_router(ev_charger_router, dependencies=_auth_dep)  # EV charger control
 
 
 @app.get("/ai_decision")
