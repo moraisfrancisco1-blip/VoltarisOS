@@ -20,6 +20,8 @@ bcrypt
 slowapi
 stripe
 pyotp
+# EV charger connector (Alfen Eve Pro-line — Modbus TCP)
+pymodbus>=3.5.0
 # Production cache and background worker
 redis
 celery
