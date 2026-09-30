@@ -23,5 +23,6 @@ sentry-sdk[fastapi]
 celery
 redis
 pyotp
-pulp[cbc]
+# PuLP 4 removed LpStatus, which optimization/multi_asset_optimizer.py imports
+pulp[cbc]<4
 pytest
