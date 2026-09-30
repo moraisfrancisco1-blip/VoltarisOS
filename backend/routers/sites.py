@@ -27,16 +27,51 @@ def get_db():
         db.close()
 
 
+# Columns of models.Site that are NOT NULL (or must never be blanked): a PATCH
+# that sends an explicit null for one of these would hit the DB constraint and
+# surface as a 500, so it is rejected with a 422 instead. Everything else in
+# SiteUpdate is nullable and may be cleared with null.
+_NON_NULLABLE_SITE_FIELDS = ("name", "solar_kw", "battery_kwh", "ev_chargers", "status")
+
+
+def _validate_name(v):
+    if v is not None:
+        v = v.strip()
+        if not v:
+            raise ValueError("name must not be empty")
+    return v
+
+
+def _validate_lat(v):
+    if v is not None and not (-90 <= v <= 90):
+        raise ValueError("lat must be between -90 and 90")
+    return v
+
+
+def _validate_lng(v):
+    if v is not None and not (-180 <= v <= 180):
+        raise ValueError("lng must be between -180 and 180")
+    return v
+
+
+def _validate_non_negative(v):
+    if v is not None and v < 0:
+        raise ValueError("must be greater than or equal to 0")
+    return v
+
+
 class Site(BaseModel):
     name: str
-    location: str
-    lat: float
-    lng: float
+    # Only the name is required: the create form lets every other field stay
+    # blank and sends null/0 for it, and the DB columns are nullable/defaulted.
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
     timezone: Optional[str] = None   # IANA timezone, e.g. "Europe/Lisbon"
-    solar_kw: float
-    battery_kwh: float
-    ev_chargers: int
-    owner: str
+    solar_kw: float = 0.0
+    battery_kwh: float = 0.0
+    ev_chargers: int = 0
+    owner: Optional[str] = None
     status: str = "active"
     # Panel orientation, Open-Meteo convention (see backend/models.py:Site) --
     # unset means the solar forecast falls back to flat-horizontal (GHI).
@@ -69,10 +104,46 @@ class Site(BaseModel):
             raise ValueError("azimuth_deg must be between -180 and 180 (0=South, -90=East, 90=West, +-180=North)")
         return v
 
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        return _validate_name(v)
 
-class SiteOut(Site):
+    @field_validator("lat")
+    @classmethod
+    def validate_lat(cls, v):
+        return _validate_lat(v)
+
+    @field_validator("lng")
+    @classmethod
+    def validate_lng(cls, v):
+        return _validate_lng(v)
+
+    @field_validator("solar_kw", "battery_kwh", "ev_chargers")
+    @classmethod
+    def validate_non_negative(cls, v):
+        return _validate_non_negative(v)
+
+
+class SiteOut(BaseModel):
+    """Response shape. Deliberately NOT derived from `Site`: the input
+    validators (ranges, non-blank name) must not run on rows already stored, or
+    a single legacy row with a NULL/out-of-range value would turn the whole
+    GET /sites listing into a 500."""
     id: int
     tenant_id: int
+    name: str
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    timezone: Optional[str] = None
+    solar_kw: Optional[float] = None
+    battery_kwh: Optional[float] = None
+    ev_chargers: Optional[int] = None
+    owner: Optional[str] = None
+    status: Optional[str] = None
+    tilt_deg: Optional[float] = None
+    azimuth_deg: Optional[float] = None
     created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
@@ -115,9 +186,18 @@ def create_site(site: Site, user: dict = Depends(get_current_user), db: Session 
     """
     tenant_id = user.get("tenant_id")
     role = user.get("role", "")
-    
+
+    # A site always belongs to a tenant (sites.tenant_id is NOT NULL); without
+    # one the insert would fail at the DB and surface as a 500.
+    if tenant_id is None:
+        raise HTTPException(400, "tenant_id could not be resolved")
+
     # SUPER_ADMIN bypasses site limits
     if role != "SUPER_ADMIN":
+        # Serialise concurrent creations for the same tenant (row lock on
+        # Postgres; a no-op on SQLite) so two parallel requests cannot both
+        # pass the count check below and exceed the plan's site limit.
+        db.query(models.Tenant).filter(models.Tenant.id == tenant_id).with_for_update().first()
         # Resolve plan and max_sites
         plan = get_tenant_plan(user, db)
         max_sites = get_max_sites_for_plan(plan)
@@ -188,12 +268,36 @@ class SiteUpdate(BaseModel):
             raise ValueError("azimuth_deg must be between -180 and 180 (0=South, -90=East, 90=West, +-180=North)")
         return v
 
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v):
+        return _validate_name(v)
+
+    @field_validator("lat")
+    @classmethod
+    def validate_lat(cls, v):
+        return _validate_lat(v)
+
+    @field_validator("lng")
+    @classmethod
+    def validate_lng(cls, v):
+        return _validate_lng(v)
+
+    @field_validator("solar_kw", "battery_kwh", "ev_chargers")
+    @classmethod
+    def validate_non_negative(cls, v):
+        return _validate_non_negative(v)
+
 
 @router.patch("/sites/{site_id}", response_model=SiteOut)
 def update_site(site_id: int, patch: SiteUpdate, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Partially update a site. Same ownership rules as delete: tenant-scoped, 404 no-leak."""
     site = _get_owned_site(db, site_id, user)
-    for field, value in patch.model_dump(exclude_unset=True).items():
+    changes = patch.model_dump(exclude_unset=True)
+    for field in _NON_NULLABLE_SITE_FIELDS:
+        if field in changes and changes[field] is None:
+            raise HTTPException(422, f"{field} cannot be null")
+    for field, value in changes.items():
         setattr(site, field, value)
     db.commit()
     db.refresh(site)

@@ -61,6 +61,41 @@ def _sanitize_config(config):
     return config
 
 
+_MASK = "***"
+
+
+def _restore_masked_secrets(new, old):
+    """Return `new` with every masked secret replaced by its stored value.
+
+    GET responses mask sensitive config values as "***" (see _sanitize_config).
+    A client that edits a device typically sends back the config it read, so a
+    sensitive key still equal to the mask means "unchanged", not "set the
+    password to ***". Without this the real credentials would be overwritten by
+    the mask and the device would silently stop connecting.
+
+    - A masked value with a stored counterpart -> the stored value is kept.
+    - A masked value with no stored counterpart -> the key is dropped (never
+      persist the literal mask).
+    - Any other value, including a new real secret, is stored as sent.
+    Nested dicts and equal-length lists are handled recursively; `new` and
+    `old` are never mutated.
+    """
+    if isinstance(new, dict):
+        old_dict = old if isinstance(old, dict) else {}
+        result = {}
+        for key, value in new.items():
+            if str(key).lower() in _SENSITIVE_CONFIG_KEYS and value == _MASK:
+                if key in old_dict:
+                    result[key] = old_dict[key]
+                continue
+            result[key] = _restore_masked_secrets(value, old_dict.get(key))
+        return result
+    if isinstance(new, list):
+        old_list = old if isinstance(old, list) and len(old) == len(new) else [None] * len(new)
+        return [_restore_masked_secrets(n, o) for n, o in zip(new, old_list)]
+    return new
+
+
 # ── Schemas ──────────────────────────────────────────────────────────────────
 class DeviceCreate(BaseModel):
     name: str
@@ -166,7 +201,13 @@ def create_device(
         if dup:
             raise HTTPException(409, "external_id already exists in this tenant")
     db.add(dev)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Two concurrent creates with the same external_id both passed the
+        # check above; the unique index rejected the second one.
+        db.rollback()
+        raise HTTPException(409, "external_id already exists in this tenant")
     db.refresh(dev)
     return dev
 
@@ -196,9 +237,15 @@ def update_device(
         ).first()
         if dup:
             raise HTTPException(409, "external_id already exists in this tenant")
+    if "config" in data:
+        data["config"] = _restore_masked_secrets(data["config"], dev.config or {})
     for field, val in data.items():
         setattr(dev, field, val)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(409, "external_id already exists in this tenant")
     db.refresh(dev)
     return dev
 
