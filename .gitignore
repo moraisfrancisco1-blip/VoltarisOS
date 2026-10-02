@@ -7,3 +7,12 @@ energy.db
 task.md
 __pycache__/
 *.pyc
+
+# Build output and package-manager caches: generated, never commit them.
+frontend/dist/
+frontend/.npm-cache/
+
+# Legacy user store (emails + unsalted SHA-256 password hashes). Not read by any
+# code; users live in the database.
+users.json
+
