@@ -1,0 +1,15 @@
+# Keep the build context small and keep local secrets/state out of the image.
+.git
+.github
+.env
+.env.*
+!.env.example
+*.db
+**/__pycache__
+**/*.pyc
+**/node_modules
+frontend/.npm-cache
+frontend/dist
+frontend/e2e
+mobile
+docs

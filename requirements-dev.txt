@@ -1,0 +1,5 @@
+# Everything needed to run the test suite: the runtime requirements plus the
+# test tooling (kept out of the production image).
+-r requirements.txt
+pytest==9.1.1
+pytest-asyncio==1.4.0

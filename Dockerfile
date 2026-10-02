@@ -6,7 +6,7 @@
 # =============================================================================
 
 # Stage 1: Build frontend
-FROM node:20-slim AS frontend-build
+FROM node:22-slim AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci --prefer-offline
@@ -14,13 +14,19 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: Backend + serve frontend
-FROM python:3.11-slim AS production
+# Same minor version as CI (.github/workflows/tests.yml), so what is tested is what ships.
+FROM python:3.12-slim AS production
 WORKDIR /app
 
 # Install system dependencies
+# libpango*/libharfbuzz-subset0/fonts: runtime libraries for weasyprint (PDF reports).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz-subset0 \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python deps
