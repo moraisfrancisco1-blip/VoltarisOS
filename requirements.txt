@@ -30,7 +30,7 @@ pandas==3.0.6
 scipy==1.18.1
 pyomo==6.10.1
 # PuLP 4 removed LpStatus, which optimization/multi_asset_optimizer.py imports.
-pulp[cbc]==3.3.2
+pulp[cbc]==4.0.0
 
 # ── Payments / integrations ──────────────────────────────────────────────────
 stripe==16.0.0
