@@ -14,6 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.config import settings
+from backend.audit import audit_request
 from backend.database import SessionLocal
 from backend import models
 from backend.security import get_current_user
@@ -209,6 +210,9 @@ async def create_checkout_session(
             },
         )
 
+        audit_request(db, request, user, "billing.checkout_started", target_resource="tenant", target_id=tenant_id,
+                      details={"plan": body.plan_id, "billing_cycle": body.billing_cycle,
+                               "amount_eur": price_cents / 100, "session_id": session.id})
         return {
             "session_id": session.id,
             "url": session.url,
@@ -252,6 +256,7 @@ async def create_portal_session(
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    audit_request(db, request, user, "billing.portal_opened", target_resource="tenant", target_id=tenant.id)
     return {"url": session.url}
 
 
@@ -305,6 +310,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     event_type = event["type"]
     obj = event["data"]["object"]
     tenant = _resolve_tenant(db, obj)
+    before = (tenant.plan, tenant.subscription_status) if tenant else None
 
     if event_type == "checkout.session.completed":
         if tenant:
@@ -373,6 +379,16 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         # other one won. Discard this attempt's changes: it is a duplicate.
         db.rollback()
         return JSONResponse(content={"received": True, "duplicate": True}, status_code=200)
+    # Who changed the plan? Stripe did. Record every change to a tenant's plan or
+    # subscription status (the actor is the system, not a user).
+    if tenant is not None and before is not None:
+        after = (tenant.plan, tenant.subscription_status)
+        if after != before:
+            audit_request(db, request, None, "billing.subscription_changed", target_resource="tenant",
+                          target_id=tenant.id, tenant_id=tenant.id, user_email="stripe",
+                          details={"event_type": event_type, "event_id": event_id,
+                                   "plan_from": before[0], "plan_to": after[0],
+                                   "status_from": before[1], "status_to": after[1]})
     return JSONResponse(content={"received": True}, status_code=200)
 
 

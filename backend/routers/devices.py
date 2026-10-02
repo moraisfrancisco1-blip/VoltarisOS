@@ -15,7 +15,7 @@ from backend.schemas import (
     DeviceReadingBatchResponse,
     DeviceReadingBatchItem,
 )
-from backend.audit import log_audit_event
+from backend.audit import log_audit_event, audit_request
 from backend import netguard
 from backend.security import get_current_user, require_ingest_identity
 from backend.routers.alerts_ws import evaluate_rules_sync
@@ -176,6 +176,7 @@ def list_devices(db: Session = Depends(get_db), user: dict = Depends(get_current
 @router.post("", response_model=DeviceOut, status_code=201)
 def create_device(
     body: DeviceCreate,
+    request: Request,
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
@@ -211,6 +212,10 @@ def create_device(
         db.rollback()
         raise HTTPException(409, "external_id already exists in this tenant")
     db.refresh(dev)
+    # No config in the details: it holds credentials.
+    audit_request(db, request, user, "device.created", target_resource="device", target_id=dev.id,
+                  tenant_id=dev.tenant_id,
+                  details={"name": dev.name, "protocol": dev.protocol, "device_type": dev.device_type, "site_id": dev.site_id})
     return dev
 
 
@@ -223,6 +228,7 @@ def get_device(device_id: int, db: Session = Depends(get_db), user: dict = Depen
 def update_device(
     device_id: int,
     body: DeviceUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
@@ -239,8 +245,13 @@ def update_device(
         ).first()
         if dup:
             raise HTTPException(409, "external_id already exists in this tenant")
+    config_keys_changed = None
     if "config" in data:
-        data["config"] = _restore_masked_secrets(data["config"], dev.config or {})
+        old_config = dev.config or {}
+        data["config"] = _restore_masked_secrets(data["config"], old_config)
+        config_keys_changed = sorted(
+            k for k in set(old_config) | set(data["config"]) if old_config.get(k) != data["config"].get(k)
+        )
     for field, val in data.items():
         setattr(dev, field, val)
     try:
@@ -249,18 +260,29 @@ def update_device(
         db.rollback()
         raise HTTPException(409, "external_id already exists in this tenant")
     db.refresh(dev)
+    # Names only: config values are credentials / network addresses.
+    details = {"fields": sorted(data)}
+    if config_keys_changed is not None:
+        details["config_keys_changed"] = config_keys_changed
+    if "enabled" in data:
+        details["enabled"] = data["enabled"]
+    audit_request(db, request, user, "device.updated", target_resource="device", target_id=dev.id,
+                  tenant_id=dev.tenant_id, details=details)
     return dev
 
 
 @router.delete("/{device_id}", status_code=204)
-def delete_device(device_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def delete_device(device_id: int, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     dev = _get_owned_device(db, device_id, user)
+    name, tenant_id = dev.name, dev.tenant_id
     db.delete(dev)
     db.commit()
+    audit_request(db, request, user, "device.deleted", target_resource="device", target_id=device_id,
+                  tenant_id=tenant_id, details={"name": name})
 
 
 @router.post("/{device_id}/test")
-async def test_connection(device_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+async def test_connection(device_id: int, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     """Quick connectivity check — does NOT store readings."""
     dev = _get_owned_device(db, device_id, user)
 
@@ -269,6 +291,10 @@ async def test_connection(device_id: int, db: Session = Depends(get_db), user: d
     dev.status = "online" if result["ok"] else "error"
     dev.last_seen = models.utcnow_naive() if result["ok"] else dev.last_seen
     db.commit()
+    # The server opened an outbound connection on the user's behalf: keep a trail
+    # (no host/credentials in the details).
+    audit_request(db, request, user, "device.tested", target_resource="device", target_id=dev.id,
+                  tenant_id=dev.tenant_id, details={"protocol": dev.protocol, "ok": bool(result["ok"])})
     return result
 
 

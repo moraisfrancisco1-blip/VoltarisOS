@@ -4,7 +4,7 @@ sites.py — Site management with plan-based limit enforcement.
 POST /sites validates that the user's active plan has enough site slots
 before allowing creation of a new installation (solar/battery/site).
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from sqlalchemy.orm import Session
@@ -13,6 +13,7 @@ from datetime import datetime
 
 from backend.database import SessionLocal
 from backend import models
+from backend.audit import audit_request
 from backend.security import get_current_user, require_super_admin
 from backend.permissions import get_tenant_plan, get_max_sites_for_plan
 
@@ -178,7 +179,7 @@ def get_sites(user: dict = Depends(get_current_user), db: Session = Depends(get_
 
 
 @router.post("/sites", response_model=SiteOut, status_code=201)
-def create_site(site: Site, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def create_site(site: Site, request: Request, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Create a new installation site. Enforces plan-based max_sites limit.
     
     If the user's current site count >= max_sites for their plan,
@@ -224,6 +225,8 @@ def create_site(site: Site, user: dict = Depends(get_current_user), db: Session 
     db.add(db_site)
     db.commit()
     db.refresh(db_site)
+    audit_request(db, request, user, "site.created", target_resource="site", target_id=db_site.id,
+                  details={"name": db_site.name})
     return db_site
 
 
@@ -290,7 +293,7 @@ class SiteUpdate(BaseModel):
 
 
 @router.patch("/sites/{site_id}", response_model=SiteOut)
-def update_site(site_id: int, patch: SiteUpdate, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def update_site(site_id: int, patch: SiteUpdate, request: Request, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Partially update a site. Same ownership rules as delete: tenant-scoped, 404 no-leak."""
     site = _get_owned_site(db, site_id, user)
     changes = patch.model_dump(exclude_unset=True)
@@ -301,18 +304,24 @@ def update_site(site_id: int, patch: SiteUpdate, user: dict = Depends(get_curren
         setattr(site, field, value)
     db.commit()
     db.refresh(site)
+    # Field NAMES only: owner/location can be personal data.
+    audit_request(db, request, user, "site.updated", target_resource="site", target_id=site.id,
+                  tenant_id=site.tenant_id, details={"fields": sorted(changes)})
     return site
 
 
 @router.delete("/sites/{site_id}")
-def delete_site(site_id: int, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+def delete_site(site_id: int, request: Request, user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete a site. Users can only delete their own tenant's sites (404 no-leak)."""
     site = _get_owned_site(db, site_id, user)
     # Explicitly remove VPP memberships for this site (SQLite does not enforce
     # the FK ON DELETE CASCADE), so no orphan memberships are left behind.
     db.query(models.VPPSiteMembership).filter(models.VPPSiteMembership.site_id == site_id).delete()
+    site_name, site_tenant = site.name, site.tenant_id
     db.delete(site)
     db.commit()
+    audit_request(db, request, user, "site.deleted", target_resource="site", target_id=site_id,
+                  tenant_id=site_tenant, details={"name": site_name})
     return {"message": "Site removido"}
 
 

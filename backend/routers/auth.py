@@ -20,7 +20,7 @@ import os
 import re
 import secrets
 import sys
-from backend.audit import log_user_login, log_audit_event
+from backend.audit import log_user_login, log_audit_event, audit_request
 from backend.twofa import verify_totp_code
 from backend.permissions import (
     PlanTier, TIER_ORDER, PLAN_MAX_SITES, PLAN_ROLE_CEILING,
@@ -435,6 +435,11 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     )
     db.add(user)
     db.commit()
+
+    audit_request(db, request, None, "user.registered", target_resource="user", target_id=user.id,
+                  tenant_id=tenant.id, user_email=user.email,
+                  details={"plan": plan_tier, "role": role, "payment_pending": payment_pending,
+                           "via_invite_code": bool(code_upper)})
     
     return {
         "message": "Conta criada com sucesso",
@@ -746,7 +751,7 @@ def remove_avatar(
 
 
 @router.post("/auth/change-password")
-def change_password(req: ChangePasswordRequest, response: Response, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
+def change_password(req: ChangePasswordRequest, request: Request, response: Response, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
     """Any logged-in user can change their own password.
 
     Also completes the forced first-login change: the flag is cleared and a
@@ -765,6 +770,8 @@ def change_password(req: ChangePasswordRequest, response: Response, db: Session 
     user.password_hash = hash_pw(req.new_password)
     user.must_change_password = False
     db.commit()
+    audit_request(db, request, current, "user.password_changed", target_resource="user", target_id=user.id,
+                  tenant_id=user.tenant_id)
 
     tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
     plan = str(tenant.plan) if tenant and tenant.plan else "beta"
@@ -786,7 +793,7 @@ def change_password(req: ChangePasswordRequest, response: Response, db: Session 
 
 
 @router.post("/auth/invite")
-def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
+def invite_user(req: InviteUserRequest, request: Request, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin-only: create a teammate account directly (no beta code needed).
     Role is restricted to TENANT_MEMBER/TENANT_ADMIN — SUPER_ADMIN can NEVER be
     granted through this endpoint, only via seed_admin() on first boot or manual DB."""
@@ -798,7 +805,11 @@ def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: di
         raise HTTPException(400, "A password deve ter pelo menos 8 caracteres")
 
     inviting_admin = db.query(models.User).filter(models.User.email == admin.get("sub")).first()
-    tenant_id = inviting_admin.tenant_id if inviting_admin else 1
+    if inviting_admin is None:
+        # The token is still valid (72h) but the account is gone. Never fall
+        # back to a default tenant: that would create users in tenant 1.
+        raise HTTPException(403, "Conta de administrador não encontrada")
+    tenant_id = inviting_admin.tenant_id
 
     # Validate role against plan ceiling
     tenant = db.query(models.Tenant).filter(models.Tenant.id == tenant_id).first()
@@ -817,6 +828,8 @@ def invite_user(req: InviteUserRequest, db: Session = Depends(get_db), admin: di
     )
     db.add(user)
     db.commit()
+    audit_request(db, request, admin, "user.invited", target_resource="user", target_id=user.id,
+                  tenant_id=tenant_id, details={"email": user.email, "role": role})
     return {"message": "Utilizador convidado com sucesso", "role": role}
 
 
@@ -849,7 +862,7 @@ def list_users(db: Session = Depends(get_db), _admin: dict = Depends(require_adm
 
 
 @router.patch("/auth/users/{user_id}/toggle-active")
-def toggle_active(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
+def toggle_active(user_id: int, request: Request, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin-only: enable/disable a user account. Cannot deactivate SUPER_ADMIN accounts."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -859,16 +872,19 @@ def toggle_active(user_id: int, db: Session = Depends(get_db), admin: dict = Dep
     
     # TENANT_ADMIN can only toggle users in their own tenant
     admin_user = db.query(models.User).filter(models.User.email == admin.get("sub")).first()
-    if admin.get("role") != "SUPER_ADMIN" and admin_user and user.tenant_id != admin_user.tenant_id:
+    # Fail closed: if the admin's own row is gone, the tenant cannot be verified.
+    if admin.get("role") != "SUPER_ADMIN" and (admin_user is None or user.tenant_id != admin_user.tenant_id):
         raise HTTPException(403, "Acesso negado — utilizador fora do teu tenant")
     
     user.active = not user.active
     db.commit()
+    audit_request(db, request, admin, "user.activation_toggled", target_resource="user", target_id=user.id,
+                  tenant_id=user.tenant_id, details={"email": user.email, "active": user.active})
     return {"id": user.id, "active": user.active}
 
 
 @router.delete("/auth/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
+def delete_user(user_id: int, request: Request, db: Session = Depends(get_db), admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
     """Admin-only: remove a user. Cannot remove SUPER_ADMIN accounts."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -878,11 +894,15 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: dict = Depen
     
     # TENANT_ADMIN can only delete users in their own tenant
     admin_user = db.query(models.User).filter(models.User.email == admin.get("sub")).first()
-    if admin.get("role") != "SUPER_ADMIN" and admin_user and user.tenant_id != admin_user.tenant_id:
+    # Fail closed: if the admin's own row is gone, the tenant cannot be verified.
+    if admin.get("role") != "SUPER_ADMIN" and (admin_user is None or user.tenant_id != admin_user.tenant_id):
         raise HTTPException(403, "Acesso negado — utilizador fora do teu tenant")
     
+    deleted_id, deleted_email, deleted_tenant, deleted_role = user.id, user.email, user.tenant_id, user.role
     db.delete(user)
     db.commit()
+    audit_request(db, request, admin, "user.deleted", target_resource="user", target_id=deleted_id,
+                  tenant_id=deleted_tenant, details={"email": deleted_email, "role": deleted_role})
     return {"message": "Utilizador removido"}
 
 
@@ -921,6 +941,7 @@ def _slugify_tenant(value: str) -> str:
 @router.post("/admin/tenants", status_code=201)
 def create_tenant(
     req: CreateTenantRequest,
+    request: Request,
     db: Session = Depends(get_db),
     _sa: dict = Depends(require_super_admin),
 ):
@@ -1006,6 +1027,11 @@ def create_tenant(
 
     db.commit()
     db.refresh(tenant)
+
+    audit_request(db, request, _sa, "tenant.created", target_resource="tenant", target_id=tenant.id,
+                  tenant_id=tenant.id,
+                  details={"name": tenant.name, "slug": tenant.slug, "plan": tenant.plan,
+                           "first_user_email": admin_email or None})
 
     first_user = None
     if new_user is not None:

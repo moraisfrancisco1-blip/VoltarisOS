@@ -8,7 +8,7 @@ DELETE /api/alert-rules/{id}
 WS   /ws/alerts?token=...     — push stream
 POST /api/alerts/fire         — internal: gateway fires alert → broadcasts
 """
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
@@ -16,6 +16,7 @@ import asyncio, json
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
+from backend.audit import audit_request
 from backend.security import get_current_user, get_current_user_or_service, require_gateway_key
 
 router = APIRouter()
@@ -190,7 +191,7 @@ def list_alerts(
 
 
 @router.post("/api/alerts/{alert_id}/ack")
-def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def acknowledge_alert(alert_id: int, request: Request, by: str = "user", db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     q = db.query(models.Alert).filter(models.Alert.id == alert_id)
     tenant = _effective_tenant(user)
     if tenant is not None:
@@ -202,6 +203,10 @@ def acknowledge_alert(alert_id: int, by: str = "user", db: Session = Depends(get
     a.acknowledged_by = by
     a.acknowledged_at = models.utcnow_naive()
     db.commit()
+    # `by` is a client-supplied label (the UI always sends "user"); the audit
+    # entry records the authenticated actor.
+    audit_request(db, request, user, "alert.acknowledged", target_resource="alert", target_id=a.id,
+                  tenant_id=a.tenant_id, details={"severity": a.severity, "claimed_by": by})
     return {"ok": True}
 
 
@@ -250,7 +255,7 @@ def list_rules(db: Session = Depends(get_db), user: dict = Depends(get_current_u
 
 
 @router.post("/api/alert-rules", response_model=AlertRuleOut, status_code=201)
-def create_rule(body: AlertRuleCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def create_rule(body: AlertRuleCreate, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     tenant_id = user.get("tenant_id")
     if tenant_id is None:
         raise HTTPException(400, "tenant_id could not be resolved")
@@ -258,11 +263,13 @@ def create_rule(body: AlertRuleCreate, db: Session = Depends(get_db), user: dict
     db.add(rule)
     db.commit()
     db.refresh(rule)
+    audit_request(db, request, user, "alert_rule.created", target_resource="alert_rule", target_id=rule.id,
+                  details=body.model_dump(mode="json"))
     return rule
 
 
 @router.delete("/api/alert-rules/{rule_id}", status_code=204)
-def delete_rule(rule_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def delete_rule(rule_id: int, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     q = db.query(models.AlertRule).filter(models.AlertRule.id == rule_id)
     tenant = _effective_tenant(user)
     if tenant is not None:
@@ -270,8 +277,11 @@ def delete_rule(rule_id: int, db: Session = Depends(get_db), user: dict = Depend
     rule = q.first()
     if not rule:
         raise HTTPException(404)
+    rule_tenant = rule.tenant_id
     db.delete(rule)
     db.commit()
+    audit_request(db, request, user, "alert_rule.deleted", target_resource="alert_rule", target_id=rule_id,
+                  tenant_id=rule_tenant)
 
 
 # ─── Rules engine — shared threshold/dedup logic ──────────────────────────────

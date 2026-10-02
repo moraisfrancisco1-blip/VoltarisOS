@@ -116,7 +116,7 @@ async def test_device_test_connection_blocks_cross_tenant():
     user_b = {"role": "TENANT_MEMBER", "tenant_id": 2}
 
     with pytest.raises(HTTPException) as exc:
-        await _device_test_connection(1, db=db, user=user_b)
+        await _device_test_connection(1, request=None, db=db, user=user_b)
     assert exc.value.status_code == 404
 
 
@@ -128,7 +128,7 @@ async def test_device_test_connection_same_tenant_passes_ownership():
 
     user_a = {"role": "TENANT_MEMBER", "tenant_id": 1}
     # Not 404: ownership passes and _run_test executes (simulated → no network).
-    result = await _device_test_connection(1, db=db, user=user_a)
+    result = await _device_test_connection(1, request=None, db=db, user=user_a)
     assert result.get("ok") is False  # unknown protocol branch, but ownership passed
 
 
@@ -140,5 +140,5 @@ async def test_device_test_connection_super_admin_bypass():
 
     admin = {"role": "SUPER_ADMIN", "tenant_id": None}
     # SUPER_ADMIN bypass: no 404, _run_test executes.
-    result = await _device_test_connection(1, db=db, user=admin)
+    result = await _device_test_connection(1, request=None, db=db, user=admin)
     assert result.get("ok") is False  # unknown protocol branch

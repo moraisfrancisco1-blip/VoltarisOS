@@ -5,7 +5,7 @@ Tenant isolation: the tenant is ALWAYS derived from the authenticated user (JWT)
 never from the request body/query. Report content is built from real persisted
 data; no random/mock KPIs.
 """
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
@@ -15,6 +15,7 @@ import os
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
+from backend.audit import audit_request
 from backend.security import get_current_user
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
@@ -96,7 +97,7 @@ class ReportJobOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 @router.post("/generate", response_model=ReportJobOut, status_code=201)
-def generate_report(body: GenerateRequest, bg: BackgroundTasks, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def generate_report(body: GenerateRequest, bg: BackgroundTasks, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     """Create a report job. The tenant always comes from the authenticated user."""
     if body.report_type not in VALID_TYPES:
         raise HTTPException(400, "Invalid report type")
@@ -125,6 +126,8 @@ def generate_report(body: GenerateRequest, bg: BackgroundTasks, db: Session = De
         "language": body.language,
     }
     bg.add_task(_build_pdf, job.id, params)
+    audit_request(db, request, user, "report.requested", target_resource="report_job", target_id=job.id,
+                  details={"report_type": body.report_type, "period": job.period, "site_ids": site_ids})
     return job
 
 
