@@ -155,6 +155,43 @@ class DeviceReading(Base):
     raw = Column(JSON, nullable=True)
 
 
+class DeviceReadingHourly(Base):
+    """Hour-level summary of DeviceReading rows that aged out of the raw window.
+
+    Raw telemetry (one row every ~30 s per device) is the biggest table by far.
+    The retention job (backend/retention.py) summarises each hour into one row
+    here and only then deletes the raw rows, so long-range questions (the carbon
+    page sums every month of the year, the telemetry-coverage endpoint counts
+    everything) keep working after the raw data is gone. For any given hour the
+    data lives EITHER in device_readings OR here, never both: readers add the two.
+    """
+    __tablename__ = "device_readings_hourly"
+    __table_args__ = (
+        UniqueConstraint("device_id", "hour_start", name="uq_device_readings_hourly_device_hour"),
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, nullable=True, index=True)
+    device_id = Column(Integer, nullable=False, index=True)
+    hour_start = Column(DateTime, nullable=False, index=True)
+    sample_count = Column(Integer, nullable=False, default=0)
+    power_kw_avg = Column(Float, nullable=True)
+    power_kw_min = Column(Float, nullable=True)
+    power_kw_max = Column(Float, nullable=True)
+    # SUM of the raw energy_kwh values (NULL when no sample in the hour had one).
+    energy_kwh_sum = Column(Float, nullable=True)
+    # kWh integrated from power_kw (gaps clamped to 1 h): what readers fall back to
+    # when a device never reported energy_kwh (see energy_metrics.solar_energy_kwh).
+    energy_from_power_kwh = Column(Float, nullable=True)
+    soc_pct_avg = Column(Float, nullable=True)
+    soc_pct_min = Column(Float, nullable=True)
+    soc_pct_max = Column(Float, nullable=True)
+    temp_c_avg = Column(Float, nullable=True)
+    temp_c_max = Column(Float, nullable=True)
+    voltage_v_avg = Column(Float, nullable=True)
+    current_a_avg = Column(Float, nullable=True)
+    frequency_hz_avg = Column(Float, nullable=True)
+
+
 class AlertRule(Base):
     __tablename__ = "alert_rules"
     id = Column(Integer, primary_key=True, index=True)

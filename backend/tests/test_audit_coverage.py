@@ -510,6 +510,11 @@ def test_every_audit_action_is_subscribable_through_webhooks():
         for node in ast.walk(ast.parse(open(path).read())):
             if isinstance(node, ast.Call):
                 name = ast.unparse(node.func)
+                # Events recorded with dispatch_webhooks=False never reach webhooks,
+                # so being subscribable is meaningless for them.
+                if any(k.arg == "dispatch_webhooks" and isinstance(k.value, ast.Constant) and k.value.value is False
+                       for k in node.keywords):
+                    continue
                 if name.endswith(("audit_request", "_audit_command")):
                     literals = [a.value for a in node.args if isinstance(a, ast.Constant) and isinstance(a.value, str) and "." in a.value]
                     emitted.update(l for l in literals if l.split(".")[0] not in ("backend", "x"))

@@ -15,8 +15,42 @@ from backend import models
 SOLAR_TYPES = ("solar", "pv", "inverter")
 
 
+def hourly_energy_kwh(db: Session, tenant, start, end, site_id=None, fallback_to_power=True) -> float:
+    """Solar energy (kWh) in [start, end) from hours that retention already
+    summarised into device_readings_hourly (backend/retention.py).
+
+    Hours older than the raw-telemetry window live ONLY there, so any reader that
+    looks back further than that window must add this to its raw-reading total.
+    An hour is in exactly one of the two tables, so the sum never double counts.
+    `fallback_to_power` mirrors solar_energy_kwh: hours where the device never
+    reported energy_kwh use the energy integrated from power instead.
+    """
+    h = models.DeviceReadingHourly
+    energy = (func.coalesce(h.energy_kwh_sum, h.energy_from_power_kwh, 0.0)
+              if fallback_to_power else func.coalesce(h.energy_kwh_sum, 0.0))
+    q = (
+        db.query(func.coalesce(func.sum(energy), 0.0))
+        .join(models.Device, models.Device.id == h.device_id)
+        .filter(h.hour_start >= start)
+        .filter(h.hour_start < end)
+        .filter(func.lower(models.Device.device_type).in_(SOLAR_TYPES))
+    )
+    if site_id is not None:
+        q = q.filter(models.Device.site_id == site_id)
+    if tenant is not None:
+        q = q.filter(models.Device.tenant_id == tenant)
+    return float(q.scalar() or 0.0)
+
+
 def solar_energy_kwh(db: Session, tenant, start, end, site_id=None) -> float:
-    """Real produced solar energy (kWh) in the [start, end) window.
+    """Real produced solar energy (kWh) in the [start, end) window: recent raw
+    readings plus hours already summarised by the retention job."""
+    raw = _raw_solar_energy_kwh(db, tenant, start, end, site_id)
+    return round(raw + hourly_energy_kwh(db, tenant, start, end, site_id), 2)
+
+
+def _raw_solar_energy_kwh(db: Session, tenant, start, end, site_id=None) -> float:
+    """Raw-readings part of solar_energy_kwh.
 
     Primary source: SUM(DeviceReading.energy_kwh) for solar-capable devices of
     the effective tenant. Only if no `energy_kwh` was ever recorded in the window

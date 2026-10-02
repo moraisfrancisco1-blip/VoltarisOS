@@ -20,7 +20,9 @@ Usage:
         details={"quantity_kw": 100, "price": 45.5}
     )
 
-The audit_logs table is APPEND-ONLY — no UPDATE or DELETE operations.
+The audit_logs table is APPEND-ONLY — no UPDATE or DELETE operations, with one
+sanctioned exception: the data-retention job (backend/retention.py) deletes rows
+older than RETENTION_AUDIT_LOGS_DAYS (default 730) and records that it did.
 """
 import logging
 from typing import Optional, Any

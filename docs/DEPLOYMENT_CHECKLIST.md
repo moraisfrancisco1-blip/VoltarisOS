@@ -102,3 +102,41 @@ produção), `SENTRY_DSN`.
   é `healthy`.
 - Sem locking distribuído em migrations; arrancar uma réplica no deploy inicial.
 - Concorrência de ingestão protegida por índice único `(device_id, timestamp)`.
+
+---
+
+## Retenção de dados
+
+Sem retenção, `device_readings` (uma linha a cada ~30 s por dispositivo), as
+previsões, as otimizações, os alertas e os relatórios crescem para sempre.
+`backend/retention.py` corre **diariamente às 03:30** (tarefa Celery
+`backend.tasks.run_retention`, requer `RUN_CELERY=1`) e limita cada tabela.
+
+| Dataset | Defeito | Mínimo | Notas |
+|---|---|---|---|
+| `DEVICE_READINGS` | 90 dias | 35 | Telemetria bruta. **Antes de apagar, cada hora é resumida** em `device_readings_hourly` (guardada para sempre), para os gráficos de carbono, a cobertura de telemetria e a energia solar continuarem a ver o histórico. O mínimo existe porque a previsão de carga lê 28 dias de leituras brutas. |
+| `AUDIT_LOGS` | 730 dias | 90 | Única exceção à regra "só acrescenta". Cada execução que apaga algo regista `retention.run`. |
+| `ALERTS` | 180 dias | 30 | Só alertas **reconhecidos**; os por reconhecer nunca são apagados. |
+| `FORECAST_RECORDS` | 60 dias | 30 | |
+| `VPP_RUNS` | 180 dias | 30 | Execuções de otimização e os seus registos de despacho. **As propostas (`vpp_bids`) nunca são apagadas.** |
+| `REPORT_JOBS` | 90 dias | 7 | Linhas e ficheiros PDF (só dentro do diretório de relatórios). |
+| `STRIPE_EVENTS` | 90 dias | 30 | Chaves de idempotência do webhook (o Stripe repete até ~3 dias). |
+| `LEADS` | 365 dias | 30 | Contactos da landing page (dados pessoais). |
+
+Configuração: `RETENTION_<DATASET>_DAYS` (`0` = guardar para sempre; abaixo do
+mínimo é subido para o mínimo), `RETENTION_ENABLED`, `RETENTION_DRY_RUN`,
+`RETENTION_MAX_SECONDS` (180, abaixo do soft limit de 240 s da tarefa),
+`RETENTION_BATCH_SIZE`. A execução é retomável: se o tempo acabar, a seguinte
+continua do dia mais antigo que falta.
+
+**Primeira ativação (recomendado):**
+1. `GET /api/admin/retention` (SUPER_ADMIN): vê a política efetiva e a idade dos dados mais antigos.
+2. `POST /api/admin/retention/run` (por defeito é **simulação**): vê o que seria apagado.
+3. Só então deixa a tarefa diária correr, ou `POST /api/admin/retention/run?dry_run=false`.
+
+Sem Celery: `python -m backend.retention --dry-run` e depois sem `--dry-run`, num cron do Railway.
+
+> A partir da primeira execução real, as leituras brutas com mais de 90 dias
+> **deixam de existir** (só ficam os resumos horários). Se precisas de mais, sobe
+> `RETENTION_DEVICE_READINGS_DAYS` **antes** da primeira execução.
+

@@ -365,7 +365,21 @@ def get_telemetry_coverage(
         .one_or_none()
     )
 
-    if row is None or row.readings_count == 0:
+    # Older telemetry only exists as hourly summaries (backend/retention.py): count
+    # the samples they stand for and let them extend the first/last timestamps.
+    hrow = (
+        db.query(
+            func.coalesce(func.sum(models.DeviceReadingHourly.sample_count), 0).label("samples"),
+            func.min(models.DeviceReadingHourly.hour_start).label("first_hour"),
+            func.max(models.DeviceReadingHourly.hour_start).label("last_hour"),
+        )
+        .filter(models.DeviceReadingHourly.tenant_id == effective_tenant)
+        .one_or_none()
+    )
+    raw_count = row.readings_count if row is not None else 0
+    hourly_samples = int(hrow.samples) if hrow is not None else 0
+    total = raw_count + hourly_samples
+    if total == 0:
         return TelemetryCoverageOut(
             tenant_id=effective_tenant,
             readings_count=0,
@@ -373,9 +387,11 @@ def get_telemetry_coverage(
             last_reading=None,
         )
 
+    firsts = [t for t in (row.first_reading if raw_count else None, hrow.first_hour if hourly_samples else None) if t]
+    last = row.last_reading if raw_count else (hrow.last_hour if hourly_samples else None)
     return TelemetryCoverageOut(
         tenant_id=effective_tenant,
-        readings_count=row.readings_count,
-        first_reading=row.first_reading,
-        last_reading=row.last_reading,
+        readings_count=total,
+        first_reading=min(firsts) if firsts else None,
+        last_reading=last,
     )

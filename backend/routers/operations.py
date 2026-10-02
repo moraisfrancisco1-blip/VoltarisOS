@@ -7,13 +7,14 @@ booleans and counts).
 """
 import os
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import text
+from sqlalchemy import func, text
 
 from backend.database import SessionLocal
 from backend import models
-from backend.security import require_super_admin_or_service
+from backend.audit import audit_request
+from backend.security import require_super_admin, require_super_admin_or_service
 
 router = APIRouter(prefix="/api/admin", tags=["operations"])
 
@@ -153,3 +154,47 @@ def production_readiness(_sa: dict = Depends(require_super_admin_or_service), db
         "issues": [{"component": n, "status": s} for n, s in failures],
         "timestamp": models.utcnow_naive().isoformat(),
     }
+
+
+# ─── Data retention (backend/retention.py) ───────────────────────────────────
+
+@router.get("/retention")
+def retention_status(_sa: dict = Depends(require_super_admin), db: Session = Depends(get_db)):
+    """Effective retention configuration plus the age of the oldest data, so an
+    operator can see what the policy is and whether it is keeping up."""
+    from backend import retention
+    oldest = {
+        "device_readings": db.query(func.min(models.DeviceReading.timestamp)).scalar(),
+        "device_readings_hourly": db.query(func.min(models.DeviceReadingHourly.hour_start)).scalar(),
+        "audit_logs": db.query(func.min(models.AuditLog.timestamp)).scalar(),
+    }
+    return {
+        "config": retention.current_config(),
+        "oldest": {k: v.isoformat() if v else None for k, v in oldest.items()},
+    }
+
+
+@router.post("/retention/run")
+def retention_run(
+    request: Request,
+    dry_run: bool = Query(True, description="Default true: only report what would be deleted."),
+    max_seconds: int = Query(20, ge=1, le=120, description="Time budget for this request."),
+    dataset: str | None = Query(None, description="Limit to one dataset, e.g. device_readings."),
+    sa: dict = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Run the retention pass now (SUPER_ADMIN only). Defaults to a dry run; pass
+    dry_run=false to delete. The scheduled daily task does the same on its own;
+    this is for deployments without Celery and for a first look before enabling."""
+    from backend import retention
+    only = None
+    if dataset:
+        if dataset.upper() not in retention.POLICIES:
+            from fastapi import HTTPException
+            raise HTTPException(422, f"Unknown dataset. Valid: {', '.join(k.lower() for k in retention.POLICIES)}")
+        only = [dataset]
+    report = retention.run_retention(db, dry_run=dry_run, max_seconds=max_seconds, only=only)
+    audit_request(db, request, sa, "retention.triggered", target_resource="retention",
+                  details={"dry_run": dry_run, "dataset": dataset, "deleted": report.total_deleted},
+                  dispatch_webhooks=False)
+    return report.as_dict()
