@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react"
 import axios from "axios"
 import { useTranslation } from "../i18n/useTranslation"
 import { useAppStore, resolveAccent } from "../store/appStore"
+import { renderMarkdownLite } from "../lib/safeMarkdown.mjs"
 
 const SUGGESTIONS = [
   "copilot_sug_1",
@@ -13,10 +14,10 @@ const SUGGESTIONS = [
 
 const LOCALES = { pt: "pt-PT", en: "en-GB", fr: "fr-FR", es: "es-ES", nl: "nl-NL" }
 
+// Assistant text is rendered as HTML, so it must be escaped first (XSS):
+// see lib/safeMarkdown.mjs.
 function parseMarkdown(text) {
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--text)">$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+  return renderMarkdownLite(text)
 }
 
 export default function AICopilot({ user }) {

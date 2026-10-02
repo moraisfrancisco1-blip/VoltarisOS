@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useAppStore } from "../store/appStore"
 import DemoNotice from "../components/DemoNotice"
+import { renderMarkdownLite } from "../lib/safeMarkdown.mjs"
 
 import { useTranslation } from "../i18n/useTranslation";
 
@@ -289,7 +290,7 @@ export default function AIDispatchCopilot() {
                         background: "var(--surface2)", border: "1px solid var(--border)", fontSize: "13px", lineHeight: 1.6
                       }}>
                         <div style={{ marginBottom: msg.details ? "10px" : 0, display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                          <span dangerouslySetInnerHTML={{ __html: (msg.summary || msg.text).replace(/\*\*(.*?)\*\*/g, `<strong style="color:var(--text)">$1</strong>`) }} />
+                          <span dangerouslySetInnerHTML={{ __html: renderMarkdownLite(msg.summary || msg.text, { italic: false }) }} />
                           {msg.risk && riskBadge(msg.risk)}
                         </div>
                         {msg.details && (
