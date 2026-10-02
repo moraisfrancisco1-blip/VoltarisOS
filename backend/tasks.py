@@ -248,6 +248,19 @@ def deliver_webhook(self, webhook_id: int, event: str, payload: dict):
         ).encode("utf-8")
         signature = hmac.new(wh.secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
 
+        # SSRF guard at delivery time: re-check (with DNS) because the name may
+        # resolve to an internal address now even if it did not at registration.
+        # Not retried: a blocked destination will not become allowed.
+        from backend import netguard
+        try:
+            netguard.check_url(wh.url)
+        except netguard.BlockedDestination as exc:
+            wh.last_triggered_at = models.utcnow_naive()
+            wh.last_error = f"blocked: {exc}"[:500]
+            wh.failure_count += 1
+            db.commit()
+            return {"status": "blocked", "reason": str(exc)}
+
         try:
             resp = httpx.post(
                 wh.url,
@@ -258,6 +271,7 @@ def deliver_webhook(self, webhook_id: int, event: str, payload: dict):
                     "X-VoltarisOS-Signature": f"sha256={signature}",
                 },
                 timeout=10.0,
+                follow_redirects=False,
             )
             wh.last_triggered_at = models.utcnow_naive()
             wh.last_status_code = resp.status_code
