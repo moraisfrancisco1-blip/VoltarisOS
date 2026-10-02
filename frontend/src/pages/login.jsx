@@ -354,7 +354,7 @@ export default function Login({ onLogin }) {
           setLoading(false)
           return
         }
-        await axios.post("/api/auth/register", {
+        const registerRes = await axios.post("/api/auth/register", {
           email: form.email,
           password: form.password,
           company: form.company,
@@ -365,7 +365,7 @@ export default function Login({ onLogin }) {
           plan: inviteResult ? "" : form.plan,
         })
         setMode("login")
-        setError(t("auth_account_created"))
+        setError(registerRes?.data?.payment_required ? t("auth_account_created_pay") : t("auth_account_created"))
       }
     } catch (e) {
       setError(e.response?.data?.detail || t("auth_invalid_creds"))

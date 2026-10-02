@@ -129,6 +129,15 @@ class Settings:
             "price_yearly": 6624,
             "description": "1 site · até 50 kWh"
         },
+        # Smart is offered at registration (AVAILABLE_PLANS: €149/month, 2 sites),
+        # so it must be purchasable too. price_yearly follows the same rule as
+        # every other plan: 96% of price_monthly, per month, billed annually.
+        "smart": {
+            "name": "Smart",
+            "price_monthly": 14900,
+            "price_yearly": 14304,
+            "description": "2 sites · IA e arbitragem"
+        },
         "starter": {
             "name": "Starter",
             "price_monthly": 27900,

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from jose import jwt
 from datetime import datetime, timedelta
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
@@ -176,8 +177,46 @@ def create_token(data: dict) -> str:
     payload["exp"] = models.utcnow_naive() + timedelta(hours=72)
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
+# Plan every unpaid self-registration lands on until Stripe confirms payment.
+# Lowest paid tier: 1 site, core + energy modules only (NOT "beta", which
+# unlocks every module).
+UNPAID_SIGNUP_PLAN = "home"
+PENDING_PAYMENT_STATUS = "pending_payment"
+
+
+def _slugify(name: str) -> str:
+    return name.lower().replace(" ", "-").replace(".", "")[:50] or "default"
+
+
+def create_new_tenant(db: Session, name: str, plan: str = "beta") -> models.Tenant:
+    """Always create a NEW tenant for `name`, with a slug guaranteed unique.
+
+    Self-registration must never attach a new account to an existing tenant
+    just because the company name matches: that would hand a stranger access
+    to another company's sites, devices and data. Joining an existing tenant
+    only happens through the admin invite flow (POST /auth/users/invite).
+    """
+    base = _slugify(name)[:44]
+    max_sites = PLAN_MAX_SITES.get(plan, 1)
+    candidate = base
+    suffix = 1
+    while True:
+        if not db.query(models.Tenant).filter(models.Tenant.slug == candidate).first():
+            tenant = models.Tenant(name=name, slug=candidate, plan=plan, max_sites=max_sites, max_devices=50)
+            db.add(tenant)
+            try:
+                db.flush()
+            except IntegrityError:
+                # Lost a race for the same slug: roll back this insert and try the next suffix.
+                db.rollback()
+            else:
+                return tenant
+        suffix += 1
+        candidate = f"{base}-{suffix}"
+
+
 def get_or_create_tenant(db: Session, name: str, plan: str = "beta") -> models.Tenant:
-    slug = name.lower().replace(" ", "-").replace(".", "")[:50] or "default"
+    slug = _slugify(name)
     tenant = db.query(models.Tenant).filter(models.Tenant.slug == slug).first()
     if not tenant:
         max_sites = PLAN_MAX_SITES.get(plan, 1)
@@ -319,15 +358,24 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     
     Flow:
     1. If beta_code is provided and valid → auto-assign the plan tied to that code
-    2. If beta_code is NOT provided → plan field is REQUIRED (onboarding plan selection)
+    2. If beta_code is NOT provided → plan field is REQUIRED (onboarding plan selection),
+       but the tenant is created on the lowest tier with subscription_status
+       "pending_payment": the chosen plan is only granted by the Stripe webhook
+       once payment is confirmed
     3. terms_accepted must be True (legal consent)
     4. Role is restricted: TENANT_MEMBER for self-registration (TENANT_ADMIN only via invite/admin)
     5. Plan determines max_sites, module access
     """
+    company = (req.company or "").strip()
+    if not company:
+        raise HTTPException(400, "O nome da empresa é obrigatório.")
+
     code_upper = req.beta_code.strip().upper() if req.beta_code else ""
     
     # Determine plan and whether we need explicit plan selection
     plan_tier = ""
+    requested_plan = ""
+    payment_pending = False
     allowed_roles_for_code = list(ALLOWED_REGISTER_ROLES)
     invite_label = ""
     
@@ -347,7 +395,12 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
         # No promo code — plan selection is mandatory
         if not req.plan or req.plan not in [p["id"] for p in AVAILABLE_PLANS]:
             raise HTTPException(400, "Seleção de plano obrigatória. Escolhe um plano de subscrição para continuar.")
-        plan_tier = req.plan
+        # Choosing a paid plan is not paying for it. Until Stripe confirms the
+        # payment (webhook), the account only gets the lowest tier; the chosen
+        # plan is activated by the payment webhook, never by registration.
+        requested_plan = req.plan
+        plan_tier = UNPAID_SIGNUP_PLAN
+        payment_pending = True
 
     # Enforce terms acceptance
     if not req.terms_accepted:
@@ -364,18 +417,17 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     if not is_role_allowed_for_plan(role, plan_tier):
         role = "TENANT_MEMBER"  # fallback to safe default
 
-    # Create tenant with the selected plan
-    tenant = get_or_create_tenant(db, req.company, plan=plan_tier)
-    
-    # Update tenant's max_sites to match the plan
-    tenant.max_sites = PLAN_MAX_SITES.get(plan_tier, 1)
+    # Always a brand-new tenant — never join an existing one by company name.
+    tenant = create_new_tenant(db, company, plan=plan_tier)
+    if payment_pending:
+        tenant.subscription_status = PENDING_PAYMENT_STATUS
     
     # Create user
     user = models.User(
         tenant_id=tenant.id,
         email=req.email,
         password_hash=hash_pw(req.password),
-        name=req.company,
+        name=company,
         role=role,
         color=req.color,
         active=True,
@@ -384,7 +436,13 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     db.add(user)
     db.commit()
     
-    return {"message": "Conta criada com sucesso", "plan": plan_tier, "role": role}
+    return {
+        "message": "Conta criada com sucesso",
+        "plan": plan_tier,
+        "role": role,
+        "payment_required": payment_pending,
+        "requested_plan": requested_plan or None,
+    }
 
 
 @router.post("/auth/login")

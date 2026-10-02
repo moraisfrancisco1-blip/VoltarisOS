@@ -204,8 +204,9 @@ class TestWebhook:
         assert resp.status_code == 200
 
         tenant = db_session.query(models.Tenant).filter(models.Tenant.id == TENANT_A).first()
-        assert tenant.plan == "beta"
-        assert tenant.max_sites == PLAN_MAX_SITES["beta"]
+        # Reverts to the lowest PAID tier, never to "beta" (beta unlocks every module).
+        assert tenant.plan == "home"
+        assert tenant.max_sites == PLAN_MAX_SITES["home"]
         assert tenant.subscription_status == "canceled"
         assert tenant.subscription_end is None
 
@@ -294,3 +295,202 @@ class TestWebhookSecurity:
         assert tenant.plan == "beta"
 
 
+
+
+# ── D. Audit fixes: pricing, plan lifecycle, session access ──────────────────
+def _sub_event(event_id, event_type, sub_id, status, tenant_id=TENANT_A, plan_id="pro", customer="cus_X"):
+    return {
+        "id": event_id,
+        "type": event_type,
+        "data": {"object": {
+            "id": sub_id, "customer": customer, "status": status,
+            "current_period_end": 1750000000,
+            "metadata": {"tenant_id": str(tenant_id), "plan_id": plan_id},
+        }},
+    }
+
+
+def _tenant(db, tenant_id=TENANT_A):
+    db.expire_all()
+    return db.query(models.Tenant).filter(models.Tenant.id == tenant_id).first()
+
+
+class TestPricing:
+    def test_yearly_checkout_charges_twelve_times_the_monthly_equivalent(self, client, db_session, monkeypatch):
+        _seed_tenant(db_session, TENANT_A)
+        captured = {}
+        _mock_stripe_checkout(monkeypatch, captured)
+        resp = client.post("/api/payments/create-checkout-session", json={"plan_id": "home", "billing_cycle": "yearly"})
+        assert resp.status_code == 200, resp.text
+        price = captured["session"]["line_items"][0]["price_data"]
+        assert price["recurring"]["interval"] == "year"
+        assert price["unit_amount"] == 6624 * 12  # €794.88 per year, not €66.24
+        assert resp.json()["amount"] == 794.88
+
+    def test_monthly_checkout_charges_the_monthly_price(self, client, db_session, monkeypatch):
+        _seed_tenant(db_session, TENANT_A)
+        captured = {}
+        _mock_stripe_checkout(monkeypatch, captured)
+        client.post("/api/payments/create-checkout-session", json={"plan_id": "pro", "billing_cycle": "monthly"})
+        price = captured["session"]["line_items"][0]["price_data"]
+        assert price["unit_amount"] == 109900
+        assert price["recurring"]["interval"] == "month"
+
+    def test_invalid_billing_cycle_rejected(self, client, db_session):
+        _seed_tenant(db_session, TENANT_A)
+        resp = client.post("/api/payments/create-checkout-session", json={"plan_id": "home", "billing_cycle": "weekly"})
+        assert resp.status_code == 400
+
+    def test_smart_plan_is_purchasable(self, client, db_session, monkeypatch):
+        _seed_tenant(db_session, TENANT_A)
+        captured = {}
+        _mock_stripe_checkout(monkeypatch, captured)
+        resp = client.post("/api/payments/create-checkout-session", json={"plan_id": "smart", "billing_cycle": "monthly"})
+        assert resp.status_code == 200, resp.text
+        assert captured["session"]["line_items"][0]["price_data"]["unit_amount"] == 14900
+
+    def test_plans_endpoint_exposes_yearly_total(self, client):
+        plans = {p["id"]: p for p in client.get("/api/payments/plans").json()["plans"]}
+        assert plans["home"]["price_monthly"] == 69
+        assert plans["home"]["price_yearly"] == 66.24
+        assert plans["home"]["price_yearly_total"] == 794.88
+        assert "smart" in plans
+
+    def test_checkout_never_reuses_a_customer_found_by_email(self, client, db_session, monkeypatch):
+        _seed_tenant(db_session, TENANT_A)
+        _mock_stripe_checkout(monkeypatch, {})
+
+        def boom(*a, **k):
+            raise AssertionError("Customer.list must not be used: it can return another tenant's customer")
+        monkeypatch.setattr(payments.stripe.Customer, "list", boom)
+        resp = client.post("/api/payments/create-checkout-session", json={"plan_id": "home", "billing_cycle": "monthly"})
+        assert resp.status_code == 200, resp.text
+        assert _tenant(db_session).stripe_customer_id == "cus_test_123"
+
+
+class TestPlanLifecycle:
+    def _paying_tenant(self, db, plan="pro", sub="sub_old", status="active"):
+        db.add(models.Tenant(
+            id=TENANT_A, name="A", slug="tenant-a", plan=plan, max_sites=PLAN_MAX_SITES[plan],
+            stripe_customer_id="cus_X", stripe_subscription_id=sub, subscription_status=status,
+        ))
+        db.commit()
+
+    def test_payment_failed_keeps_plan_but_flags_past_due(self, client, db_session, monkeypatch):
+        self._paying_tenant(db_session)
+        _mock_event(monkeypatch, {
+            "id": "evt_pf", "type": "invoice.payment_failed",
+            "data": {"object": {"customer": "cus_X", "subscription": "sub_old"}},
+        })
+        assert _post_webhook(client).status_code == 200
+        t = _tenant(db_session)
+        assert t.plan == "pro"
+        assert t.subscription_status == "past_due"
+
+    def test_subscription_past_due_keeps_plan(self, client, db_session, monkeypatch):
+        self._paying_tenant(db_session)
+        _mock_event(monkeypatch, _sub_event("evt_pd", "customer.subscription.updated", "sub_old", "past_due"))
+        _post_webhook(client)
+        t = _tenant(db_session)
+        assert t.plan == "pro"
+        assert t.subscription_status == "past_due"
+
+    def test_subscription_unpaid_revokes_to_home_not_beta(self, client, db_session, monkeypatch):
+        self._paying_tenant(db_session)
+        _mock_event(monkeypatch, _sub_event("evt_unpaid2", "customer.subscription.updated", "sub_old", "unpaid"))
+        _post_webhook(client)
+        t = _tenant(db_session)
+        assert t.plan == "home"
+        assert t.max_sites == PLAN_MAX_SITES["home"]
+
+    def test_upgrade_cancels_the_replaced_subscription(self, client, db_session, monkeypatch):
+        self._paying_tenant(db_session, plan="home", sub="sub_old")
+        cancelled = []
+        monkeypatch.setattr(payments.stripe.Subscription, "cancel", lambda sid: cancelled.append(sid))
+        _mock_event(monkeypatch, {
+            "id": "evt_up", "type": "checkout.session.completed",
+            "data": {"object": {
+                "client_reference_id": str(TENANT_A), "customer": "cus_X", "subscription": "sub_new",
+                "payment_status": "paid", "metadata": {"tenant_id": str(TENANT_A), "plan_id": "pro"},
+            }},
+        })
+        _post_webhook(client)
+        assert cancelled == ["sub_old"]
+        t = _tenant(db_session)
+        assert t.plan == "pro"
+        assert t.stripe_subscription_id == "sub_new"
+
+    def test_new_subscription_event_after_checkout_does_not_cancel_twice(self, client, db_session, monkeypatch):
+        self._paying_tenant(db_session, plan="home", sub="sub_new")  # checkout event already processed
+        cancelled = []
+        monkeypatch.setattr(payments.stripe.Subscription, "cancel", lambda sid: cancelled.append(sid))
+        _mock_event(monkeypatch, _sub_event("evt_created2", "customer.subscription.created", "sub_new", "active"))
+        _post_webhook(client)
+        assert cancelled == []
+
+    def test_cancellation_of_replaced_subscription_does_not_revoke_current_plan(self, client, db_session, monkeypatch):
+        # Tenant already moved to sub_new / pro; Stripe now reports sub_old as deleted.
+        self._paying_tenant(db_session, plan="pro", sub="sub_new")
+        _mock_event(monkeypatch, {
+            "id": "evt_old_deleted", "type": "customer.subscription.deleted",
+            "data": {"object": {"id": "sub_old", "customer": "cus_X", "status": "canceled", "metadata": {}}},
+        })
+        _post_webhook(client)
+        t = _tenant(db_session)
+        assert t.plan == "pro"
+        assert t.stripe_subscription_id == "sub_new"
+        assert t.subscription_status == "active"
+
+    def test_stale_canceled_update_does_not_overwrite_current_subscription(self, client, db_session, monkeypatch):
+        self._paying_tenant(db_session, plan="pro", sub="sub_new")
+        _mock_event(monkeypatch, _sub_event("evt_stale", "customer.subscription.updated", "sub_old", "canceled"))
+        _post_webhook(client)
+        t = _tenant(db_session)
+        assert t.plan == "pro"
+        assert t.stripe_subscription_id == "sub_new"
+
+    def test_paid_checkout_clears_pending_payment(self, client, db_session, monkeypatch):
+        db_session.add(models.Tenant(id=TENANT_A, name="A", slug="tenant-a", plan="home", max_sites=1,
+                                     subscription_status="pending_payment"))
+        db_session.commit()
+        _mock_event(monkeypatch, {
+            "id": "evt_pend", "type": "checkout.session.completed",
+            "data": {"object": {
+                "client_reference_id": str(TENANT_A), "customer": "cus_N", "subscription": "sub_N",
+                "payment_status": "paid", "metadata": {"tenant_id": str(TENANT_A), "plan_id": "starter"},
+            }},
+        })
+        _post_webhook(client)
+        t = _tenant(db_session)
+        assert t.plan == "starter"
+        assert t.subscription_status == "active"
+
+
+class TestSessionAccess:
+    class _FakeSession:
+        def __init__(self, tenant_id):
+            self.id = "cs_1"
+            self.status = "complete"
+            self.payment_status = "paid"
+            self.customer_email = "a@test.com"
+            self.client_reference_id = str(tenant_id)
+            self.metadata = {"tenant_id": str(tenant_id)}
+
+    def test_session_requires_auth(self, client):
+        app.dependency_overrides.pop(get_current_user, None)
+        assert client.get("/api/payments/session/cs_1").status_code == 401
+
+    def test_own_session_is_returned(self, client, monkeypatch):
+        monkeypatch.setattr(payments.stripe.checkout.Session, "retrieve", lambda sid: self._FakeSession(TENANT_A))
+        resp = client.get("/api/payments/session/cs_1")
+        assert resp.status_code == 200
+        assert resp.json()["payment_status"] == "paid"
+
+    def test_other_tenants_session_is_404(self, client, monkeypatch):
+        monkeypatch.setattr(payments.stripe.checkout.Session, "retrieve", lambda sid: self._FakeSession(TENANT_B))
+        assert client.get("/api/payments/session/cs_1").status_code == 404
+
+    def test_super_admin_can_read_any_session(self, client, monkeypatch):
+        app.dependency_overrides[get_current_user] = lambda: {"sub": "9", "tenant_id": 99, "role": "SUPER_ADMIN"}
+        monkeypatch.setattr(payments.stripe.checkout.Session, "retrieve", lambda sid: self._FakeSession(TENANT_B))
+        assert client.get("/api/payments/session/cs_1").status_code == 200

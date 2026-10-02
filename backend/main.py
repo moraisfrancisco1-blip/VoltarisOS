@@ -1,10 +1,13 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import logging
 import os
 from datetime import datetime
 from optimization.ai_optimizer import optimize_energy
 from fastapi import FastAPI
+
+_logger = logging.getLogger(__name__)
 
 # ─── Sentry Initialization (must be first) ──────────────────────────────────
 from backend.config import settings
@@ -322,9 +325,10 @@ def health_detailed():
             "type": engine.dialect.name,
         }
     except Exception as e:
+        _logger.warning("Health check: database unavailable: %s", e)
         health_status["components"]["database"] = {
             "status": "unhealthy",
-            "error": str(e),
+            "error": type(e).__name__,
         }
         health_status["status"] = "degraded"
     
@@ -354,7 +358,7 @@ def health_detailed():
     except Exception as e:
         health_status["components"]["redis"] = {
             "status": "unhealthy",
-            "error": str(e),
+            "error": type(e).__name__,
         }
         health_status["status"] = "degraded"
     
@@ -398,11 +402,18 @@ def readiness_check():
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
     except Exception as e:
-        return {
-            "status": "not_ready",
-            "reason": "database_unavailable",
-            "error": str(e),
-        }, 503
+        _logger.warning("Readiness check: database unavailable: %s", e)
+        # A (dict, status) tuple is Flask syntax: FastAPI would serialise it
+        # as a JSON list with HTTP 200 and the load balancer would never see
+        # the failure. Return a real 503.
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_ready",
+                "reason": "database_unavailable",
+                "error": type(e).__name__,
+            },
+        )
     
     # All critical checks passed
     return {

@@ -416,10 +416,30 @@ export default function Settings({ user, setUser, setPage }) {
   const [cardName, setCardName] = useState("");
   const [paymentSaved, setPaymentSaved] = useState(false);
   const [planModal, setPlanModal] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState("enterprise");
+  // Plan the tenant is actually on (from the login/me payload), not a fixed "enterprise".
+  const currentPlan = user?.plan || "beta";
+  const [selectedPlan, setSelectedPlan] = useState(["home", "smart", "starter", "pro", "enterprise"].includes(user?.plan) ? user.plan : "home");
+  // Prices shown in the plan modal come from the backend (GET /api/payments/plans),
+  // the same numbers Stripe charges. Fallbacks below mirror backend/config.py
+  // STRIPE_PLANS so the modal still shows the real prices if that call fails.
+  const [planPrices, setPlanPrices] = useState({});
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [planChanged, setPlanChanged] = useState(false);
+  useEffect(() => {
+    if (!planModal) return;
+    let cancelled = false;
+    fetch("/api/payments/plans")
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (cancelled || !data || !Array.isArray(data.plans)) return;
+        const next = {};
+        data.plans.forEach(pl => { next[pl.id] = { monthly: pl.price_monthly, yearlyMonthly: pl.price_yearly }; });
+        setPlanPrices(next);
+      })
+      .catch(() => { /* keep the static fallback prices */ });
+    return () => { cancelled = true; };
+  }, [planModal]);
   const [companyForm, setCompanyForm] = useState({
     name: "", vat_number: "", address: "", country: "", website: "", support_email: "", billing_email: "",
   });
@@ -943,23 +963,34 @@ export default function Settings({ user, setUser, setPage }) {
     }
   };
 
-  const PLANS = [
-    { id: "home", name: "Home", monthly: 99, yearly: 890, color: "#10b981", badge: null,
-      features: ["1 site", "2 BESS units", "Basic monitoring", "Mobile app access", "Email alerts", "CSV exports"],
-      limits: { sites: 1, bess: 2, users: 1, api: "1k/mo" } },
-    { id: "starter", name: "Starter", monthly: 499, yearly: 4490, color: "#60a5fa", badge: null,
-      features: ["Up to 3 sites", "5 BESS units", "Basic analytics", "Email support", "Standard dashboards", "CSV exports"],
-      limits: { sites: 3, bess: 5, users: 5, api: "10k/mo" } },
-    { id: "beta", name: "Beta", monthly: 999, yearly: 8990, color: "#f59e0b", badge: "POPULAR",
-      features: ["Up to 5 sites", "15 BESS units", "AI trading (beta)", "Priority support", "Advanced analytics", "API access", "Custom alerts"],
-      limits: { sites: 5, bess: 15, users: 10, api: "50k/mo" } },
-    { id: "pro", name: "Pro", monthly: 1499, yearly: 13490, color: "#a78bfa", badge: null,
-      features: ["Up to 10 sites", "25 BESS units", "AI trading engine", "Priority support", "Advanced analytics", "API access", "Custom alerts", "white-label (basic)"],
-      limits: { sites: 10, bess: 25, users: 15, api: "100k/mo" } },
-    { id: "enterprise", name: "Enterprise", monthly: 3999, yearly: 35990, color: accent, badge: "FULL SUITE",
-      features: ["Unlimited sites", "Unlimited BESS", "Full AI suite", "Dedicated support", "Custom integrations", "white-label (full)", "SLA guarantee", "On-premise option", "SSO/SAML", "Audit logs"],
-      limits: { sites: "∞", bess: "∞", users: "∞", api: "Unlimited" } },
+  // monthly: €/month billed monthly. yearlyMonthly: €/month when billed annually.
+  // yearly: total charged once a year (= yearlyMonthly x 12). Prices are
+  // overridden by the backend values in `planPrices`.
+  const BASE_PLANS = [
+    { id: "home", name: "Home", monthly: 69, yearlyMonthly: 66.24, color: "#10b981", badge: null,
+      features: ["1 site", "Basic monitoring", "Mobile app access", "Email alerts", "CSV exports"],
+      limits: { sites: 1 } },
+    { id: "smart", name: "Smart", monthly: 149, yearlyMonthly: 143.04, color: "#22d3ee", badge: null,
+      features: ["Up to 2 sites", "AI optimisation", "Arbitrage", "Basic forecasting", "Email alerts"],
+      limits: { sites: 2 } },
+    { id: "starter", name: "Starter", monthly: 279, yearlyMonthly: 267.84, color: "#60a5fa", badge: null,
+      features: ["Up to 5 sites", "Trading & forecasting", "VPP", "Operations & reports", "Email support"],
+      limits: { sites: 5 } },
+    { id: "pro", name: "Pro", monthly: 1099, yearlyMonthly: 1055.04, color: "#a78bfa", badge: "POPULAR",
+      features: ["Up to 20 sites", "Advanced AI", "AI copilot", "Autonomous dispatch", "Priority support", "API access"],
+      limits: { sites: 20 } },
+    { id: "enterprise", name: "Enterprise", monthly: 3999, yearlyMonthly: 3839.04, color: accent, badge: "FULL SUITE",
+      features: ["Unlimited sites", "Full AI suite", "white-label", "Audit logs", "API access", "Organisation management"],
+      limits: { sites: "∞" } },
   ];
+  const PLANS = BASE_PLANS.map(p => {
+    const live = planPrices[p.id];
+    const monthly = live?.monthly ?? p.monthly;
+    const yearlyMonthly = live?.yearlyMonthly ?? p.yearlyMonthly;
+    return { ...p, monthly, yearlyMonthly, yearly: Math.round(yearlyMonthly * 12 * 100) / 100 };
+  });
+  const fmtEur = (n) => Number(n).toLocaleString(undefined, { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 });
+  const yearlySavePct = (plan) => plan ? Math.round((1 - plan.yearlyMonthly / plan.monthly) * 100) : 0;
 
   const tabLabel = (id) => {
     const map = {
@@ -1590,12 +1621,16 @@ export default function Settings({ user, setUser, setPage }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div>
                 <div style={{ fontSize: 11, color: accent, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>CURRENT PLAN</div>
-                <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 6 }}>Enterprise</h2>
-                <p style={{ fontSize: 13, color: SUB }}>Unlimited sites · AI trading · white-label · Priority support</p>
+                <h2 style={{ fontSize: 22, fontWeight: 800, color: "#fff", marginBottom: 6 }}>{PLANS.find(p => p.id === currentPlan)?.name || currentPlan}</h2>
+                <p style={{ fontSize: 13, color: SUB }}>{(PLANS.find(p => p.id === currentPlan)?.features || []).slice(0, 4).join(" · ")}</p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color: accent }}>€3,999</div>
-                <div style={{ fontSize: 12, color: SUB }}>/month</div>
+                {PLANS.find(p => p.id === currentPlan) && (
+                  <>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: accent }}>€{fmtEur(PLANS.find(p => p.id === currentPlan).monthly)}</div>
+                    <div style={{ fontSize: 12, color: SUB }}>/month</div>
+                  </>
+                )}
               </div>
             </div>
             <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
@@ -1993,8 +2028,8 @@ export default function Settings({ user, setUser, setPage }) {
                 </p>
                 <p style={{ fontSize: 13, color: SUB, marginBottom: 28 }}>
                   {billingCycle === "monthly"
-                    ? `€${PLANS.find(p => p.id === selectedPlan)?.monthly.toLocaleString()}/month`
-                    : `€${PLANS.find(p => p.id === selectedPlan)?.yearly.toLocaleString()}/year (save ${Math.round((1 - PLANS.find(p => p.id === selectedPlan)?.yearly / (PLANS.find(p => p.id === selectedPlan)?.monthly * 12)) * 100)}%)`}
+                    ? `€${fmtEur(PLANS.find(p => p.id === selectedPlan)?.monthly)}/month`
+                    : `€${fmtEur(PLANS.find(p => p.id === selectedPlan)?.yearly)}/year (save ${yearlySavePct(PLANS.find(p => p.id === selectedPlan))}%)`}
                 </p>
                 <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
                   <Btn onClick={() => { setPlanModal(false); setTermsAccepted(false); setPlanChanged(false); setBillingCycle("monthly"); }} accent={accent}>Done</Btn>
@@ -2034,7 +2069,7 @@ export default function Settings({ user, setUser, setPage }) {
                       color: billingCycle === "yearly" ? "#000" : SUB,
                       border: `1px solid ${billingCycle === "yearly" ? accent : BORD}`,
                       transition: "all 0.2s", position: "relative",
-                    }}>Yearly <span style={{ fontSize: 10, color: billingCycle === "yearly" ? "#000" : "#10b981", fontWeight: 700, marginLeft: 4 }}>Save 25%</span></button>
+                    }}>Yearly <span style={{ fontSize: 10, color: billingCycle === "yearly" ? "#000" : "#10b981", fontWeight: 700, marginLeft: 4 }}>Save {yearlySavePct(PLANS[0])}%</span></button>
                   </div>
                 </div>
 
@@ -2042,9 +2077,9 @@ export default function Settings({ user, setUser, setPage }) {
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, padding: "0 24px" }}>
                   {PLANS.map(plan => {
                     const isSelected = selectedPlan === plan.id;
-                    const isCurrent = plan.id === "enterprise";
+                    const isCurrent = plan.id === currentPlan;
                     const price = billingCycle === "monthly" ? plan.monthly : plan.yearly;
-                    const perMonth = billingCycle === "yearly" ? Math.round(plan.yearly / 12) : plan.monthly;
+                    const perMonth = billingCycle === "yearly" ? plan.yearlyMonthly : plan.monthly;
                     return (
                       <div key={plan.id} onClick={() => setSelectedPlan(plan.id)} style={{
                         border: `2px solid ${isSelected ? plan.color : BORD}`,
@@ -2064,11 +2099,11 @@ export default function Settings({ user, setUser, setPage }) {
                           )}
                           <div style={{ fontSize: 16, fontWeight: 800, color: plan.color, marginBottom: 4 }}>{plan.name}</div>
                           <div style={{ display: "flex", alignItems: "baseline", gap: 3, marginBottom: 2 }}>
-                            <span style={{ fontSize: 22, fontWeight: 900, color: "var(--text)" }}>€{perMonth.toLocaleString()}</span>
+                            <span style={{ fontSize: 22, fontWeight: 900, color: "var(--text)" }}>€{fmtEur(perMonth)}</span>
                             <span style={{ fontSize: 10, color: "var(--sub)" }}>/mo</span>
                           </div>
                           {billingCycle === "yearly" && (
-                            <div style={{ fontSize: 11, color: SUB }}>€{price.toLocaleString()} billed annually</div>
+                            <div style={{ fontSize: 11, color: SUB }}>€{fmtEur(price)} billed annually</div>
                           )}
                         </div>
                         {/* Features */}
@@ -2111,13 +2146,13 @@ export default function Settings({ user, setUser, setPage }) {
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <span style={{ fontSize: 13, color: SUB }}>Billing</span>
                       <span style={{ fontSize: 13, fontWeight: 600 }}>
-                        {billingCycle === "monthly" ? "Monthly" : "Annual (25% off)"}
+                        {billingCycle === "monthly" ? "Monthly" : `Annual (${yearlySavePct(PLANS.find(p => p.id === selectedPlan))}% off)`}
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 12, borderTop: `1px solid ${BORD}` }}>
                       <span style={{ fontSize: 14, fontWeight: 700 }}>Total</span>
                       <span style={{ fontSize: 20, fontWeight: 900, color: "#fff" }}>
-                        €{(billingCycle === "monthly" ? PLANS.find(p => p.id === selectedPlan)?.monthly : PLANS.find(p => p.id === selectedPlan)?.yearly).toLocaleString()}
+                        €{fmtEur(billingCycle === "monthly" ? PLANS.find(p => p.id === selectedPlan)?.monthly : PLANS.find(p => p.id === selectedPlan)?.yearly)}
                         <span style={{ fontSize: 12, fontWeight: 400, color: SUB }}>{billingCycle === "monthly" ? "/mo" : "/yr"}</span>
                       </span>
                     </div>
@@ -2150,8 +2185,8 @@ export default function Settings({ user, setUser, setPage }) {
                   {/* Action buttons */}
                   <div style={{ display: "flex", gap: 12 }}>
                     <Btn variant="secondary" accent={accent} onClick={() => { setPlanModal(false); setTermsAccepted(false); setBillingCycle("monthly"); }} style={{ flex: 1 }}>Cancel</Btn>
-                    <button disabled={!termsAccepted || selectedPlan === "enterprise"} onClick={async () => {
-                      if (!termsAccepted || selectedPlan === "enterprise") return;
+                    <button disabled={!termsAccepted} onClick={async () => {
+                      if (!termsAccepted) return;
                       try {
                         const res = await fetch("/api/payments/create-checkout-session", {
                           method: "POST",
@@ -2169,13 +2204,13 @@ export default function Settings({ user, setUser, setPage }) {
                         alert(t("settings_checkout_err"));
                       }
                     }} style={{
-                      flex: 2, padding: "12px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: termsAccepted && selectedPlan !== "enterprise" ? "pointer" : "not-allowed",
-                      background: termsAccepted && selectedPlan !== "enterprise" ? `linear-gradient(135deg, ${accent}, #4f46e5)` : "var(--sub)",
-                      color: termsAccepted && selectedPlan !== "enterprise" ? "#fff" : "var(--sub)",
+                      flex: 2, padding: "12px 24px", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: termsAccepted ? "pointer" : "not-allowed",
+                      background: termsAccepted ? `linear-gradient(135deg, ${accent}, #4f46e5)` : "var(--sub)",
+                      color: termsAccepted ? "#fff" : "var(--sub)",
                       border: "none", transition: "all 0.2s",
-                      boxShadow: termsAccepted && selectedPlan !== "enterprise" ? `0 4px 20px ${accent}40` : "none",
+                      boxShadow: termsAccepted ? `0 4px 20px ${accent}40` : "none",
                     }}>
-                      {selectedPlan === "enterprise" ? "Current Plan" : `Change to ${PLANS.find(p => p.id === selectedPlan)?.name} — €${(billingCycle === "monthly" ? PLANS.find(p => p.id === selectedPlan)?.monthly : PLANS.find(p => p.id === selectedPlan)?.yearly).toLocaleString()}${billingCycle === "monthly" ? "/mo" : "/yr"}`}
+                      {`${selectedPlan === currentPlan ? "Subscribe to" : "Change to"} ${PLANS.find(p => p.id === selectedPlan)?.name} — €${fmtEur(billingCycle === "monthly" ? PLANS.find(p => p.id === selectedPlan)?.monthly : PLANS.find(p => p.id === selectedPlan)?.yearly)}${billingCycle === "monthly" ? "/mo" : "/yr"}`}
                     </button>
                   </div>
                 </div>

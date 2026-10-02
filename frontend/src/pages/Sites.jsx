@@ -9,6 +9,23 @@ const API = import.meta.env.VITE_API_URL || "";
 const card = { background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: 20 };
 const label = { fontSize: 11, color: "var(--sub)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 };
 
+// FastAPI returns `detail` as a string for HTTPException but as a list of
+// {loc, msg} objects for request-validation (422) errors.
+const formatApiDetail = (detail) => {
+  if (!detail) return "";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map(d => {
+        const field = Array.isArray(d?.loc) ? d.loc.filter(p => p !== "body").join(".") : "";
+        return field ? `${field}: ${d?.msg || ""}` : (d?.msg || "");
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return "";
+};
+
 const BLANK = {
   name: "", location: "", lat: "", lng: "",
   solar_kw: "", battery_kwh: "", ev_chargers: 0, owner: "", status: "active",
@@ -96,7 +113,7 @@ export default function Sites() {
       });
       if (!res.ok) {
         let detail = "";
-        try { detail = (await res.json()).detail || ""; } catch (e) { /* ignore */ }
+        try { detail = formatApiDetail((await res.json()).detail); } catch (e) { /* ignore */ }
         throw new Error(detail || `HTTP ${res.status}`);
       }
       setShowForm(false);
