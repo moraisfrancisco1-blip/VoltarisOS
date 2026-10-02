@@ -1,28 +1,57 @@
-fastapi
-uvicorn[standard]
-numpy
-pandas
-pyomo
-# PuLP 4 removed LpStatus, which optimization/multi_asset_optimizer.py imports
-pulp[cbc]<4
-pytest
-pytest-asyncio
-sqlalchemy
-pydantic
-scipy
-httpx
-python-multipart
-aiofiles
-python-jose[cryptography]
-openai
-python-dotenv
-psycopg2-binary
-bcrypt
-slowapi
-stripe
-pyotp
-# EV charger connector (Alfen Eve Pro-line — Modbus TCP)
-pymodbus>=3.5.0
-# Production cache and background worker
-redis
-celery
+# Single source of truth for the backend runtime (Docker image, CI, local dev).
+# backend/requirements.txt just includes this file. Test-only packages live in
+# requirements-dev.txt. Versions are pinned so a fresh install is reproducible;
+# bump them deliberately (Dependabot opens the PRs) instead of getting whatever
+# PyPI serves that day -- an unpinned `pulp[cbc]` once pulled PuLP 4.0.0, which
+# removed LpStatus and silently broke the optimizer in CI and in production.
+
+# ── Web / API ────────────────────────────────────────────────────────────────
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+pydantic==2.13.5
+httpx==0.28.1
+python-multipart==0.0.32
+aiofiles==25.1.0
+slowapi==0.1.10
+python-dotenv==1.2.4
+
+# ── Database ─────────────────────────────────────────────────────────────────
+sqlalchemy==2.1.2
+psycopg2-binary==2.9.13
+
+# ── Auth / security ──────────────────────────────────────────────────────────
+python-jose[cryptography]==3.5.0
+bcrypt==5.0.0
+pyotp==2.10.0
+
+# ── Optimisation / forecasting ───────────────────────────────────────────────
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+pyomo==6.10.1
+# PuLP 4 removed LpStatus, which optimization/multi_asset_optimizer.py imports.
+pulp[cbc]==3.3.2
+
+# ── Payments / integrations ──────────────────────────────────────────────────
+stripe==16.0.0
+openai==3.23.0
+
+# ── Equipment connectors ─────────────────────────────────────────────────────
+# EV charger (Alfen Eve Pro-line, Modbus TCP) and inverters.
+pymodbus==3.15.0
+# OPC-UA (backend/routers/devices.py test-connection and gateway connector).
+asyncua==2.0.1
+
+# ── Reports (PDF) ────────────────────────────────────────────────────────────
+# weasyprint needs the pango system libraries (installed in the Dockerfile);
+# reportlab is the fallback used by backend/routers/reports.py.
+weasyprint==70.0
+reportlab==5.0.1
+
+# ── Observability ────────────────────────────────────────────────────────────
+# Imported by backend/main.py when SENTRY_DSN is set in production.
+sentry-sdk[fastapi]==2.71.0
+
+# ── Production cache and background worker ──────────────────────────────────
+redis==8.1.0
+celery==5.6.3

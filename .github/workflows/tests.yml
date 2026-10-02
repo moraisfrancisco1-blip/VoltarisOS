@@ -28,7 +28,7 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt
+        run: python -m pip install -r requirements-dev.txt
 
       - name: Compile VPP router
         run: python -m py_compile backend/routers/vpp.py
@@ -68,3 +68,30 @@ jobs:
           name: peak-cost-reoptimization
           path: artifacts/peak_cost_reoptimization.json
           if-no-files-found: error
+
+  # Builds the exact image Railway deploys and smoke-tests it. The test job above
+  # runs against a dev install, so it cannot notice a package that is missing
+  # from the production image (as happened with sentry-sdk, reportlab, asyncua and
+  # the pango libraries weasyprint needs).
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build production image
+        run: docker build -t voltaris:ci .
+
+      - name: Smoke test the image
+        run: |
+          docker run -i --rm \
+            -e ENVIRONMENT=development -e SECRET_KEY=ci-only-secret-key-not-for-production \
+            -e DATABASE_URL=sqlite:////tmp/ci.db \
+            voltaris:ci python - <<'PY'
+          import sentry_sdk, reportlab, asyncua, slowapi, openai, pymodbus, pulp, celery
+          from weasyprint import HTML  # needs the pango system libraries
+          HTML(string="<h1>ok</h1>").write_pdf("/tmp/ci.pdf")
+          from pulp import LpStatus  # PuLP 4 removed it
+          import backend.main  # the app must import with the production requirements
+          print("image smoke test ok")
+          PY
