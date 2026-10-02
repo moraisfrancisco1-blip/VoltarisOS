@@ -22,7 +22,7 @@ PostgreSQL, React frontend.
 ## Running tests
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # runtime requirements + test tooling
 python -m pytest backend forecasting optimization simulation control gateway
 ```
 
