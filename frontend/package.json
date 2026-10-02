@@ -7,6 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "i18n:audit": "node scripts/audit-i18n.mjs",
+    "test:unit": "node --test src/lib/*.test.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
