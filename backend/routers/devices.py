@@ -573,10 +573,10 @@ async def _test_solaredge(cfg: dict) -> dict:
 
 
 async def _test_modbus_tcp(cfg: dict) -> dict:
-    from pymodbus.client import AsyncModbusTcpClient
     host = cfg.get("host", "127.0.0.1")
     port = int(cfg.get("port", 502))
     await netguard.acheck_host(host)  # SSRF: never connect to internal/metadata addresses
+    from pymodbus.client import AsyncModbusTcpClient
     client = AsyncModbusTcpClient(host, port=port)
     connected = await client.connect()
     await client.close()
@@ -602,9 +602,11 @@ def _test_modbus_rtu(cfg: dict) -> dict:
 
 
 async def _test_opcua(cfg: dict) -> dict:
-    from asyncua import Client as OpcClient
     url = cfg.get("url", "opc.tcp://localhost:4840")
+    # Validate the destination BEFORE anything else (including importing the
+    # client library): a refused target must be refused whatever is installed.
     await netguard.acheck_url(url, schemes=("opc.tcp",))
+    from asyncua import Client as OpcClient
     async with OpcClient(url=url, timeout=5) as c:
         await c.connect()
     return {"ok": True, "message": f"OPC-UA connected to {url}"}
