@@ -119,11 +119,16 @@ class TestTenantSettings:
             status_code = 200
             text = "ok"
 
-        def _fake_post(url, json=None, timeout=None):
+        def _fake_post(url, json=None, timeout=None, **kwargs):
             calls.append((url, json))
             return _FakeResponse()
 
         monkeypatch.setattr("backend.routers.tenant_settings.httpx.post", _fake_post)
+        # The SSRF guard resolves the host; do not depend on real DNS in tests.
+        monkeypatch.setattr(
+            "backend.netguard.socket.getaddrinfo",
+            lambda host, port, *a, **kw: [(2, 1, 6, "", ("93.184.216.34", 0))],
+        )
 
         resp = client.post("/api/tenant-settings/notifications/test", headers=_auth(TENANT_A))
         assert resp.status_code == 200

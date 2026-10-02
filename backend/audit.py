@@ -22,10 +22,13 @@ Usage:
 
 The audit_logs table is APPEND-ONLY — no UPDATE or DELETE operations.
 """
+import logging
 from typing import Optional, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 from backend.models import AuditLog, utcnow_naive
+
+logger = logging.getLogger(__name__)
 
 
 def log_audit_event(
@@ -40,6 +43,7 @@ def log_audit_event(
     user_agent: Optional[str] = None,
     details: Optional[dict[str, Any]] = None,
     timestamp: Optional[datetime] = None,
+    dispatch_webhooks: bool = True,
 ) -> AuditLog:
     """
     Log an audit event to the audit_logs table.
@@ -83,14 +87,70 @@ def log_audit_event(
     )
     db.add(audit_log)
     db.commit()
-    _dispatch_webhooks(db, tenant_id, action, {
-        "action": action,
-        "target_resource": target_resource,
-        "target_id": target_id,
-        "user_email": user_email,
-        "details": details,
-    })
+    if dispatch_webhooks:
+        _dispatch_webhooks(db, tenant_id, action, {
+            "action": action,
+            "target_resource": target_resource,
+            "target_id": target_id,
+            "user_email": user_email,
+            "details": details,
+        })
     return audit_log
+
+
+def audit_request(
+    db: Session,
+    request,
+    user: Optional[dict],
+    action: str,
+    *,
+    target_resource: Optional[str] = None,
+    target_id: Optional[int] = None,
+    details: Optional[dict[str, Any]] = None,
+    tenant_id: Optional[int] = None,
+    user_email: Optional[str] = None,
+    dispatch_webhooks: bool = True,
+) -> Optional[AuditLog]:
+    """Audit an action performed through an HTTP request, never failing it.
+
+    Derives the actor (JWT/API-key identity), tenant, IP and user agent from the
+    request, so endpoints stay one line. The business action has ALREADY been
+    committed when this runs, so a failure here is logged and swallowed rather
+    than turning a successful change into a 500 (same discipline as
+    _dispatch_webhooks). Pass `tenant_id` when the affected tenant is not the
+    caller's (e.g. a SUPER_ADMIN creating a tenant) and `user_email` for system
+    actors (e.g. "stripe").
+
+    `dispatch_webhooks=False` records the event without notifying the tenant's
+    webhooks (used when the event is itself a webhook test: the receiver would
+    otherwise get two messages for one click).
+
+    `details` must never contain secrets (passwords, tokens, device credentials):
+    log field NAMES that changed, not their values, when the value is sensitive.
+    """
+    try:
+        user = user or {}
+        client = getattr(request, "client", None)
+        headers = getattr(request, "headers", None)
+        return log_audit_event(
+            db=db,
+            action=action,
+            tenant_id=tenant_id if tenant_id is not None else user.get("tenant_id"),
+            user_email=user_email if user_email is not None else user.get("sub"),
+            target_resource=target_resource,
+            target_id=target_id,
+            ip_address=client.host if client else None,
+            user_agent=headers.get("user-agent") if headers else None,
+            details=details,
+            dispatch_webhooks=dispatch_webhooks,
+        )
+    except Exception:
+        logger.exception("Could not write audit event %s", action)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return None
 
 
 def _dispatch_webhooks(db: Session, tenant_id: Optional[int], action: str, payload: dict) -> None:

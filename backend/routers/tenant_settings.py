@@ -29,7 +29,8 @@ from pydantic import BaseModel
 from backend.database import SessionLocal
 from backend.security import require_admin, get_current_user
 from backend import models
-from backend.audit import log_audit_event
+from backend.audit import log_audit_event, audit_request
+from backend import netguard
 
 router = APIRouter(prefix="/api/tenant-settings", tags=["tenant-settings"])
 
@@ -99,22 +100,39 @@ def update_tenant_settings(
 
 
 @router.post("/notifications/test")
-def send_test_notification(db=Depends(get_db), current_user: dict = Depends(require_admin)):
+def send_test_notification(request: Request, db=Depends(get_db), current_user: dict = Depends(require_admin)):
     row = _row(db, current_user.get("tenant_id"))
     webhook_url = (row.notifications or {}).get("slackWebhook")
     if not webhook_url:
         raise HTTPException(400, "Nenhum Slack webhook URL guardado. Preenche e grava o campo primeiro.")
 
+    # The URL is typed by the tenant: guard against SSRF (internal addresses,
+    # cloud metadata) before the server connects to it.
     try:
-        resp = httpx.post(
-            webhook_url,
-            json={"text": "🔔 Mensagem de teste da VoltarisOS — as notificações Slack estão configuradas corretamente."},
-            timeout=10.0,
-        )
-    except httpx.HTTPError as e:
-        raise HTTPException(502, f"Não foi possível contactar o Slack: {e}")
+        netguard.check_url(webhook_url, schemes=("https",))
+    except netguard.BlockedDestination as exc:
+        raise HTTPException(400, f"URL do Slack não permitido: {exc}")
 
-    if resp.status_code != 200:
-        raise HTTPException(502, f"O Slack recusou a mensagem (status {resp.status_code}): {resp.text[:200]}")
+    ok = False
+    try:
+        try:
+            resp = httpx.post(
+                webhook_url,
+                json={"text": "🔔 Mensagem de teste da VoltarisOS — as notificações Slack estão configuradas corretamente."},
+                timeout=10.0,
+                follow_redirects=False,
+            )
+        except httpx.HTTPError:
+            raise HTTPException(502, "Não foi possível contactar o Slack.")
+
+        # Never reflect the response body (or the exception text): with a
+        # user-chosen URL it would turn this endpoint into a way to read
+        # internal services.
+        if resp.status_code != 200:
+            raise HTTPException(502, f"O Slack recusou a mensagem (status {resp.status_code}).")
+        ok = True
+    finally:
+        audit_request(db, request, current_user, "tenant_settings.test_notification", target_resource="tenant",
+                      target_id=current_user.get("tenant_id"), details={"channel": "slack", "ok": ok})
 
     return {"message": "Mensagem de teste enviada com sucesso."}

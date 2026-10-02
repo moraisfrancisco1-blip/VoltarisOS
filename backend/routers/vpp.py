@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend import models
-from backend.audit import log_audit_event
+from backend.audit import log_audit_event, audit_request
 from backend.security import get_current_user
 from optimization.asset_mapper import build_portfolio_from_vpp
 from optimization.multi_asset_optimizer import MultiAssetOptimizer
@@ -104,7 +104,7 @@ def list_groups(db: Session = Depends(get_db), user: dict = Depends(get_current_
 
 
 @router.post("", response_model=VPPGroupOut, status_code=201)
-def create_group(body: VPPGroupCreate, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def create_group(body: VPPGroupCreate, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     tenant_id = user.get("tenant_id")
     if tenant_id is None:
         raise HTTPException(400, "tenant_id could not be resolved")
@@ -112,6 +112,8 @@ def create_group(body: VPPGroupCreate, db: Session = Depends(get_db), user: dict
     db.add(g)
     db.commit()
     db.refresh(g)
+    audit_request(db, request, user, "vpp.group.created", target_resource="vpp_group", target_id=g.id,
+                  details={"name": g.name, "market": g.market, "strategy": g.strategy})
     return g
 
 
@@ -121,7 +123,7 @@ def get_group(vpp_id: int, db: Session = Depends(get_db), user: dict = Depends(g
 
 
 @router.delete("/{vpp_id}", status_code=204)
-def delete_group(vpp_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def delete_group(vpp_id: int, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     """Delete a VPP group. Postgres enforces the FK from every row that
     references this group (or, for dispatch records, its optimization runs),
     so those must be removed first, in dependency order, or the delete 500s
@@ -134,12 +136,15 @@ def delete_group(vpp_id: int, db: Session = Depends(get_db), user: dict = Depend
     db.query(models.VPPOptimizationRun).filter(models.VPPOptimizationRun.vpp_id == vpp_id).delete(synchronize_session=False)
     db.query(models.VPPBid).filter(models.VPPBid.vpp_id == vpp_id).delete(synchronize_session=False)
     db.query(models.VPPSiteMembership).filter(models.VPPSiteMembership.vpp_id == vpp_id).delete(synchronize_session=False)
+    group_name, group_tenant = g.name, g.tenant_id
     db.delete(g)
     db.commit()
+    audit_request(db, request, user, "vpp.group.deleted", target_resource="vpp_group", target_id=vpp_id,
+                  tenant_id=group_tenant, details={"name": group_name})
 
 
 @router.post("/{vpp_id}/sites")
-def add_site(vpp_id: int, body: AddSiteBody, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def add_site(vpp_id: int, body: AddSiteBody, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     _get_owned_vpp(db, vpp_id, user)
     # The site must exist and belong to the effective tenant (404 no-leak).
     # SUPER_ADMIN bypasses the tenant filter via _effective_tenant -> None.
@@ -158,11 +163,13 @@ def add_site(vpp_id: int, body: AddSiteBody, db: Session = Depends(get_db), user
     m = models.VPPSiteMembership(vpp_id=vpp_id, site_id=body.site_id, weight=body.weight)
     db.add(m)
     db.commit()
+    audit_request(db, request, user, "vpp.site.added", target_resource="vpp_group", target_id=vpp_id,
+                  details={"site_id": body.site_id, "weight": body.weight})
     return {"ok": True}
 
 
 @router.delete("/{vpp_id}/sites/{site_id}", status_code=204)
-def remove_site(vpp_id: int, site_id: int, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
+def remove_site(vpp_id: int, site_id: int, request: Request, db: Session = Depends(get_db), user: dict = Depends(get_current_user)):
     _get_owned_vpp(db, vpp_id, user)
     m = db.query(models.VPPSiteMembership).filter(
         models.VPPSiteMembership.vpp_id == vpp_id,
@@ -171,6 +178,8 @@ def remove_site(vpp_id: int, site_id: int, db: Session = Depends(get_db), user: 
     if m:
         db.delete(m)
         db.commit()
+        audit_request(db, request, user, "vpp.site.removed", target_resource="vpp_group", target_id=vpp_id,
+                      details={"site_id": site_id})
 
 
 @router.get("/{vpp_id}/aggregate")

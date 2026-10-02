@@ -24,7 +24,7 @@ from backend.database import SessionLocal
 from backend.security import require_admin
 from backend.models import utcnow_naive
 from backend import models
-from backend.audit import log_audit_event
+from backend.audit import log_audit_event, audit_request
 from backend import netguard
 from backend.tasks import deliver_webhook
 
@@ -59,6 +59,34 @@ KNOWN_EVENT_TYPES = [
     "user.profile_updated",
     "company.updated",
     "tenant_settings.updated",
+    "tenant_settings.test_notification",
+    "site.created",
+    "site.updated",
+    "site.deleted",
+    "device.created",
+    "device.updated",
+    "device.deleted",
+    "device.tested",
+    "device.command",
+    "device.optimise",
+    "vpp.group.created",
+    "vpp.group.deleted",
+    "vpp.site.added",
+    "vpp.site.removed",
+    "alert.acknowledged",
+    "alert_rule.created",
+    "alert_rule.deleted",
+    "report.requested",
+    "user.registered",
+    "user.password_changed",
+    "user.invited",
+    "user.activation_toggled",
+    "user.deleted",
+    "tenant.created",
+    "billing.checkout_started",
+    "billing.portal_opened",
+    "billing.subscription_changed",
+    "webhook.tested",
 ]
 
 
@@ -249,9 +277,12 @@ def delete_webhook(
 @router.post("/{webhook_id}/test")
 def test_webhook(
     webhook_id: int,
+    request: Request,
     db=Depends(get_db),
     current_user: dict = Depends(require_admin),
 ):
     row = _owned_webhook(db, webhook_id, current_user)
     deliver_webhook.delay(row.id, "webhook.test", {"message": "This is a test event from VoltarisOS."})
+    audit_request(db, request, current_user, "webhook.tested", target_resource="webhook", target_id=row.id,
+                  tenant_id=row.tenant_id, dispatch_webhooks=False)
     return {"message": "Evento de teste enviado."}
