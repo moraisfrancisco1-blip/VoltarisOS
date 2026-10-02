@@ -25,6 +25,7 @@ from backend.security import require_admin
 from backend.models import utcnow_naive
 from backend import models
 from backend.audit import log_audit_event
+from backend import netguard
 from backend.tasks import deliver_webhook
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
@@ -69,6 +70,19 @@ def get_db():
         db.close()
 
 
+def _validate_webhook_url(v: str) -> str:
+    """Scheme + obviously-internal destinations only: no DNS here (validators
+    must not depend on the network). The delivery task resolves the name and
+    checks every address again, see backend/tasks.py deliver_webhook."""
+    if not (v.startswith("https://") or v.startswith("http://")):
+        raise ValueError("URL deve começar com http:// ou https://")
+    try:
+        netguard.check_url(v, resolve=False)
+    except netguard.BlockedDestination as exc:
+        raise ValueError(str(exc))
+    return v
+
+
 class WebhookCreate(BaseModel):
     url: str
     event_types: list[str]
@@ -76,9 +90,7 @@ class WebhookCreate(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, v):
-        if not (v.startswith("https://") or v.startswith("http://")):
-            raise ValueError("URL deve começar com http:// ou https://")
-        return v
+        return _validate_webhook_url(v)
 
     @field_validator("event_types")
     @classmethod
@@ -99,9 +111,7 @@ class WebhookUpdate(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, v):
-        if v is not None and not (v.startswith("https://") or v.startswith("http://")):
-            raise ValueError("URL deve começar com http:// ou https://")
-        return v
+        return None if v is None else _validate_webhook_url(v)
 
     @field_validator("event_types")
     @classmethod

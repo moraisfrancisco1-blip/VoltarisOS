@@ -12,6 +12,7 @@ Handles:
 Register map: Alfen Eve Pro-line Modbus TCP Interface v3.8
 """
 
+import math
 import logging
 from typing import Optional
 from pymodbus.client import AsyncModbusTcpClient
@@ -126,6 +127,29 @@ async def poll(config: dict) -> dict:
         client.close()
 
 
+# --- Safety limits ------------------------------------------------------------
+
+# Absolute ceiling for the charge current we will ever write, whatever the
+# device config says. The per-device `max_amps` lives in user-editable config,
+# so it can only LOWER the limit, never raise it past what the hardware (and
+# the installation's fuses) allow. Alfen Eve Pro-line is rated up to 32 A.
+HARD_MAX_AMPS = 32.0
+
+
+def _amps_limits(config: dict) -> tuple[float, float]:
+    """(min_amps, max_amps) from config, bounded by HARD_MAX_AMPS."""
+    def _num(key: str, default: float) -> float:
+        try:
+            value = float(config.get(key, default))
+        except (TypeError, ValueError):
+            return default
+        return value if math.isfinite(value) else default
+
+    max_amps = min(max(_num("max_amps", 16.0), 0.0), HARD_MAX_AMPS)
+    min_amps = min(max(_num("min_amps", 5.0), 0.0), max_amps)
+    return min_amps, max_amps
+
+
 # --- send_command() - called by optimiser & API ------------------------------
 
 async def send_command(config: dict, command: str, value: float = 0.0) -> dict:
@@ -134,8 +158,10 @@ async def send_command(config: dict, command: str, value: float = 0.0) -> dict:
         port=int(config.get("port", 502)),
         slave_id=int(config.get("slave_id", 1)),
     )
-    min_amps = float(config.get("min_amps", 5))
-    max_amps = float(config.get("max_amps", 16))
+    min_amps, max_amps = _amps_limits(config)
+
+    if command == "set_current" and not math.isfinite(float(value)):
+        return {"ok": False, "message": "Invalid current value"}
 
     connected = await client.connect()
     if not connected:
@@ -174,8 +200,7 @@ async def solar_optimise(config: dict, solar_surplus_kw: float, spot_price_eur: 
     and the charger reduces it internally to protect the 25A fuses.
     """
     phases       = int(config.get("phases", 3))
-    min_amps     = float(config.get("min_amps", 5))
-    max_amps     = float(config.get("max_amps", 16))
+    min_amps, max_amps = _amps_limits(config)
     start_kw     = float(config.get("solar_start_kw", 3.5))
     price_pause  = float(config.get("price_pause_above", 0.18))
     price_resume = float(config.get("price_resume_below", 0.10))

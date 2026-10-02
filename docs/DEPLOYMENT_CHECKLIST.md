@@ -7,8 +7,14 @@ que **não** está implementado (controlo físico).
 > **MONITORING REAL (operacional):** ingestão, idempotência, alertas, offline
 > detection, carbon, maintenance, tenant isolation.
 >
-> **CONTROLO FÍSICO NÃO IMPLEMENTADO:** envio de comandos a equipamentos,
-> Modbus/MQTT, dispatch físico, `process_vpp_bid`. Nada aqui envia comandos.
+> **CONTROLO FÍSICO NÃO IMPLEMENTADO:** dispatch físico a partir do otimizador
+> (`control/` só faz dry-run), `process_vpp_bid`.
+>
+> **Exceção:** os endpoints `/api/ev/{id}/command` e `/api/ev/{id}/optimise`
+> escrevem registos Modbus num carregador Alfen. São restritos a
+> TENANT_ADMIN/SUPER_ADMIN, auditados (`device.command`, `device.optimise`), o
+> valor da corrente tem um teto rígido de 32 A no conector e o `host` passa pela
+> guarda anti-SSRF.
 
 ---
 
@@ -21,6 +27,7 @@ que **não** está implementado (controlo físico).
 | `ENVIRONMENT` | sim | `production` | Desativa OpenAPI/docs por defeito; ativa guards |
 | `REDIS_URL` | se `RUN_CELERY=1` | `redis://...:6379/0` | Obrigatória se Celery ativo |
 | `RUN_CELERY` | sim | `1` | `1` lança worker+beat; `0` só API |
+| `ALLOW_PRIVATE_DESTINATIONS` | não | `false` (defeito em produção) | Guarda anti-SSRF (`backend/netguard.py`): o servidor **não** liga a endereços privados/loopback (testes de ligação de dispositivos, carregadores EV, webhooks). Endereços de metadados cloud (169.254.x) são sempre bloqueados. Só pôr `true` numa instalação on-prem de um único tenant que fale mesmo com equipamento na LAN; na cloud, o equipamento do cliente é alcançado pelo gateway. |
 | `GATEWAY_API_KEYS` | recomendada | `{"<key>":<tenant_id>}` | Sem ela, gateways não ingerem (readiness `not_configured`) |
 
 ### Opcionais

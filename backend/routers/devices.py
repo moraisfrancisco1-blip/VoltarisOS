@@ -1,6 +1,7 @@
 """
 /api/devices  — CRUD + connection test + readings + batch ingest
 """
+import re
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, Any, Dict, List
@@ -15,6 +16,7 @@ from backend.schemas import (
     DeviceReadingBatchItem,
 )
 from backend.audit import log_audit_event
+from backend import netguard
 from backend.security import get_current_user, require_ingest_identity
 from backend.routers.alerts_ws import evaluate_rules_sync
 
@@ -560,6 +562,8 @@ async def _test_solaredge(cfg: dict) -> dict:
     site_id = cfg.get("site_id", "")
     if not api_key or not site_id:
         return {"ok": False, "message": "api_key and site_id required"}
+    if not str(site_id).isdigit():
+        return {"ok": False, "message": "site_id must be numeric"}
     url = f"https://monitoringapi.solaredge.com/site/{site_id}/overview?api_key={api_key}"
     async with httpx.AsyncClient(timeout=8) as c:
         r = await c.get(url)
@@ -572,6 +576,7 @@ async def _test_modbus_tcp(cfg: dict) -> dict:
     from pymodbus.client import AsyncModbusTcpClient
     host = cfg.get("host", "127.0.0.1")
     port = int(cfg.get("port", 502))
+    await netguard.acheck_host(host)  # SSRF: never connect to internal/metadata addresses
     client = AsyncModbusTcpClient(host, port=port)
     connected = await client.connect()
     await client.close()
@@ -581,10 +586,14 @@ async def _test_modbus_tcp(cfg: dict) -> dict:
 
 
 def _test_modbus_rtu(cfg: dict) -> dict:
-    import serial
     port = cfg.get("port", "/dev/ttyUSB0")
     baud = int(cfg.get("baudrate", 9600))
+    # Only real serial ports: an arbitrary path would let a user probe the
+    # server's filesystem / open unrelated device files.
+    if not re.fullmatch(r"(/dev/(tty|serial/)[A-Za-z0-9_./-]*|COM[0-9]{1,3})", str(port)) or ".." in str(port):
+        return {"ok": False, "message": "Invalid serial port"}
     try:
+        import serial
         s = serial.Serial(port, baud, timeout=2)
         s.close()
         return {"ok": True, "message": f"Serial port {port} opened at {baud} baud"}
@@ -595,6 +604,7 @@ def _test_modbus_rtu(cfg: dict) -> dict:
 async def _test_opcua(cfg: dict) -> dict:
     from asyncua import Client as OpcClient
     url = cfg.get("url", "opc.tcp://localhost:4840")
+    await netguard.acheck_url(url, schemes=("opc.tcp",))
     async with OpcClient(url=url, timeout=5) as c:
         await c.connect()
     return {"ok": True, "message": f"OPC-UA connected to {url}"}
@@ -611,7 +621,10 @@ async def _test_http_api(protocol: str, cfg: dict) -> dict:
         "huawei": f"https://{host}/rest/pvms/web/auth/token",
     }
     url = endpoints.get(protocol, f"http://{host}/")
-    async with httpx.AsyncClient(timeout=6, verify=False) as c:
+    # `host` is interpolated into the URL: validate the *resulting* URL's host
+    # (this also rejects "evil.com/x#" style tricks) before connecting.
+    await netguard.acheck_url(url)
+    async with httpx.AsyncClient(timeout=6, verify=False, follow_redirects=False) as c:
         r = await c.get(url)
     if r.status_code < 400:
         return {"ok": True, "message": f"{protocol} API reachable ({r.status_code})"}
