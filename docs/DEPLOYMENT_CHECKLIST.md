@@ -140,3 +140,8 @@ Sem Celery: `python -m backend.retention --dry-run` e depois sem `--dry-run`, nu
 > **deixam de existir** (só ficam os resumos horários). Se precisas de mais, sobe
 > `RETENTION_DEVICE_READINGS_DAYS` **antes** da primeira execução.
 
+## Sessões revogáveis
+
+- Cada login cria uma linha em `user_sessions` (tabela criada automaticamente no arranque). Tokens emitidos antes deste deploy não têm `sid` e continuam válidos até expirarem (72h).
+- Passadas 72h do deploy, definir `SESSIONS_REQUIRE_SID=true` para recusar qualquer token sem sessão (fecha a janela dos tokens antigos irrevogáveis).
+- Mudar a password, desativar/apagar um utilizador, anonimizá-lo (RGPD) ou `POST /api/sessions/users/{id}/revoke` terminam as sessões de imediato.

@@ -66,6 +66,7 @@ POLICIES: Dict[str, Policy] = {p.key: p for p in (
     Policy("VPP_RUNS", 180, 30, "Optimisation runs and their dispatch records. VPP bids are never touched."),
     Policy("REPORT_JOBS", 90, 7, "Report jobs and the generated PDF files on disk."),
     Policy("STRIPE_EVENTS", 90, 30, "Webhook idempotency keys. Stripe retries for ~3 days, so 30 is a safe floor."),
+    Policy("USER_SESSIONS", 30, 1, "Login sessions already expired (they hold IP and user agent). Live ones are never deleted."),
     Policy("LEADS", 365, 30, "Marketing sign-ups from the landing page (personal data, no account)."),
 )}
 
@@ -411,6 +412,7 @@ def run_retention(
         ("VPP_RUNS", lambda c: _purge_vpp_runs(db, ctx, c)),
         ("REPORT_JOBS", lambda c: _purge_report_jobs(db, ctx, c)),
         ("STRIPE_EVENTS", lambda c: {"deleted": _purge_ids(db, ctx, S, S.processed_at, c)}),
+        ("USER_SESSIONS", lambda c: {"deleted": _purge_ids(db, ctx, models.UserSession, models.UserSession.expires_at, c)}),
         ("LEADS", lambda c: {"deleted": _purge_ids(db, ctx, models.Lead, models.Lead.created_at, c)}),
         ("DEVICE_READINGS", lambda c: _purge_device_readings(db, ctx, _hour_floor(c))),
     ]

@@ -70,6 +70,8 @@ KNOWN_EVENT_TYPES = [
     "device.command",
     "privacy.data_exported",
     "privacy.user_erased",
+    "session.revoked",
+    "session.revoked_all",
     "device.optimise",
     "vpp.group.created",
     "vpp.group.deleted",

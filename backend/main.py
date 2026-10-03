@@ -78,6 +78,7 @@ from backend.routers.company import router as company_router
 from backend.routers.tenant_settings import router as tenant_settings_router
 from backend.routers.ev_charger import router as ev_charger_router
 from backend.routers.privacy import router as privacy_router
+from backend.routers.sessions import router as sessions_router
 from backend.routers.integrations import router as integrations_router
 from backend.security import get_current_user, limiter, require_password_changed
 from backend.startup import validate_startup_config
@@ -279,6 +280,7 @@ app.include_router(company_router, dependencies=_auth_dep)  # require_admin insi
 app.include_router(tenant_settings_router, dependencies=_auth_dep)  # PATCH/test require_admin inside; GET any member
 app.include_router(integrations_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
 app.include_router(privacy_router, dependencies=_auth_dep)  # self-service + admin; checks inside
+app.include_router(sessions_router, dependencies=_auth_dep)  # own sessions; admin variant checks inside
 app.include_router(ev_charger_router, dependencies=_auth_dep)  # EV charger control (device ownership enforced inside)
 
 
