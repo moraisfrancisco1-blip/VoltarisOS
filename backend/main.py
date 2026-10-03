@@ -180,21 +180,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Permissions policy (restrict browser features)
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
         
-        # Content Security Policy (restrict resource loading)
-        csp_directives = [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-            "style-src 'self' 'unsafe-inline'",
-            "img-src 'self' data: https:",
-            "font-src 'self' data:",
-            "connect-src 'self' https://api.stripe.com wss:",
-            "frame-src 'none'",
-            "object-src 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-        ]
-        response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
-        
+        # Content Security Policy: see backend/csp.py (script-src 'self', no inline/eval).
+        from backend.csp import build_csp, header_name, is_api_docs
+        response.headers[header_name()] = build_csp(
+            request.headers.get("host", ""),
+            api_docs=is_api_docs(request.url.path),
+            secure=os.getenv("ENVIRONMENT", "development") == "production",
+        )
+
         # Remove server header (information disclosure)
         if "server" in response.headers:
             del response.headers["server"]
