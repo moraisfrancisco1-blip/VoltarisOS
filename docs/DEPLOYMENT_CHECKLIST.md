@@ -34,7 +34,7 @@ que **não** está implementado (controlo físico).
 `PORT` (default 8000), `CORS_ORIGINS`, `ACCESS_TOKEN_EXPIRE_MINUTES`,
 `DEVICE_OFFLINE_AFTER_MINUTES` (default 30), `OPENAI_API_KEY`,
 `ENTSOE_API_KEY`/`EEX_API_KEY`, `STRIPE_*`, `ENABLE_DOCS` (`true` reativa docs em
-produção), `SENTRY_DSN`.
+produção), `SENTRY_DSN` (opcional `SENTRY_SEND_PII=true` envia IPs/cabeçalhos ao Sentry — só com DPA; por omissão não envia).
 
 ## 2. Order de startup
 
