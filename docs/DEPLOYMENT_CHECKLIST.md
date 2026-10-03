@@ -140,3 +140,10 @@ Sem Celery: `python -m backend.retention --dry-run` e depois sem `--dry-run`, nu
 > **deixam de existir** (só ficam os resumos horários). Se precisas de mais, sobe
 > `RETENTION_DEVICE_READINGS_DAYS` **antes** da primeira execução.
 
+
+## Content-Security-Policy
+
+- `script-src 'self'`: o navegador recusa scripts inline, `javascript:` e `eval`, o que limita o dano de uma falha XSS (o token está em localStorage). Definida em `backend/csp.py`.
+- WebSockets só para o próprio host da página (não `wss:` genérico); `/docs` e `/redoc` têm uma política própria que permite o CDN do Swagger.
+- Se um ecrã quebrar por causa da política, `CSP_REPORT_ONLY=true` passa-a a só-relatório (nada é bloqueado; a consola do navegador lista as violações) sem alterar código.
+- Depois do deploy: abrir a aplicação autenticada (mapa, gráficos, definições) com a consola aberta e confirmar que não há "Refused to ...".
