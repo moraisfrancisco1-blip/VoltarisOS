@@ -18,7 +18,7 @@ from backend.database import SessionLocal
 from backend import models
 from backend.security import get_current_user
 from backend.config import settings
-from backend.energy_metrics import SOLAR_TYPES, solar_energy_kwh as _solar_energy_kwh
+from backend.energy_metrics import SOLAR_TYPES, hourly_energy_kwh, solar_energy_kwh as _solar_energy_kwh
 
 router = APIRouter()
 
@@ -97,7 +97,8 @@ def carbon_overview(db: Session = Depends(get_db), user: dict = Depends(get_curr
         )
         if tenant is not None:
             mq = mq.filter(models.Device.tenant_id == tenant)
-        kwh = mq.scalar() or 0.0
+        # Months older than the raw-telemetry window only exist as hourly summaries.
+        kwh = (mq.scalar() or 0.0) + hourly_energy_kwh(db, tenant, ms, me, fallback_to_power=False)
         monthly.append({
             "month": _MONTHS[m - 1],
             "co2_avoided": round(kwh * CO2_PER_KWH, 1),

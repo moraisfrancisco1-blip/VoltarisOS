@@ -8,7 +8,7 @@ from celery.schedules import crontab
 logger = logging.getLogger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 celery_app = Celery("voltaris", broker=REDIS_URL, backend=REDIS_URL, include=["backend.tasks", "backend.tasks_forecast_backtest"])
-celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json", timezone="Europe/Lisbon", enable_utc=True, task_track_started=True, task_time_limit=300, task_soft_time_limit=240, result_expires=3600, worker_prefetch_multiplier=1, worker_max_tasks_per_child=100, task_acks_late=True, task_reject_on_worker_lost=True, beat_schedule={"run-forecasting-every-15min": {"task": "backend.tasks.run_forecasting", "schedule": crontab(minute="*/15")}, "run-milp-optimization-every-5min": {"task": "backend.tasks.run_milp_optimization", "schedule": crontab(minute="*/5")}, "aggregate-device-data-every-5min": {"task": "backend.tasks.aggregate_device_data", "schedule": crontab(minute="*/5")}, "generate-daily-report": {"task": "backend.tasks.generate_daily_report", "schedule": crontab(hour=0, minute=0)}, "cleanup-old-audit-logs": {"task": "backend.tasks.cleanup_old_audit_logs", "schedule": crontab(hour=3, minute=0, day_of_week=0)}, "detect-offline-devices": {"task": "backend.tasks.detect_offline_devices", "schedule": crontab(minute="*/5")}})
+celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json", timezone="Europe/Lisbon", enable_utc=True, task_track_started=True, task_time_limit=300, task_soft_time_limit=240, result_expires=3600, worker_prefetch_multiplier=1, worker_max_tasks_per_child=100, task_acks_late=True, task_reject_on_worker_lost=True, beat_schedule={"run-forecasting-every-15min": {"task": "backend.tasks.run_forecasting", "schedule": crontab(minute="*/15")}, "run-milp-optimization-every-5min": {"task": "backend.tasks.run_milp_optimization", "schedule": crontab(minute="*/5")}, "aggregate-device-data-every-5min": {"task": "backend.tasks.aggregate_device_data", "schedule": crontab(minute="*/5")}, "generate-daily-report": {"task": "backend.tasks.generate_daily_report", "schedule": crontab(hour=0, minute=0)}, "run-data-retention-daily": {"task": "backend.tasks.run_retention", "schedule": crontab(hour=3, minute=30)}, "detect-offline-devices": {"task": "backend.tasks.detect_offline_devices", "schedule": crontab(minute="*/5")}})
 
 
 @celery_app.task(name="backend.tasks.run_forecasting", bind=True, max_retries=3, default_retry_delay=60)
@@ -134,9 +134,28 @@ def generate_daily_report():
     return {"status": "not_implemented", "reason": "reporting remains outside the optimization pipeline"}
 
 
+@celery_app.task(name="backend.tasks.run_retention")
+def run_retention():
+    """Daily data-retention pass (see backend/retention.py): summarise old telemetry
+    into hourly rows, then delete data past each dataset's retention window.
+    Bounded by RETENTION_MAX_SECONDS (< the 300 s task limit) and resumable."""
+    from backend.database import SessionLocal
+    from backend import retention
+    db = SessionLocal()
+    try:
+        return retention.run_retention(db).as_dict()
+    except Exception:
+        logger.exception("Data retention task failed")
+        raise
+    finally:
+        db.close()
+
+
 @celery_app.task(name="backend.tasks.cleanup_old_audit_logs")
 def cleanup_old_audit_logs():
-    return {"status": "not_implemented", "reason": "cleanup remains outside the optimization pipeline"}
+    """Legacy task name (it used to be a no-op scheduled weekly): kept so a queued
+    or externally scheduled call still works. Same as run_retention."""
+    return run_retention()
 
 
 @celery_app.task(name="backend.tasks.process_vpp_bid")
