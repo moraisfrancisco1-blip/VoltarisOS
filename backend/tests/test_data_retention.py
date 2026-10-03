@@ -77,7 +77,8 @@ class TestConfiguration:
     def test_defaults(self):
         days = {k.lower(): retention.retention_days(p) for k, p in retention.POLICIES.items()}
         assert days == {"device_readings": 90, "audit_logs": 730, "alerts": 180, "forecast_records": 60,
-                        "vpp_runs": 180, "report_jobs": 90, "stripe_events": 90, "leads": 365}
+                        "vpp_runs": 180, "report_jobs": 90, "stripe_events": 90, "leads": 365,
+                        "user_sessions": 30}
 
     def test_env_override(self, monkeypatch):
         monkeypatch.setenv("RETENTION_AUDIT_LOGS_DAYS", "1095")

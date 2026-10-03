@@ -461,6 +461,23 @@ class Lead(Base):
     created_at = Column(DateTime, default=utcnow_naive, nullable=False)
 
 
+class UserSession(Base):
+    """One row per login. The JWT carries this id as its `sid` claim and every
+    request checks the row still exists and has not expired, which is what lets
+    a session be ended before the token's own expiry (password change, account
+    deactivation, "sign out everywhere", RGPD erasure). Revoking = deleting."""
+    __tablename__ = "user_sessions"
+
+    id = Column(String(64), primary_key=True)  # random, unguessable; also the JWT `sid`
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
+    last_seen_at = Column(DateTime, default=utcnow_naive, nullable=False)
+    expires_at = Column(DateTime, nullable=False, index=True)
+    ip_address = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+
+
 # ─── Tenant-wide operational preferences (Settings > Energy/Trading/Notifications) ─
 
 class TenantSettings(Base):

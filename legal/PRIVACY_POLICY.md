@@ -28,7 +28,7 @@
 |---|---|---|
 | Conta | email, nome, telefone, cargo, cor de perfil, avatar, função (admin/membro), data de aceitação dos termos | Fornecidos pelo utilizador ou pelo administrador do tenant |
 | Autenticação | palavra-passe (guardada só como hash bcrypt), segredo e códigos de recuperação do 2FA, chaves de API (guardadas só como hash) | Utilizador |
-| Utilização e segurança | registo de auditoria (ação, data, endereço IP, user-agent), último acesso | Gerado automaticamente |
+| Utilização e segurança | registo de auditoria (ação, data, endereço IP, user-agent), último acesso, sessões de login ativas (IP, user-agent, datas) | Gerado automaticamente |
 | Organização | nome da empresa, morada, emails de suporte e faturação | Administrador do tenant |
 | Faturação | cliente, subscrição e estado de pagamento no Stripe. **Não guardamos números de cartão** | Stripe / Cliente |
 | Integrações | tokens OAuth (Google, Microsoft, Slack) e etiqueta da conta ligada; credenciais dos dispositivos configurados | Utilizador, quando liga a integração |
@@ -81,6 +81,7 @@ Aplicamos limites automáticos de conservação (valores por omissão, configur�
 | Registo de auditoria | 730 dias |
 | Alertas reconhecidos | 180 dias (os não reconhecidos não são apagados automaticamente) |
 | Previsões, execuções de otimização, trabalhos de relatório e ficheiros PDF | 60–180 dias, consoante o tipo |
+| Sessões de login | Terminadas ao sair, ao mudar a palavra-passe ou por um administrador; os registos expirados são apagados após 30 dias |
 | Contactos comerciais (leads) | 365 dias |
 | Eventos de webhook do Stripe (idempotência) | 90 dias |
 | Conta e dados do tenant | Enquanto o contrato estiver ativo; depois [PRAZO — ex. 30 dias] para exportação e eliminação |

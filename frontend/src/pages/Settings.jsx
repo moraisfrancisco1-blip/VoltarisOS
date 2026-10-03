@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAppStore, THEMES } from "../store/appStore";
 import { useTranslation } from "../i18n/useTranslation";
 import { LANGUAGES } from "../i18n/translations";
+import ActiveSessions from "../components/ActiveSessions";
 
 // Tabs that expose platform-billing / subscription-management data — the
 // company's contract with Voltaris, its invoices and payment method. This is
@@ -1607,6 +1608,9 @@ export default function Settings({ user, setUser, setPage }) {
                 <Btn variant="secondary" accent={accent} onClick={() => setPage ? setPage("audit") : undefined}>View Audit Log</Btn>
               </div>
             </div>
+          </div>
+          <div style={{ ...card, gridColumn: "1 / -1" }}>
+            <ActiveSessions accent={accent} onSignedOut={() => { try { localStorage.removeItem("token"); } catch (e) {} window.location.assign("/"); }} />
           </div>
         </div>
       )}

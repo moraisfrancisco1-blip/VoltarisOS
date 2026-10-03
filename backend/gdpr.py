@@ -64,6 +64,11 @@ def export_user_data(db: Session, user: models.User) -> dict:
              "scope": c.scope, "connected_at": _iso(c.connected_at)}
             for c in db.query(models.OAuthConnection).filter(models.OAuthConnection.user_id == user.id)
         ],
+        "sessions": [
+            {"created_at": _iso(x.created_at), "last_seen_at": _iso(x.last_seen_at), "expires_at": _iso(x.expires_at),
+             "ip_address": x.ip_address, "user_agent": x.user_agent}
+            for x in db.query(models.UserSession).filter(models.UserSession.user_id == user.id)
+        ],
         "report_requests": [
             {"id": r.id, "report_type": r.report_type, "period": r.period, "created_at": _iso(r.created_at)}
             for r in db.query(models.ReportJob).filter(models.ReportJob.requested_by == user.email)
@@ -117,6 +122,7 @@ def erase_user(db: Session, user: models.User) -> dict:
     for r in reports:
         r.requested_by = alias
 
+    sessions = db.query(models.UserSession).filter(models.UserSession.user_id == uid).delete(synchronize_session=False)
     leads = db.query(models.Lead).filter(models.Lead.email == old_email).delete(synchronize_session=False)
     oauth = db.query(models.OAuthConnection).filter(models.OAuthConnection.user_id == uid).delete(synchronize_session=False)
     now = utcnow_naive()
@@ -137,4 +143,4 @@ def erase_user(db: Session, user: models.User) -> dict:
     user.password_hash = hash_pw(secrets.token_urlsafe(32))  # unknown to everyone: no login possible
     db.commit()
     return {"audit_rows": len(logs), "reports": len(reports), "leads": leads,
-            "oauth_connections": oauth, "api_keys_revoked": keys}
+            "oauth_connections": oauth, "api_keys_revoked": keys, "sessions_ended": sessions}
