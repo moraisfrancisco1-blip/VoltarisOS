@@ -255,7 +255,7 @@ class TestUserAdministration:
         resp = client.post("/api/auth/change-password", json={"current_password": OLD_PW, "new_password": NEW_PW}, headers=H())
         assert resp.status_code == 200, resp.text
         row = one(db, "user.password_changed")
-        assert row.user_email == "admin-a@x.com" and row.details is None
+        assert row.user_email == "admin-a@x.com" and row.details == {"other_sessions_ended": 0}
         assert OLD_PW not in str(row.details) and NEW_PW not in str(row.details)
 
     def test_failed_password_change_is_not_recorded_as_a_change(self, client, db):

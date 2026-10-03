@@ -22,6 +22,7 @@ import secrets
 import sys
 from backend.audit import log_user_login, log_audit_event, audit_request
 from backend.twofa import verify_totp_code
+from backend.sessions import create_session, ensure_session, revoke_session, revoke_user_sessions
 from backend.permissions import (
     PlanTier, TIER_ORDER, PLAN_MAX_SITES, PLAN_ROLE_CEILING,
     get_tenant_plan, get_allowed_modules_for_plan, get_max_sites_for_plan,
@@ -509,6 +510,7 @@ def login(request: Request, response: Response, req: LoginRequest, db: Session =
         "tenant_id": user.tenant_id,
         "plan": plan,
         "must_change_password": must_change_password,
+        "sid": create_session(db, user, request),
     })
     set_auth_cookie(response, token)
 
@@ -537,18 +539,36 @@ def login(request: Request, response: Response, req: LoginRequest, db: Session =
     }
 
 
+def _end_session_of(request: Request, db: Session) -> None:
+    """Delete the session named by the request's token, if any. Never raises."""
+    try:
+        header = request.headers.get("authorization") or ""
+        token = header[7:] if header.lower().startswith("bearer ") else request.cookies.get("vos_session")
+        if not token or token.startswith("vos_"):
+            return
+        sid = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False}).get("sid")
+        if sid:
+            revoke_session(db, str(sid))
+    except Exception:
+        db.rollback()
+
+
 @router.post("/auth/logout")
-def logout(response: Response):
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
     """Clear the vos_session cookie (see set_auth_cookie). No auth required --
     idempotent, and a stale/expired/missing token shouldn't block logging out.
     The frontend also clears its own localStorage; this covers the fallback
-    cookie so a 'logged out' state is actually fully logged out."""
+    cookie so a 'logged out' state is actually fully logged out.
+
+    Also ends the server-side session the token belongs to, so a copy of the
+    token stops working. Best effort: a missing/garbled token just logs out."""
+    _end_session_of(request, db)
     clear_auth_cookie(response)
     return {"message": "Sessão terminada"}
 
 
 @router.get("/auth/me")
-def get_me(response: Response, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
+def get_me(request: Request, response: Response, db: Session = Depends(get_db), current: dict = Depends(get_current_user)):
     """Return the current user's profile with plan info and allowed modules.
     Used by the frontend to inject user context (role, plan, allowed_modules).
 
@@ -578,6 +598,7 @@ def get_me(response: Response, db: Session = Depends(get_db), current: dict = De
         "tenant_id": user.tenant_id,
         "plan": plan,
         "must_change_password": bool(user.must_change_password),
+        "sid": ensure_session(db, user, request, current.get("sid")),
     })
     set_auth_cookie(response, token)
 
@@ -688,6 +709,7 @@ def update_me(
             "role": normalize_role(user.role),
             "tenant_id": user.tenant_id,
             "plan": plan,
+            "sid": ensure_session(db, user, request, current.get("sid")),
         })
         set_auth_cookie(response, result["token"])
     return result
@@ -770,8 +792,12 @@ def change_password(req: ChangePasswordRequest, request: Request, response: Resp
     user.password_hash = hash_pw(req.new_password)
     user.must_change_password = False
     db.commit()
+    # A new password ends every OTHER login of this account (a stolen session
+    # must not survive the very action meant to lock it out); this one continues.
+    sid = ensure_session(db, user, request, current.get("sid"))
+    ended = revoke_user_sessions(db, user.id, except_sid=sid)
     audit_request(db, request, current, "user.password_changed", target_resource="user", target_id=user.id,
-                  tenant_id=user.tenant_id)
+                  tenant_id=user.tenant_id, details={"other_sessions_ended": ended})
 
     tenant = db.query(models.Tenant).filter(models.Tenant.id == user.tenant_id).first()
     plan = str(tenant.plan) if tenant and tenant.plan else "beta"
@@ -783,6 +809,7 @@ def change_password(req: ChangePasswordRequest, request: Request, response: Resp
         "tenant_id": user.tenant_id,
         "plan": plan,
         "must_change_password": False,
+        "sid": sid,
     })
     set_auth_cookie(response, token)
     return {
@@ -878,6 +905,8 @@ def toggle_active(user_id: int, request: Request, db: Session = Depends(get_db),
     
     user.active = not user.active
     db.commit()
+    if not user.active:
+        revoke_user_sessions(db, user.id)  # a deactivated account must not keep working until the token expires
     audit_request(db, request, admin, "user.activation_toggled", target_resource="user", target_id=user.id,
                   tenant_id=user.tenant_id, details={"email": user.email, "active": user.active})
     return {"id": user.id, "active": user.active}
@@ -899,6 +928,7 @@ def delete_user(user_id: int, request: Request, db: Session = Depends(get_db), a
         raise HTTPException(403, "Acesso negado — utilizador fora do teu tenant")
     
     deleted_id, deleted_email, deleted_tenant, deleted_role = user.id, user.email, user.tenant_id, user.role
+    revoke_user_sessions(db, user.id)  # rows reference users.id; also ends their logins
     db.delete(user)
     db.commit()
     audit_request(db, request, admin, "user.deleted", target_resource="user", target_id=deleted_id,

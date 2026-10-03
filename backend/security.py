@@ -7,6 +7,7 @@ security.py — shared auth used by every router.
 import hashlib
 import hmac
 import json
+import logging
 import os
 import secrets
 import sys
@@ -21,10 +22,12 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from sqlalchemy import text
+from sqlalchemy import select, text
 
 from backend.database import engine
-from backend.models import utcnow_naive
+from backend.models import UserSession, utcnow_naive
+
+logger = logging.getLogger(__name__)
 
 
 def _require_secret(key: str) -> str:
@@ -142,11 +145,43 @@ def verify_pw(password: str, stored_hash: str) -> bool:
 
 
 # ─── JWT ──────────────────────────────────────────────────────────────────────
+def _require_sid() -> bool:
+    return os.getenv("SESSIONS_REQUIRE_SID", "").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _assert_session_active(sid: str) -> None:
+    """The token names a server-side session (backend/sessions.py); it must still
+    exist and be unexpired. One indexed primary-key lookup. Fails closed: if the
+    store cannot be read, the request is refused rather than waved through."""
+    try:
+        with engine.begin() as conn:
+            table = UserSession.__table__
+            expires_at = conn.execute(select(table.c.expires_at).where(table.c.id == sid)).scalar()
+            now = utcnow_naive()
+            if expires_at is not None and expires_at > now:
+                conn.execute(
+                    table.update()
+                    .where(table.c.id == sid, table.c.last_seen_at < now - timedelta(seconds=_LAST_SEEN_THROTTLE_SECONDS))
+                    .values(last_seen_at=now)
+                )
+    except Exception:
+        logger.exception("Could not verify session")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Não foi possível validar a sessão")
+    if expires_at is None or expires_at <= now:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão terminada")
+
+
 def decode_token(token: str) -> dict:
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido ou expirado")
+    sid = payload.get("sid")
+    if sid:
+        _assert_session_active(str(sid))
+    elif _require_sid():
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sessão terminada")
+    return payload
 
 
 _LAST_SEEN_THROTTLE_SECONDS = 60

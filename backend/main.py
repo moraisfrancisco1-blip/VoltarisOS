@@ -33,8 +33,9 @@ if settings.SENTRY_ENABLED and settings.SENTRY_DSN:
             CeleryIntegration(),
             RedisIntegration(),
         ],
-        # Send default PII (user IP, etc.) for debugging
-        send_default_pii=True,
+        # RGPD: IPs, cookies and headers are personal data and would sit in a
+        # third party. Opt in explicitly (SENTRY_SEND_PII=true) only if a DPA covers it.
+        send_default_pii=os.getenv("SENTRY_SEND_PII", "false").lower() in ("1", "true", "yes"),
         # Ignore common noise errors
         ignore_errors=[
             KeyboardInterrupt,
@@ -76,6 +77,8 @@ from backend.routers.operations import router as operations_router
 from backend.routers.company import router as company_router
 from backend.routers.tenant_settings import router as tenant_settings_router
 from backend.routers.ev_charger import router as ev_charger_router
+from backend.routers.privacy import router as privacy_router
+from backend.routers.sessions import router as sessions_router
 from backend.routers.integrations import router as integrations_router
 from backend.security import get_current_user, limiter, require_password_changed
 from backend.startup import validate_startup_config
@@ -269,6 +272,8 @@ app.include_router(operations_router)  # /api/admin/production-readiness — adm
 app.include_router(company_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
 app.include_router(tenant_settings_router, dependencies=_auth_dep)  # PATCH/test require_admin inside; GET any member
 app.include_router(integrations_router, dependencies=_auth_dep)  # require_admin inside enforces TENANT_ADMIN/SUPER_ADMIN
+app.include_router(privacy_router, dependencies=_auth_dep)  # self-service + admin; checks inside
+app.include_router(sessions_router, dependencies=_auth_dep)  # own sessions; admin variant checks inside
 app.include_router(ev_charger_router, dependencies=_auth_dep)  # EV charger control (device ownership enforced inside)
 
 

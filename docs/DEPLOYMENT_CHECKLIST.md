@@ -34,7 +34,7 @@ que **não** está implementado (controlo físico).
 `PORT` (default 8000), `CORS_ORIGINS`, `ACCESS_TOKEN_EXPIRE_MINUTES`,
 `DEVICE_OFFLINE_AFTER_MINUTES` (default 30), `OPENAI_API_KEY`,
 `ENTSOE_API_KEY`/`EEX_API_KEY`, `STRIPE_*`, `ENABLE_DOCS` (`true` reativa docs em
-produção), `SENTRY_DSN`.
+produção), `SENTRY_DSN` (opcional `SENTRY_SEND_PII=true` envia IPs/cabeçalhos ao Sentry — só com DPA; por omissão não envia).
 
 ## 2. Order de startup
 
@@ -147,3 +147,9 @@ Sem Celery: `python -m backend.retention --dry-run` e depois sem `--dry-run`, nu
 - WebSockets só para o próprio host da página (não `wss:` genérico); `/docs` e `/redoc` têm uma política própria que permite o CDN do Swagger.
 - Se um ecrã quebrar por causa da política, `CSP_REPORT_ONLY=true` passa-a a só-relatório (nada é bloqueado; a consola do navegador lista as violações) sem alterar código.
 - Depois do deploy: abrir a aplicação autenticada (mapa, gráficos, definições) com a consola aberta e confirmar que não há "Refused to ...".
+
+## Sessões revogáveis
+
+- Cada login cria uma linha em `user_sessions` (tabela criada automaticamente no arranque). Tokens emitidos antes deste deploy não têm `sid` e continuam válidos até expirarem (72h).
+- Passadas 72h do deploy, definir `SESSIONS_REQUIRE_SID=true` para recusar qualquer token sem sessão (fecha a janela dos tokens antigos irrevogáveis).
+- Mudar a password, desativar/apagar um utilizador, anonimizá-lo (RGPD) ou `POST /api/sessions/users/{id}/revoke` terminam as sessões de imediato.
