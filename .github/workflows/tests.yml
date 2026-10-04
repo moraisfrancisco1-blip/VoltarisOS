@@ -69,6 +69,49 @@ jobs:
           path: artifacts/peak_cost_reoptimization.json
           if-no-files-found: error
 
+  # Cheap static gate: syntax errors and undefined names (see ruff.toml for why the
+  # rule set is deliberately small). Catches a typo'd name that tests never reach.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: python -m pip install "ruff==0.16.10"
+
+      - name: Lint
+        run: ruff check .
+
+  # The `image` job below already proves the frontend builds (the Dockerfile builds
+  # it); nothing ran the frontend's own tests until now.
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Unit tests
+        run: npm run test:unit
+
   # Builds the exact image Railway deploys and smoke-tests it. The test job above
   # runs against a dev install, so it cannot notice a package that is missing
   # from the production image (as happened with sentry-sdk, reportlab, asyncua and
