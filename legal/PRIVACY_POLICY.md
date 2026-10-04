@@ -64,7 +64,7 @@ Recorremos apenas a prestadores necessários ao serviço, vinculados por contrat
 | OpenAI | Respostas do assistente | Mensagem escrita pelo utilizador (texto livre) e resumo operacional agregado (preços, capacidade, receita); o contexto enviado não inclui email nem nome | EUA — [CCT/DPF] |
 | Google, Microsoft, Slack | Apenas se o utilizador ligar a integração | Tokens e dados autorizados pelo utilizador | conforme o prestador |
 | Fornecedores de dados de mercado e meteorologia (ENTSO-E, OMIE, Open-Meteo) | Preços e previsão | Nenhum dado pessoal é enviado | — |
-| [Fornecedor de email transacional] | Envio de emails | Email, nome | [confirmar] |
+| [Fornecedor de email, se existir] | A aplicação não envia emails atualmente (nada no código); remover esta linha se continuar a ser verdade | — | — |
 
 Podemos ainda divulgar dados a autoridades quando a lei o exigir. [CONFIRMAR LISTA ATUAL ANTES DE PUBLICAR.]
 
