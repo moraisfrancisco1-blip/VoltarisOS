@@ -14,6 +14,7 @@ from sqlalchemy import func, text
 from backend.database import SessionLocal
 from backend import models
 from backend.audit import audit_request
+from backend.schema_drift import drift_status
 from backend.security import require_super_admin, require_super_admin_or_service
 
 router = APIRouter(prefix="/api/admin", tags=["operations"])
@@ -127,6 +128,7 @@ def production_readiness(_sa: dict = Depends(require_super_admin_or_service), db
         "celery": _celery_state(),
         "ingest_auth": _ingest_auth_state(),
         "migrations": _migration_state(db),
+        "schema": drift_status(db.get_bind()),
     }
 
     failures = []
