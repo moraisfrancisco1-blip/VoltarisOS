@@ -58,8 +58,8 @@ Não foi encontrado no código nenhum envio de emails; se existir um serviço de
 
 ## 4. Pendentes que este registo revelou
 
-1. **Dados de habitações (plano Home).** Telemetria, `owner`, `location` e coordenadas de particulares são dados pessoais; a Política de Privacidade ainda não os refere. Decidir o papel (responsável vs. subcontratante) e se a exportação/anonimização deve cobrir sites e leituras (hoje cobre só o utilizador).
-2. **Resumo horário sem prazo** (`device_readings_hourly`): é dado pessoal quando o site é uma habitação; definir limite ou justificar.
+1. **Dados de habitações (plano Home).** Telemetria, `owner`, `location` e coordenadas de particulares são dados pessoais. *Parcialmente tratado:* a exportação e a eliminação de um site (`/api/privacy/sites/{id}/export|erase`) e a Política de Privacidade já os cobrem (PR claude/gdpr-household). Falta decidir o papel exacto (responsável vs. subcontratante) e que o apagar normal de um site/device (`DELETE`) continua a deixar a telemetria órfã: só a eliminação RGPD a remove.
+2. **Resumo horário sem prazo** (`device_readings_hourly`): é dado pessoal quando o site é uma habitação. Existe agora `RETENTION_DEVICE_READINGS_HOURLY_DAYS` (por omissão 0 = sem limite, mínimo 365); falta **decidir o valor**.
 3. **Segredo TOTP em claro** na base: cifrar em repouso.
 4. **Backups automáticos** inexistentes; sem eles, não há disponibilidade/integridade demonstrável (art. 32.º/1/c).
 5. **Eliminação de um tenant inteiro** e conservação de faturação: política por decidir.
