@@ -111,6 +111,10 @@ _migrate_add_missing_columns()
 from backend.migrations.runner import run_migrations
 run_migrations()
 
+# Log (never block on) any model table/column the live database is missing.
+from backend.schema_drift import warn_on_drift
+warn_on_drift(engine)
+
 # Interactive OpenAPI docs are disabled by default in production (configurable
 # with ENABLE_DOCS=true). Development keeps them enabled.
 _docs_enabled = os.getenv("ENABLE_DOCS", "").lower() == "true" or os.getenv("ENVIRONMENT", "development") != "production"
