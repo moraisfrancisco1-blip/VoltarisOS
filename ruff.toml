@@ -1,0 +1,9 @@
+# Lint gate for CI (.github/workflows/tests.yml, job `lint`).
+# Deliberately limited to rules that find real bugs, so the gate is green on the
+# existing code and stays meaningful: syntax errors (E9), invalid comparisons and
+# asserts (F63), runtime syntax errors (F7) and undefined names (F82). Style
+# rules (unused imports, line length, ...) are not enforced.
+extend-exclude = ["frontend", "landing", "mobile"]
+
+[lint]
+select = ["E9", "F63", "F7", "F82"]
