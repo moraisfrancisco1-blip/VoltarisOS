@@ -395,8 +395,15 @@ export default function App() {
   useEffect(() => {
     if (!user?.token) return
     let cancelled = false
-    fetch("/api/auth/me")
+    // /auth/me reissues the token with a fresh 72 h expiry. Keep it, otherwise the session
+    // dies 72 h after login no matter how often the app is used. Done on load and every 6 h
+    // (the stored token is only swapped in localStorage, so no re-render or reconnect happens).
+    const renew = () => fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
+      .then((me) => { if (me?.token && !cancelled) localStorage.setItem("token", me.token); return me })
+      .catch(() => null)
+    const renewTimer = setInterval(renew, 6 * 60 * 60 * 1000)
+    renew()
       .then((me) => {
         if (!me || cancelled) return
         const canonical = me.role ? normalizeRole(me.role) : null
@@ -412,7 +419,7 @@ export default function App() {
         } : u)
       })
       .catch(() => {})
-    return () => { cancelled = true }
+    return () => { cancelled = true; clearInterval(renewTimer) }
   }, [user?.token])
 
   return (
