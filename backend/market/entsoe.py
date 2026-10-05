@@ -114,27 +114,46 @@ class EntsoeClient:
             logger.error(f"ENTSO-E generation forecast error: {e}")
             return EntsoeResponse(success=False, data=[], error=str(e))
 
+    # Slot length of an ENTSO-E <Period>. Day-ahead prices are published per hour (PT60M) or, in
+    # markets that moved to 15-minute products such as the Netherlands, per quarter hour (PT15M).
+    _RESOLUTION_MINUTES = {"PT15M": 15, "PT30M": 30, "PT60M": 60}
+
     def _parse_price_response(self, xml_text: str) -> List[PricePoint]:
+        """Prices as one PricePoint per UTC HOUR (quarter-hour slots are averaged).
+
+        Reads any version of the ENTSO-E document: the version is part of the XML namespace
+        (…publicationdocument:7:0 … 7:3) and this parser used to hardcode the generation/load
+        document's namespace, so it found no price at all. A <Period> without a <resolution>
+        is treated as hourly. Periods with a resolution we do not know are skipped, never
+        guessed."""
         import xml.etree.ElementTree as ET
-        prices = []
+        slots: Dict[datetime, List[float]] = {}
         try:
             root = ET.fromstring(xml_text)
-            ns = {"pub": "urn:iec62325.351:tc57wg16:451-6:generationloaddocument:3:0"}
-            for ts in root.findall(".//pub:TimeSeries", ns):
-                for period in ts.findall(".//pub:Period", ns):
-                    start_str = period.find("pub:timeInterval/pub:start", ns)
-                    if start_str is None:
+            for ts in root.findall(".//{*}TimeSeries"):
+                for period in ts.findall(".//{*}Period"):
+                    start_el = period.find("{*}timeInterval/{*}start")
+                    if start_el is None or not (start_el.text or "").strip():
                         continue
-                    period_start = datetime.strptime(start_str.text, "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc)
-                    for point in period.findall("pub:Point", ns):
-                        position = point.find("pub:position", ns)
-                        price = point.find("pub:price.amount", ns)
-                        if position is not None and price is not None:
-                            timestamp = period_start + timedelta(hours=int(position.text) - 1)
-                            prices.append(PricePoint(timestamp=timestamp, price_eur_mwh=float(price.text)))
+                    resolution_el = period.find("{*}resolution")
+                    resolution = (resolution_el.text or "").strip() if resolution_el is not None else "PT60M"
+                    minutes = self._RESOLUTION_MINUTES.get(resolution or "PT60M")
+                    if minutes is None:
+                        logger.warning("ENTSO-E period with unsupported resolution %r ignored", resolution)
+                        continue
+                    period_start = datetime.strptime(start_el.text.strip(), "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc)
+                    for point in period.findall("{*}Point"):
+                        position = point.find("{*}position")
+                        price = point.find("{*}price.amount")
+                        if position is None or price is None:
+                            continue
+                        slot = period_start + timedelta(minutes=minutes * (int(position.text) - 1))
+                        hour = slot.replace(minute=0, second=0, microsecond=0)
+                        slots.setdefault(hour, []).append(float(price.text))
         except ET.ParseError as e:
             logger.error(f"XML parse error: {e}")
-        return prices
+        return [PricePoint(timestamp=hour, price_eur_mwh=round(sum(values) / len(values), 4))
+                for hour, values in sorted(slots.items())]
 
     def clear_cache(self):
         self._cache.clear()

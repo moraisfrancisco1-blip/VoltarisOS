@@ -20,7 +20,7 @@ def run_forecasting(self):
     from forecasting.contracts import ForecastBundle
     from forecasting.load_forecast import forecast_load_with_metadata
     from forecasting.persistence import record_from_bundle
-    from forecasting.price_forecast import forecast_market_prices_with_metadata
+    from forecasting.price_forecast import forecast_market_prices_with_metadata, DayAheadNotPublished
     from backend.config import settings
     from backend.forecast_inputs import solar_forecast_from_sites
 
@@ -38,7 +38,12 @@ def run_forecasting(self):
                     continue
                 load, load_provider = forecast_load_with_metadata(readings, start, hours=24, history_days=28)
                 country = getattr(tenant, "country_code", None) or settings.FORECAST_COUNTRY_CODE
-                prices, price_provider = __import__("asyncio").run(forecast_market_prices_with_metadata(country_code=country, hours=24, allow_fallback=False))
+                try:
+                    prices, price_provider = __import__("asyncio").run(forecast_market_prices_with_metadata(country_code=country, hours=24, allow_fallback=False, start=start))
+                except DayAheadNotPublished as exc:
+                    # Expected for part of every day (tomorrow's prices are not out yet): wait, do not alarm.
+                    results.append({"tenant_id": tenant.id, "status": "skipped", "reason": "day_ahead_prices_incomplete", "detail": str(exc)})
+                    continue
                 # Location, capacity and panel orientation live on the tenant's sites, not on the tenant.
                 solar, solar_provider = solar_forecast_from_sites(db, tenant.id, hours=24)
                 bundle = ForecastBundle(prices_eur_mwh=prices, load_kw=load, solar_kw=solar, timestamps=[(start + timedelta(hours=i)).isoformat() for i in range(24)], providers=(price_provider, load_provider, solar_provider))
