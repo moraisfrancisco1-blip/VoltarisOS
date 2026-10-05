@@ -1,3 +1,4 @@
+import TradingReal from "../components/real/TradingReal";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
@@ -44,7 +45,7 @@ const RECENT_TRADES = Array.from({ length: 8 }, (_, i) => ({
   qty: rand(1, 8), price: rand(55, 110), pnl: rand(-80, 200),
 }));
 
-export default function TradingDashboard() {
+export default function TradingDashboard({ setPage }) {
   const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [priceCurve]      = useState(genPriceCurve);
@@ -78,16 +79,8 @@ export default function TradingDashboard() {
 
   const priceColor  = priceDir > 0 ? C.green : C.red;
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_trading")}
-        </div>
-      </div>
-    )
-  }
+  // Real day-ahead prices and the tenant's VPP bids; the demo below needs Simulation mode.
+  if (!simMode) return <TradingReal onNavigate={setPage} />;
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
