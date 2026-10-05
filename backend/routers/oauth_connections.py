@@ -16,6 +16,7 @@ its /start endpoint returns 503 rather than a fake success.
 Redirect URI to register with each provider (exact match required):
     {OAUTH_REDIRECT_BASE_URL}/api/oauth/{provider}/callback
 """
+import re
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
@@ -446,6 +447,41 @@ def solaredge_overview(db=Depends(get_db), user: dict = Depends(require_admin)):
     if not resp.is_success:
         raise HTTPException(502, {"solaredge_status": resp.status_code, "body": body})
     return {"site_id": site_id, "overview": body}
+
+
+_SOLAREDGE_SUBPATH = re.compile(r"^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+){0,3}$")
+
+
+@router.get("/solaredge/site")
+def solaredge_site_details(
+    path: str = "",
+    db=Depends(get_db),
+    user: dict = Depends(require_admin),
+):
+    """Read-only look at what SolarEdge knows about the connected site: GET
+    /v2/sites/{site_id}[/{path}] with the stored bearer token (e.g. path=equipment).
+    `path` is restricted to a few plain segments, so the token can only ever be
+    sent to this site's own URLs on the SolarEdge API host."""
+    if path and not _SOLAREDGE_SUBPATH.fullmatch(path):
+        raise HTTPException(422, "path inválido")
+    tenant_id = user.get("tenant_id")
+    token = get_valid_access_token(db, tenant_id, "solaredge")
+    site_id = solaredge_site_id(db, tenant_id)
+    if not site_id:
+        raise HTTPException(409, "Site ID da SolarEdge desconhecido — volta a ligar")
+    url = f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}" + (f"/{path}" if path else "")
+    try:
+        resp = httpx.get(url, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+                         timeout=20.0)
+    except httpx.RequestError as e:
+        raise HTTPException(502, f"SolarEdge inacessível: {e}")
+    try:
+        body = resp.json()
+    except ValueError:
+        body = {"raw": resp.text[:500]}
+    if not resp.is_success:
+        raise HTTPException(502, {"solaredge_status": resp.status_code, "body": body})
+    return {"site_id": site_id, "path": path or "/", "data": body}
 
 
 @router.post("/solaredge/sync")

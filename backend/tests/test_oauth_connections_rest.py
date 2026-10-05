@@ -331,3 +331,45 @@ class TestSolarEdge:
         assert resp.json() == {"site_id": "2951500", "overview": {"currentPower": 1234}}
         conn = db_session.query(models.OAuthConnection).filter(models.OAuthConnection.provider == "solaredge").first()
         assert conn.access_token == "new" and conn.refresh_token == "rt2"
+
+
+class TestSolarEdgeSiteDetails:
+    def _connect(self, db_session):
+        user = _seed_user(db_session, TENANT_A)
+        db_session.add(models.OAuthConnection(
+            tenant_id=TENANT_A, user_id=user.id, provider="solaredge", account_label="Site 2951500",
+            access_token="tok", refresh_token="rt", expires_at=datetime.utcnow() + timedelta(hours=1),
+        ))
+        db_session.commit()
+
+    def test_member_forbidden(self, client, db_session):
+        resp = client.get("/api/oauth/solaredge/site", headers=_auth(TENANT_A, role="TENANT_MEMBER"))
+        assert resp.status_code == 403
+
+    def test_returns_site_details_with_bearer_token(self, client, db_session, monkeypatch):
+        self._connect(db_session)
+
+        def fake_get(url, **kwargs):
+            assert url == "https://monitoringapi.solaredge.com/v2/sites/2951500"
+            assert kwargs["headers"]["Authorization"] == "Bearer tok"
+            return FakeResponse({"peakPower": 5.4})
+
+        monkeypatch.setattr(httpx, "get", fake_get)
+        resp = client.get("/api/oauth/solaredge/site", headers=_auth(TENANT_A))
+        assert resp.status_code == 200
+        assert resp.json() == {"site_id": "2951500", "path": "/", "data": {"peakPower": 5.4}}
+
+    def test_subpath_is_appended_under_the_site(self, client, db_session, monkeypatch):
+        self._connect(db_session)
+        monkeypatch.setattr(httpx, "get", lambda url, **kw: (
+            FakeResponse({"ok": 1}) if url == "https://monitoringapi.solaredge.com/v2/sites/2951500/equipment"
+            else pytest.fail(f"unexpected url {url}")))
+        resp = client.get("/api/oauth/solaredge/site?path=equipment", headers=_auth(TENANT_A))
+        assert resp.status_code == 200 and resp.json()["data"] == {"ok": 1}
+
+    @pytest.mark.parametrize("bad", ["../sites/999", "a/../b", "https://evil.example", "a?x=1", "a/b/c/d/e"])
+    def test_path_cannot_escape_the_site(self, client, db_session, monkeypatch, bad):
+        self._connect(db_session)
+        monkeypatch.setattr(httpx, "get", lambda *a, **kw: pytest.fail("must not call SolarEdge"))
+        resp = client.get("/api/oauth/solaredge/site", params={"path": bad}, headers=_auth(TENANT_A))
+        assert resp.status_code == 422
