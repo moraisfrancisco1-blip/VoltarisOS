@@ -60,6 +60,7 @@ export default function Sites() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState(null); // null = creating a new site, otherwise the id being edited
   const [form, setForm] = useState({ ...BLANK });
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState(null);
@@ -86,7 +87,21 @@ export default function Sites() {
 
   const filtered = sites.filter(s => (s.name || "").toLowerCase().includes(search.toLowerCase()));
 
-  const openCreate = () => { setForm({ ...BLANK }); setShowForm(true); setFormError(null); };
+  const openCreate = () => { setEditId(null); setForm({ ...BLANK }); setShowForm(true); setFormError(null); };
+
+  // Same form, prefilled with the site's current values (null/undefined become empty fields).
+  const openEdit = (s) => {
+    const v = (x) => (x == null ? "" : x);
+    setEditId(s.id);
+    setForm({
+      name: v(s.name), location: v(s.location), lat: v(s.lat), lng: v(s.lng),
+      solar_kw: v(s.solar_kw), battery_kwh: v(s.battery_kwh), ev_chargers: v(s.ev_chargers),
+      owner: v(s.owner), status: s.status || "active",
+      tilt_deg: v(s.tilt_deg), azimuth_deg: v(s.azimuth_deg),
+    });
+    setShowForm(true);
+    setFormError(null);
+  };
 
   const saveForm = async () => {
     if (!form.name) { setFormError(t("sites_err_name")); return; }
@@ -106,8 +121,10 @@ export default function Sites() {
         tilt_deg: form.tilt_deg !== "" ? Number(form.tilt_deg) : null,
         azimuth_deg: form.azimuth_deg !== "" ? Number(form.azimuth_deg) : null,
       };
-      const res = await fetch(`${API}/api/sites`, {
-        method: "POST",
+      // An empty owner is left untouched when editing (PATCH), never cleared.
+      if (editId && !form.owner) delete payload.owner;
+      const res = await fetch(editId ? `${API}/api/sites/${editId}` : `${API}/api/sites`, {
+        method: editId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -201,7 +218,7 @@ export default function Sites() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
-              {["Name", "Location", "Lat", "Lng", "Solar (kW)", "BESS (kWh)", "EV", "Owner", "Status", ""].map(h => (
+              {["Name", "Location", "Lat", "Lng", "Solar (kW)", "Tilt / Azimuth", "BESS (kWh)", "EV", "Owner", "Status", ""].map(h => (
                 <th key={h} style={{ textAlign: "left", padding: "4px 10px", fontSize: 10, color: "var(--sub)", fontWeight: 600, whiteSpace: "nowrap" }}>{h}</th>
               ))}
             </tr>
@@ -214,13 +231,18 @@ export default function Sites() {
                 <td style={{ padding: "10px 10px", fontSize: 12, color: "var(--sub)" }}>{s.lat != null ? s.lat : "—"}</td>
                 <td style={{ padding: "10px 10px", fontSize: 12, color: "var(--sub)" }}>{s.lng != null ? s.lng : "—"}</td>
                 <td style={{ padding: "10px 10px", fontSize: 12, color: amber }}>{Number(s.solar_kw || 0).toLocaleString()}</td>
+                <td style={{ padding: "10px 10px", fontSize: 12, color: "var(--sub)", whiteSpace: "nowrap" }}>
+                  {s.tilt_deg != null || s.azimuth_deg != null ? `${s.tilt_deg ?? "—"}° / ${s.azimuth_deg ?? "—"}°` : "—"}
+                </td>
                 <td style={{ padding: "10px 10px", fontSize: 12, color: purple }}>{Number(s.battery_kwh || 0).toLocaleString()}</td>
                 <td style={{ padding: "10px 10px", fontSize: 12, color: blue }}>{s.ev_chargers ?? 0}</td>
                 <td style={{ padding: "10px 10px", fontSize: 11, color: "var(--text)" }}>{s.owner || "—"}</td>
                 <td style={{ padding: "10px 10px" }}>
                   <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: statusBg(s.status), color: statusColor(s.status) }}>{s.status}</span>
                 </td>
-                <td style={{ padding: "10px 10px" }}>
+                <td style={{ padding: "10px 10px", whiteSpace: "nowrap" }}>
+                  <button onClick={() => openEdit(s)}
+                    style={{ padding: "4px 10px", background: "var(--surface2)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 6, color: "var(--text)", fontSize: 11, cursor: "pointer", marginRight: 6 }}>Edit</button>
                   <button onClick={() => setDeleteId(s.id)}
                     style={{ padding: "4px 10px", background: "#ef444415", border: "1px solid #ef4444", borderRadius: 6, color: red, fontSize: 11, cursor: "pointer" }}>Del</button>
                 </td>
@@ -236,7 +258,7 @@ export default function Sites() {
         <div style={{ position: "fixed", inset: 0, background: "#00000088", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: 28, width: 680, maxHeight: "90vh", overflowY: "auto" }}>
             <h2 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700, color: "var(--text)" }}>
-              Add New Site
+              {editId ? "Edit Site" : "Add New Site"}
             </h2>
 
             {/* Basic */}
@@ -282,7 +304,7 @@ export default function Sites() {
               </button>
               <button onClick={saveForm} disabled={saving}
                 style={{ padding: "8px 20px", background: accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
-                {saving ? t("state_creating") : "Create Site"}
+                {saving ? (editId ? "Saving…" : t("state_creating")) : (editId ? "Save Changes" : "Create Site")}
               </button>
             </div>
           </div>
