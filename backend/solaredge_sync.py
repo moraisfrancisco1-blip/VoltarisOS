@@ -311,9 +311,14 @@ def backfill_history(db, tenant_id: int, days: int = 30, *, tz_name: str = "Euro
     fetch = fetch or (lambda s, e: _fetch_energy_buckets(token, site_id, s, e))
 
     now = now or datetime.now(timezone.utc)
-    first = db.query(models.DeviceReading.timestamp).filter(
-        models.DeviceReading.device_id == dev.id,
-    ).order_by(models.DeviceReading.timestamp.asc()).first()
+    # The first LIVE reading: rows stored by an earlier backfill do not count, otherwise every
+    # repeat would move the anchor back and fetch a different range.
+    first = None
+    for ts_, raw_ in db.query(models.DeviceReading.timestamp, models.DeviceReading.raw).filter(
+            models.DeviceReading.device_id == dev.id).order_by(models.DeviceReading.timestamp.asc()):
+        if not (isinstance(raw_, dict) and raw_.get(BACKFILL_KEY)):
+            first = (ts_,)
+            break
     # Stop at the local midnight that starts the day of the first reading (that day and later
     # come from the live sync); with no reading yet, stop at today's local midnight.
     anchor_utc = first[0].replace(tzinfo=timezone.utc) if first else now
