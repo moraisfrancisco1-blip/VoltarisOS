@@ -1,4 +1,5 @@
 import DemoNotice from "../components/DemoNotice";
+import CarbonReal from "../components/real/CarbonReal";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
@@ -66,16 +67,8 @@ export default function CarbonDashboard() {
 
   const giColor = gridIntensity < 150 ? C.green : gridIntensity < 250 ? C.amber : C.red;
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_carbon")}
-        </div>
-      </div>
-    )
-  }
+  // Real numbers from /api/carbon/overview; the demo below needs Simulation mode.
+  if (!simMode) return <CarbonReal />;
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
