@@ -15,8 +15,9 @@ def interval_kwh(prev_total, day_total):
     """Energy (kWh) gained between two readings of a growing daily counter.
 
     - no counter value now -> None (nothing to store)
-    - no previous reading   -> 0.0 (the energy produced before we started watching
-      cannot be placed in time, so it is not attributed to this moment)
+    - no previous reading   -> the counter itself: it is "energy so far TODAY", so
+      what was produced before we started watching still belongs to today (only its
+      split across the hours of the day is unknown)
     - counter went up/stayed -> the difference
     - counter dropped a lot  -> it reset: everything since the reset is new
     - counter dipped slightly -> 0.0 (noise, not production)
@@ -24,7 +25,7 @@ def interval_kwh(prev_total, day_total):
     if day_total is None:
         return None
     if prev_total is None:
-        return 0.0
+        return day_total
     delta = day_total - prev_total
     if delta >= 0:
         return delta
