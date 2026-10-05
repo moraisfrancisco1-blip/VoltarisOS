@@ -12,6 +12,7 @@ connector polled by the edge gateway): this one has its own device
 two never write to the same row.
 """
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -270,15 +271,35 @@ BACKFILL_KEY = "voltaris_backfill"
 BACKFILL_MAX_DAYS = 60
 
 
-def _fetch_energy_buckets(token: str, site_id: str, start: datetime, end: datetime) -> list:
+RATE_LIMIT_RETRIES = 2
+RATE_LIMIT_MAX_WAIT_S = 30
+BACKFILL_CHUNK_DAYS = 7   # one request covers several days: 30 days = 5 calls, not 30
+BACKFILL_PAUSE_S = 1.0    # between requests, to stay under SolarEdge's per-minute ceiling
+
+
+def _is_rate_limited(exc) -> bool:
+    return isinstance(exc, httpx.HTTPStatusError) and getattr(exc.response, "status_code", None) == 429
+
+
+def _fetch_energy_buckets(token: str, site_id: str, start: datetime, end: datetime, *, sleep=time.sleep) -> list:
     """Quarter-hour energy buckets [{"timestamp": ISO with offset, "value": Wh|None}] for
-    [start, end) (tz-aware datetimes), straight from the inverter's own history."""
-    resp = httpx.get(
-        f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}/energy",
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-        params={"from": start.isoformat(), "to": end.isoformat(), "resolution": "QUARTER_HOUR"},
-        timeout=30.0,
-    )
+    [start, end) (tz-aware datetimes), straight from the inverter's own history. A 429 (too many
+    requests) is waited out (Retry-After, capped) a couple of times before it is raised."""
+    for attempt in range(RATE_LIMIT_RETRIES + 1):
+        resp = httpx.get(
+            f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}/energy",
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+            params={"from": start.isoformat(), "to": end.isoformat(), "resolution": "QUARTER_HOUR"},
+            timeout=30.0,
+        )
+        if resp.status_code == 429 and attempt < RATE_LIMIT_RETRIES:
+            try:
+                wait = float(resp.headers.get("Retry-After", ""))
+            except (TypeError, ValueError):
+                wait = 10.0 * (attempt + 1)
+            sleep(min(max(wait, 1.0), RATE_LIMIT_MAX_WAIT_S))
+            continue
+        break
     resp.raise_for_status()
     body = resp.json()
     if not isinstance(body, dict):
@@ -289,7 +310,7 @@ def _fetch_energy_buckets(token: str, site_id: str, start: datetime, end: dateti
 
 
 def backfill_history(db, tenant_id: int, days: int = 30, *, tz_name: str = "Europe/Amsterdam",
-                     fetch=None, now=None) -> dict:
+                     fetch=None, now=None, chunk_days: int = BACKFILL_CHUNK_DAYS, sleep=time.sleep) -> dict:
     """Historical record for comparison: store the inverter's own past quarter-hour energy as
     DeviceReadings (marked raw[BACKFILL_KEY]) for the `days` complete local days BEFORE the first
     reading this device already has. Adds nothing for that day or after, never touches an existing
@@ -327,23 +348,65 @@ def backfill_history(db, tenant_id: int, days: int = 30, *, tz_name: str = "Euro
 
     result = {"tenant_id": tenant_id, "site_id": site_id, "device_id": dev.id, "from": first_day.isoformat(),
               "until": last_day.isoformat(), "stored": 0, "skipped_existing": 0, "empty_buckets": 0,
-              "days_failed": []}
+              "days_already_done": 0, "days_failed": [], "rate_limited": False}
+
+    def local_midnight(day):
+        return datetime.combine(day, datetime.min.time(), tzinfo=tz)
+
+    def to_utc(moment):
+        return moment.astimezone(timezone.utc).replace(tzinfo=None)
+
+    # What is already stored in the whole range. A day that already holds backfilled rows is done
+    # (each chunk is committed whole), so a repeat only fetches the days that are still missing.
+    existing = set()
+    done_days = set()
+    for ts_, raw_ in db.query(models.DeviceReading.timestamp, models.DeviceReading.raw).filter(
+            models.DeviceReading.device_id == dev.id,
+            models.DeviceReading.timestamp >= to_utc(local_midnight(first_day)),
+            models.DeviceReading.timestamp < to_utc(local_midnight(last_day))):
+        existing.add(ts_)
+        if isinstance(raw_, dict) and raw_.get(BACKFILL_KEY):
+            done_days.add(ts_.replace(tzinfo=timezone.utc).astimezone(tz).date())
+
+    chunk_days = max(1, int(chunk_days))
     cur = first_day
+    first_request = True
     while cur < last_day:
-        start = datetime.combine(cur, datetime.min.time(), tzinfo=tz)
-        end = datetime.combine(cur + timedelta(days=1), datetime.min.time(), tzinfo=tz)
-        try:
-            buckets = fetch(start, end)
-        except Exception:
-            logger.warning("SolarEdge history for %s failed", cur, exc_info=True)
-            result["days_failed"].append(cur.isoformat())
+        if cur in done_days:
+            result["days_already_done"] += 1
             cur += timedelta(days=1)
             continue
-        start_utc = start.astimezone(timezone.utc).replace(tzinfo=None)
-        end_utc = end.astimezone(timezone.utc).replace(tzinfo=None)
-        existing = {r[0] for r in db.query(models.DeviceReading.timestamp).filter(
-            models.DeviceReading.device_id == dev.id,
-            models.DeviceReading.timestamp >= start_utc, models.DeviceReading.timestamp < end_utc)}
+        chunk_end = cur  # last day of this chunk (inclusive): consecutive days still to fetch
+        while chunk_end + timedelta(days=1) < last_day and chunk_end - cur + timedelta(days=1) < timedelta(days=chunk_days) \
+                and (chunk_end + timedelta(days=1)) not in done_days:
+            chunk_end += timedelta(days=1)
+        start = local_midnight(cur)
+        end = local_midnight(chunk_end + timedelta(days=1))
+        if not first_request:
+            sleep(BACKFILL_PAUSE_S)
+        first_request = False
+        try:
+            buckets = fetch(start, end)
+        except Exception as exc:
+            logger.warning("SolarEdge history for %s..%s failed", cur, chunk_end, exc_info=True)
+            if _is_rate_limited(exc):
+                # SolarEdge is throttling us: stop here instead of hammering it. Repeating the call
+                # later continues with the days that are still missing.
+                result["rate_limited"] = True
+                day = cur
+                while day < last_day:
+                    if day not in done_days:
+                        result["days_failed"].append(day.isoformat())
+                    day += timedelta(days=1)
+                break
+            day = cur
+            while day <= chunk_end:
+                result["days_failed"].append(day.isoformat())
+                day += timedelta(days=1)
+            cur = chunk_end + timedelta(days=1)
+            continue
+        start_utc = to_utc(start)
+        end_utc = to_utc(end)
         for item in buckets:
             wh = _num(item.get("value"), "value") if isinstance(item, dict) else None
             if wh is None:
@@ -371,7 +434,7 @@ def backfill_history(db, tenant_id: int, days: int = 30, *, tz_name: str = "Euro
                      "value_wh": wh}))
             result["stored"] += 1
         db.commit()
-        cur += timedelta(days=1)
+        cur = chunk_end + timedelta(days=1)
     return result
 
 
