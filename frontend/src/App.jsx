@@ -134,14 +134,18 @@ function AppShell({ user, setUser, onLogout }) {
       // stay idle while logged out instead of knocking on the server with an empty token.
       const authToken = localStorage.getItem("token") || ""
       if (!authToken) { reconnectTimer = setTimeout(connect, 30000); return }
-      const url = `${proto}//${host}/ws/alerts?token=${encodeURIComponent(authToken)}`
+      // The token is NOT put in the URL (it would end up in server/proxy logs): it goes in the
+      // first message, which the server answers with {"type":"auth_ok"} or a 4401 close.
+      const url = `${proto}//${host}/ws/alerts`
       try {
         ws = new WebSocket(url)
-        ws.onopen = () => { failures = 0 }
+        ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token: authToken }))
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data)
-            if (msg.type === "alert") {
+            if (msg.type === "auth_ok") {
+              failures = 0
+            } else if (msg.type === "alert") {
               const severity = msg.severity || "info"
               const color = severity === "critical" ? "#f87171" : severity === "warning" ? "#f59e0b" : "#4ade80"
               addToast(`🔔 ${msg.message || msg.title || "New alert"}`, severity === "critical" ? "error" : "info")
@@ -153,9 +157,11 @@ function AppShell({ user, setUser, onLogout }) {
         ws.onerror = () => {}
         // Back off (8 s, 16 s, 32 s ... up to 5 min) instead of retrying every 8 s forever when the
         // server keeps refusing the connection (expired or revoked session).
-        ws.onclose = () => {
+        ws.onclose = (ev) => {
           failures += 1
-          reconnectTimer = setTimeout(connect, Math.min(8000 * 2 ** (failures - 1), 300000))
+          // 4401 = the server rejected the token: wait the maximum, a retry cannot succeed sooner.
+          const delay = ev && ev.code === 4401 ? 300000 : Math.min(8000 * 2 ** (failures - 1), 300000)
+          reconnectTimer = setTimeout(connect, delay)
         }
       } catch {}
     }

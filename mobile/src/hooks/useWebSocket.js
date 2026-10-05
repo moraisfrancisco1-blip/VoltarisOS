@@ -48,7 +48,7 @@ export function useWebSocket(endpoint, options = {}) {
     if (!token) {
       throw new Error('No authentication token available');
     }
-    return `${WS_BASE_URL}${endpoint}?token=${token}`;
+    return { url: `${WS_BASE_URL}${endpoint}`, token };  // token goes in the first message, not the URL (logs)
   }, [endpoint]);
 
   // Connect to WebSocket
@@ -59,11 +59,12 @@ export function useWebSocket(endpoint, options = {}) {
       setConnectionStatus(CONNECTION_STATUS.CONNECTING);
       setError(null);
 
-      const url = await buildWsUrl();
+      const { url, token } = await buildWsUrl();
       const ws = new WebSocket(url);
 
       ws.onopen = () => {
         if (!isMountedRef.current) return;
+        ws.send(JSON.stringify({ type: 'auth', token }));
         setConnectionStatus(CONNECTION_STATUS.CONNECTED);
         reconnectAttemptsRef.current = 0;
         onOpen?.();
@@ -73,6 +74,7 @@ export function useWebSocket(endpoint, options = {}) {
         if (!isMountedRef.current) return;
         try {
           const data = JSON.parse(event.data);
+          if (data && data.type === 'auth_ok') return;
           setLastMessage(data);
           onMessage?.(data);
         } catch (e) {
@@ -86,7 +88,7 @@ export function useWebSocket(endpoint, options = {}) {
         onClose?.(event);
         
         // Attempt reconnection if not manually closed
-        if (event.code !== 1000 && reconnectAttemptsRef.current < WS_MAX_RECONNECT_ATTEMPTS) {
+        if (event.code !== 1000 && event.code !== 4401 && reconnectAttemptsRef.current < WS_MAX_RECONNECT_ATTEMPTS) {
           scheduleReconnect();
         }
       };
