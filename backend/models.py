@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, DateTime, String, JSON, Boolean, ForeignKey, Text, Index, UniqueConstraint, text
+from sqlalchemy import Column, Integer, Float, DateTime, Date, String, JSON, Boolean, ForeignKey, Text, Index, UniqueConstraint, text
 from datetime import datetime, timezone
 from backend.database import Base
 
@@ -501,4 +501,29 @@ class TenantSettings(Base):
     energy = Column(JSON, nullable=True)
     trading = Column(JSON, nullable=True)
     notifications = Column(JSON, nullable=True)
+    updated_at = Column(DateTime, default=utcnow_naive, onupdate=utcnow_naive, nullable=False)
+
+
+# ─── Regulatory compliance tracker (Regulatory Compliance page) ──────────────
+
+class ComplianceItem(Base):
+    """An obligation a tenant tracks: a regulatory filing, certification, inspection
+    or report -- what is due, to whom, by when, how risky it is, and where it stands.
+
+    Entered and maintained by the tenant's own admins; there is no external data
+    source behind it. See backend/routers/compliance.py."""
+    __tablename__ = "compliance_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    body = Column(String, nullable=True)  # issuing authority / counterparty, free text
+    due_date = Column(Date, nullable=False)
+    category = Column(String, nullable=False, default="Regulatory")
+    risk = Column(String, nullable=False, default="medium")      # low | medium | high
+    status = Column(String, nullable=False, default="pending")   # pending | inprogress | done
+    notes = Column(Text, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_by = Column(String, nullable=True)
+    created_at = Column(DateTime, default=utcnow_naive, nullable=False)
     updated_at = Column(DateTime, default=utcnow_naive, onupdate=utcnow_naive, nullable=False)
