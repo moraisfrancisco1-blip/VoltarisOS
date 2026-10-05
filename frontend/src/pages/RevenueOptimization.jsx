@@ -1,3 +1,4 @@
+import SavingsReal from "../components/real/SavingsReal";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
@@ -84,16 +85,8 @@ export default function RevenueOptimization() {
     fill: s.color,
   }));
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_revenue")}
-        </div>
-      </div>
-    )
-  }
+  // Real earnings from /api/savings/today; the demo below needs Simulation mode.
+  if (!simMode) return <SavingsReal title="Revenue" subtitle="What your energy activity earned today, from real data" />;
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
