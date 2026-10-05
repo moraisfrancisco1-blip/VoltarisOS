@@ -390,14 +390,15 @@ def test_migration_converts_legacy_counter_rows_in_order(db, monkeypatch):
     db.add(models.DeviceReading(device_id=other.id, tenant_id=TENANT, timestamp=t0, energy_kwh=7.7, raw={}))
     db.commit()
 
+    dev_id, other_id = dev.id, other.id  # migrate() closes the session, detaching dev/other
     monkeypatch.setattr(mig, "SessionLocal", lambda: db)
     mig.migrate()
     mig.migrate()  # idempotent
 
-    rows = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == dev.id) \
+    rows = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == dev_id) \
         .order_by(models.DeviceReading.timestamp).all()
     assert [r.energy_kwh for r in rows] == [pytest.approx(0.0), pytest.approx(0.4), pytest.approx(0.6), pytest.approx(0.1)]
     assert [r.raw[mig.DAY_TOTAL_KEY] for r in rows] == [1.0, 1.4, 2.0, 0.1]
     assert rows[0].raw["production"]["total"] == 1000.0  # original payload preserved
-    untouched = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == other.id).one()
+    untouched = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == other_id).one()
     assert untouched.energy_kwh == 7.7 and mig.DAY_TOTAL_KEY not in untouched.raw
