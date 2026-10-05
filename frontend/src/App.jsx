@@ -127,12 +127,17 @@ function AppShell({ user, setUser, onLogout }) {
     const host  = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
       ? `${window.location.hostname}:8000`
       : window.location.host
-    const authToken = localStorage.getItem("token") || ""
-    const url = `${proto}//${host}/ws/alerts?token=${encodeURIComponent(authToken)}`
     let ws, reconnectTimer
+    let failures = 0
     const connect = () => {
+      // Read the token on every attempt, so a fresh login is picked up without a reload, and
+      // stay idle while logged out instead of knocking on the server with an empty token.
+      const authToken = localStorage.getItem("token") || ""
+      if (!authToken) { reconnectTimer = setTimeout(connect, 30000); return }
+      const url = `${proto}//${host}/ws/alerts?token=${encodeURIComponent(authToken)}`
       try {
         ws = new WebSocket(url)
+        ws.onopen = () => { failures = 0 }
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data)
@@ -146,7 +151,12 @@ function AppShell({ user, setUser, onLogout }) {
           } catch {}
         }
         ws.onerror = () => {}
-        ws.onclose = () => { reconnectTimer = setTimeout(connect, 8000) }
+        // Back off (8 s, 16 s, 32 s ... up to 5 min) instead of retrying every 8 s forever when the
+        // server keeps refusing the connection (expired or revoked session).
+        ws.onclose = () => {
+          failures += 1
+          reconnectTimer = setTimeout(connect, Math.min(8000 * 2 ** (failures - 1), 300000))
+        }
       } catch {}
     }
     connect()

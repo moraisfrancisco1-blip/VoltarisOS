@@ -12,6 +12,10 @@ _logger = logging.getLogger(__name__)
 # ─── Sentry Initialization (must be first) ──────────────────────────────────
 from backend.config import settings
 from backend.models import utcnow_naive
+from backend.log_redaction import install_uvicorn_redaction
+
+# The WebSocket token travels in the URL; never let uvicorn write it to the logs.
+install_uvicorn_redaction()
 if settings.SENTRY_ENABLED and settings.SENTRY_DSN:
     import sentry_sdk
     from sentry_sdk.integrations.fastapi import FastApiIntegration
