@@ -90,6 +90,17 @@ def _get_or_create_device(db, tenant_id: int, site_id: str) -> models.Device:
     return dev
 
 
+def _link_to_only_site(db, dev: models.Device) -> None:
+    """Dashboards group devices by site. If the device has none yet and its tenant
+    has exactly one site, attach it there. With several sites it is ambiguous, so
+    leave it for the user; never move a device that already has a site."""
+    if dev.site_id is not None:
+        return
+    sites = db.query(models.Site.id).filter(models.Site.tenant_id == dev.tenant_id).limit(2).all()
+    if len(sites) == 1:
+        dev.site_id = sites[0][0]
+
+
 def sync_tenant(db, tenant_id: int) -> dict:
     """Pull the overview once and store a reading. Raises HTTPException (409/502,
     from the OAuth helpers) when the connection is missing/expired or SolarEdge is
@@ -118,6 +129,7 @@ def sync_tenant(db, tenant_id: int) -> dict:
                 "keys": sorted(body) if isinstance(body, dict) else None}
 
     dev = _get_or_create_device(db, tenant_id, site_id)
+    _link_to_only_site(db, dev)
     now = utcnow_naive()
     db.add(models.DeviceReading(
         device_id=dev.id, tenant_id=tenant_id, timestamp=now,
