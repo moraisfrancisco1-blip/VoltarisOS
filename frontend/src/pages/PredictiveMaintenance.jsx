@@ -1,4 +1,5 @@
 import DemoNotice from "../components/DemoNotice";
+import MaintenanceReal from "../components/real/MaintenanceReal";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../store/appStore";
 import {
@@ -103,16 +104,8 @@ export default function PredictiveMaintenance({ setPage }) {
 
   const PRIORITY_COLOR = { Critical: red, High: amber, Medium: blue, Low: green };
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_maintenance")}
-        </div>
-      </div>
-    )
-  }
+  // Real devices/alerts from /api/maintenance/*; the demo below needs Simulation mode.
+  if (!simMode) return <MaintenanceReal />;
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "var(--surface)" }}>
