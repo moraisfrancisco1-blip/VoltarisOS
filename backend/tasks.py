@@ -8,7 +8,7 @@ from celery.schedules import crontab
 logger = logging.getLogger(__name__)
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 celery_app = Celery("voltaris", broker=REDIS_URL, backend=REDIS_URL, include=["backend.tasks", "backend.tasks_forecast_backtest"])
-celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json", timezone="Europe/Lisbon", enable_utc=True, task_track_started=True, task_time_limit=300, task_soft_time_limit=240, result_expires=3600, worker_prefetch_multiplier=1, worker_max_tasks_per_child=100, task_acks_late=True, task_reject_on_worker_lost=True, beat_schedule={"run-forecasting-every-15min": {"task": "backend.tasks.run_forecasting", "schedule": crontab(minute="*/15")}, "run-milp-optimization-every-5min": {"task": "backend.tasks.run_milp_optimization", "schedule": crontab(minute="*/5")}, "aggregate-device-data-every-5min": {"task": "backend.tasks.aggregate_device_data", "schedule": crontab(minute="*/5")}, "generate-daily-report": {"task": "backend.tasks.generate_daily_report", "schedule": crontab(hour=0, minute=0)}, "run-data-retention-daily": {"task": "backend.tasks.run_retention", "schedule": crontab(hour=3, minute=30)}, "detect-offline-devices": {"task": "backend.tasks.detect_offline_devices", "schedule": crontab(minute="*/5")}})
+celery_app.conf.update(task_serializer="json", accept_content=["json"], result_serializer="json", timezone="Europe/Lisbon", enable_utc=True, task_track_started=True, task_time_limit=300, task_soft_time_limit=240, result_expires=3600, worker_prefetch_multiplier=1, worker_max_tasks_per_child=100, task_acks_late=True, task_reject_on_worker_lost=True, beat_schedule={"run-forecasting-every-15min": {"task": "backend.tasks.run_forecasting", "schedule": crontab(minute="*/15")}, "run-milp-optimization-every-5min": {"task": "backend.tasks.run_milp_optimization", "schedule": crontab(minute="*/5")}, "aggregate-device-data-every-5min": {"task": "backend.tasks.aggregate_device_data", "schedule": crontab(minute="*/5")}, "generate-daily-report": {"task": "backend.tasks.generate_daily_report", "schedule": crontab(hour=0, minute=0)}, "run-data-retention-daily": {"task": "backend.tasks.run_retention", "schedule": crontab(hour=3, minute=30)}, "detect-offline-devices": {"task": "backend.tasks.detect_offline_devices", "schedule": crontab(minute="*/5")}, "sync-solaredge-oauth-every-5min": {"task": "backend.tasks.sync_solaredge_oauth", "schedule": crontab(minute="*/5")}})
 
 
 @celery_app.task(name="backend.tasks.run_forecasting", bind=True, max_retries=3, default_retry_delay=60)
@@ -161,6 +161,19 @@ def cleanup_old_audit_logs():
 @celery_app.task(name="backend.tasks.process_vpp_bid")
 def process_vpp_bid(bid_id: int, tenant_id: int):
     return {"status": "not_implemented", "bid_id": bid_id, "tenant_id": tenant_id}
+
+
+@celery_app.task(name="backend.tasks.sync_solaredge_oauth")
+def sync_solaredge_oauth():
+    """Turn every tenant's SolarEdge OAuth connection into device readings
+    (see backend/solaredge_sync.py). A failing tenant never blocks the others."""
+    from backend.database import SessionLocal
+    from backend import solaredge_sync
+    db = SessionLocal()
+    try:
+        return solaredge_sync.sync_all(db)
+    finally:
+        db.close()
 
 
 @celery_app.task(name="backend.tasks.detect_offline_devices")
