@@ -55,6 +55,7 @@ KNOWN_EVENT_TYPES = [
     "oauth.connected",
     "oauth.disconnected",
     "oauth.solaredge_synced",
+    "oauth.solaredge_history_backfilled",
     "user.avatar_updated",
     "user.avatar_removed",
     "user.profile_updated",

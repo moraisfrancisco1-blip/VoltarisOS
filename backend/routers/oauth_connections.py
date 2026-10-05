@@ -518,6 +518,30 @@ def solaredge_sync_now(request: Request, db=Depends(get_db), user: dict = Depend
     return result
 
 
+@router.post("/solaredge/backfill")
+def solaredge_backfill_history(request: Request, days: int = 30, db=Depends(get_db),
+                               user: dict = Depends(require_admin)):
+    """Store the inverter's own past quarter-hour energy as a historical comparison record
+    (readings marked raw.voltaris_backfill) for the complete days before the first reading we
+    already hold. Never overwrites or duplicates anything, so it is safe to repeat."""
+    from backend import solaredge_sync  # lazy: solaredge_sync imports this module
+    try:
+        result = solaredge_sync.backfill_history(db, user.get("tenant_id"), days)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(502, {"solaredge_status": e.response.status_code, "body": e.response.text[:500]})
+    except httpx.RequestError as e:
+        raise HTTPException(502, f"SolarEdge inacessível: {e}")
+
+    log_audit_event(
+        db=db, action="oauth.solaredge_history_backfilled", tenant_id=user.get("tenant_id"),
+        user_email=user.get("sub"), target_resource="oauth_connection",
+        ip_address=request.client.host if request.client else None,
+        details={"stored": result.get("stored"), "from": result.get("from"), "until": result.get("until"),
+                 "days_failed": len(result.get("days_failed") or [])},
+    )
+    return result
+
+
 # SolarEdge's registered redirect is https://www.voltarisos.com/auth/callback
 # (not /api/oauth/solaredge/callback), so expose that exact path too. Must be
 # included in main.py before the SPA catch-all route.
