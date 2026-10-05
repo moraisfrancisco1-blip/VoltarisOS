@@ -37,6 +37,11 @@ const STATUSES = ["active", "online", "offline", "warning", "maintenance", "comm
 const statusColor = (s) => (s === "online" || s === "active") ? green : s === "warning" ? amber : s === "maintenance" ? blue : s === "commissioning" ? purple : red;
 const statusBg = (s) => `${statusColor(s)}20`;
 
+// A home system is a few kW, so a total in MW rounded to one decimal read "0.0 MWp".
+// Show kW/kWh until the total reaches a megawatt, then switch to MW/MWh.
+const fmtCapacity = (value, kUnit, mUnit) =>
+  value >= 1000 ? `${(value / 1000).toFixed(2)} ${mUnit}` : `${Number(value.toFixed(1))} ${kUnit}`;
+
 function InputField({ label: lb, value, onChange, type = "text", options, unit, readOnly = false }) {
   return (
     <div>
@@ -192,8 +197,8 @@ export default function Sites() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
         {[
           { label: "Total Sites", value: sites.length, color: "var(--text)" },
-          { label: "Total Solar", value: `${(totalSolarKw / 1000).toFixed(1)} MWp`, color: amber },
-          { label: "Total BESS", value: `${(totalBessKwh / 1000).toFixed(1)} MWh`, color: purple },
+          { label: "Total Solar", value: fmtCapacity(totalSolarKw, "kWp", "MWp"), color: amber },
+          { label: "Total BESS", value: fmtCapacity(totalBessKwh, "kWh", "MWh"), color: purple },
           { label: "Online", value: `${onlineCount} / ${sites.length}`, color: green },
         ].map(k => (
           <div key={k.label} style={card}>
