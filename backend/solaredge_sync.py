@@ -43,10 +43,29 @@ def parse_overview(body: dict) -> dict:
     data = body.get("overview") if isinstance(body.get("overview"), dict) else body
     power_w = _num(data.get("currentPower"), "power")
     energy_wh = _num(data.get("lastDayData"), "energy")
-    return {
-        "power_kw": power_w / 1000.0 if power_w is not None else None,
-        "energy_kwh": energy_wh / 1000.0 if energy_wh is not None else None,
-    }
+    power_kw = power_w / 1000.0 if power_w is not None else None
+    energy_kwh = energy_wh / 1000.0 if energy_wh is not None else None
+
+    # SolarEdge v2 overview: {"production": {"total": 2433, "unit": "WH", ...},
+    # "consumption": {...}} -- energy only, no instantaneous power.
+    if energy_kwh is None:
+        energy_kwh = _energy_kwh(data.get("production"))
+    return {"power_kw": power_kw, "energy_kwh": energy_kwh}
+
+
+_UNIT_TO_KWH = {"WH": 0.001, "KWH": 1.0, "MWH": 1000.0}
+
+
+def _energy_kwh(block):
+    """{"total": n, "unit": "WH"|"KWH"|"MWH"} -> kWh; None when absent or the
+    unit is unknown (never guess a unit)."""
+    if not isinstance(block, dict):
+        return None
+    total = _num(block.get("total"), "total")
+    factor = _UNIT_TO_KWH.get(str(block.get("unit", "")).upper())
+    if total is None or factor is None:
+        return None
+    return total * factor
 
 
 def _get_or_create_device(db, tenant_id: int, site_id: str) -> models.Device:
