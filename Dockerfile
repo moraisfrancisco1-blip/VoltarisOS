@@ -62,8 +62,13 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 EXPOSE 8000
 
 # Production environment
+# PYTHONPATH: the Celery CLI only puts the cwd on sys.path while it imports
+# backend.tasks, so lazy imports inside tasks (`from forecasting...`,
+# `from optimization...`) failed with ModuleNotFoundError in the worker even
+# though the packages are in /app.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app \
     ENVIRONMENT=production
 
 CMD ["./start.sh"]
