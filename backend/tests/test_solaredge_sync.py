@@ -476,9 +476,10 @@ def _live_reading(db, when):
     return dev
 
 
-def _backfill(db, days=3, fetch=_fake_energy):
+def _backfill(db, days=3, fetch=_fake_energy, chunk_days=1):
     from datetime import timezone
-    return solaredge_sync.backfill_history(db, TENANT, days, fetch=fetch,
+    return solaredge_sync.backfill_history(db, TENANT, days, fetch=fetch, chunk_days=chunk_days,
+                                           sleep=lambda s: None,
                                            now=datetime(2026, 10, 6, 10, 0, tzinfo=timezone.utc))
 
 
@@ -504,7 +505,7 @@ def test_backfill_is_repeatable_without_duplicates(db):
     count = db.query(models.DeviceReading).count()
     second = _backfill(db)
     assert first["stored"] == 6
-    assert second["stored"] == 0 and second["skipped_existing"] == 6
+    assert second["stored"] == 0 and second["days_already_done"] == 3
     assert db.query(models.DeviceReading).count() == count
 
 
@@ -539,3 +540,44 @@ def test_backfill_days_are_clamped(db):
     _live_reading(db, datetime(2026, 10, 5, 4, 0))
     out = _backfill(db, days=10_000, fetch=lambda s, e: [])
     assert out["from"] == "2026-08-06"  # 60 days before 5 Oct
+
+
+def _status_error(code):
+    return httpx.HTTPStatusError("x", request=None, response=FakeResponse({}, status_code=code))
+
+
+def test_backfill_asks_for_several_days_per_request(db):
+    _live_reading(db, datetime(2026, 10, 5, 4, 0))
+    ranges = []
+
+    def whole_range(start, end):
+        ranges.append((start.date(), end.date()))
+        out, day = [], start
+        while day < end:
+            out.append({"timestamp": (day + timedelta(hours=10)).isoformat(), "value": 100.0})
+            day += timedelta(days=1)
+        return out
+
+    out = _backfill(db, days=10, fetch=whole_range, chunk_days=7)
+    assert len(ranges) == 2  # 7 + 3 days, not 10 requests
+    assert out["stored"] == 10 and out["days_failed"] == []
+
+
+def test_backfill_stops_when_rate_limited_and_a_repeat_finishes_the_job(db):
+    _live_reading(db, datetime(2026, 10, 5, 4, 0))
+    calls = {"n": 0}
+
+    def throttled_after_one(start, end):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise _status_error(429)
+        return _fake_energy(start, end)
+
+    first = _backfill(db, days=3, fetch=throttled_after_one)  # one day per request
+    assert first["rate_limited"] is True and first["stored"] == 2
+    assert first["days_failed"] == ["2026-10-03", "2026-10-04"] and calls["n"] == 2  # it stopped asking
+
+    fetched = []
+    second = _backfill(db, days=3, fetch=lambda s, e: fetched.append(s.date()) or _fake_energy(s, e))
+    assert second["days_already_done"] == 1 and len(fetched) == 2  # only the missing days are requested
+    assert second["stored"] == 4 and second["rate_limited"] is False
