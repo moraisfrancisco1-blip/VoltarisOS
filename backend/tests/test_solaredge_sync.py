@@ -121,3 +121,51 @@ def test_sync_all_isolates_failures_per_tenant(db, monkeypatch):
     assert res == {"synced": 1, "failed": 1, "skipped": 0}
     assert db.query(models.DeviceReading).filter(models.DeviceReading.tenant_id == 2).count() == 1
     assert db.query(models.DeviceReading).filter(models.DeviceReading.tenant_id == 1).count() == 0
+
+
+def _site(db, tenant_id, name="home"):
+    s = models.Site(tenant_id=tenant_id, name=name, solar_kw=4.8, battery_kwh=0, ev_chargers=0,
+                    owner="x", status="active")
+    db.add(s)
+    db.commit()
+    return s
+
+
+def _fake_overview(monkeypatch):
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: FakeResponse(
+        {"production": {"total": 2433, "unit": "WH"}}))
+
+
+def test_device_is_linked_to_the_tenants_only_site(db, monkeypatch):
+    _connect(db)
+    site = _site(db, TENANT)
+    _fake_overview(monkeypatch)
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert db.get(models.Device, out["device_id"]).site_id == site.id
+
+
+def test_device_stays_unlinked_when_tenant_has_several_sites(db, monkeypatch):
+    _connect(db)
+    _site(db, TENANT, "a")
+    _site(db, TENANT, "b")
+    _fake_overview(monkeypatch)
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert db.get(models.Device, out["device_id"]).site_id is None
+
+
+def test_existing_site_link_is_never_moved(db, monkeypatch):
+    _connect(db)
+    first = _site(db, TENANT, "a")
+    _fake_overview(monkeypatch)
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    _site(db, TENANT, "b")  # now ambiguous, but the device keeps its site
+    solaredge_sync.sync_tenant(db, TENANT)
+    assert db.get(models.Device, out["device_id"]).site_id == first.id
+
+
+def test_other_tenants_site_is_ignored(db, monkeypatch):
+    _connect(db)
+    _site(db, 99)
+    _fake_overview(monkeypatch)
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert db.get(models.Device, out["device_id"]).site_id is None
