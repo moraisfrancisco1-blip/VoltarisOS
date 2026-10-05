@@ -169,3 +169,83 @@ def test_other_tenants_site_is_ignored(db, monkeypatch):
     _fake_overview(monkeypatch)
     out = solaredge_sync.sync_tenant(db, TENANT)
     assert db.get(models.Device, out["device_id"]).site_id is None
+
+
+def _energy(monkeypatch, wh):
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: FakeResponse(
+        {"production": {"total": wh, "unit": "WH"}}))
+
+
+def _age_last_reading(db, minutes, energy_kwh):
+    """Pretend the latest stored reading was taken `minutes` ago with this energy."""
+    r = db.query(models.DeviceReading).order_by(models.DeviceReading.id.desc()).first()
+    r.timestamp = datetime.utcnow() - timedelta(minutes=minutes)
+    r.energy_kwh = energy_kwh
+    db.commit()
+
+
+def test_power_is_estimated_from_energy_gained_since_an_older_reading(db, monkeypatch):
+    _connect(db)
+    _energy(monkeypatch, 1000)
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=20, energy_kwh=1.0)  # 1.0 kWh, 20 min ago
+
+    _energy(monkeypatch, 2000)                          # 2.0 kWh now: +1 kWh in 1/3 h
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_estimated"] is True
+    assert out["power_kw"] == pytest.approx(3.0, rel=0.02)
+    last = db.query(models.DeviceReading).order_by(models.DeviceReading.id.desc()).first()
+    assert last.power_kw == pytest.approx(3.0, rel=0.02)
+    assert last.raw["voltaris_power_estimate"]["method"] == "energy_delta"
+
+
+def test_power_not_estimated_when_previous_reading_is_too_recent(db, monkeypatch):
+    _connect(db)
+    _energy(monkeypatch, 1000)
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=2, energy_kwh=1.0)  # SolarEdge hasn't refreshed yet
+
+    _energy(monkeypatch, 1000)
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_kw"] is None and out["power_estimated"] is False
+
+
+def test_power_not_estimated_when_previous_reading_is_too_old(db, monkeypatch):
+    _connect(db)
+    _energy(monkeypatch, 1000)
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=90, energy_kwh=0.5)
+
+    _energy(monkeypatch, 2000)
+    assert solaredge_sync.sync_tenant(db, TENANT)["power_kw"] is None
+
+
+def test_power_not_estimated_when_the_daily_counter_reset(db, monkeypatch):
+    _connect(db)
+    _energy(monkeypatch, 9000)
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=20, energy_kwh=9.0)
+
+    _energy(monkeypatch, 50)  # new day: the total restarted
+    assert solaredge_sync.sync_tenant(db, TENANT)["power_kw"] is None
+
+
+def test_zero_when_energy_did_not_change_over_the_window(db, monkeypatch):
+    _connect(db)
+    _energy(monkeypatch, 3000)
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=20, energy_kwh=3.0)
+
+    _energy(monkeypatch, 3000)  # night: nothing produced
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_kw"] == 0.0 and out["power_estimated"] is True
+
+
+def test_a_real_power_value_is_never_overridden(db, monkeypatch):
+    _connect(db)
+    monkeypatch.setattr(httpx, "get", lambda url, **kw: FakeResponse(
+        {"overview": {"currentPower": {"power": 4000}, "lastDayData": {"energy": 1000}}}))
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=20, energy_kwh=0.0)
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_kw"] == 4.0 and out["power_estimated"] is False

@@ -12,6 +12,7 @@ connector polled by the edge gateway): this one has its own device
 two never write to the same row.
 """
 import logging
+from datetime import timedelta
 
 import httpx
 
@@ -90,6 +91,36 @@ def _get_or_create_device(db, tenant_id: int, site_id: str) -> models.Device:
     return dev
 
 
+# The v2 overview carries energy only (no instantaneous power), and SolarEdge
+# refreshes it every ~15 min. So power is estimated as the energy gained since an
+# earlier reading divided by the elapsed time, using the OLDEST reading that is
+# between 10 and 30 minutes old: a ~20-30 min average, steady despite the
+# 15-minute update cadence (a 5-minute delta would flicker 0, 0, X, 0, 0).
+ESTIMATE_MIN_MINUTES = 10
+ESTIMATE_MAX_MINUTES = 30
+
+
+def _estimate_power_kw(db, device_id: int, now, energy_kwh):
+    """Average kW over the last ~30 min from the energy counter, or None when it
+    cannot be done honestly: no energy value, no reading in the window, or the
+    counter went down (it is the day's total, so that means it reset at midnight)."""
+    if energy_kwh is None:
+        return None
+    prev = db.query(models.DeviceReading).filter(
+        models.DeviceReading.device_id == device_id,
+        models.DeviceReading.energy_kwh.isnot(None),
+        models.DeviceReading.timestamp >= now - timedelta(minutes=ESTIMATE_MAX_MINUTES),
+        models.DeviceReading.timestamp <= now - timedelta(minutes=ESTIMATE_MIN_MINUTES),
+    ).order_by(models.DeviceReading.timestamp.asc()).first()
+    if prev is None:
+        return None
+    delta = energy_kwh - prev.energy_kwh
+    if delta < 0:
+        return None
+    hours = (now - prev.timestamp).total_seconds() / 3600.0
+    return delta / hours
+
+
 def _link_to_only_site(db, dev: models.Device) -> None:
     """Dashboards group devices by site. If the device has none yet and its tenant
     has exactly one site, attach it there. With several sites it is ambiguous, so
@@ -131,14 +162,26 @@ def sync_tenant(db, tenant_id: int) -> dict:
     dev = _get_or_create_device(db, tenant_id, site_id)
     _link_to_only_site(db, dev)
     now = utcnow_naive()
+
+    raw = body
+    estimated = False
+    if values["power_kw"] is None:
+        est = _estimate_power_kw(db, dev.id, now, values["energy_kwh"])
+        if est is not None:
+            values["power_kw"] = est
+            estimated = True
+            raw = {**body, "voltaris_power_estimate": {
+                "method": "energy_delta", "window_minutes": [ESTIMATE_MIN_MINUTES, ESTIMATE_MAX_MINUTES]}}
+
     db.add(models.DeviceReading(
         device_id=dev.id, tenant_id=tenant_id, timestamp=now,
-        power_kw=values["power_kw"], energy_kwh=values["energy_kwh"], raw=body,
+        power_kw=values["power_kw"], energy_kwh=values["energy_kwh"], raw=raw,
     ))
     dev.last_seen = now
     dev.status = "online"
     db.commit()
-    return {"tenant_id": tenant_id, "site_id": site_id, "device_id": dev.id, "stored": True, **values}
+    return {"tenant_id": tenant_id, "site_id": site_id, "device_id": dev.id, "stored": True,
+            "power_estimated": estimated, **values}
 
 
 def sync_all(db) -> dict:
