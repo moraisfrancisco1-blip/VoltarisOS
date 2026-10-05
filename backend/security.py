@@ -174,7 +174,10 @@ def _assert_session_active(sid: str) -> None:
 def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
+    except JWTError as exc:
+        # Why a token was refused (expired vs signature mismatch, e.g. SECRET_KEY changed between
+        # deploys). Logs the exception class/message only, never the token.
+        logger.warning("JWT rejected: %s: %s", type(exc).__name__, exc)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido ou expirado")
     sid = payload.get("sid")
     if sid:

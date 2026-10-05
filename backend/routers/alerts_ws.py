@@ -18,6 +18,8 @@ from backend.database import SessionLocal
 from backend import models
 from backend.audit import audit_request
 from backend.security import get_current_user, get_current_user_or_service, require_gateway_key
+from backend.ws_auth import authenticate
+from starlette.websockets import WebSocketState
 
 router = APIRouter()
 
@@ -27,7 +29,8 @@ class ConnectionManager:
         self._connections: dict[str, list[WebSocket]] = {}  # tenant_id → [ws]
 
     async def connect(self, ws: WebSocket, tenant_id: str):
-        await ws.accept()
+        if ws.application_state != WebSocketState.CONNECTED:  # ws_auth.authenticate already accepted it
+            await ws.accept()
         self._connections.setdefault(tenant_id, []).append(ws)
 
     def disconnect(self, ws: WebSocket, tenant_id: str):
@@ -119,14 +122,14 @@ class FireAlertRequest(BaseModel):
 @router.websocket("/ws/alerts")
 async def alerts_ws(ws: WebSocket, token: str = Query(default="")):
     """
-    Connect: ws://host/ws/alerts?token=<jwt>
-    A valid JWT (same one used for the REST API) is required — connection is
-    rejected before accept() if the token is missing or invalid.
+    Connect: ws://host/ws/alerts, then send {"type": "auth", "token": "<jwt>"} as the first
+    message (the JWT never appears in the URL or the logs). The legacy ?token=<jwt> is still
+    accepted. A valid JWT (same one used for the REST API) is required, otherwise close code 4401.
     """
-    tenant_id = _tenant_from_token(token)
-    if tenant_id is None:
-        await ws.close(code=4401)  # custom close code: unauthorized
+    claims = await authenticate(ws, token)
+    if claims is None:
         return
+    tenant_id = str(claims.get("tenant_id", 1))
     await manager.connect(ws, tenant_id)
     try:
         # Send last 10 unacknowledged alerts on connect

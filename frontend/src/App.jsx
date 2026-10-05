@@ -134,14 +134,18 @@ function AppShell({ user, setUser, onLogout }) {
       // stay idle while logged out instead of knocking on the server with an empty token.
       const authToken = localStorage.getItem("token") || ""
       if (!authToken) { reconnectTimer = setTimeout(connect, 30000); return }
-      const url = `${proto}//${host}/ws/alerts?token=${encodeURIComponent(authToken)}`
+      // The token is NOT put in the URL (it would end up in server/proxy logs): it goes in the
+      // first message, which the server answers with {"type":"auth_ok"} or a 4401 close.
+      const url = `${proto}//${host}/ws/alerts`
       try {
         ws = new WebSocket(url)
-        ws.onopen = () => { failures = 0 }
+        ws.onopen = () => ws.send(JSON.stringify({ type: "auth", token: authToken }))
         ws.onmessage = (e) => {
           try {
             const msg = JSON.parse(e.data)
-            if (msg.type === "alert") {
+            if (msg.type === "auth_ok") {
+              failures = 0
+            } else if (msg.type === "alert") {
               const severity = msg.severity || "info"
               const color = severity === "critical" ? "#f87171" : severity === "warning" ? "#f59e0b" : "#4ade80"
               addToast(`🔔 ${msg.message || msg.title || "New alert"}`, severity === "critical" ? "error" : "info")
@@ -153,9 +157,11 @@ function AppShell({ user, setUser, onLogout }) {
         ws.onerror = () => {}
         // Back off (8 s, 16 s, 32 s ... up to 5 min) instead of retrying every 8 s forever when the
         // server keeps refusing the connection (expired or revoked session).
-        ws.onclose = () => {
+        ws.onclose = (ev) => {
           failures += 1
-          reconnectTimer = setTimeout(connect, Math.min(8000 * 2 ** (failures - 1), 300000))
+          // 4401 = the server rejected the token: wait the maximum, a retry cannot succeed sooner.
+          const delay = ev && ev.code === 4401 ? 300000 : Math.min(8000 * 2 ** (failures - 1), 300000)
+          reconnectTimer = setTimeout(connect, delay)
         }
       } catch {}
     }
@@ -389,8 +395,15 @@ export default function App() {
   useEffect(() => {
     if (!user?.token) return
     let cancelled = false
-    fetch("/api/auth/me")
+    // /auth/me reissues the token with a fresh 72 h expiry. Keep it, otherwise the session
+    // dies 72 h after login no matter how often the app is used. Done on load and every 6 h
+    // (the stored token is only swapped in localStorage, so no re-render or reconnect happens).
+    const renew = () => fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
+      .then((me) => { if (me?.token && !cancelled) localStorage.setItem("token", me.token); return me })
+      .catch(() => null)
+    const renewTimer = setInterval(renew, 6 * 60 * 60 * 1000)
+    renew()
       .then((me) => {
         if (!me || cancelled) return
         const canonical = me.role ? normalizeRole(me.role) : null
@@ -406,7 +419,7 @@ export default function App() {
         } : u)
       })
       .catch(() => {})
-    return () => { cancelled = true }
+    return () => { cancelled = true; clearInterval(renewTimer) }
   }, [user?.token])
 
   return (

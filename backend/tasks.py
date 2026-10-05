@@ -73,6 +73,7 @@ def run_milp_optimization(self):
     """Consume the latest persisted canonical forecast and run the rolling optimizer."""
     from backend.database import SessionLocal
     from backend import models
+    from sqlalchemy import func
     from datetime import datetime, timezone
     from forecasting.persistence import latest_forecast, bundle_from_record
     from optimization.rolling_horizon import RollingHorizonOptimizer
@@ -82,6 +83,12 @@ def run_milp_optimization(self):
         tenants = db.query(models.Tenant).filter(models.Tenant.active == True).all()
         for tenant in tenants:
             try:
+                battery_kwh = db.query(func.coalesce(func.sum(models.Site.battery_kwh), 0)).filter(
+                    models.Site.tenant_id == tenant.id).scalar()
+                if not battery_kwh:
+                    # Nothing to dispatch (no battery on any site): not a fault, so no traceback.
+                    results.append({"tenant_id": tenant.id, "status": "skipped", "reason": "no_dispatchable_assets"})
+                    continue
                 record = latest_forecast(db, models, tenant.id)
                 if record is None:
                     results.append({"tenant_id": tenant.id, "status": "skipped", "reason": "forecast_unavailable"})

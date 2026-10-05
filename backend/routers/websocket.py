@@ -7,7 +7,8 @@ Provides:
 - /ws/optimization — Optimization decision updates
 
 Usage (frontend):
-    const ws = new WebSocket("ws://localhost:8000/ws/dashboard?token=<jwt>");
+    const ws = new WebSocket("ws://localhost:8000/ws/dashboard");
+    ws.onopen = () => ws.send(JSON.stringify({type: "auth", token: "<jwt>"}));
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         updateDashboard(data);
@@ -20,7 +21,8 @@ from datetime import datetime
 from typing import Dict, Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
 from sqlalchemy.orm import joinedload
-from backend.security import decode_token
+from starlette.websockets import WebSocketState
+from backend.ws_auth import authenticate
 from backend.models import utcnow_naive
 from backend.dashboard_snapshot import fetch_dashboard_snapshot
 
@@ -40,8 +42,9 @@ class ConnectionManager:
         self._next_id = 0
     
     async def connect(self, channel: str, websocket: WebSocket) -> int:
-        """Accept a new WebSocket connection."""
-        await websocket.accept()
+        """Accept a new WebSocket connection (unless ws_auth.authenticate already did)."""
+        if websocket.application_state != WebSocketState.CONNECTED:
+            await websocket.accept()
         conn_id = self._next_id
         self._next_id += 1
         
@@ -101,14 +104,11 @@ async def websocket_dashboard(
     
     Requires valid JWT token.
     """
-    # Validate token
-    try:
-        user_data = decode_token(token)
-        tenant_id = user_data.get("tenant_id")
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
+    claims = await authenticate(websocket, token)
+    if claims is None:
         return
-    
+    tenant_id = claims.get("tenant_id")
+
     conn_id = await manager.connect("dashboard", websocket)
     
     try:
@@ -154,14 +154,11 @@ async def websocket_alerts(
     Pushes new alerts immediately when fired.
     Requires valid JWT token.
     """
-    # Validate token
-    try:
-        user_data = decode_token(token)
-        tenant_id = user_data.get("tenant_id")
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
+    claims = await authenticate(websocket, token)
+    if claims is None:
         return
-    
+    tenant_id = claims.get("tenant_id")
+
     conn_id = await manager.connect("alerts", websocket)
     
     try:
@@ -218,14 +215,11 @@ async def websocket_optimization(
     Pushes optimization decisions when they change.
     Requires valid JWT token.
     """
-    # Validate token
-    try:
-        user_data = decode_token(token)
-        tenant_id = user_data.get("tenant_id")
-    except Exception:
-        await websocket.close(code=4001, reason="Invalid token")
+    claims = await authenticate(websocket, token)
+    if claims is None:
         return
-    
+    tenant_id = claims.get("tenant_id")
+
     conn_id = await manager.connect("optimization", websocket)
     
     try:

@@ -60,9 +60,22 @@ axios.interceptors.response.use(
 // (see the comment above) is left alone. Only inspects res.status; the body
 // is left untouched for the caller to read.
 const _origFetch = window.fetch.bind(window)
+
+// Only our own origin gets the token and may end the session: a third-party URL must never
+// receive the JWT, and its 401 says nothing about our session.
+function _isSameOrigin(input) {
+  try {
+    const raw = typeof input === "string" ? input : input instanceof URL ? input.href : input?.url
+    return new URL(raw, window.location.href).origin === window.location.origin
+  } catch {
+    return false
+  }
+}
+
 window.fetch = (input, init = {}) => {
-  const token = localStorage.getItem("token")
-  init = { ...init, credentials: init.credentials || "include" }
+  const sameOrigin = _isSameOrigin(input)
+  const token = sameOrigin ? localStorage.getItem("token") : null
+  if (sameOrigin) init = { ...init, credentials: init.credentials || "include" }
   if (token) {
     init = { ...init, headers: { ...(init.headers || {}), Authorization: `Bearer ${token}` } }
   }
