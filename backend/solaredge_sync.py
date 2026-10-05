@@ -18,12 +18,26 @@ import httpx
 
 from backend import models
 from backend.config import settings
+from backend.energy_counter import interval_kwh
 from backend.models import utcnow_naive
 from backend.routers.oauth_connections import get_valid_access_token, solaredge_site_id
 
 logger = logging.getLogger(__name__)
 
 PROTOCOL = "solaredge_oauth"
+
+# The overview gives the day's energy SO FAR (a counter that resets at midnight).
+# DeviceReading.energy_kwh must hold the energy of each reading's interval (all
+# backend aggregations SUM it), so the counter itself is kept in the raw payload.
+DAY_TOTAL_KEY = "voltaris_day_total_kwh"
+
+
+def day_total_of(reading):
+    """The day-counter value a stored reading was taken at. Readings stored before
+    this convention (no marker in raw) kept the counter in energy_kwh itself."""
+    raw = reading.raw if isinstance(reading.raw, dict) else {}
+    value = raw.get(DAY_TOTAL_KEY)
+    return value if isinstance(value, (int, float)) else reading.energy_kwh
 
 
 def _num(value, key):
@@ -154,11 +168,11 @@ ESTIMATE_MIN_MINUTES = 10
 ESTIMATE_MAX_MINUTES = 30
 
 
-def _estimate_power_kw(db, device_id: int, now, energy_kwh):
-    """Average kW over the last ~30 min from the energy counter, or None when it
-    cannot be done honestly: no energy value, no reading in the window, or the
+def _estimate_power_kw(db, device_id: int, now, day_total):
+    """Average kW over the last ~30 min from the day counter, or None when it
+    cannot be done honestly: no counter value, no reading in the window, or the
     counter went down (it is the day's total, so that means it reset at midnight)."""
-    if energy_kwh is None:
+    if day_total is None:
         return None
     prev = db.query(models.DeviceReading).filter(
         models.DeviceReading.device_id == device_id,
@@ -168,7 +182,10 @@ def _estimate_power_kw(db, device_id: int, now, energy_kwh):
     ).order_by(models.DeviceReading.timestamp.asc()).first()
     if prev is None:
         return None
-    delta = energy_kwh - prev.energy_kwh
+    prev_total = day_total_of(prev)
+    if prev_total is None:
+        return None
+    delta = day_total - prev_total
     if delta < 0:
         return None
     hours = (now - prev.timestamp).total_seconds() / 3600.0
@@ -217,30 +234,36 @@ def sync_tenant(db, tenant_id: int) -> dict:
     _link_to_only_site(db, dev)
     now = utcnow_naive()
 
-    raw = body
+    day_total = values["energy_kwh"]  # counter: energy so far today
+    last = db.query(models.DeviceReading).filter(
+        models.DeviceReading.device_id == dev.id,
+    ).order_by(models.DeviceReading.timestamp.desc()).first()
+    interval = interval_kwh(day_total_of(last) if last is not None else None, day_total)
+
+    raw = {**body, DAY_TOTAL_KEY: day_total}
     estimated = False
     if values["power_kw"] is None:
         real = _fetch_power_kw(token, site_id)
         if real is not None:
             values["power_kw"] = real
-            raw = {**body, "voltaris_power_source": "solaredge_power_endpoint"}
+            raw["voltaris_power_source"] = "solaredge_power_endpoint"
         else:
-            est = _estimate_power_kw(db, dev.id, now, values["energy_kwh"])
+            est = _estimate_power_kw(db, dev.id, now, day_total)
             if est is not None:
                 values["power_kw"] = est
                 estimated = True
-                raw = {**body, "voltaris_power_estimate": {
-                    "method": "energy_delta", "window_minutes": [ESTIMATE_MIN_MINUTES, ESTIMATE_MAX_MINUTES]}}
+                raw["voltaris_power_estimate"] = {
+                    "method": "energy_delta", "window_minutes": [ESTIMATE_MIN_MINUTES, ESTIMATE_MAX_MINUTES]}
 
     db.add(models.DeviceReading(
         device_id=dev.id, tenant_id=tenant_id, timestamp=now,
-        power_kw=values["power_kw"], energy_kwh=values["energy_kwh"], raw=raw,
+        power_kw=values["power_kw"], energy_kwh=interval, raw=raw,
     ))
     dev.last_seen = now
     dev.status = "online"
     db.commit()
     return {"tenant_id": tenant_id, "site_id": site_id, "device_id": dev.id, "stored": True,
-            "power_estimated": estimated, **values}
+            "power_estimated": estimated, "interval_kwh": interval, **values}
 
 
 def sync_all(db) -> dict:

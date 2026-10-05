@@ -44,6 +44,7 @@ MIGRATIONS = [
     "add_user_avatar",
     "add_user_profile_fields",
     "fix_sites_id_sequence",
+    "fix_solaredge_oauth_energy",
 ]
 
 
