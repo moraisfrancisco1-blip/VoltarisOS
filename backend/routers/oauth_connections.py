@@ -448,6 +448,19 @@ def solaredge_overview(db=Depends(get_db), user: dict = Depends(require_admin)):
     return {"site_id": site_id, "overview": body}
 
 
+@router.post("/solaredge/sync")
+def solaredge_sync_now(db=Depends(get_db), user: dict = Depends(require_admin)):
+    """Pull the SolarEdge overview now and store it as a device reading (the same
+    thing the periodic backend.tasks.sync_solaredge_oauth task does for every tenant)."""
+    from backend import solaredge_sync  # lazy: solaredge_sync imports this module
+    try:
+        return solaredge_sync.sync_tenant(db, user.get("tenant_id"))
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(502, {"solaredge_status": e.response.status_code, "body": e.response.text[:500]})
+    except httpx.RequestError as e:
+        raise HTTPException(502, f"SolarEdge inacessível: {e}")
+
+
 # SolarEdge's registered redirect is https://www.voltarisos.com/auth/callback
 # (not /api/oauth/solaredge/callback), so expose that exact path too. Must be
 # included in main.py before the SPA catch-all route.
