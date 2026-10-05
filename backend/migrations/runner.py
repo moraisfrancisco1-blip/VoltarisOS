@@ -43,6 +43,7 @@ MIGRATIONS = [
     "add_site_tilt_azimuth",
     "add_user_avatar",
     "add_user_profile_fields",
+    "fix_sites_id_sequence",
 ]
 
 
