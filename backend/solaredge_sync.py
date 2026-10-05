@@ -266,6 +266,110 @@ def sync_tenant(db, tenant_id: int) -> dict:
             "power_estimated": estimated, "interval_kwh": interval, **values}
 
 
+BACKFILL_KEY = "voltaris_backfill"
+BACKFILL_MAX_DAYS = 60
+
+
+def _fetch_energy_buckets(token: str, site_id: str, start: datetime, end: datetime) -> list:
+    """Quarter-hour energy buckets [{"timestamp": ISO with offset, "value": Wh|None}] for
+    [start, end) (tz-aware datetimes), straight from the inverter's own history."""
+    resp = httpx.get(
+        f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}/energy",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        params={"from": start.isoformat(), "to": end.isoformat(), "resolution": "QUARTER_HOUR"},
+        timeout=30.0,
+    )
+    resp.raise_for_status()
+    body = resp.json()
+    if not isinstance(body, dict):
+        raise ValueError("unexpected energy response from SolarEdge")
+    if str(body.get("unit", "WH")).upper() != "WH":
+        raise ValueError("unexpected energy unit from SolarEdge")  # never guess a unit
+    return body.get("values") or []
+
+
+def backfill_history(db, tenant_id: int, days: int = 30, *, tz_name: str = "Europe/Amsterdam",
+                     fetch=None, now=None) -> dict:
+    """Historical record for comparison: store the inverter's own past quarter-hour energy as
+    DeviceReadings (marked raw[BACKFILL_KEY]) for the `days` complete local days BEFORE the first
+    reading this device already has. Adds nothing for that day or after, never touches an existing
+    row, and skips a timestamp that is already stored, so it can be repeated safely and never
+    double-counts."""
+    from zoneinfo import ZoneInfo
+    days = max(1, min(int(days), BACKFILL_MAX_DAYS))
+    token = get_valid_access_token(db, tenant_id, "solaredge")
+    site_id = solaredge_site_id(db, tenant_id)
+    if not site_id:
+        return {"tenant_id": tenant_id, "stored": 0, "reason": "site_id desconhecido — voltar a ligar"}
+    dev = _get_or_create_device(db, tenant_id, site_id)
+    _link_to_only_site(db, dev)
+    site = db.get(models.Site, dev.site_id) if dev.site_id else None
+    try:
+        tz = ZoneInfo((site.timezone if site is not None else None) or tz_name)
+    except Exception:
+        tz = ZoneInfo(tz_name)
+    fetch = fetch or (lambda s, e: _fetch_energy_buckets(token, site_id, s, e))
+
+    now = now or datetime.now(timezone.utc)
+    first = db.query(models.DeviceReading.timestamp).filter(
+        models.DeviceReading.device_id == dev.id,
+    ).order_by(models.DeviceReading.timestamp.asc()).first()
+    # Stop at the local midnight that starts the day of the first reading (that day and later
+    # come from the live sync); with no reading yet, stop at today's local midnight.
+    anchor_utc = first[0].replace(tzinfo=timezone.utc) if first else now
+    last_day = anchor_utc.astimezone(tz).date()
+    first_day = last_day - timedelta(days=days)
+
+    result = {"tenant_id": tenant_id, "site_id": site_id, "device_id": dev.id, "from": first_day.isoformat(),
+              "until": last_day.isoformat(), "stored": 0, "skipped_existing": 0, "empty_buckets": 0,
+              "days_failed": []}
+    cur = first_day
+    while cur < last_day:
+        start = datetime.combine(cur, datetime.min.time(), tzinfo=tz)
+        end = datetime.combine(cur + timedelta(days=1), datetime.min.time(), tzinfo=tz)
+        try:
+            buckets = fetch(start, end)
+        except Exception:
+            logger.warning("SolarEdge history for %s failed", cur, exc_info=True)
+            result["days_failed"].append(cur.isoformat())
+            cur += timedelta(days=1)
+            continue
+        start_utc = start.astimezone(timezone.utc).replace(tzinfo=None)
+        end_utc = end.astimezone(timezone.utc).replace(tzinfo=None)
+        existing = {r[0] for r in db.query(models.DeviceReading.timestamp).filter(
+            models.DeviceReading.device_id == dev.id,
+            models.DeviceReading.timestamp >= start_utc, models.DeviceReading.timestamp < end_utc)}
+        for item in buckets:
+            wh = _num(item.get("value"), "value") if isinstance(item, dict) else None
+            if wh is None:
+                result["empty_buckets"] += 1  # the inverter reported nothing: do not invent a zero
+                continue
+            try:
+                ts = datetime.fromisoformat(str(item.get("timestamp")))
+            except ValueError:
+                continue
+            if ts.tzinfo is None:
+                continue
+            ts_utc = ts.astimezone(timezone.utc).replace(tzinfo=None)
+            if not (start_utc <= ts_utc < end_utc) or ts_utc >= (first[0] if first else now.replace(tzinfo=None)):
+                continue
+            if ts_utc in existing:
+                result["skipped_existing"] += 1
+                continue
+            existing.add(ts_utc)
+            kwh = wh / 1000.0
+            db.add(models.DeviceReading(
+                device_id=dev.id, tenant_id=tenant_id, timestamp=ts_utc,
+                power_kw=kwh * 4.0,  # average over the quarter hour
+                energy_kwh=kwh,      # per-interval energy, like every other stored reading
+                raw={BACKFILL_KEY: True, "source": "solaredge_v2_energy", "resolution": "QUARTER_HOUR",
+                     "value_wh": wh}))
+            result["stored"] += 1
+        db.commit()
+        cur += timedelta(days=1)
+    return result
+
+
 def sync_all(db) -> dict:
     """Run sync_tenant for every tenant with a SolarEdge connection; one tenant's
     failure never stops the others."""

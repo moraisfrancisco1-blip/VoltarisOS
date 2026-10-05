@@ -452,3 +452,90 @@ def test_migration_gives_the_first_reading_its_counter(db, monkeypatch):
     assert energies(ids[1]) == [pytest.approx(1.2)]
     assert energies(ids[2]) == [0.0]
     assert energies(ids[3]) == [0.0]
+
+
+# ─── Historical backfill (comparison record) ─────────────────────────────────
+
+def _fake_energy(start, end):
+    """Three quarter-hour buckets in the day: 100 Wh, nothing reported, 200 Wh, plus one that
+    belongs to the next day (must be ignored)."""
+    return [
+        {"timestamp": (start + timedelta(hours=10)).isoformat(), "value": 100.0},
+        {"timestamp": (start + timedelta(hours=10, minutes=15)).isoformat(), "value": None},
+        {"timestamp": (start + timedelta(hours=10, minutes=30)).isoformat(), "value": 200.0},
+        {"timestamp": (end + timedelta(hours=1)).isoformat(), "value": 999.0},
+    ]
+
+
+def _live_reading(db, when):
+    _connect(db)
+    dev = solaredge_sync._get_or_create_device(db, TENANT, "2951500")
+    db.add(models.DeviceReading(device_id=dev.id, tenant_id=TENANT, timestamp=when, power_kw=1.0,
+                                energy_kwh=0.5, raw={"live": True}))
+    db.commit()
+    return dev
+
+
+def _backfill(db, days=3, fetch=_fake_energy):
+    from datetime import timezone
+    return solaredge_sync.backfill_history(db, TENANT, days, fetch=fetch,
+                                           now=datetime(2026, 10, 6, 10, 0, tzinfo=timezone.utc))
+
+
+def test_backfill_stores_only_complete_days_before_the_first_live_reading(db):
+    dev = _live_reading(db, datetime(2026, 10, 5, 4, 0))  # 06:00 local on 5 Oct
+    out = _backfill(db, days=3)
+
+    assert (out["from"], out["until"]) == ("2026-10-02", "2026-10-05")
+    assert out["stored"] == 6 and out["empty_buckets"] == 3  # 3 days x (2 values + 1 null)
+    rows = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == dev.id).order_by(
+        models.DeviceReading.timestamp).all()
+    backfilled = [r for r in rows if (r.raw or {}).get(solaredge_sync.BACKFILL_KEY)]
+    assert len(backfilled) == 6
+    assert all(r.timestamp < datetime(2026, 10, 4, 22, 0) for r in backfilled)  # before 5 Oct local midnight
+    assert sum(r.energy_kwh for r in backfilled) == pytest.approx(3 * 0.3)  # per-interval kWh, 0.1 + 0.2 a day
+    assert backfilled[0].power_kw == pytest.approx(0.4)  # 0.1 kWh in a quarter hour = 0.4 kW
+    assert [r for r in rows if (r.raw or {}) == {"live": True}][0].energy_kwh == 0.5  # live row untouched
+
+
+def test_backfill_is_repeatable_without_duplicates(db):
+    _live_reading(db, datetime(2026, 10, 5, 4, 0))
+    first = _backfill(db)
+    count = db.query(models.DeviceReading).count()
+    second = _backfill(db)
+    assert first["stored"] == 6
+    assert second["stored"] == 0 and second["skipped_existing"] == 6
+    assert db.query(models.DeviceReading).count() == count
+
+
+def test_backfill_never_writes_the_first_live_day_or_later(db):
+    _live_reading(db, datetime(2026, 10, 5, 4, 0))
+
+    def greedy(start, end):  # even if SolarEdge returned later data it would be refused
+        return _fake_energy(start, end) + [{"timestamp": "2026-10-05T12:00:00+02:00", "value": 50.0}]
+
+    out = _backfill(db, fetch=greedy)
+    assert db.query(models.DeviceReading).filter(
+        models.DeviceReading.timestamp >= datetime(2026, 10, 4, 22, 0),
+        models.DeviceReading.timestamp != datetime(2026, 10, 5, 4, 0)).count() == 0
+    assert out["stored"] == 6
+
+
+def test_backfill_records_a_failed_day_and_keeps_the_rest(db):
+    _live_reading(db, datetime(2026, 10, 5, 4, 0))
+    calls = {"n": 0}
+
+    def flaky(start, end):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise httpx.ConnectError("down")
+        return _fake_energy(start, end)
+
+    out = _backfill(db, fetch=flaky)
+    assert out["days_failed"] == ["2026-10-03"] and out["stored"] == 4
+
+
+def test_backfill_days_are_clamped(db):
+    _live_reading(db, datetime(2026, 10, 5, 4, 0))
+    out = _backfill(db, days=10_000, fetch=lambda s, e: [])
+    assert out["from"] == "2026-08-06"  # 60 days before 5 Oct
