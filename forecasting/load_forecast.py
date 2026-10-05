@@ -9,6 +9,12 @@ from typing import Iterable
 from forecasting.contracts import ProviderMetadata
 
 
+def _as_utc(moment: datetime) -> datetime:
+    """The database stores naive UTC datetimes while callers use timezone-aware ones; comparing
+    the two raises TypeError. Treat naive values as UTC and convert aware ones to UTC."""
+    return moment.replace(tzinfo=timezone.utc) if moment.tzinfo is None else moment.astimezone(timezone.utc)
+
+
 def forecast_load_from_readings(
     readings: Iterable[object], start: datetime, hours: int = 24, history_days: int = 28,
     fallback_kw: float | None = None,
@@ -18,13 +24,17 @@ def forecast_load_from_readings(
         raise ValueError("hours must be positive")
     if history_days <= 0:
         raise ValueError("history_days must be positive")
+    start = _as_utc(start)
     cutoff = start - timedelta(days=history_days)
     buckets: dict[tuple[int, int], list[float]] = defaultdict(list)
     all_values: list[float] = []
     for reading in readings:
         timestamp = getattr(reading, "timestamp", None)
         power_kw = getattr(reading, "power_kw", None)
-        if timestamp is None or power_kw is None or timestamp < cutoff or timestamp >= start:
+        if timestamp is None or power_kw is None:
+            continue
+        timestamp = _as_utc(timestamp)
+        if timestamp < cutoff or timestamp >= start:
             continue
         try:
             value = max(0.0, float(power_kw))

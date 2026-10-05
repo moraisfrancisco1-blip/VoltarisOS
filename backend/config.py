@@ -110,6 +110,10 @@ class Settings:
     
     # Market configuration
     DEFAULT_MARKET: str = os.getenv("DEFAULT_MARKET", "MIBEL")
+
+    # ENTSO-E bidding-zone country for the persisted forecast's market prices when the tenant
+    # has no country of its own (tenants do not store one). Was hardcoded to "PT".
+    FORECAST_COUNTRY_CODE: str = os.getenv("FORECAST_COUNTRY_CODE", "NL")
     PRICE_UPDATE_INTERVAL_MINUTES: int = int(os.getenv("PRICE_UPDATE_INTERVAL_MINUTES", "15"))
     
     # Stripe Metered Billing
