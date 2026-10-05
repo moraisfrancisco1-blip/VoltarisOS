@@ -1,3 +1,5 @@
+import ComplianceReal from "../components/real/ComplianceReal";
+import { isAdminRole } from "../config/roleAccess";
 import DemoNotice from "../components/DemoNotice";
 import { useState } from "react";
 import { useAppStore } from "../store/appStore";
@@ -51,7 +53,7 @@ const RADAR_DATA = [
   { category: "ISO", score: 68 },
 ];
 
-export default function RegulatoryCompliance() {
+export default function RegulatoryCompliance({ user }) {
   const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [filter, setFilter] = useState("all");
@@ -76,16 +78,8 @@ export default function RegulatoryCompliance() {
     { name: "Urgent", value: urgent, fill: red },
   ];
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1200 }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_compliance")}
-        </div>
-      </div>
-    )
-  }
+  // The tenant's real tracker (/api/compliance); the demo below needs Simulation mode.
+  if (!simMode) return <ComplianceReal canEdit={isAdminRole(user?.role)} />;
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1200 }}>
