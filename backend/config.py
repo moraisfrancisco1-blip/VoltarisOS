@@ -17,6 +17,14 @@ def _require_env(key: str, hint: str = "") -> str:
     return value
 
 
+def entsoe_api_key() -> str:
+    """The ENTSO-E key. The prices endpoint (backend/routers/prices.py) reads ENTSOE_TOKEN while
+    the market client behind the persisted forecast reads ENTSOE_API_KEY, so a deployment that set
+    only one of them had working page prices but a failing forecast ("ENTSO-E API client is not
+    configured"). Accept either name."""
+    return os.getenv("ENTSOE_API_KEY") or os.getenv("ENTSOE_TOKEN", "")
+
+
 class Settings:
     # Database
     # SQLite fallback is acceptable for local dev; production MUST set DATABASE_URL
@@ -91,7 +99,7 @@ class Settings:
     TOTP_ENABLED: bool = os.getenv("TOTP_ENABLED", "false").lower() == "true"
     
     # Energy Market APIs (ENTSO-E, EEX)
-    ENTSOE_API_KEY: str = os.getenv("ENTSOE_API_KEY", "")
+    ENTSOE_API_KEY: str = entsoe_api_key()
     ENTSOE_BASE_URL: str = os.getenv("ENTSOE_BASE_URL", "https://web-api.tp.entsoe.eu/api")
     EEX_API_KEY: str = os.getenv("EEX_API_KEY", "")
     EEX_BASE_URL: str = os.getenv("EEX_BASE_URL", "https://www.eex.com/data")
