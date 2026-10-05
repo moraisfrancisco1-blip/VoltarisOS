@@ -61,6 +61,21 @@ def test_parse_overview_unwrapped_bare_numbers():
     assert out == {"power_kw": 1.234, "energy_kwh": 2.0}
 
 
+def test_parse_overview_v2_production_total_with_unit():
+    # Real response from the SolarEdge v2 overview of a connected site.
+    body = {"siteId": 860695,
+            "production": {"total": 2433, "unit": "WH", "toSelfConsumption": None,
+                           "toStorage": None, "toGrid": None},
+            "consumption": {"total": None, "unit": "WH", "fromPv": None,
+                            "fromStorage": None, "fromGrid": None}}
+    assert solaredge_sync.parse_overview(body) == {"power_kw": None, "energy_kwh": 2.433}
+
+
+def test_parse_overview_v2_unknown_unit_is_not_guessed():
+    out = solaredge_sync.parse_overview({"production": {"total": 5, "unit": "BTU"}})
+    assert out == {"power_kw": None, "energy_kwh": None}
+
+
 def test_parse_overview_unknown_shape_gives_none():
     assert solaredge_sync.parse_overview({"foo": 1}) == {"power_kw": None, "energy_kwh": None}
 
