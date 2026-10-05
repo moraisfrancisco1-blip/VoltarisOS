@@ -1,3 +1,4 @@
+import DegradationReal from "../components/real/DegradationReal";
 /**
  * SolarDegradationLab.jsx
  * ─────────────────────────────────────────────────────────────────
@@ -104,7 +105,7 @@ const FLEET = [
   { id: "ES-001", name: "Parque Alicante",     panels: 6500, type: "bifacial",  age: 2, health: 99, pid: "low",  status: "nominal" },
 ]
 
-export default function SolarDegradationLab() {
+export default function SolarDegradationLab({ setPage }) {
   const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode)
   const [params, setParams] = useState({
@@ -126,16 +127,8 @@ export default function SolarDegradationLab() {
     { metric: "PID Risk", value: params.pidRisk === "low" ? 90 : params.pidRisk === "medium" ? 55 : 25 },
   ]
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_degradation")}
-        </div>
-      </div>
-    )
-  }
+  // Real performance ratio from /api/solar/performance; the demo simulator below needs Simulation mode.
+  if (!simMode) return <DegradationReal onNavigate={setPage} />;
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>
