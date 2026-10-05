@@ -249,3 +249,73 @@ def test_a_real_power_value_is_never_overridden(db, monkeypatch):
     _age_last_reading(db, minutes=20, energy_kwh=0.0)
     out = solaredge_sync.sync_tenant(db, TENANT)
     assert out["power_kw"] == 4.0 and out["power_estimated"] is False
+
+
+# ── SolarEdge v2 /power endpoint (real current power) ────────────────────────
+from datetime import timezone  # noqa: E402
+
+
+def _iso(minutes_ago):
+    return (datetime.now(timezone.utc) - timedelta(minutes=minutes_ago)).isoformat()
+
+
+def _route(monkeypatch, power_body=None, power_status=200):
+    """overview -> production only (no power); /power -> power_body."""
+    def fake_get(url, **kw):
+        if url.endswith("/power"):
+            return FakeResponse(power_body if power_body is not None else {}, status_code=power_status)
+        return FakeResponse({"production": {"total": 2433, "unit": "WH"}})
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+
+def test_parse_power_takes_latest_non_null_bucket_in_kw():
+    body = {"unit": "W", "values": [
+        {"timestamp": _iso(40), "value": 100.0},
+        {"timestamp": _iso(10), "value": 1500.0},
+        {"timestamp": _iso(0), "value": None},  # quarter hour still open
+    ]}
+    assert solaredge_sync.parse_power(body) == 1.5
+
+
+def test_parse_power_accepts_power_key_and_kw_unit():
+    body = {"unit": "kW", "values": [{"timestamp": _iso(5), "power": 2.0}]}
+    assert solaredge_sync.parse_power(body) == 2.0
+
+
+@pytest.mark.parametrize("body", [
+    None, {}, {"values": "x"},
+    {"unit": "W", "values": []},
+    {"unit": "W", "values": [{"timestamp": _iso(5), "value": None}]},
+    {"unit": "W", "values": [{"timestamp": _iso(90), "value": 900.0}]},       # stale
+    {"unit": "W", "values": [{"timestamp": "2026-10-05T10:00:00", "value": 9.0}]},  # naive ts
+    {"unit": "W", "values": [{"timestamp": "garbage", "value": 9.0}]},
+    {"unit": "BTU", "values": [{"timestamp": _iso(5), "value": 9.0}]},
+])
+def test_parse_power_never_returns_unprovable_or_stale_values(body):
+    assert solaredge_sync.parse_power(body) is None
+
+
+def test_sync_prefers_the_real_power_endpoint(db, monkeypatch):
+    _connect(db)
+    _route(monkeypatch, {"unit": "W", "values": [{"timestamp": _iso(2), "value": 228.0}]})
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_kw"] == pytest.approx(0.228) and out["power_estimated"] is False
+    last = db.query(models.DeviceReading).order_by(models.DeviceReading.id.desc()).first()
+    assert last.raw["voltaris_power_source"] == "solaredge_power_endpoint"
+
+
+def test_sync_falls_back_to_estimate_when_power_endpoint_fails(db, monkeypatch):
+    _connect(db)
+    _route(monkeypatch, power_status=500)
+    solaredge_sync.sync_tenant(db, TENANT)
+    _age_last_reading(db, minutes=20, energy_kwh=1.433)  # +1.0 kWh over 20 min
+
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_estimated"] is True and out["power_kw"] == pytest.approx(3.0, rel=0.02)
+
+
+def test_sync_ignores_a_stale_power_bucket(db, monkeypatch):
+    _connect(db)
+    _route(monkeypatch, {"unit": "W", "values": [{"timestamp": _iso(120), "value": 5000.0}]})
+    out = solaredge_sync.sync_tenant(db, TENANT)
+    assert out["power_kw"] is None
