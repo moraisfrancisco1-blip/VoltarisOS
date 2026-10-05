@@ -16,12 +16,12 @@ from forecasting.load_forecast import forecast_load_from_readings
 
 
 def _readings(naive: bool):
-    """Three days of readings: 5 kW at 10:00 UTC and 7 kW at 11:00 UTC."""
+    """Three Mondays of readings (the forecast buckets by weekday and hour): 5 kW at 10:00 UTC, 7 kW at 11:00 UTC."""
     out = []
-    base = datetime(2026, 10, 1, 0, 0)
+    base = datetime(2026, 9, 14, 0, 0)  # a Monday; 2026-10-05 (the forecast start) is a Monday too
     for day in range(3):
         for hour, kw in ((10, 5.0), (11, 7.0)):
-            ts = base + timedelta(days=day, hours=hour)
+            ts = base + timedelta(days=7 * day, hours=hour)
             out.append(SimpleNamespace(timestamp=ts if naive else ts.replace(tzinfo=timezone.utc), power_kw=kw))
     return out
 
