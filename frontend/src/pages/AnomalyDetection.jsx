@@ -1,3 +1,4 @@
+import AlertsSummaryReal from "../components/real/AlertsSummaryReal";
 import { useState, useEffect, useRef } from "react"
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line,
@@ -183,16 +184,9 @@ export default function AnomalyDetection({ setPage }) {
   const sevCounts = { critical: 0, high: 0, medium: 0, low: 0 }
   feed.forEach(x => { if (sevCounts[x.sev] !== undefined) sevCounts[x.sev]++ })
 
+  // Real alerts from /api/alerts (rule-based, no ML model yet); the demo below needs Simulation mode.
   if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--text)" }}>Anomaly Detection</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 14 }}>
-          {t("demo_anomaly")}
-        </div>
-      </div>
-    )
+    return <AlertsSummaryReal onNavigate={setPage} />
   }
 
   return (

@@ -1,3 +1,4 @@
+import CommandCenterReal from "../components/real/CommandCenterReal";
 import { useState, useEffect } from "react";
 import {
   AreaChart, Area, BarChart, Bar,
@@ -114,16 +115,8 @@ export default function CommandCenter({ setPage }) {
   const statusColor = (s) => s === "online" ? green : s === "warning" ? amber : red;
   const eventColor = (t) => t === "error" ? red : t === "warning" ? amber : t === "success" ? green : blue;
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "var(--text)" }}>Command Center</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13, ...card }}>
-          {t("demo_command_center")}
-        </div>
-      </div>
-    );
-  }
+  // Real status from /api/dashboard/snapshot, devices, alerts and sites; the demo below needs Simulation mode.
+  if (!simMode) return <CommandCenterReal onNavigate={setPage} />;
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

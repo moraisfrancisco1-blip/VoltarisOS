@@ -1,3 +1,4 @@
+import DeviceListReal from "../components/real/DeviceListReal";
 import DemoNotice from "../components/DemoNotice";
 import { useState, useEffect } from "react";
 import { useTranslation } from "../i18n/useTranslation";
@@ -48,7 +49,7 @@ const genSchedule = () => Array.from({ length: 12 }, (_, i) => ({
   solar_direct: rand(0, 60, 0),
 }));
 
-export default function EVCharging() {
+export default function EVCharging({ setPage }) {
   const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [chargers, setChargers] = useState(CHARGERS.map(c => ({ ...c })));
@@ -90,16 +91,17 @@ export default function EVCharging() {
     { name: "Grid Import", value: Math.round(100 - metrics.solarSelf), fill: blue },
   ];
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 24, maxWidth: 1400 }}>
-        <div style={{ padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_ev")}
-        </div>
-      </div>
-    )
-  }
+  // The tenant's real EV chargers (GET /api/devices); the demo below needs Simulation mode.
+  if (!simMode) return (
+    <DeviceListReal
+      title="EV Charging"
+      subtitle="Your connected chargers and their latest readings"
+      types={["ev_charger", "ev"]}
+      emptyTitle="No EV charger connected yet"
+      emptyText="When a charger is connected under Integrations, it appears here with its status and power."
+      onNavigate={setPage}
+    />
+  );
 
   return (
     <div style={{ padding: 24, display: "flex", flexDirection: "column", gap: 20, maxWidth: 1400 }}>

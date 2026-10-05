@@ -1,3 +1,4 @@
+import ExportReal from "../components/real/ExportReal";
 import { useState } from "react"
 import { useAppStore } from "../store/appStore"
 import { useTranslation } from "../i18n/useTranslation"
@@ -5,7 +6,7 @@ import DemoNotice from "../components/DemoNotice"
 
 const FORMATS = ["PDF", "CSV", "Excel", "JSON"]
 
-export default function ExportCenter({ user }) {
+export default function ExportCenter({ user, setPage }) {
   const { t } = useTranslation()
   const { addToast, addAuditEntry, simMode } = useAppStore()
   const color = user?.color || "#4ade80"
@@ -55,16 +56,9 @@ export default function ExportCenter({ user }) {
 
   const anySelected = Object.values(selected).some(Boolean)
 
+  // Points to the real report flow on the Reports page; the demo below needs Simulation mode.
   if (!simMode) {
-    return (
-      <div style={{ padding: "32px", maxWidth: "1000px" }}>
-        <h1 style={{ color: "var(--text)", fontSize: "24px", fontWeight: "700", marginBottom: "6px" }}>Export Center</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 14 }}>
-          {t("demo_export")}
-        </div>
-      </div>
-    )
+    return <ExportReal onNavigate={setPage} />
   }
 
   return (

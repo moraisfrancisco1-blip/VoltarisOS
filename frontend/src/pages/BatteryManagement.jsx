@@ -1,3 +1,4 @@
+import DeviceListReal from "../components/real/DeviceListReal";
 import { useState, useEffect, useRef } from "react";
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar, ComposedChart,
@@ -112,7 +113,7 @@ function TempGauge({ value, max = 60 }) {
   );
 }
 
-export default function BatteryManagement() {
+export default function BatteryManagement({ setPage }) {
   const { t } = useTranslation();
   const simMode = useAppStore(s => s.simMode);
   const [selected, setSelected] = useState(0);
@@ -185,16 +186,17 @@ export default function BatteryManagement() {
     }))
   );
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "transparent" }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 6, color: "#fff", letterSpacing: -0.5 }}>Battery Energy Storage System</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13, ...card2 }}>
-          {t("demo_battery")}
-        </div>
-      </div>
-    );
-  }
+  // The tenant's real batteries (GET /api/devices); the demo below needs Simulation mode.
+  if (!simMode) return (
+    <DeviceListReal
+      title="Battery Energy Storage"
+      subtitle="Your connected batteries and their latest readings"
+      types={["battery"]}
+      emptyTitle="No battery connected yet"
+      emptyText="When a battery is connected under Integrations, it appears here with its charge level, power and temperature."
+      onNavigate={setPage}
+    />
+  );
 
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh", background: "transparent" }}>
