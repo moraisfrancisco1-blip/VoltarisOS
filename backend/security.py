@@ -47,6 +47,16 @@ SECRET_KEY = _require_secret("SECRET_KEY")
 ALGORITHM = "HS256"
 
 
+def secret_key_fingerprint(key: str) -> str:
+    """8 hex chars of a salted hash: enough to tell whether two deploys run with the same key,
+    far too little to help recover it. Logged once at start-up to diagnose logouts after a deploy."""
+    return hashlib.sha256(b"voltaris-key-fingerprint:" + key.encode("utf-8")).hexdigest()[:8]
+
+
+# warning level so it shows with the default log config
+logger.warning("SECRET_KEY fingerprint: %s", secret_key_fingerprint(SECRET_KEY))
+
+
 # ─── RBAC v2 — canonical roles + legacy normalization ────────────────────────
 # Single source of truth for the role values the whole app (backend guards and
 # the frontend RBAC) understands. Legacy / variant spellings found in older DB
