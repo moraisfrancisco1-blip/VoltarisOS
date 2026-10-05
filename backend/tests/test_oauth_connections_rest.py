@@ -367,6 +367,30 @@ class TestSolarEdgeSiteDetails:
         resp = client.get("/api/oauth/solaredge/site?path=equipment", headers=_auth(TENANT_A))
         assert resp.status_code == 200 and resp.json()["data"] == {"ok": 1}
 
+    def test_period_and_resolution_are_forwarded_as_query_parameters(self, client, db_session, monkeypatch):
+        self._connect(db_session)
+        seen = {}
+
+        def fake_get(url, **kwargs):
+            seen["url"], seen["params"] = url, kwargs.get("params")
+            return FakeResponse({"values": []})
+
+        monkeypatch.setattr(httpx, "get", fake_get)
+        resp = client.get("/api/oauth/solaredge/site", headers=_auth(TENANT_A), params={
+            "path": "energy", "from": "2026-10-05T00:00:00+02:00", "to": "2026-10-06T00:00:00+02:00",
+            "resolution": "QUARTER_HOUR"})
+        assert resp.status_code == 200
+        assert seen["url"] == "https://monitoringapi.solaredge.com/v2/sites/2951500/energy"
+        assert seen["params"] == {"from": "2026-10-05T00:00:00+02:00", "to": "2026-10-06T00:00:00+02:00",
+                                  "resolution": "QUARTER_HOUR"}
+
+    @pytest.mark.parametrize("name,value", [("from", "x; DROP"), ("to", "../../etc"), ("resolution", "quarter hour")])
+    def test_bad_query_values_are_rejected(self, client, db_session, monkeypatch, name, value):
+        self._connect(db_session)
+        monkeypatch.setattr(httpx, "get", lambda *a, **kw: pytest.fail("must not call SolarEdge"))
+        resp = client.get("/api/oauth/solaredge/site", params={"path": "energy", name: value}, headers=_auth(TENANT_A))
+        assert resp.status_code == 422
+
     @pytest.mark.parametrize("bad", ["../sites/999", "a/../b", "https://evil.example", "a?x=1", "a/b/c/d/e"])
     def test_path_cannot_escape_the_site(self, client, db_session, monkeypatch, bad):
         self._connect(db_session)

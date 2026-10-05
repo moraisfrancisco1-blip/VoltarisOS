@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt as jose_jwt
 from pydantic import BaseModel
@@ -450,11 +450,17 @@ def solaredge_overview(db=Depends(get_db), user: dict = Depends(require_admin)):
 
 
 _SOLAREDGE_SUBPATH = re.compile(r"^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+){0,3}$")
+# Optional read-only query values for the energy/power endpoints: ISO timestamps, upper-case resolution.
+_SOLAREDGE_TIME = re.compile(r"^[0-9T:+.\-Z]{10,40}$")
+_SOLAREDGE_RESOLUTION = re.compile(r"^[A-Z_]{3,20}$")
 
 
 @router.get("/solaredge/site")
 def solaredge_site_details(
     path: str = "",
+    from_: str | None = Query(default=None, alias="from"),
+    to: str | None = None,
+    resolution: str | None = None,
     db=Depends(get_db),
     user: dict = Depends(require_admin),
 ):
@@ -464,6 +470,13 @@ def solaredge_site_details(
     sent to this site's own URLs on the SolarEdge API host."""
     if path and not _SOLAREDGE_SUBPATH.fullmatch(path):
         raise HTTPException(422, "path inválido")
+    params = {}
+    for name, value, pattern in (("from", from_, _SOLAREDGE_TIME), ("to", to, _SOLAREDGE_TIME),
+                                 ("resolution", resolution, _SOLAREDGE_RESOLUTION)):
+        if value is not None:
+            if not pattern.fullmatch(value):
+                raise HTTPException(422, f"{name} inválido")
+            params[name] = value
     tenant_id = user.get("tenant_id")
     token = get_valid_access_token(db, tenant_id, "solaredge")
     site_id = solaredge_site_id(db, tenant_id)
@@ -472,7 +485,7 @@ def solaredge_site_details(
     url = f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}" + (f"/{path}" if path else "")
     try:
         resp = httpx.get(url, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
-                         timeout=20.0)
+                         params=params or None, timeout=20.0)
     except httpx.RequestError as e:
         raise HTTPException(502, f"SolarEdge inacessível: {e}")
     try:
