@@ -47,8 +47,12 @@ def run_forecasting(self):
                 # Location, capacity and panel orientation live on the tenant's sites, not on the tenant.
                 solar, solar_provider = solar_forecast_from_sites(db, tenant.id, hours=24)
                 bundle = ForecastBundle(prices_eur_mwh=prices, load_kw=load, solar_kw=solar, timestamps=[(start + timedelta(hours=i)).isoformat() for i in range(24)], providers=(price_provider, load_provider, solar_provider))
-                bundle.validate(24, now=start)
-                record = record_from_bundle(models, tenant.id, bundle, now=start)
+                # `start` is the forecast's first hour (floored), but the providers were queried just now,
+                # later in that hour. Freshness and the record's generated_at use the real current time:
+                # using `start` made every provider look "generated in the future".
+                now = datetime.now(timezone.utc)
+                bundle.validate(24, now=now)
+                record = record_from_bundle(models, tenant.id, bundle, now=now)
                 db.add(record)
                 db.commit()
                 results.append({"tenant_id": tenant.id, "status": "completed", "record_id": record.id, "generated_at": record.generated_at.isoformat()})
