@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import DemoNotice from "../components/DemoNotice";
-import { useAppStore } from "../store/appStore";
-
-import { useTranslation } from "../i18n/useTranslation";
 
 const accent = "#6366f1";
 
@@ -14,8 +10,6 @@ const isOnline = (status) => status === "active" || status === "online";
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export default function MapView() {
-  const { t } = useTranslation();
-  const simMode = useAppStore(s => s.simMode);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const [selected, setSelected] = useState(null);
@@ -36,7 +30,7 @@ export default function MapView() {
 
   useEffect(() => {
     if (mapInstanceRef.current) return;
-    if (!simMode || !sitesLoaded || sites.length === 0 || !mapRef.current) return;
+    if (!sitesLoaded || sites.length === 0 || !mapRef.current) return;
 
     // Leaflet popup premium styling injection
     if (!document.querySelector("#leaflet-premium-css")) {
@@ -171,6 +165,9 @@ export default function MapView() {
         `);
       });
 
+      // Frame the real sites instead of the generic Europe view the map opens with.
+      map.fitBounds(L.latLngBounds(sites.map(s => [s.lat, s.lng])), { padding: [60, 60], maxZoom: 13 });
+
       mapInstanceRef.current = map;
       setMapReady(true);
     }
@@ -182,7 +179,7 @@ export default function MapView() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sitesLoaded, simMode, sites]);
+  }, [sitesLoaded, sites]);
 
   const cardStyle = {
     background: "var(--surface)",
@@ -191,21 +188,8 @@ export default function MapView() {
     padding: 20,
   };
 
-  if (!simMode) {
-    return (
-      <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4, color: "var(--text)" }}>Site Map</h1>
-        <div style={{ marginTop: 20, padding: 24, textAlign: "center", color: "var(--sub)", fontSize: 13,
-          background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12 }}>
-          {t("demo_map")}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ padding: 32, color: "var(--text)", minHeight: "100vh" }}>
-      <DemoNotice />
       <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4, color: "var(--text)" }}>Site Map</h1>
       <p style={{ color: "var(--sub)", marginBottom: 24 }}>Geographic overview of all VPP assets</p>
 
