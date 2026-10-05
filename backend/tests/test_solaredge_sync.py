@@ -327,7 +327,7 @@ from backend import energy_counter  # noqa: E402
 
 
 @pytest.mark.parametrize("prev,now,expected", [
-    (None, 5.0, 0.0),      # first reading: nothing earlier to measure against
+    (None, 5.0, 5.0),      # first reading: the counter is "today so far", so it all belongs to today
     (1.0, 1.5, 0.5),       # normal growth
     (2.0, 2.0, 0.0),       # nothing produced
     (9.0, 0.2, 0.2),       # midnight reset: everything since is new
@@ -348,7 +348,7 @@ def test_summing_stored_energy_gives_the_day_total_not_a_multiple(db, monkeypatc
         solaredge_sync.sync_tenant(db, TENANT)
     stored = [r.energy_kwh for r in db.query(models.DeviceReading).order_by(models.DeviceReading.id)]
     assert sum(stored) == pytest.approx(3.0)            # the day's real total
-    assert stored[0] == 0.0                              # first reading: no interval yet
+    assert stored[0] == 0.0                              # the counter was 0 at the first reading
     last = db.query(models.DeviceReading).order_by(models.DeviceReading.id.desc()).first()
     assert last.raw[solaredge_sync.DAY_TOTAL_KEY] == pytest.approx(3.0)  # counter kept in raw
 
@@ -359,7 +359,7 @@ def test_midnight_reset_does_not_subtract_or_double_count(db, monkeypatch):
         _energy(monkeypatch, wh)
         solaredge_sync.sync_tenant(db, TENANT)
     stored = [r.energy_kwh for r in db.query(models.DeviceReading).order_by(models.DeviceReading.id)]
-    assert stored == [pytest.approx(0.0), pytest.approx(1.0), pytest.approx(0.1)]
+    assert stored == [pytest.approx(8.0), pytest.approx(1.0), pytest.approx(0.1)]  # 8 so far, +1, new day 0.1
 
 
 def test_legacy_reading_without_marker_is_read_as_the_counter(db, monkeypatch):
@@ -397,8 +397,58 @@ def test_migration_converts_legacy_counter_rows_in_order(db, monkeypatch):
 
     rows = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == dev_id) \
         .order_by(models.DeviceReading.timestamp).all()
-    assert [r.energy_kwh for r in rows] == [pytest.approx(0.0), pytest.approx(0.4), pytest.approx(0.6), pytest.approx(0.1)]
+    assert [r.energy_kwh for r in rows] == [pytest.approx(1.0), pytest.approx(0.4), pytest.approx(0.6), pytest.approx(0.1)]
     assert [r.raw[mig.DAY_TOTAL_KEY] for r in rows] == [1.0, 1.4, 2.0, 0.1]
     assert rows[0].raw["production"]["total"] == 1000.0  # original payload preserved
     untouched = db.query(models.DeviceReading).filter(models.DeviceReading.device_id == other_id).one()
     assert untouched.energy_kwh == 7.7 and mig.DAY_TOTAL_KEY not in untouched.raw
+
+
+# ── first reading counts what the counter already held ───────────────────────
+def test_first_reading_counts_the_energy_already_produced_today(db, monkeypatch):
+    """Regression: the first reading was stored as 0, dropping everything produced
+    before we connected and understating that day's totals."""
+    _connect(db)
+    for wh in (2433, 2900, 3500):  # the day counter when we start watching, then growth
+        _energy(monkeypatch, wh)
+        solaredge_sync.sync_tenant(db, TENANT)
+    stored = [r.energy_kwh for r in db.query(models.DeviceReading).order_by(models.DeviceReading.id)]
+    assert stored == [pytest.approx(2.433), pytest.approx(0.467), pytest.approx(0.6)]
+    assert sum(stored) == pytest.approx(3.5)  # equals SolarEdge's own total for the day
+
+
+def test_migration_gives_the_first_reading_its_counter(db, monkeypatch):
+    from backend.migrations import fix_solaredge_first_reading as mig
+
+    def reading(dev_id, minutes_ago, energy, counter=None):
+        raw = {} if counter is None else {mig.DAY_TOTAL_KEY: counter}
+        return models.DeviceReading(device_id=dev_id, tenant_id=TENANT, energy_kwh=energy, raw=raw,
+                                    timestamp=datetime.utcnow() - timedelta(minutes=minutes_ago))
+
+    se = models.Device(tenant_id=TENANT, name="se", protocol="solaredge_oauth", device_type="inverter", config={})
+    already_ok = models.Device(tenant_id=TENANT, name="ok", protocol="solaredge_oauth", device_type="inverter", config={})
+    night = models.Device(tenant_id=TENANT, name="night", protocol="solaredge_oauth", device_type="inverter", config={})
+    other = models.Device(tenant_id=TENANT, name="manual", protocol="solaredge", device_type="inverter", config={})
+    db.add_all([se, already_ok, night, other])
+    db.flush()
+    db.add_all([
+        reading(se.id, 60, 0.0, counter=2.433), reading(se.id, 55, 0.467, counter=2.9),   # to be fixed
+        reading(already_ok.id, 60, 1.2, counter=1.2),                                      # already counts it
+        reading(night.id, 60, 0.0, counter=0.0),                                           # counter really was 0
+        reading(other.id, 60, 0.0, counter=5.0),                                           # not a solaredge_oauth device
+    ])
+    db.commit()
+    ids = (se.id, already_ok.id, night.id, other.id)
+
+    monkeypatch.setattr(mig, "SessionLocal", lambda: db)
+    mig.migrate()
+    mig.migrate()  # idempotent
+
+    def energies(dev_id):
+        return [r.energy_kwh for r in db.query(models.DeviceReading).filter(
+            models.DeviceReading.device_id == dev_id).order_by(models.DeviceReading.timestamp)]
+
+    assert energies(ids[0]) == [pytest.approx(2.433), pytest.approx(0.467)]  # only the first changed
+    assert energies(ids[1]) == [pytest.approx(1.2)]
+    assert energies(ids[2]) == [0.0]
+    assert energies(ids[3]) == [0.0]
