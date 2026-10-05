@@ -449,16 +449,24 @@ def solaredge_overview(db=Depends(get_db), user: dict = Depends(require_admin)):
 
 
 @router.post("/solaredge/sync")
-def solaredge_sync_now(db=Depends(get_db), user: dict = Depends(require_admin)):
+def solaredge_sync_now(request: Request, db=Depends(get_db), user: dict = Depends(require_admin)):
     """Pull the SolarEdge overview now and store it as a device reading (the same
     thing the periodic backend.tasks.sync_solaredge_oauth task does for every tenant)."""
     from backend import solaredge_sync  # lazy: solaredge_sync imports this module
     try:
-        return solaredge_sync.sync_tenant(db, user.get("tenant_id"))
+        result = solaredge_sync.sync_tenant(db, user.get("tenant_id"))
     except httpx.HTTPStatusError as e:
         raise HTTPException(502, {"solaredge_status": e.response.status_code, "body": e.response.text[:500]})
     except httpx.RequestError as e:
         raise HTTPException(502, f"SolarEdge inacessível: {e}")
+
+    log_audit_event(
+        db=db, action="oauth.solaredge_synced", tenant_id=user.get("tenant_id"),
+        user_email=user.get("sub"), target_resource="oauth_connection",
+        ip_address=request.client.host if request.client else None,
+        details={"stored": bool(result.get("stored")), "site_id": result.get("site_id")},
+    )
+    return result
 
 
 # SolarEdge's registered redirect is https://www.voltarisos.com/auth/callback

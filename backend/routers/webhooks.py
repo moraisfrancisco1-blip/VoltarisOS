@@ -54,6 +54,7 @@ KNOWN_EVENT_TYPES = [
     "white_label.domain_removed",
     "oauth.connected",
     "oauth.disconnected",
+    "oauth.solaredge_synced",
     "user.avatar_updated",
     "user.avatar_removed",
     "user.profile_updated",
