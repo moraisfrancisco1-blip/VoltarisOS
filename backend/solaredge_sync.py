@@ -12,7 +12,7 @@ connector polled by the edge gateway): this one has its own device
 two never write to the same row.
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -91,6 +91,60 @@ def _get_or_create_device(db, tenant_id: int, site_id: str) -> models.Device:
     return dev
 
 
+# GET /v2/sites/{id}/power: {"unit": "W", "resolution": "QUARTER_HOUR",
+# "values": [{"timestamp": "...+02:00", "value": ...}, ...]} from midnight until now.
+# The newest bucket is often null (the quarter hour is still open), so take the
+# latest non-null one, and only if it is recent enough to call "current".
+POWER_MAX_AGE_MINUTES = 45
+_POWER_UNIT_TO_KW = {"W": 0.001, "KW": 1.0}
+
+
+def parse_power(body, now=None):
+    """Latest non-null power bucket as kW, or None when there is none, its
+    timestamp is missing/naive/unparseable (freshness cannot be proven), or it is
+    older than POWER_MAX_AGE_MINUTES. Never returns a stale value as "current"."""
+    if not isinstance(body, dict) or not isinstance(body.get("values"), list):
+        return None
+    factor = _POWER_UNIT_TO_KW.get(str(body.get("unit", "W")).upper())
+    if factor is None:
+        return None
+    now = now or datetime.now(timezone.utc)
+    for item in reversed(body["values"]):
+        if not isinstance(item, dict):
+            continue
+        value = _num(item.get("value"), "value")
+        if value is None:
+            value = _num(item.get("power"), "power")
+        if value is None:
+            continue  # open/empty bucket: look at the previous one
+        try:
+            ts = datetime.fromisoformat(str(item.get("timestamp")))
+        except ValueError:
+            return None
+        if ts.tzinfo is None:
+            return None
+        if now - ts > timedelta(minutes=POWER_MAX_AGE_MINUTES):
+            return None  # every earlier bucket is older still
+        return value * factor
+    return None
+
+
+def _fetch_power_kw(token: str, site_id: str):
+    """Current power from the power endpoint; None on any failure (the energy-based
+    estimate then takes over, so a flaky endpoint never breaks the sync)."""
+    try:
+        resp = httpx.get(
+            f"{settings.SOLAREDGE_API_BASE.rstrip('/')}/v2/sites/{site_id}/power",
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+            timeout=20.0,
+        )
+        resp.raise_for_status()
+        return parse_power(resp.json())
+    except Exception:
+        logger.warning("SolarEdge power endpoint unavailable for site %s", site_id, exc_info=True)
+        return None
+
+
 # The v2 overview carries energy only (no instantaneous power), and SolarEdge
 # refreshes it every ~15 min. So power is estimated as the energy gained since an
 # earlier reading divided by the elapsed time, using the OLDEST reading that is
@@ -166,12 +220,17 @@ def sync_tenant(db, tenant_id: int) -> dict:
     raw = body
     estimated = False
     if values["power_kw"] is None:
-        est = _estimate_power_kw(db, dev.id, now, values["energy_kwh"])
-        if est is not None:
-            values["power_kw"] = est
-            estimated = True
-            raw = {**body, "voltaris_power_estimate": {
-                "method": "energy_delta", "window_minutes": [ESTIMATE_MIN_MINUTES, ESTIMATE_MAX_MINUTES]}}
+        real = _fetch_power_kw(token, site_id)
+        if real is not None:
+            values["power_kw"] = real
+            raw = {**body, "voltaris_power_source": "solaredge_power_endpoint"}
+        else:
+            est = _estimate_power_kw(db, dev.id, now, values["energy_kwh"])
+            if est is not None:
+                values["power_kw"] = est
+                estimated = True
+                raw = {**body, "voltaris_power_estimate": {
+                    "method": "energy_delta", "window_minutes": [ESTIMATE_MIN_MINUTES, ESTIMATE_MAX_MINUTES]}}
 
     db.add(models.DeviceReading(
         device_id=dev.id, tenant_id=tenant_id, timestamp=now,
