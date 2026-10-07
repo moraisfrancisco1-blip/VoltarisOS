@@ -46,6 +46,8 @@ function Wait-Answer($udp, [int]$id, [int]$ms) {
         try { $data = $udp.Receive([ref]$remote) } catch { continue }   # timeout / ICMP reset: keep waiting until the deadline
         $text = [Text.Encoding]::UTF8.GetString($data)
         try { $obj = $text | ConvertFrom-Json } catch { continue }
+        # A message with "method" is a REQUEST (our own broadcast looping back to this PC), not the battery's answer.
+        if ($null -ne $obj.method) { continue }
         if ($null -ne $obj.id -and [int]$obj.id -eq $id) { return @{ Text = $text; From = $remote.Address.ToString() } }
     }
 }

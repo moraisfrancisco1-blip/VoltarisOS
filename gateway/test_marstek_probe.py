@@ -107,6 +107,21 @@ def test_wait_for_ignores_answers_to_other_requests():
     sender.close()
 
 
+def test_wait_for_ignores_our_own_request_looping_back():
+    local = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    local.bind(("127.0.0.1", 0))
+    port = local.getsockname()[1]
+    sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    request = {"id": 7, "method": "ES.GetStatus", "params": {"id": 0}}
+    sender.sendto(json.dumps(request).encode(), ("127.0.0.1", port))  # an echo of a request, same id
+    assert mp._wait_for(local, 7, 0.2) is None
+    sender.sendto(json.dumps({"id": 7, "result": {"ok": 1}}).encode(), ("127.0.0.1", port))
+    message, _ = mp._wait_for(local, 7, 1.0)
+    assert message["result"] == {"ok": 1}
+    local.close()
+    sender.close()
+
+
 def test_redact_walks_nested_structures():
     data = {"a": [{"wifi_name": "x", "keep": 1}], "ssid": None}
     assert mp.redact(data) == {"a": [{"wifi_name": "<redacted>", "keep": 1}], "ssid": None}
