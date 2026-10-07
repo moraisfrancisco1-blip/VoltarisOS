@@ -33,7 +33,7 @@
 | Faturação | cliente, subscrição e estado de pagamento no Stripe. **Não guardamos números de cartão** | Stripe / Cliente |
 | Integrações | tokens OAuth (Google, Microsoft, Slack) e etiqueta da conta ligada; credenciais dos dispositivos configurados | Utilizador, quando liga a integração |
 | Contactos comerciais | nome, email, empresa de quem se inscreve na página pública | Titular |
-| Dados operacionais | sites, dispositivos, leituras de energia, preços, ordens VPP, alertas, relatórios | Cliente / dispositivos |
+| Dados operacionais | sites (nome, proprietário, localização e coordenadas), dispositivos, leituras de energia, preços, ordens VPP, alertas, relatórios. **Quando o site é uma habitação, a localização e o consumo de energia são dados pessoais do agregado** | Cliente / dispositivos |
 | Assistente (Copilot) | mensagem escrita e um resumo do estado operacional (preços, capacidade, receita) | Utilizador |
 
 Não tratamos categorias especiais de dados (art. 9.º RGPD) nem dados de menores de forma intencional; o serviço destina-se a empresas e profissionais.
@@ -78,6 +78,7 @@ Aplicamos limites automáticos de conservação (valores por omissão, configur�
 | Dados | Conservação |
 |---|---|
 | Leituras de dispositivos em bruto | 90 dias; depois mantém-se apenas o resumo horário agregado |
+| Resumos horários de energia | [DECIDIR: sem limite hoje; pode ser limitado por configuração, mínimo 1 ano] |
 | Registo de auditoria | 730 dias |
 | Alertas reconhecidos | 180 dias (os não reconhecidos não são apagados automaticamente) |
 | Previsões, execuções de otimização, trabalhos de relatório e ficheiros PDF | 60–180 dias, consoante o tipo |
@@ -95,6 +96,7 @@ Pode, a qualquer momento: **aceder** aos seus dados, **retificá-los**, **apagá
 - **Exportar** os seus dados em JSON: `GET /api/privacy/me/export`.
 - **Apagar** (anonimizar) a sua conta: `POST /api/privacy/me/erase`, confirmando com a palavra-passe. Remove nome, telefone, cargo, avatar, 2FA e tokens de integrações; revoga as chaves de API; e retira o seu email, IP e user-agent dos registos de auditoria, que permanecem de forma anonimizada. O único administrador de um tenant tem de nomear outro antes.
 - Um administrador do tenant pode fazer o mesmo por um colega da sua organização.
+- **Dados de um site (incluindo habitações):** o administrador do tenant pode exportar os dados de um site (`GET /api/privacy/sites/{id}/export`, com leituras brutas opcionais dos últimos 90 dias, sem credenciais de equipamentos) e eliminá-lo por completo (`POST /api/privacy/sites/{id}/erase`: o site, os seus equipamentos e credenciais, leituras, resumos horários, alertas e regras). Quem é ocupante de uma habitação gerida por um Cliente deve dirigir o pedido a esse Cliente, que é o responsável pelo tratamento; o VoltarisOS apoia-o tecnicamente.
 - Os restantes pedidos: legal@voltarisos.com. Respondemos no prazo de **um mês**, prorrogável nos termos do art. 12.º RGPD.
 
 Se for utilizador de uma empresa Cliente, o seu primeiro contacto para dados operacionais da empresa é essa empresa.

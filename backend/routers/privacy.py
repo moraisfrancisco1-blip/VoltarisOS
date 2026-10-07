@@ -122,3 +122,44 @@ def erase_user_data(user_id: int, req: EraseUserRequest, request: Request, db: S
     audit_request(db, request, admin, "privacy.user_erased", target_resource="user", target_id=uid,
                   tenant_id=tenant_id, details=counts)
     return {"message": "Dados pessoais anonimizados", **counts}
+
+
+# ─── Sites (a site can be a household: its telemetry is personal data) ────────
+
+def _site_for(db: Session, admin: dict, site_id: int) -> models.Site:
+    q = db.query(models.Site).filter(models.Site.id == site_id)
+    if admin.get("role") != "SUPER_ADMIN":
+        # Fail closed on the caller's own tenant: 404 without revealing existence.
+        q = q.filter(models.Site.tenant_id == admin.get("tenant_id"))
+    site = q.first()
+    if not site:
+        raise HTTPException(404, "Site não encontrado")
+    return site
+
+
+@router.get("/sites/{site_id}/export")
+def export_site(site_id: int, request: Request, raw_days: int = 0, db: Session = Depends(get_db),
+                admin: dict = Depends(require_admin)):
+    """Admin: export a site's data. `raw_days` (0-90) adds raw readings of the last N days;
+    hourly summaries are always included. Device credentials are never exported."""
+    if raw_days < 0 or raw_days > 90:
+        raise HTTPException(400, "raw_days tem de estar entre 0 e 90")
+    site = _site_for(db, admin, site_id)
+    data = gdpr.export_site_data(db, site, raw_days=raw_days)
+    audit_request(db, request, admin, "privacy.data_exported", target_resource="site", target_id=site.id,
+                  tenant_id=site.tenant_id, details={"raw_days": raw_days, "truncated": data["truncated"]})
+    return data
+
+
+@router.post("/sites/{site_id}/erase")
+def erase_site_data(site_id: int, req: EraseUserRequest, request: Request, db: Session = Depends(get_db),
+                    admin: dict = Depends(require_admin), _pw: dict = Depends(require_password_changed)):
+    """Admin: delete a site with all its devices (and their credentials), readings, hourly
+    summaries, alerts and rules. Irreversible. Needs the word ERASE."""
+    _require_confirm(req.confirm)
+    site = _site_for(db, admin, site_id)
+    sid, tenant_id = site.id, site.tenant_id
+    counts = gdpr.erase_site(db, site)
+    audit_request(db, request, admin, "privacy.site_erased", target_resource="site", target_id=sid,
+                  tenant_id=tenant_id, details=counts)  # ids and counts only: a site name can identify a person
+    return {"message": "Site e telemetria eliminados", **counts}

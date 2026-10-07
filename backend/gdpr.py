@@ -144,3 +144,107 @@ def erase_user(db: Session, user: models.User) -> dict:
     db.commit()
     return {"audit_rows": len(logs), "reports": len(reports), "leads": leads,
             "oauth_connections": oauth, "api_keys_revoked": keys, "sessions_ended": sessions}
+
+
+# ─── Site-level data (households are personal data) ───────────────────────────
+# A site can be someone's home: its location, owner and above all the energy
+# telemetry (consumption patterns) identify the household. The Customer (tenant)
+# is the controller; these helpers let a tenant admin answer an access/erasure
+# request about a site. Plain site/device DELETE keeps its historical behaviour
+# (telemetry rows only point at devices by a bare integer, so they are orphaned,
+# not removed); erase_site is the deliberate, complete path.
+
+EXPORT_ROW_CAP = 200_000
+_CHUNK = 10_000
+
+
+def _site_devices(db: Session, site: models.Site) -> list:
+    return db.query(models.Device).filter(models.Device.site_id == site.id,
+                                          models.Device.tenant_id == site.tenant_id).all()
+
+
+def export_site_data(db: Session, site: models.Site, raw_days: int = 0) -> dict:
+    """Everything held about a site. Device credentials (`config`) are omitted.
+    Hourly summaries are always included; raw readings only for the last
+    `raw_days` days (0 = counts only). One shared row cap keeps the response bounded."""
+    from datetime import timedelta
+    devices = _site_devices(db, site)
+    ids = [d.id for d in devices]
+    budget = EXPORT_ROW_CAP
+    truncated = False
+
+    hourly = []
+    if ids:
+        q = (db.query(models.DeviceReadingHourly).filter(models.DeviceReadingHourly.device_id.in_(ids))
+             .order_by(models.DeviceReadingHourly.hour_start))
+        for r in q.limit(budget + 1):
+            if len(hourly) >= budget:
+                truncated = True
+                break
+            hourly.append({"device_id": r.device_id, "hour_start": _iso(r.hour_start), "samples": r.sample_count,
+                           "power_kw_avg": r.power_kw_avg, "power_kw_min": r.power_kw_min, "power_kw_max": r.power_kw_max,
+                           "energy_kwh": r.energy_kwh_sum, "soc_pct_avg": r.soc_pct_avg, "temp_c_avg": r.temp_c_avg})
+        budget -= len(hourly)
+
+    raw, raw_count = [], 0
+    if ids:
+        raw_q = db.query(models.DeviceReading).filter(models.DeviceReading.device_id.in_(ids))
+        raw_count = raw_q.count()
+        if raw_days > 0 and budget > 0:
+            since = utcnow_naive() - timedelta(days=min(raw_days, 90))
+            for r in raw_q.filter(models.DeviceReading.timestamp >= since).order_by(models.DeviceReading.timestamp).limit(budget + 1):
+                if len(raw) >= budget:
+                    truncated = True
+                    break
+                raw.append({"device_id": r.device_id, "timestamp": _iso(r.timestamp), "power_kw": r.power_kw,
+                            "energy_kwh": r.energy_kwh, "soc_pct": r.soc_pct, "temp_c": r.temp_c})
+    alerts = [
+        {"fired_at": _iso(a.fired_at), "device_id": a.device_id, "severity": a.severity, "title": a.title,
+         "message": a.message, "metric": a.metric, "value": a.value}
+        for a in (db.query(models.Alert).filter(models.Alert.tenant_id == site.tenant_id, models.Alert.device_id.in_(ids)).all() if ids else [])
+    ]
+    return {
+        "generated_at": _iso(utcnow_naive()),
+        "site": {"id": site.id, "name": site.name, "owner": site.owner, "location": site.location, "lat": site.lat,
+                 "lng": site.lng, "timezone": site.timezone, "solar_kw": site.solar_kw, "battery_kwh": site.battery_kwh,
+                 "ev_chargers": site.ev_chargers, "created_at": _iso(site.created_at)},
+        "devices": [{"id": d.id, "name": d.name, "protocol": d.protocol, "device_type": d.device_type,
+                     "external_id": d.external_id, "enabled": d.enabled, "status": d.status,
+                     "last_seen": _iso(d.last_seen), "created_at": _iso(d.created_at)} for d in devices],
+        "raw_readings": {"stored_count": raw_count, "included_days": min(raw_days, 90) if raw_days > 0 else 0, "rows": raw},
+        "hourly_summaries": hourly,
+        "alerts": alerts,
+        "truncated": truncated,
+    }
+
+
+def _delete_in_chunks(db: Session, model, column, ids: list) -> int:
+    total = 0
+    while ids:
+        batch = [r[0] for r in db.query(model.id).filter(column.in_(ids)).limit(_CHUNK).all()]
+        if not batch:
+            break
+        db.query(model).filter(model.id.in_(batch)).delete(synchronize_session=False)
+        db.commit()
+        total += len(batch)
+    return total
+
+
+def erase_site(db: Session, site: models.Site) -> dict:
+    """Delete a site and every trace of its telemetry. Commits. Returns counts."""
+    ids = [d.id for d in _site_devices(db, site)]
+    counts = {
+        "raw_readings": _delete_in_chunks(db, models.DeviceReading, models.DeviceReading.device_id, ids),
+        "hourly_summaries": _delete_in_chunks(db, models.DeviceReadingHourly, models.DeviceReadingHourly.device_id, ids),
+        "alerts": _delete_in_chunks(db, models.Alert, models.Alert.device_id, ids),
+    }
+    if ids:
+        counts["alert_rules"] = db.query(models.AlertRule).filter(
+            models.AlertRule.tenant_id == site.tenant_id, models.AlertRule.device_id.in_(ids)).delete(synchronize_session=False)
+        counts["devices"] = db.query(models.Device).filter(models.Device.id.in_(ids)).delete(synchronize_session=False)
+    else:
+        counts["alert_rules"] = counts["devices"] = 0
+    db.query(models.VPPSiteMembership).filter(models.VPPSiteMembership.site_id == site.id).delete(synchronize_session=False)
+    db.delete(site)
+    db.commit()
+    return counts
