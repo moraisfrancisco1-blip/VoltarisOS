@@ -38,7 +38,7 @@ READ_ONLY_METHODS = (
     "EM.GetStatus",
 )
 
-REDACT_KEYS = {"target", "ip", "mac", "wifi_mac", "ble_mac", "wifi_name", "ssid", "bssid"}
+REDACT_KEYS = {"target", "ip", "mac", "wifi_mac", "ble_mac", "wifi_name", "ssid", "bssid", "src"}  # src = "<model>-<device MAC>"
 
 
 def redact(value):

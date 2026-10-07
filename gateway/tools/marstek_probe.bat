@@ -112,7 +112,7 @@ try {
         Write-Host '  - If you know the battery IP, run:  marstek_probe.bat 192.168.1.50'
     }
     # Remove network identifiers (values only; field names and measurements are kept).
-    $json = [regex]::Replace($json, '"(target|ip|mac|wifi_mac|ble_mac|wifi_name|ssid|bssid)"\s*:\s*"[^"]*"', '"$1": "<redacted>"')
+    $json = [regex]::Replace($json, '"(target|ip|mac|wifi_mac|ble_mac|wifi_name|ssid|bssid|src)"\s*:\s*"[^"]*"', '"$1": "<redacted>"')
 
     [IO.File]::WriteAllText($outFile, $json, (New-Object Text.UTF8Encoding $false))
     try { Set-Clipboard -Value $json } catch { }

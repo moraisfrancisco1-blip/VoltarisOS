@@ -28,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger("voltaris.gateway")
 
 # ── Connector registry ────────────────────────────────────────────────────────
-from gateway.connectors import solaredge, modbus_tcp, opcua_client
+from gateway.connectors import solaredge, modbus_tcp, opcua_client, marstek
 from gateway.connectors import modbus_rtu          # sync — run in executor
 
 
@@ -36,6 +36,7 @@ ASYNC_CONNECTORS = {
     "solaredge": solaredge.poll,
     "modbus_tcp": modbus_tcp.poll,
     "opcua": opcua_client.poll,
+    "marstek": marstek.poll,
 }
 
 SYNC_CONNECTORS = {
