@@ -466,6 +466,12 @@ async def require_ingest_identity(creds: HTTPAuthorizationCredentials = Depends(
 
     token = creds.credentials
 
+    # 0) A tenant's own API key (Settings > API Keys, "vos_..."), so a customer can push readings from
+    #    a home hub (e.g. a Homey Flow) without a gateway key. Tenant-scoped: the ingest route still
+    #    requires the device to belong to that tenant. Revoked/unknown keys are a 401.
+    if token.startswith(API_KEY_PREFIX):
+        return _resolve_api_key(token)
+
     # 1) Normal logged-in user (JWT)
     try:
         return decode_token(token)
