@@ -91,7 +91,9 @@ def _wait_for(sock, msg_id, timeout):
             message = json.loads(data.decode("utf-8", errors="replace"))
         except ValueError:
             continue
-        if isinstance(message, dict) and message.get("id") == msg_id:
+        if isinstance(message, dict) and message.get("id") == msg_id and "method" not in message:
+            # `"method" in message` means this is a REQUEST (our own broadcast looping back, or
+            # another client's), never the battery's answer, which carries "result" or "error".
             return message, addr
 
 
